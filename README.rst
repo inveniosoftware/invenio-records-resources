@@ -1,0 +1,32 @@
+..
+    Copyright (C) 2020 CERN.
+
+    Invenio-Resources is free software; you can redistribute it and/or
+    modify it under the terms of the MIT License; see LICENSE file for more
+    details.
+
+===================
+ Invenio-Resources
+===================
+
+.. image:: https://img.shields.io/travis/inveniosoftware/invenio-resources.svg
+        :target: https://travis-ci.org/inveniosoftware/invenio-resources
+
+.. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-resources.svg
+        :target: https://coveralls.io/r/inveniosoftware/invenio-resources
+
+.. image:: https://img.shields.io/github/tag/inveniosoftware/invenio-resources.svg
+        :target: https://github.com/inveniosoftware/invenio-resources/releases
+
+.. image:: https://img.shields.io/pypi/dm/invenio-resources.svg
+        :target: https://pypi.python.org/pypi/invenio-resources
+
+.. image:: https://img.shields.io/github/license/inveniosoftware/invenio-resources.svg
+        :target: https://github.com/inveniosoftware/invenio-resources/blob/master/LICENSE
+
+Invenio Resources module to create REST APIs
+
+TODO: Please provide feature overview of module
+
+Further documentation is available on
+https://invenio-resources.readthedocs.io/
