@@ -91,5 +91,10 @@ class RecordResource(CollectionResource):
 
     def delete(self, *args, **kwargs):
         """Delete an item."""
-        # TODO
-        pass
+        identity = None
+        return (
+            self.service_cls.delete(
+                id_=resource_requestctx.route["pid_value"], identity=identity
+            ),
+            204,
+        )
