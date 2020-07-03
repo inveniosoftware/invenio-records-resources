@@ -17,13 +17,31 @@ history = open("CHANGES.rst").read()
 tests_require = [
     "pytest-invenio>=1.3.2",
     "invenio-app>=1.3.0",
-    'psycopg2-binary>=2.7.4',
-    'elasticsearch>=7.0.0,<8.0.0',
-    'elasticsearch-dsl>=7.0.0,<8.0.0',
 ]
+
+# Should follow inveniosoftware/invenio versions
+invenio_search_version = '>=1.2.0,<2.0.0'
+invenio_db_version = '>=1.0.4,<2.0.0'
 
 extras_require = {
     "docs": ["Sphinx>=1.5.1,<3"],
+    # Elasticsearch version
+    'elasticsearch6': [
+        'invenio-search[elasticsearch6]{}'.format(invenio_search_version),
+    ],
+    'elasticsearch7': [
+        'invenio-search[elasticsearch7]{}'.format(invenio_search_version),
+    ],
+    # Databases
+    'mysql': [
+        'invenio-db[mysql,versioning]{}'.format(invenio_db_version),
+    ],
+    'postgresql': [
+        'invenio-db[postgresql,versioning]{}'.format(invenio_db_version),
+    ],
+    'sqlite': [
+        'invenio-db[versioning]{}'.format(invenio_db_version),
+    ],
     "tests": tests_require,
 }
 
@@ -37,17 +55,17 @@ setup_requires = [
 ]
 
 install_requires = [
-    # TODO pin versions
     "Flask-BabelEx>=0.9.4",
     "invenio-base>=1.2.3",
-    "invenio-db>=1.0.5",
     "invenio-pidstore>=1.2.0",
-    "invenio-search>=1.3.1",  # FIXME: this avoids elastic to be installed in tests
     "invenio-indexer>=1.1.1",
-    "invenio-records>=1.3.1",
-    # "invenio-records-agent>=",  # FIXME: will be renamed
+    "invenio-records>=1.3.2",
     "invenio-rest>=1.2.1",
-    # "flask-resources",
+    # "flask-resources", # FIXME: Currently in dev
+    # Service
+    "invenio-accounts>=1.3.0",
+    "invenio-files-rest>=1.2.0",
+    "invenio-records-permissions>=0.8.0",
 ]
 
 packages = find_packages()

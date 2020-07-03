@@ -12,11 +12,11 @@ from flask_resources.context import resource_requestctx
 from flask_resources.loaders import RequestLoader
 from flask_resources.parsers import search_request_parser
 from flask_resources.resources import ResourceConfig
-from invenio_records_agent import RecordManager
 
 from ..responses import RecordResponse
 from ..schemas import RecordSchemaJSONV1
 from ..serializers import RecordJSONSerializer
+from ..service import RecordService
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -37,13 +37,13 @@ class RecordResource(CollectionResource):
     def __init__(
         self,
         config=RecordResourceConfig(),
-        manager_cls=RecordManager,
+        service_cls=RecordService,
         *args,
         **kwargs
     ):
         """Constructor."""
         super(RecordResource, self).__init__(config=config, *args, **kwargs)
-        self.manager_cls = manager_cls
+        self.service_cls = service_cls
 
     #
     # Primary Interface
@@ -52,7 +52,7 @@ class RecordResource(CollectionResource):
         """Perform a search over the items."""
         # TODO fix identity extraction
         identity = None
-        record_list, total, aggregations = self.manager_cls.search(
+        record_list, total, aggregations = self.service_cls.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,
             pagination=resource_requestctx.request_args.get(
@@ -67,13 +67,13 @@ class RecordResource(CollectionResource):
         data = resource_requestctx.request_content
         # TODO fix identity extraction
         identity = None
-        return self.manager_cls.create(data, identity), 200
+        return self.service_cls.create(data, identity), 200
 
     def read(self, *args, **kwargs):
         """Read an item."""
         identity = None
         return (
-            self.manager_cls.get(
+            self.service_cls.get(
                 id_=resource_requestctx.route["pid_value"], identity=identity
             ),
             200,
