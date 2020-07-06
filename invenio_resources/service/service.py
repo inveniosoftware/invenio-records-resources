@@ -20,7 +20,7 @@ from ..config import lt_es7
 from .errors import PermissionDeniedError
 from .search import SearchEngine
 from .search.serializers import es_to_record
-from .state import RecordState
+from .state import RecordSearchState, RecordState
 
 
 class RecordServiceConfig:
@@ -166,7 +166,7 @@ class RecordService:
 
         aggregations = search_result.aggregations.to_dict()
 
-        return record_list, total, aggregations
+        return RecordSearchState(record_list, total, aggregations)
 
     @classmethod
     def create(cls, data, identity):

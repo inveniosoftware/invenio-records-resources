@@ -51,10 +51,20 @@ class RecordJSONSerializer(SerializerMixin):
     def serialize_object_list(
         self, obj_list, response_ctx=None, *args, **kwargs
     ):
-        """Dump the object list into a json string."""
-        records_list = [
-            self._process_record(record.id, record.record, response_ctx)
-            for record in obj_list
-        ]
+        """Dump the object list into a json string.
 
-        return json.dumps(records_list)
+        :param: obj_list a RecordSearchState object
+        """
+        serialized_content = {
+            "hits": {
+                "hits": [
+                    self._process_record(record.id, record.record, response_ctx)
+                    for record in obj_list.records
+                ],
+                "total": obj_list.total
+            },
+            "links": "",
+            "aggregations": obj_list.aggregations
+        }
+
+        return json.dumps(serialized_content)

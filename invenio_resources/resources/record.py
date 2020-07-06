@@ -52,7 +52,7 @@ class RecordResource(CollectionResource):
         """Perform a search over the items."""
         # TODO fix identity extraction
         identity = None
-        record_list, total, aggregations = self.service_cls.search(
+        record_search = self.service_cls.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,
             pagination=resource_requestctx.request_args.get(
@@ -60,7 +60,7 @@ class RecordResource(CollectionResource):
             ),
         )
 
-        return record_list, 200
+        return record_search, 200
 
     def create(self, *args, **kwargs):
         """Create an item."""
