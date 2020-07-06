@@ -125,8 +125,6 @@ class RecordService:
     @classmethod
     def get(cls, id_, identity):
         """Retrieve a record."""
-        # TODO: Permissions
-        # cls.require_permission(identity, "create")
         pid, record = cls.resolve(id_)
         cls.require_permission(identity, "read", record=record)
         # Todo: how do we deal with tombstone pages
@@ -135,6 +133,9 @@ class RecordService:
     @classmethod
     def search(cls, querystring, identity, pagination=None, *args, **kwargs):
         """Search for records matching the querystring."""
+        # Permissions
+        cls.require_permission(identity, "search")
+
         # Create search object
         search_engine = cls.factory.search()
 
@@ -171,7 +172,8 @@ class RecordService:
     def create(cls, data, identity):
         """Create a record."""
         # TODO: Permissions
-        # cls.require_permission(identity, "create")
+        cls.require_permission(identity, "create")
+
         # Data validation
         # TODO: validate data
 
@@ -193,12 +195,13 @@ class RecordService:
     @classmethod
     def delete(cls, id_, identity):
         """Delete a record from database and search indexes."""
-        # TODO: Permissions
-        # cls.require_permission(identity, "delete")
         # TODO: etag and versioning
 
         # TODO: Removed based on id both DB and ES
         pid, record = cls.resolve(id_)
+        # Permissions
+        cls.require_permission(identity, "delete", record=record)
+
         record.delete()
         # TODO: mark all PIDs as DELETED
         db.session.commit()
@@ -207,3 +210,23 @@ class RecordService:
             indexer.delete(record)
 
         # TODO: Shall it return true/false? The tombstone page?
+
+    @classmethod
+    def update(cls, id_, data, identity):
+        """Replace a record."""
+        # TODO: etag and versioning
+        pid, record = cls.resolve(id_)
+        # Permissions
+        cls.require_permission(identity, "update", record=record)
+        # TODO: Data validation
+
+        record.clear()
+        record.update(data)
+        record.commit()
+        db.session.commit()
+
+        indexer = cls.factory.indexer()
+        if indexer:
+            indexer.index(record)
+
+        return cls.factory.record_state(pid=pid, record=record)

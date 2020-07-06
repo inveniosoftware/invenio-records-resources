@@ -65,7 +65,6 @@ class RecordResource(CollectionResource):
     def create(self, *args, **kwargs):
         """Create an item."""
         data = resource_requestctx.request_content
-        # TODO fix identity extraction
         identity = None
         return self.service_cls.create(data, identity), 200
 
@@ -81,8 +80,16 @@ class RecordResource(CollectionResource):
 
     def update(self, *args, **kwargs):
         """Update an item."""
-        # TODO
-        pass
+        data = resource_requestctx.request_content
+        identity = None
+        return (
+            self.service_cls.update(
+                id_=resource_requestctx.route["pid_value"],
+                data=data,
+                identity=identity
+            ),
+            200,
+        )
 
     def partial_update(self, *args, **kwargs):
         """Patch an item."""

@@ -37,6 +37,13 @@ def test_create_read_search_record(client, minimal_record):
     response = client.get("/api/records_v2/{}".format(recid), headers=HEADERS)
     assert response.status_code == 200
 
+    # Update the record
+    updated_record = minimal_record
+    updated_record["titles"][0]["title"] = "updated title"
+    response = client.put("/api/records_v2/{}".format(recid), headers=HEADERS,
+                          data=json.dumps(updated_record))
+    assert response.status_code == 200
+
     # Delete the record
     response = client.delete("/api/records_v2/{}".format(recid),
                              headers=HEADERS)
