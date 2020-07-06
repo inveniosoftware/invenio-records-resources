@@ -8,6 +8,7 @@
 
 """Invenio Resources module to create REST APIs."""
 
+from flask import g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 from flask_resources.loaders import RequestLoader
@@ -51,7 +52,7 @@ class RecordResource(CollectionResource):
     def search(self, *args, **kwargs):
         """Perform a search over the items."""
         # TODO fix identity extraction
-        identity = None
+        identity = g.identiy
         record_search = self.service_cls.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,
@@ -63,12 +64,12 @@ class RecordResource(CollectionResource):
     def create(self, *args, **kwargs):
         """Create an item."""
         data = resource_requestctx.request_content
-        identity = None
+        identity = g.identity
         return self.service_cls.create(data, identity), 200
 
     def read(self, *args, **kwargs):
         """Read an item."""
-        identity = None
+        identity = g.identity
         return (
             self.service_cls.get(
                 id_=resource_requestctx.route["pid_value"], identity=identity
@@ -79,7 +80,7 @@ class RecordResource(CollectionResource):
     def update(self, *args, **kwargs):
         """Update an item."""
         data = resource_requestctx.request_content
-        identity = None
+        identity = g.identity
         return (
             self.service_cls.update(
                 id_=resource_requestctx.route["pid_value"],
@@ -96,7 +97,7 @@ class RecordResource(CollectionResource):
 
     def delete(self, *args, **kwargs):
         """Delete an item."""
-        identity = None
+        identity = g.identity
         return (
             self.service_cls.delete(
                 id_=resource_requestctx.route["pid_value"], identity=identity

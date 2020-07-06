@@ -25,10 +25,6 @@ class InvenioRecordsResources(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-
-        record_bp = RecordResource().as_blueprint("records_resource")
-        app.register_blueprint(record_bp)
-
         app.extensions["invenio-records-resources"] = self
 
     def init_config(self, app):
