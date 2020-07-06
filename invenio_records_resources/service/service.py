@@ -14,6 +14,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
+from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
@@ -30,7 +31,7 @@ class RecordServiceConfig:
     resolver_cls = Resolver
     resolver_obj_type = "rec"
     pid_type = "recid"  # PID type for resolver, minter, and fetcher
-    permission_policy_cls = ""
+    permission_policy_cls = RecordPermissionPolicy
     record_state_cls = RecordState
     # Class dependency injection
     indexer_cls = RecordIndexer
@@ -54,53 +55,53 @@ class RecordServiceConfig:
 class RecordService:
     """Record Service interface."""
 
-    _config = RecordServiceConfig
+    config = RecordServiceConfig
 
     @classmethod
     def resolver(cls):
         """Factory for creating a resolver class."""
-        return cls._config.resolver_cls(
-            pid_type=cls._config.pid_type,
-            getter=cls._config.record_cls.get_record,
+        return cls.config.resolver_cls(
+            pid_type=cls.config.pid_type,
+            getter=cls.config.record_cls.get_record,
         )
 
     @classmethod
     def minter(cls):
         """Factory for creating a minter class."""
-        return current_pidstore.minters[cls._config.pid_type]
+        return current_pidstore.minters[cls.config.pid_type]
 
     @classmethod
     def fetcher(cls):
         """Factory for creating a fetcher class."""
-        return current_pidstore.fetchers[cls._config.pid_type]
+        return current_pidstore.fetchers[cls.config.pid_type]
 
     @classmethod
     def indexer(cls):
         """Factory for creating a indexer class."""
-        return cls._config.indexer_cls()
+        return cls.config.indexer_cls()
 
     @classmethod
     def search_engine(cls):
         """Factory for creating a search class."""
-        return cls._config.search_engine_cls(cls._config.search_cls)
+        return cls.config.search_engine_cls(cls.config.search_cls)
 
     @classmethod
     def permission(cls, action_name, **kwargs):
         """Factory for creating permissions from a permission policy."""
-        if cls._config.permission_policy_cls:
-            return cls._config.permission_policy_cls(action_name, **kwargs)
+        if cls.config.permission_policy_cls:
+            return cls.config.permission_policy_cls(action_name, **kwargs)
         else:
-            return Permission()
+            return RecordPermissionPolicy(action=action_name, **kwargs)
 
     @classmethod
     def record_cls(cls):
         """Factory for creating a record class."""
-        return cls._config.record_cls
+        return cls.config.record_cls
 
     @classmethod
     def record_state(cls, **kwargs):
         """Create a new item state."""
-        return cls._config.record_state_cls(**kwargs)
+        return cls.config.record_state_cls(**kwargs)
 
     #
     # Permissions checking
