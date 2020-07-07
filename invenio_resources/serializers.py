@@ -12,6 +12,8 @@ import json
 import pytz
 from flask_resources.serializers import SerializerMixin
 
+from .links import link_for, search_links
+
 
 class RecordJSONSerializer(SerializerMixin):
     """Record JSON serializer implementation."""
@@ -35,6 +37,10 @@ class RecordJSONSerializer(SerializerMixin):
                 if record.updated and not record.updated.tzinfo
                 else None
             ),
+            links=dict(
+                self=link_for(api=True, tpl='record', pid=pid),
+                self_html=link_for(api=False, tpl='record', pid=pid),
+            )
         )
 
         return record_dict
@@ -55,15 +61,18 @@ class RecordJSONSerializer(SerializerMixin):
 
         :param: obj_list a RecordSearchState object
         """
+        url_args = response_ctx.get("url_args")
+
         serialized_content = {
             "hits": {
                 "hits": [
-                    self._process_record(record.id, record.record, response_ctx)
+                    self._process_record(record.id, record.record,
+                                         response_ctx)
                     for record in obj_list.records
                 ],
                 "total": obj_list.total
             },
-            "links": "",
+            "links": search_links(url_args=url_args, total=obj_list.total),
             "aggregations": obj_list.aggregations
         }
 

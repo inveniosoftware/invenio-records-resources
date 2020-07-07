@@ -19,11 +19,25 @@ def test_create_read_record(client, minimal_record):
         "/api/records_v2", headers=HEADERS, data=json.dumps(minimal_record)
     )
     assert response.status_code == 200
+    response_fields = response.json.keys()
+    fields_to_check = ['pid', 'metadata', 'revision',
+                       'created', 'updated', 'links']
+    for field in fields_to_check:
+        assert field in response_fields
+
+    # Save record pid for posterior operations
     recid = response.json["pid"]
 
     # Read the record
     response = client.get("/api/records_v2/{}".format(recid), headers=HEADERS)
     assert response.status_code == 200
+    assert response.json["pid"] == recid  # Check it matches with the original
+
+    response_fields = response.json.keys()
+    fields_to_check = ['pid', 'metadata', 'revision',
+                       'created', 'updated', 'links']
+    for field in fields_to_check:
+        assert field in response_fields
 
 
 def test_create_search_record(client, minimal_record):

@@ -98,6 +98,9 @@ setup(
         "invenio_base.api_apps": [
             "invenio_resources = invenio_resources:InvenioResources",
         ],
+        'invenio_config.module': [
+            'invenio_resources = invenio_resources.config',
+        ],
         "invenio_i18n.translations": ["messages = invenio_resources",],
     },
     extras_require=extras_require,

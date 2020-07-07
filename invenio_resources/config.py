@@ -12,3 +12,10 @@ from elasticsearch import VERSION as ES_VERSION
 lt_es7 = ES_VERSION[0] < 7
 
 PIDSTORE_RECID_FIELD = "recid"
+
+LINK_URLS = {
+    'record': '{base}/records/{pid}',
+    'records': '{base}/records/',
+}
+
+SERVER_HOSTNAME = "localhost:5000"

@@ -22,6 +22,7 @@ class RecordState:
         """Check if record is in a specific revision."""
         return str(self.record.revision_id) == str(revision_id)
 
+
 class RecordSearchState:
     """State object for objects associated with a record search."""
 
