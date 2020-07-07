@@ -38,5 +38,6 @@ def test_create_read_search_record(client, minimal_record):
     assert response.status_code == 200
 
     # Delete the record
-    response = client.delete("/api/records_v2/{}".format(recid), headers=HEADERS)
+    response = client.delete("/api/records_v2/{}".format(recid),
+                             headers=HEADERS)
     assert response.status_code == 204
