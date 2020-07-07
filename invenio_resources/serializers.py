@@ -41,9 +41,12 @@ class RecordJSONSerializer(SerializerMixin):
 
     def serialize_object(self, obj, response_ctx=None, *args, **kwargs):
         """Dump the object into a json string."""
-        return json.dumps(
-            self._process_record(obj.id, obj.record, response_ctx)
-        )
+        if obj:  # e.g. delete op has no return body
+            return json.dumps(
+                self._process_record(obj.id, obj.record, response_ctx)
+            )
+        else:
+            return ""
 
     def serialize_object_list(
         self, obj_list, response_ctx=None, *args, **kwargs
