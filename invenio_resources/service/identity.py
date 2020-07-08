@@ -21,5 +21,6 @@ class SystemIdentity(Identity):
     @property
     def provides(self):
         """Needs provided by this identity."""
-        # todo: fake it so permission.allows(system_identity)  always works)
+        # TODO: fake it so permission.allows(system_identity) always works
+        # Integrating with invenio-records-permissions
         return set()

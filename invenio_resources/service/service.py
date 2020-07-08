@@ -23,8 +23,8 @@ from .search.serializers import es_to_record
 from .state import RecordSearchState, RecordState
 
 
-class RecordServiceConfig:
-    """Service configuration."""
+class RecordServiceFactoryConfig:
+    """Service factory configuration."""
 
     record_cls = Record
     resolver_cls = Resolver
@@ -100,7 +100,7 @@ class RecordServiceFactory:
 class RecordService:
     """Record Service interface."""
 
-    factory = RecordServiceFactory(RecordServiceConfig)
+    factory = RecordServiceFactory(RecordServiceFactoryConfig)
 
     #
     # Permissions checking

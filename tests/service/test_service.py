@@ -6,14 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Agents tests."""
-
-from uuid import uuid4
-
-import pytest
-from flask_principal import Identity, UserNeed
-
-from invenio_resources.service import RecordService, RecordServiceFactory
+"""Service tests."""
 
 
 def test_service_get(service_cls, identity_simple, fake_record_db):

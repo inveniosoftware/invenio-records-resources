@@ -15,9 +15,8 @@ from invenio_rest.errors import RESTException
 class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
-    def __init__(self, action):
-        """Constructor."""
-        pass
+    code = 400
+    description = "Permission denied."
 
 
 class InvalidQueryRESTError(RESTException):

@@ -14,7 +14,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 
 class UUIDResolver(object):
-    """Resolve that uses the record's UUID instead of a persistent id.
+    """Resolver that uses the record's UUID instead of a persistent id.
 
     Normally, you should use invenio_pidstore.resolver:Resolver instead. This
     class bypasses PIDStore and simply uses the UUID of the record as the PID.

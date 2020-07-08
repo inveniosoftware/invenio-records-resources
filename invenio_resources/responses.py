@@ -6,9 +6,7 @@
 # it under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio Resources module to create REST APIs."""
-
 from flask import make_response
-
 from flask_resources.context import resource_requestctx
 from flask_resources.responses import Response
 
@@ -29,7 +27,7 @@ class RecordResponse(Response):
         return make_response(
             self.serializer.serialize_object_list(
                 obj_list=content,
-                response_ctx = {"url_args": resource_requestctx.request_args}
+                response_ctx={"url_args": resource_requestctx.request_args}
             ),
             code,
             self.make_headers(),

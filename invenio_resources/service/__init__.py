@@ -8,6 +8,11 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
-from .service import RecordService, RecordServiceConfig, RecordServiceFactory
+from .service import (RecordService, RecordServiceFactory,
+                      RecordServiceFactoryConfig)
 
-__all__ = ('RecordService', 'RecordServiceConfig', 'RecordServiceFactory')
+__all__ = (
+    'RecordService',
+    'RecordServiceFactoryConfig',
+    'RecordServiceFactory'
+)

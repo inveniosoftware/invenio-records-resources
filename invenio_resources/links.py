@@ -38,7 +38,7 @@ def search_links(url_args, total):
             api_base,
             pagination["links"]["self"]["page"],
         )
-        url_args.pop('page') # Remove since it is not needed
+        url_args.pop('page')  # Remove since it is not needed
 
         if pagination['from_idx'] >= 1:
             links['prev'] = "{}?page={}".format(
