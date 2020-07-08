@@ -9,8 +9,8 @@
 
 from flask import current_app
 from invenio_rest.serializer import BaseSchema as Schema
-from marshmallow import (INCLUDE, ValidationError, fields, missing, post_load,
-                         validates_schema)
+from marshmallow import INCLUDE, ValidationError, fields, missing, post_load, \
+    validates_schema
 
 from .fields import PersistentIdentifier
 

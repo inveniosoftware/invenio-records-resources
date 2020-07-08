@@ -7,15 +7,6 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from elasticsearch import VERSION as ES_VERSION
+from .engine import SearchEngine
 
-lt_es7 = ES_VERSION[0] < 7
-
-PIDSTORE_RECID_FIELD = "recid"
-
-LINK_URLS = {
-    'record': '{base}/records/{pid}',
-    'records': '{base}/records/',
-}
-
-SERVER_HOSTNAME = "localhost:5000"
+__all__ = "SearchEngine"
