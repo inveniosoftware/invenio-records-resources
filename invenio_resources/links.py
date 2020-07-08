@@ -18,16 +18,17 @@ def _base_url(api=False):
     return url.format(current_app.config['SERVER_HOSTNAME'])
 
 
-def link_for(api, tpl, **kwargs):
+def link_for(api, tpl_key, **kwargs):
     """Create a link using specific template."""
-    tpl = LINK_URLS.get(tpl)
+    tpl = current_app.config["LINK_URLS"].get(tpl_key, "")
 
     return tpl.format(base=_base_url(api), **kwargs)
 
 
 def search_links(url_args, total):
     """Create search query links."""
-    api_base = link_for(api=True, tpl='records')  # Search links are api only
+    # Search links are api only
+    api_base = link_for(api=True, tpl_key='records')
     links = {
         'self': api_base,
     }

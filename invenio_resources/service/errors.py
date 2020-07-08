@@ -15,7 +15,7 @@ from invenio_rest.errors import RESTException
 class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
-    code = 400
+    code = 403
     description = "Permission denied."
 
 

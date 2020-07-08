@@ -9,7 +9,7 @@
 """Service tests."""
 
 
-def test_service_get(service_cls, identity_simple, fake_record_db):
+def test_service_get(app, service_cls, identity_simple, fake_record_db):
     """Get a record."""
     for recid, fake_record in fake_record_db.items():
         recstate = service_cls.get(recid, identity=identity_simple)

@@ -10,7 +10,6 @@
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 from flask_resources.loaders import RequestLoader
-from flask_resources.parsers import search_request_parser
 from flask_resources.resources import ResourceConfig
 
 from ..responses import RecordResponse
@@ -55,9 +54,7 @@ class RecordResource(CollectionResource):
         record_search = self.service_cls.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,
-            pagination=resource_requestctx.request_args.get(
-                "pagination", None
-            ),
+            pagination=resource_requestctx.request_args.get("pagination"),
         )
 
         return record_search, 200

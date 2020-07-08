@@ -11,17 +11,14 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
-import shutil
-import tempfile
 from uuid import uuid4
 
 import pytest
 from flask import Flask
 from flask_principal import Identity, Permission, UserNeed
-from invenio_records_agent.resolver import UUIDResolver
 
-from invenio_resources.service import (RecordService, RecordServiceFactory,
-                                       RecordServiceFactoryConfig)
+from invenio_resources.service import RecordService, RecordServiceConfig
+from invenio_resources.service.resolver import UUIDResolver
 
 
 @pytest.fixture()
@@ -68,18 +65,18 @@ def fake_permission_policy_cls():
 @pytest.fixture()
 def service_config_cls(fake_record_cls, fake_permission_policy_cls):
     """Service configuration class."""
-    class TestRecordServiceFactoryConfig(RecordServiceFactoryConfig):
+    class TestRecordServiceConfig(RecordServiceConfig):
         record_cls = fake_record_cls
         resolver_cls = UUIDResolver
         permission_policy_cls = fake_permission_policy_cls
 
-    return TestRecordServiceFactoryConfig
+    return TestRecordServiceConfig
 
 
 @pytest.fixture()
 def service_cls(service_config_cls):
     """Record service class."""
     class TestRecordService(RecordService):
-        factory = RecordServiceFactory(service_config_cls)
+        _config = service_config_cls
 
     return TestRecordService

@@ -22,7 +22,9 @@ class RecordJSONSerializer(SerializerMixin):
         """Constructor."""
         self.schema = schema
 
-    def _process_record(self, pid, record, response_ctx, *args, **kwargs):
+    def _process_record(self, record_state, *args, **kwargs):
+        pid = record_state.id
+        record = record_state.record
         record_dict = dict(
             pid=pid,
             metadata=record.dumps(),
@@ -38,8 +40,8 @@ class RecordJSONSerializer(SerializerMixin):
                 else None
             ),
             links=dict(
-                self=link_for(api=True, tpl='record', pid=pid),
-                self_html=link_for(api=False, tpl='record', pid=pid),
+                self=link_for(api=True, tpl_key='record', pid=pid),
+                self_html=link_for(api=False, tpl_key='record', pid=pid),
             )
         )
 
@@ -48,9 +50,7 @@ class RecordJSONSerializer(SerializerMixin):
     def serialize_object(self, obj, response_ctx=None, *args, **kwargs):
         """Dump the object into a json string."""
         if obj:  # e.g. delete op has no return body
-            return json.dumps(
-                self._process_record(obj.id, obj.record, response_ctx)
-            )
+            return json.dumps(self._process_record(obj))
         else:
             return ""
 
@@ -61,7 +61,7 @@ class RecordJSONSerializer(SerializerMixin):
 
         :param: obj_list a RecordSearchState object
         """
-        url_args = response_ctx.get("url_args")
+        url_args = response_ctx.get("url_args") if response_ctx else {}
 
         serialized_content = {
             "hits": {

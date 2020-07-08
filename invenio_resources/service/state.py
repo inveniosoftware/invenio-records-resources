@@ -9,6 +9,7 @@
 """State API."""
 
 
+# TODO: Would be nice to replace with less generic name than "state"
 class RecordState:
     """State object for objects associated with a record."""
 

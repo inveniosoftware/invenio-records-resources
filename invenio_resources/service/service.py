@@ -23,13 +23,13 @@ from .search.serializers import es_to_record
 from .state import RecordSearchState, RecordState
 
 
-class RecordServiceFactoryConfig:
+class RecordServiceConfig:
     """Service factory configuration."""
 
     record_cls = Record
     resolver_cls = Resolver
     resolver_obj_type = "rec"
-    pid_type = "recid"  # PID type for resolver and minter
+    pid_type = "recid"  # PID type for resolver, minter, and fetcher
     permission_policy_cls = ""
     record_state_cls = RecordState
     # Class dependency injection
@@ -51,56 +51,56 @@ class RecordServiceFactoryConfig:
     # }
 
 
-class RecordServiceFactory:
-    """Factory for creating object instances and classes."""
-
-    def __init__(self, config):
-        """Constructor."""
-        self._config = config
-
-    def resolver(self):
-        """Factory for creating a resolver class."""
-        return self._config.resolver_cls(
-            pid_type=self._config.pid_type,
-            getter=self._config.record_cls.get_record,
-        )
-
-    def minter(self):
-        """Factory for creating a minter class."""
-        return current_pidstore.minters[self._config.pid_type]
-
-    def fetcher(self):
-        """Factory for creating a fetcher class."""
-        return current_pidstore.fetchers[self._config.pid_type]
-
-    def indexer(self):
-        """Factory for creating a indexer class."""
-        return self._config.indexer_cls()
-
-    def search(self):
-        """Factory for creating a search class."""
-        return self._config.search_engine_cls(self._config.search_cls)
-
-    def permission(self, action_name, **kwargs):
-        """Factory for creating permissions from a permission policy."""
-        if self._config.permission_policy_cls:
-            return self._config.permission_policy_cls(action_name, **kwargs)
-        else:
-            return Permission()
-
-    def record(self):
-        """Factory for creating a record class."""
-        return self._config.record_cls
-
-    def record_state(self, **kwargs):
-        """Create a new item state."""
-        return self._config.record_state_cls(**kwargs)
-
-
 class RecordService:
     """Record Service interface."""
 
-    factory = RecordServiceFactory(RecordServiceFactoryConfig)
+    _config = RecordServiceConfig
+
+    @classmethod
+    def resolver(cls):
+        """Factory for creating a resolver class."""
+        return cls._config.resolver_cls(
+            pid_type=cls._config.pid_type,
+            getter=cls._config.record_cls.get_record,
+        )
+
+    @classmethod
+    def minter(cls):
+        """Factory for creating a minter class."""
+        return current_pidstore.minters[cls._config.pid_type]
+
+    @classmethod
+    def fetcher(cls):
+        """Factory for creating a fetcher class."""
+        return current_pidstore.fetchers[cls._config.pid_type]
+
+    @classmethod
+    def indexer(cls):
+        """Factory for creating a indexer class."""
+        return cls._config.indexer_cls()
+
+    @classmethod
+    def search_engine(cls):
+        """Factory for creating a search class."""
+        return cls._config.search_engine_cls(cls._config.search_cls)
+
+    @classmethod
+    def permission(cls, action_name, **kwargs):
+        """Factory for creating permissions from a permission policy."""
+        if cls._config.permission_policy_cls:
+            return cls._config.permission_policy_cls(action_name, **kwargs)
+        else:
+            return Permission()
+
+    @classmethod
+    def record_cls(cls):
+        """Factory for creating a record class."""
+        return cls._config.record_cls
+
+    @classmethod
+    def record_state(cls, **kwargs):
+        """Create a new item state."""
+        return cls._config.record_state_cls(**kwargs)
 
     #
     # Permissions checking
@@ -108,7 +108,7 @@ class RecordService:
     @classmethod
     def require_permission(cls, identity, action_name, **kwargs):
         """Require a specific permission from the permission policy."""
-        if not cls.factory.permission(action_name, **kwargs).allows(identity):
+        if not cls.permission(action_name, **kwargs).allows(identity):
             raise PermissionDeniedError(action_name)
 
     #
@@ -117,7 +117,7 @@ class RecordService:
     @classmethod
     def resolve(cls, id_):
         """Resolve a persistent identifier to a record."""
-        return cls.factory.resolver().resolve(id_)
+        return cls.resolver().resolve(id_)
 
     #
     # High-level API
@@ -128,7 +128,7 @@ class RecordService:
         pid, record = cls.resolve(id_)
         cls.require_permission(identity, "read", record=record)
         # Todo: how do we deal with tombstone pages
-        return cls.factory.record_state(pid=pid, record=record)
+        return cls.record_state(pid=pid, record=record)
 
     @classmethod
     def search(cls, querystring, identity, pagination=None, *args, **kwargs):
@@ -136,8 +136,8 @@ class RecordService:
         # Permissions
         cls.require_permission(identity, "search")
 
-        # Create search object
-        search_engine = cls.factory.search()
+        # Create search engine object
+        search_engine = cls.search_engine()
 
         # Add search arguments
         extras = {}
@@ -154,8 +154,8 @@ class RecordService:
         record_list = []
         for hit in search_result["hits"]["hits"]:
             # hit is ES AttrDict
-            record = es_to_record(hit.to_dict(), cls.factory.record())
-            pid = cls.factory.fetcher()(data=record, record_uuid=None)
+            record = es_to_record(hit.to_dict(), cls.record_cls())
+            pid = cls.fetcher()(data=record, record_uuid=None)
             record_list.append(RecordState(record=record, pid=pid))
 
         total = (
@@ -178,15 +178,15 @@ class RecordService:
         # TODO: validate data
 
         # Create record
-        record = cls.factory.record().create(data)
+        record = cls.record_cls().create(data)
         # Mint PID
-        pid = cls.factory.minter()(record_uuid=record.id, data=record)
+        pid = cls.minter()(record_uuid=record.id, data=record)
         # Create record state
-        record_state = cls.factory.record_state(pid=pid, record=record)
+        record_state = cls.record_state(pid=pid, record=record)
         # Persist DB
         db.session.commit()
         # Index the record
-        indexer = cls.factory.indexer()
+        indexer = cls.indexer()
         if indexer:
             indexer.index(record)
 
@@ -205,7 +205,7 @@ class RecordService:
         record.delete()
         # TODO: mark all PIDs as DELETED
         db.session.commit()
-        indexer = cls.factory.indexer()
+        indexer = cls.indexer()
         if indexer:
             indexer.delete(record)
 
@@ -225,8 +225,8 @@ class RecordService:
         record.commit()
         db.session.commit()
 
-        indexer = cls.factory.indexer()
+        indexer = cls.indexer()
         if indexer:
             indexer.index(record)
 
-        return cls.factory.record_state(pid=pid, record=record)
+        return cls.record_state(pid=pid, record=record)
