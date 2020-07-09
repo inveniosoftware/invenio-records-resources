@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Records-Agent is free software; you can redistribute it and/or
+# Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
@@ -17,8 +17,9 @@ import pytest
 from flask import Flask
 from flask_principal import Identity, Permission, UserNeed
 
-from invenio_resources.service import RecordService, RecordServiceConfig
-from invenio_resources.service.resolver import UUIDResolver
+from invenio_records_resources.service import RecordService, \
+    RecordServiceConfig
+from invenio_records_resources.service.resolver import UUIDResolver
 
 
 @pytest.fixture()

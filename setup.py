@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Resources is free software; you can redistribute it and/or modify
+# Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
 """Invenio Resources module to create REST APIs"""
@@ -73,12 +73,12 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join("invenio_resources", "version.py"), "rt") as fp:
+with open(os.path.join("invenio_records_resources", "version.py"), "rt") as fp:
     exec(fp.read(), g)
     version = g["__version__"]
 
 setup(
-    name="invenio-resources",
+    name="invenio-records-resources",
     version=version,
     description=__doc__,
     long_description=readme + "\n\n" + history,
@@ -86,22 +86,22 @@ setup(
     license="MIT",
     author="CERN",
     author_email="info@inveniosoftware.org",
-    url="https://github.com/inveniosoftware/invenio-resources",
+    url="https://github.com/inveniosoftware/invenio-records-resources",
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms="any",
     entry_points={
         "invenio_base.apps": [
-            "invenio_resources = invenio_resources:InvenioResources",
+            "invenio_records_resources = invenio_records_resources:InvenioRecordsResources",
         ],
         "invenio_base.api_apps": [
-            "invenio_resources = invenio_resources:InvenioResources",
+            "invenio_records_resources = invenio_records_resources:InvenioRecordsResources",
         ],
         'invenio_config.module': [
-            'invenio_resources = invenio_resources.config',
+            'invenio_records_resources = invenio_records_resources.config',
         ],
-        "invenio_i18n.translations": ["messages = invenio_resources",],
+        "invenio_i18n.translations": ["messages = invenio_records_resources",],
     },
     extras_require=extras_require,
     install_requires=install_requires,
