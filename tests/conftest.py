@@ -2,8 +2,9 @@
 #
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Resources is free software; you can redistribute it and/or modify
-# it under the terms of the MIT License; see LICENSE file for more details.
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
 
 """Pytest configuration.
 
@@ -17,7 +18,7 @@ import pytest
 from flask import Flask
 from invenio_app.factory import create_app as _create_app
 
-from invenio_resources.resources import RecordResource
+from invenio_records_resources.resources import RecordResource
 
 
 @pytest.fixture(scope="module")

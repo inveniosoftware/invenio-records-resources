@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Resources is free software; you can redistribute it and/or modify
+# Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
 # TODO: Generate this manifest file by running the following commands:
@@ -30,6 +30,6 @@ recursive-include docs *.rst
 recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include tests *.py
-recursive-include invenio_resources *.html
-recursive-include invenio_resources *.py
-recursive-include invenio_resources/translations *.po *.pot *.mo
+recursive-include invenio_records_resources *.html
+recursive-include invenio_records_resources *.py
+recursive-include invenio_records_resources/translations *.po *.pot *.mo

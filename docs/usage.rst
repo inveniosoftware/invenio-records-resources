@@ -1,7 +1,7 @@
 ..
     Copyright (C) 2020 CERN.
 
-    Invenio-Resources is free software; you can redistribute it and/or
+    Invenio-Records-Resources is free software; you can redistribute it and/or
     modify it under the terms of the MIT License; see LICENSE file for more
     details.
 
@@ -9,4 +9,4 @@
 Usage
 =====
 
-.. automodule:: invenio_resources
+.. automodule:: invenio_records_resources

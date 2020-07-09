@@ -3,7 +3,7 @@
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
-# Invenio-Resources is free software; you can redistribute it and/or modify it
+# Invenio-Records-Resources is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
 root = true
@@ -19,7 +19,7 @@ charset = utf-8
 [*.py]
 indent_size = 4
 # isort plugin configuration
-known_first_party = invenio_resources
+known_first_party = invenio_records_resources
 multi_line_output = 2
 default_section = THIRDPARTY
 skip = .eggs

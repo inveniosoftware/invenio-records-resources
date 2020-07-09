@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Resources is free software; you can redistribute it and/or modify
+# Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
 """Sphinx configuration."""
@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Invenio-Resources'
+project = u'Invenio-Records-Resources'
 copyright = u'2020, CERN'
 author = u'CERN'
 
@@ -58,7 +58,7 @@ author = u'CERN'
 # Get the version string. Cannot be done with import!
 g = {}
 with open(os.path.join(os.path.dirname(__file__), '..',
-                       'invenio_resources', 'version.py'),
+                       'invenio_records_resources', 'version.py'),
           'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
@@ -115,15 +115,15 @@ todo_include_todos = False
 html_theme = 'alabaster'
 
 html_theme_options = {
-    'description': 'Invenio Resources module to create REST APIs',
+    'description': 'Invenio Records Resources module to create REST APIs',
     'github_user': 'inveniosoftware',
-    'github_repo': 'invenio-resources',
+    'github_repo': 'invenio-records-resources',
     'github_button': False,
     'github_banner': True,
     'show_powered_by': False,
     'extra_nav_links': {
-        'invenio-resources@GitHub': 'https://github.com/inveniosoftware/invenio-resources',
-        'invenio-resources@PyPI': 'https://pypi.python.org/pypi/invenio-resources/',
+        'invenio-records-resources@GitHub': 'https://github.com/inveniosoftware/invenio-records-resources',
+        'invenio-records-resources@PyPI': 'https://pypi.python.org/pypi/invenio-records-resources/',
     }
 }
 
@@ -228,7 +228,7 @@ html_sidebars = {
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'invenio-resources_namedoc'
+htmlhelp_basename = 'invenio-records-resources_namedoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -250,7 +250,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'invenio-resources.tex', u'invenio-resources Documentation',
+    (master_doc, 'invenio-records-resources.tex', u'invenio-records-resources Documentation',
      u'CERN', 'manual'),
 ]
 
@@ -280,7 +280,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'invenio-resources', u'invenio-resources Documentation',
+    (master_doc, 'invenio-records-resources', u'invenio-records-resources Documentation',
      [author], 1)
 ]
 
@@ -294,8 +294,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'invenio-resources', u'Invenio-Resources Documentation',
-     author, 'invenio-resources', 'Invenio Resources module to create REST APIs',
+    (master_doc, 'invenio-records-resources', u'Invenio-Records-Resources Documentation',
+     author, 'invenio-records-resources', 'Invenio Records Resources module to create REST APIs',
      'Miscellaneous'),
 ]
 
