@@ -6,7 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Agent API."""
+"""Service API."""
 
 from flask_principal import Permission
 from invenio_db import db
@@ -18,6 +18,8 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
+from ..schemas import MetadataSchemaJSONV1
+from .data_validator import MarshmallowDataValidator
 from .errors import PermissionDeniedError
 from .search import SearchEngine
 from .search.serializers import es_to_record
@@ -33,10 +35,10 @@ class RecordServiceConfig:
     pid_type = "recid"  # PID type for resolver, minter, and fetcher
     permission_policy_cls = RecordPermissionPolicy
     record_state_cls = RecordState
-    # Class dependency injection
     indexer_cls = RecordIndexer
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
+    data_validator = MarshmallowDataValidator()
 
     # pid = 'recidv2'
     # pids = ['doi', ]
@@ -94,6 +96,11 @@ class RecordService:
             return RecordPermissionPolicy(action=action_name, **kwargs)
 
     @classmethod
+    def data_validator(cls):
+        """Factory for creating a data validator instance."""
+        return cls.config.data_validator
+
+    @classmethod
     def record_cls(cls):
         """Factory for creating a record class."""
         return cls.config.record_cls
@@ -135,7 +142,8 @@ class RecordService:
     def search(cls, querystring, identity, pagination=None, *args, **kwargs):
         """Search for records matching the querystring."""
         # Permissions
-        cls.require_permission(identity, "search")
+        # TODO rename by search in invenio-records-permission
+        cls.require_permission(identity, "list")
 
         # Create search engine object
         search_engine = cls.search_engine()
@@ -172,20 +180,13 @@ class RecordService:
     @classmethod
     def create(cls, data, identity):
         """Create a record."""
-        # TODO: Permissions
         cls.require_permission(identity, "create")
-
-        # Data validation
-        # TODO: validate data
-
-        # Create record
-        record = cls.record_cls().create(data)
-        # Mint PID
-        pid = cls.minter()(record_uuid=record.id, data=record)
+        cls.data_validator().validate(data)
+        record = cls.record_cls().create(data)  # Create record in DB
+        pid = cls.minter()(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
         record_state = cls.record_state(pid=pid, record=record)
-        # Persist DB
-        db.session.commit()
+        db.session.commit()  # Persist DB
         # Index the record
         indexer = cls.indexer()
         if indexer:

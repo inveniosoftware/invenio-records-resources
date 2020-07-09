@@ -51,8 +51,7 @@ class RecordResource(CollectionResource):
     #
     def search(self, *args, **kwargs):
         """Perform a search over the items."""
-        # TODO fix identity extraction
-        identity = g.identiy
+        identity = g.identity
         record_search = self.service_cls.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,

@@ -8,10 +8,10 @@
 
 """Marshmallow schemas for serialization."""
 
-from .json import Nested, RecordMetadataSchemaJSONV1, RecordSchemaJSONV1
+from .json import MetadataSchemaJSONV1, Nested, RecordSchemaJSONV1
 
 __all__ = (
+    "MetadataSchemaJSONV1",
     "RecordSchemaJSONV1",
     "Nested",
-    "RecordMetadataSchemaJSONV1",
 )
