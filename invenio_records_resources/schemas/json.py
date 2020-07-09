@@ -8,28 +8,21 @@
 
 """Marshmallow JSON schema."""
 
-from flask import current_app
-from invenio_rest.serializer import BaseSchema as Schema
-from marshmallow import INCLUDE, ValidationError, fields, missing, post_load, \
-    validates_schema
 
-from .fields import PersistentIdentifier
+from marshmallow import INCLUDE, Schema, fields, missing, validate
+
+from .fields import PersistentIdentifier, SanitizedUnicode
 
 
-class OriginalKeysMixin(Schema):
-    """Ensure all original keys are preserved on deserialization."""
+class MetadataSchemaJSONV1(Schema):
+    """Basic metadata schema class."""
 
-    @post_load(pass_original=True)
-    def load_unknown_fields(self, data, original_data):
-        """Check for unknown keys."""
-        if isinstance(original_data, list):
-            for elem in original_data:
-                self.load_unknown_fields(data, elem)
-        else:
-            for key, value in original_data.items():
-                if key not in data:
-                    data[key] = value
-        return data
+    class Meta:
+        """Meta class to accept unknwon fields."""
+
+        unknown = INCLUDE
+
+    title = SanitizedUnicode(required=True, validate=validate.Length(min=3))
 
 
 class RecordSchemaJSONV1(Schema):
@@ -39,7 +32,7 @@ class RecordSchemaJSONV1(Schema):
     # attribute="pid.pid_value" is not needed anymore since it is always `id`
     # PID resolving happends only at controller level.
     id = fields.String(attribute="pid.pid_value")
-    metadata = fields.Raw()
+    metadata = fields.Nested(MetadataSchemaJSONV1)
     links = fields.Raw()
     created = fields.Str()
     updated = fields.Str()
@@ -55,28 +48,3 @@ class Nested(fields.Nested):
         if value is missing and getattr(self, "required", False):
             self.fail("required")
         return super(Nested, self)._validate_missing(value)
-
-
-class RecordMetadataSchemaJSONV1(Schema):
-    """Schema for records metadata v1 in JSON with injected PID value."""
-
-    class Meta:
-        """Meta attributes for the schema."""
-
-        unknown = INCLUDE
-
-    pid = PersistentIdentifier()
-
-    def get_pid_field(self):
-        """Return pid_field value."""
-        return current_app.config["PIDSTORE_RECID_FIELD"]
-
-    @post_load()
-    def inject_pid(self, data, **kwargs):
-        """Inject context PID in the RECID field."""
-        # Remove already deserialized "pid" field
-        pid_value = data.pop("pid", None)
-        if pid_value:
-            pid_field = self.get_pid_field()
-            data.setdefault(pid_field, pid_value)
-        return data

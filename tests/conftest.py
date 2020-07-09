@@ -37,35 +37,16 @@ def create_app(instance_path):
     return _create_api
 
 
-# FIXME: this two should come from `invenio-rdm-records`
-# However, this module should not be RDM dependent
 @pytest.fixture(scope="function")
-def minimal_input_record():
+def input_record():
     """Minimal record data as dict coming from the external world."""
     return {
         "_access": {"metadata_restricted": False, "files_restricted": False},
         "_owners": [1],
         "_created_by": 1,
-        "access_right": "open",
-        "resource_type": {"type": "image", "subtype": "image-photo"},
-        # Technically not required
-        "creators": [],
-        "titles": [
-            {"title": "A Romans story", "type": "Other", "lang": "eng"}
-        ],
+        "title": "A Romans story",
+        "description": "A looong description full of lorem ipsums"
     }
-
-
-@pytest.fixture(scope="function")
-def minimal_record(minimal_input_record):
-    """Dictionary with the minimum required fields to create a record.
-
-    It fills in the missing and post_loaded fields.
-    """
-    record = deepcopy(minimal_input_record)
-    record["publication_date"] = date.today().isoformat()
-    record["_publication_date_search"] = date.today().isoformat()
-    return record
 
 
 @pytest.fixture()

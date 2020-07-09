@@ -8,5 +8,6 @@
 """Custom marshmallow fields."""
 
 from .persistent_identifier import PersistentIdentifier
+from .sanitized_unicode import SanitizedUnicode
 
-__all__ = ("PersistentIdentifier",)
+__all__ = ("PersistentIdentifier", "SanitizedUnicode")

@@ -8,9 +8,12 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
+from .data_validator import DataValidator, MarshmallowDataValidator
 from .service import RecordService, RecordServiceConfig
 
 __all__ = (
-    'RecordService',
-    'RecordServiceConfig',
+    "DataValidator",
+    "MarshmallowDataValidator",
+    "RecordService",
+    "RecordServiceConfig",
 )
