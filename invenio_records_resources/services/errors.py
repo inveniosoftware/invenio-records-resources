@@ -15,12 +15,10 @@ from invenio_rest.errors import RESTException
 class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
-    code = 403
     description = "Permission denied."
 
 
-class InvalidQueryRESTError(RESTException):
+class InvalidQueryError(Exception):
     """Invalid query syntax."""
 
-    code = 400
     description = "Invalid query syntax."

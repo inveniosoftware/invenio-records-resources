@@ -57,20 +57,22 @@ def test_create_record_permissions(app_with_custom_permissions, client,
     user1 = users['user1']
     user2 = users['user2']
     # Create new record as anonymous
-    with pytest.raises(PermissionDeniedError) as e:
-        response = client.post(
-            "/records", headers=HEADERS, data=json.dumps(input_record)
-        )
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
 
+    assert response.status_code == 403
+    assert response.json["message"] == "Permission denied."
     # Create new record as user with no `admin-access`
     # Login user2
     login_user_via_view(client, email=user2['email'],
                         password=user2['password'], login_url='/login')
 
-    with pytest.raises(PermissionDeniedError) as e:
-        response = client.post(
-            "/records", headers=HEADERS, data=json.dumps(input_record)
-        )
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 403
+    assert response.json["message"] == "Permission denied."
 
     # logout user2
     client.post('/logout')

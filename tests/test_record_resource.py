@@ -10,6 +10,7 @@
 """Invenio Resources module to create REST APIs"""
 
 import json
+import os
 
 import pytest
 from flask import url_for
@@ -35,7 +36,6 @@ def test_create_read_record(client, input_record):
 
     # Save record pid for posterior operations
     recid = response.json["pid"]
-
     # Read the record
     response = client.get("/records/{}".format(recid), headers=HEADERS)
     assert response.status_code == 200
@@ -52,7 +52,8 @@ def test_create_read_record(client, input_record):
 # because the CI creates a new container for each test run. It will work
 # once locally, but fail on subsequent run.
 # TODO: FIX to make it clean up itself. Adding es_clear didn't work
-@pytest.mark.skip(reason="Fix to make it clean up itself")
+@pytest.mark.skipif(
+    os.environ.get('CI') != 'true', reason="Fix to make it clean up itself")
 def test_create_search_record(client, input_record):
     """Test record search."""
     # Search records, should return empty
@@ -129,3 +130,23 @@ def test_create_update_record(client, input_record):
 #     )
 
 #     # TODO: Assert
+
+
+def test_read_deleted_record(client, input_record):
+    """Test record deletion."""
+    # Create dummy record to test delete
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 200
+    recid = response.json["pid"]
+
+    # Delete the record
+    response = client.delete("/records/{}".format(recid),
+                             headers=HEADERS)
+    assert response.status_code == 204
+
+    # Read the deleted record
+    response = client.get("/records/{}".format(recid), headers=HEADERS)
+    assert response.status_code == 410
+    assert response.json['message'] == "The record has been deleted."

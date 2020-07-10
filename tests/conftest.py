@@ -16,6 +16,7 @@ from datetime import date
 
 import pytest
 from flask import Flask
+from flask_resources.errors import handle_http_exception
 from flask_security.utils import hash_password
 from invenio_access.models import ActionUsers
 from invenio_access.permissions import superuser_access
@@ -24,6 +25,7 @@ from invenio_accounts.models import Role
 from invenio_app.factory import create_api as _create_api
 from invenio_records_permissions.generators import Admin, AnyUser
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
+from werkzeug.exceptions import HTTPException
 
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
@@ -117,5 +119,6 @@ def app(app):
         RecordResource(service=RecordService()).as_blueprint("base_resource")
     )
     app.register_blueprint(custom_bp)
+    app.register_error_handler(HTTPException, handle_http_exception)
     with app.app_context():
         yield app
