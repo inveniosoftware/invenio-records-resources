@@ -12,13 +12,16 @@
 from flask import g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
+from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.loaders import RequestLoader
 from flask_resources.resources import ResourceConfig
+from invenio_pidstore.errors import PIDDeletedError
 
 from ..responses import RecordResponse
 from ..schemas import RecordSchemaJSONV1
 from ..serializers import RecordJSONSerializer
 from ..services import RecordService
+from ..services.errors import InvalidQueryError, PermissionDeniedError
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -30,6 +33,26 @@ class RecordResourceConfig(ResourceConfig):
         "application/json": RecordResponse(
             RecordJSONSerializer(schema=RecordSchemaJSONV1)
         )
+    }
+    error_map = {
+        InvalidQueryError: create_errormap_handler(
+            HTTPJSONException(
+                code=400,
+                description="Invalid query syntax.",
+            )
+        ),
+        PermissionDeniedError: create_errormap_handler(
+            HTTPJSONException(
+                code=403,
+                description="Permission denied.",
+            )
+        ),
+        PIDDeletedError: create_errormap_handler(
+            HTTPJSONException(
+                code=410,
+                description="The record has been deleted.",
+            )
+        ),
     }
 
 
@@ -54,7 +77,6 @@ class RecordResource(CollectionResource):
             identity=identity,
             pagination=resource_requestctx.request_args.get("pagination"),
         )
-
         return record_search, 200
 
     def create(self, *args, **kwargs):

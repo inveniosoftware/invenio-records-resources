@@ -47,7 +47,7 @@ class Service:
     #
     # Units of transaction methods (creation...)
     #
-    def resource_unit(self, **kwargs):
+    def resource_unit(self, *args, **kwargs):
         """Create a new instance of the resource unit.
 
         A resource unit is an instantiated object representing one unit
@@ -56,7 +56,7 @@ class Service:
         """
         return self.config.resource_unit_cls(**kwargs)
 
-    def resource_list(self, **kwargs):
+    def resource_list(self, *args, **kwargs):
         """Create a new instance of the resource list.
 
         A resource list is an instantiated object representing a grouping
@@ -65,4 +65,4 @@ class Service:
         Resource list methods transact in and therefore what
         a Service must provide.
         """
-        return self.config.resource_list_cls(**kwargs)
+        return self.config.resource_list_cls(*args, **kwargs)

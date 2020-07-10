@@ -169,8 +169,10 @@ class RecordService(Service):
         self.require_permission(identity, "delete", record=record)
 
         record.delete()
-        # TODO: mark all PIDs as DELETED
+        pid.delete()
+
         db.session.commit()
+
         indexer = self.indexer()
         if indexer:
             indexer.delete(record)
