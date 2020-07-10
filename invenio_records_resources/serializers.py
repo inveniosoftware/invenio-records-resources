@@ -67,8 +67,7 @@ class RecordJSONSerializer(SerializerMixin):
         serialized_content = {
             "hits": {
                 "hits": [
-                    self._process_record(record.id, record.record,
-                                         response_ctx)
+                    self._process_record(record, response_ctx)
                     for record in obj_list.records
                 ],
                 "total": obj_list.total

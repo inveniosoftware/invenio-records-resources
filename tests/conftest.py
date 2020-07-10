@@ -78,12 +78,6 @@ def users(app, db):
     }
 
 
-class AdminCanCreatePermissionPolicy(RecordPermissionPolicy):
-    """Custom permission policy."""
-
-    can_create = [Admin()]
-
-
 class AnyUserPermissionPolicy(RecordPermissionPolicy):
     """Custom permission policy."""
 
@@ -106,14 +100,3 @@ def app(app):
     app.register_blueprint(custom_bp)
     with app.app_context():
         yield app
-
-
-@pytest.fixture(scope="module")
-def app_with_custom_permissions(app):
-    """Application factory fixture."""
-    RecordServiceConfig.permission_policy_cls = AdminCanCreatePermissionPolicy
-    RecordService.config = RecordServiceConfig
-    custom_bp = RecordResource(
-        service_cls=RecordService).as_blueprint("custom_resource")
-    app.register_blueprint(custom_bp)
-    yield app
