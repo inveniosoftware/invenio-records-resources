@@ -31,6 +31,23 @@ from invenio_records_resources.service import RecordService, \
     RecordServiceConfig
 
 
+@pytest.fixture(scope='module')
+def app_config(app_config):
+    """Override pytest-invenio app_config fixture.
+
+    For test purposes we need to enforce some configuration variables before
+    endpoints are created.
+
+    invenio-records-rest is imported from invenio-records-permissions, so
+    we need to disable its default endpoint, until we are completely
+    decoupled from invenio-records-rest. Issue:
+    https://github.com/inveniosoftware/invenio-records-permissions/issues/51
+    """
+    app_config["RECORDS_REST_ENDPOINTS"] = {}
+
+    return app_config
+
+
 @pytest.fixture(scope="module")
 def create_app(instance_path):
     """Application factory fixture."""
