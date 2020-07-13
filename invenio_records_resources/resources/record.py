@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -23,8 +24,8 @@ from ..service import RecordService
 class RecordResourceConfig(ResourceConfig):
     """Record resource config."""
 
-    item_route = "/records_v2/<pid_value>"
-    list_route = "/records_v2"
+    item_route = "/records/<pid_value>"
+    list_route = "/records"
     response_handlers = {
         "application/json": RecordResponse(
             RecordJSONSerializer(schema=RecordSchemaJSONV1)
@@ -35,15 +36,16 @@ class RecordResourceConfig(ResourceConfig):
 class RecordResource(CollectionResource):
     """Record resource."""
 
+    default_config = RecordResourceConfig
+
     def __init__(
         self,
-        config=RecordResourceConfig(),
         service_cls=RecordService,
         *args,
         **kwargs
     ):
         """Constructor."""
-        super(RecordResource, self).__init__(config=config, *args, **kwargs)
+        super(RecordResource, self).__init__(*args, **kwargs)
         self.service_cls = service_cls
 
     #

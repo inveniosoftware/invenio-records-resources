@@ -24,7 +24,7 @@ def test_create_read_record(client, input_record):
     """Test record creation."""
     # Create new record
     response = client.post(
-        "/records_v2", headers=HEADERS, data=json.dumps(input_record)
+        "/records", headers=HEADERS, data=json.dumps(input_record)
     )
     assert response.status_code == 200
     response_fields = response.json.keys()
@@ -37,7 +37,7 @@ def test_create_read_record(client, input_record):
     recid = response.json["pid"]
 
     # Read the record
-    response = client.get("/records_v2/{}".format(recid), headers=HEADERS)
+    response = client.get("/records/{}".format(recid), headers=HEADERS)
     assert response.status_code == 200
     assert response.json["pid"] == recid  # Check it matches with the original
 
@@ -52,33 +52,34 @@ def test_create_read_record(client, input_record):
 # because the CI creates a new container for each test run. It will work
 # once locally, but fail on subsequent run.
 # TODO: FIX to make it clean up itself. Adding es_clear didn't work
-# def test_create_search_record(client, input_record):
-#     """Test record search."""
-#     # Search records, should return empty
-#     response = client.get("/records_v2", headers=HEADERS)
-#     assert response.status_code == 200
+@pytest.mark.skip(reason="Fix to make it clean up itself")
+def test_create_search_record(client, input_record):
+    """Test record search."""
+    # Search records, should return empty
+    response = client.get("/records", headers=HEADERS)
+    assert response.status_code == 200
 
-#     # Create dummy record to test search
-#     response = client.post(
-#         "/records_v2", headers=HEADERS, data=json.dumps(input_record)
-#     )
-#     assert response.status_code == 200
-#     print("response.json", response.json)
+    # Create dummy record to test search
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 200
+    print("response.json", response.json)
 
-#     # Search content of record, should return the record
-#     response = client.get("/records_v2?q=story", headers=HEADERS)
-#     assert response.status_code == 200
+    # Search content of record, should return the record
+    response = client.get("/records?q=story", headers=HEADERS)
+    assert response.status_code == 200
 
-#     # Search for something non-existent, should return empty
-#     response = client.get("/records_v2?q=notfound", headers=HEADERS)
-#     assert response.status_code == 200
+    # Search for something non-existent, should return empty
+    response = client.get("/records?q=notfound", headers=HEADERS)
+    assert response.status_code == 200
 
 
 def test_create_delete_record(client, input_record):
     """Test record deletion."""
     # Create dummy record to test delete
     response = client.post(
-        "/records_v2", headers=HEADERS, data=json.dumps(input_record)
+        "/records", headers=HEADERS, data=json.dumps(input_record)
     )
     assert response.status_code == 200
     recid = response.json["pid"]
@@ -86,12 +87,12 @@ def test_create_delete_record(client, input_record):
     # Update the record
     updated_record = input_record
     updated_record["title"] = "updated title"
-    response = client.put("/records_v2/{}".format(recid), headers=HEADERS,
+    response = client.put("/records/{}".format(recid), headers=HEADERS,
                           data=json.dumps(updated_record))
     assert response.status_code == 200
 
     # Delete the record
-    response = client.delete("/records_v2/{}".format(recid),
+    response = client.delete("/records/{}".format(recid),
                              headers=HEADERS)
     assert response.status_code == 204
 
@@ -100,7 +101,7 @@ def test_create_update_record(client, input_record):
     """Test record update."""
     # Create dummy record to test update
     response = client.post(
-        "/records_v2", headers=HEADERS, data=json.dumps(input_record)
+        "/records", headers=HEADERS, data=json.dumps(input_record)
     )
     assert response.status_code == 200
     recid = response.json["pid"]
@@ -108,12 +109,12 @@ def test_create_update_record(client, input_record):
     # Update the record
     new_title = "updated title"
     input_record["title"] = new_title
-    response = client.put("/records_v2/{}".format(recid), headers=HEADERS,
+    response = client.put("/records/{}".format(recid), headers=HEADERS,
                           data=json.dumps(input_record))
     assert response.status_code == 200
 
     # Read the record
-    response = client.get("/records_v2/{}".format(recid), headers=HEADERS)
+    response = client.get("/records/{}".format(recid), headers=HEADERS)
     assert response.status_code == 200
     assert response.json["metadata"]["title"] == new_title
 
@@ -124,7 +125,7 @@ def test_create_update_record(client, input_record):
 #     input_record.pop("title")  # Remove a required field of the record
 
 #     response = client.post(
-#         "/records_v2", headers=HEADERS, data=json.dumps(input_record)
+#         "/records", headers=HEADERS, data=json.dumps(input_record)
 #     )
 
 #     # TODO: Assert
