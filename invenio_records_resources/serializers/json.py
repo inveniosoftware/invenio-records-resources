@@ -13,7 +13,7 @@ import json
 import pytz
 from flask_resources.serializers import SerializerMixin
 
-from .links import link_for, search_links
+from ..links import link_for, search_links
 
 
 class RecordJSONSerializer(SerializerMixin):

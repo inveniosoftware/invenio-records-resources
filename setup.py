@@ -66,6 +66,7 @@ install_requires = [
     "invenio-accounts>=1.3.0",
     "invenio-files-rest>=1.2.0",
     "invenio-records-permissions>=0.8.0",
+    "xmltodict~=0.12.0",
 ]
 
 packages = find_packages()
