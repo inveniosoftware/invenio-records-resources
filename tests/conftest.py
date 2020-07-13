@@ -96,14 +96,22 @@ class AnyUserPermissionPolicy(RecordPermissionPolicy):
     can_update_files = [AnyUser()]
 
 
+@pytest.fixture(scope='module')
+def app_config(app_config):
+    app_config['SEARCH_MAPPINGS'] = ['tests']
+    return app_config
+
 @pytest.fixture(scope="module")
 def app(app):
     """Application factory fixture."""
+    RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
     RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
     RecordService.config = RecordServiceConfig
     custom_bp = RecordResource(
         service_cls=RecordService).as_blueprint("base_resource")
     app.register_blueprint(custom_bp)
+    search=app.extensions['invenio-search']
+    search.register_mappings('tests', 'mock_module.mappings')
     with app.app_context():
         yield app
 
