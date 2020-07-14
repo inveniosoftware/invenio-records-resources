@@ -78,6 +78,6 @@ def service_config_cls(fake_record_cls, fake_permission_policy_cls):
 def service_cls(service_config_cls):
     """Record service class."""
     class TestRecordService(RecordService):
-        config = service_config_cls
+        default_config = service_config_cls
 
     return TestRecordService

@@ -11,8 +11,9 @@
 
 def test_service_get(app, service_cls, identity_simple, fake_record_db):
     """Get a record."""
+    service = service_cls()
     for recid, fake_record in fake_record_db.items():
-        recstate = service_cls.get(recid, identity=identity_simple)
+        recstate = service.get(recid, identity=identity_simple)
         assert recstate.record == fake_record
         assert recstate.id == str(recid)
 
