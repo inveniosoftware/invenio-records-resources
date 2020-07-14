@@ -13,6 +13,8 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from flask_resources.resources import ResourceConfig
 
+from invenio_records_resources.service import FileMetadataService, FileService
+
 
 class FileResourceConfig(ResourceConfig):
     """Record resource config."""
@@ -26,13 +28,18 @@ class FileResource(CollectionResource):
 
     default_config = FileResourceConfig
 
+    def __init__(self, service=None, *args, **kwargs):
+        """Constructor."""
+        super(FileResource, self).__init__(*args, **kwargs)
+        self.service = service or FileMetadataService()
+
     def search(self, *args, **kwargs):
         """List items."""
-        return {"TODO": "IMPLEMENT ME"}, 200
+        return self.service.search(), 200
 
     def read(self, *args, **kwargs):
         """Read an item."""
-        return {"TODO": "IMPLEMENT ME"}, 200
+        return self.service.read(), 200
 
 
 class FileActionResourceConfig(ResourceConfig):
@@ -51,6 +58,11 @@ class FileActionResource(SingletonResource):
 
     default_config = FileActionResourceConfig
 
+    def __init__(self, service=None, *args, **kwargs):
+        """Constructor."""
+        super(FileActionResource, self).__init__(*args, **kwargs)
+        self.service = service or FileService()
+
     def read(self, *args, **kwargs):
         """Read an item."""
-        return {"TODO": "IMPLEMENT ME"}, 200
+        return self.service.read(), 200
