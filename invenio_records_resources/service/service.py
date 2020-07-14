@@ -144,7 +144,7 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def get(self, id_, identity):
+    def read(self, id_, identity):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
