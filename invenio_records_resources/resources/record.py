@@ -67,7 +67,7 @@ class RecordResource(CollectionResource):
         """Read an item."""
         identity = g.identity
         return (
-            self.service.get(
+            self.service.read(
                 id_=resource_requestctx.route["pid_value"], identity=identity
             ),
             200,
