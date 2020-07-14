@@ -38,15 +38,10 @@ class RecordResource(CollectionResource):
 
     default_config = RecordResourceConfig
 
-    def __init__(
-        self,
-        service_cls=RecordService,
-        *args,
-        **kwargs
-    ):
+    def __init__(self, service=None, *args, **kwargs):
         """Constructor."""
         super(RecordResource, self).__init__(*args, **kwargs)
-        self.service_cls = service_cls
+        self.service = service or RecordService()
 
     #
     # Primary Interface
@@ -54,7 +49,7 @@ class RecordResource(CollectionResource):
     def search(self, *args, **kwargs):
         """Perform a search over the items."""
         identity = g.identity
-        record_search = self.service_cls.search(
+        record_search = self.service.search(
             querystring=resource_requestctx.request_args.get("q", ""),
             identity=identity,
             pagination=resource_requestctx.request_args.get("pagination"),
@@ -66,13 +61,13 @@ class RecordResource(CollectionResource):
         """Create an item."""
         data = resource_requestctx.request_content
         identity = g.identity
-        return self.service_cls.create(data, identity), 200
+        return self.service.create(data, identity), 200
 
     def read(self, *args, **kwargs):
         """Read an item."""
         identity = g.identity
         return (
-            self.service_cls.get(
+            self.service.get(
                 id_=resource_requestctx.route["pid_value"], identity=identity
             ),
             200,
@@ -83,7 +78,7 @@ class RecordResource(CollectionResource):
         data = resource_requestctx.request_content
         identity = g.identity
         return (
-            self.service_cls.update(
+            self.service.update(
                 id_=resource_requestctx.route["pid_value"],
                 data=data,
                 identity=identity
@@ -100,7 +95,7 @@ class RecordResource(CollectionResource):
         """Delete an item."""
         identity = g.identity
         return (
-            self.service_cls.delete(
+            self.service.delete(
                 id_=resource_requestctx.route["pid_value"], identity=identity
             ),
             204,

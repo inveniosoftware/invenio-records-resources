@@ -41,7 +41,7 @@ def app(app):
     """Application factory fixture."""
     custom_bp = RecordResource(
         config=CustomRecordResourceConfig,
-        service_cls=RecordService).as_blueprint("custom_resource")
+        service=RecordService()).as_blueprint("custom_resource")
     app.register_blueprint(custom_bp)
     yield app
 

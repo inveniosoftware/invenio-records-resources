@@ -26,6 +26,87 @@ from .search.serializers import es_to_record
 from .state import RecordSearchState, RecordState
 
 
+class Service:
+    """Service interface.
+
+    NOTE: This separation from RecordService is useful conceptually:
+        here are actions that are essentially completely controlled by a config
+        and in RecordService you have custom combinations / business logic.
+        It could also allow the Service pattern to be used for other things
+        than Records in Invenio (but is that a realistic case?)
+    """
+
+    default_config = None
+
+    def __init__(self, config=None):
+        """Constructor."""
+        self.config = config or self.default_config
+        if not self.config:
+            # This exception will be thrown at application start up, so it
+            # can be just a regular Exception
+            raise Exception(
+                "You need to provide a default_config for your Service"
+            )
+
+    #
+    # Persistent identifier resolution
+    #
+    def resolver(self):
+        """Factory for creating a resolver instance."""
+        return self.config.resolver_cls(
+            pid_type=self.config.pid_type,
+            getter=self.config.record_cls.get_record,
+        )
+
+    def resolve(self, id_):
+        """Resolve a persistent identifier to a record."""
+        return self.resolver().resolve(id_)
+
+    def minter(self):
+        """Returns the minter function."""
+        return current_pidstore.minters[self.config.pid_type]
+
+    def fetcher(self):
+        """Returns the fetcher function."""
+        return current_pidstore.fetchers[self.config.pid_type]
+
+    def indexer(self):
+        """Factory for creating an indexer instance."""
+        return self.config.indexer_cls()
+
+    def search_engine(self):
+        """Factory for creating a search instance."""
+        return self.config.search_engine_cls(self.config.search_cls)
+
+    #
+    # Permissions checking
+    #
+    def permission_policy(self, action_name, **kwargs):
+        """Factory for a permission policy instance."""
+        return self.config.permission_policy_cls(action_name, **kwargs)
+
+    def require_permission(self, identity, action_name, **kwargs):
+        """Require a specific permission from the permission policy."""
+        if not self.permission_policy(action_name, **kwargs).allows(identity):
+            raise PermissionDeniedError(action_name)
+
+    #
+    # Data validation and representation
+    #
+    def data_validator(self):
+        """Returns the data validator instance."""
+        return self.config.data_validator
+
+    # TODO: Check
+    def record_cls(self):
+        """Factory for creating a record class."""
+        return self.config.record_cls
+
+    def record_state(self, **kwargs):
+        """Create a new item state."""
+        return self.config.record_state_cls(**kwargs)
+
+
 class RecordServiceConfig:
     """Service factory configuration."""
 
@@ -38,6 +119,7 @@ class RecordServiceConfig:
     indexer_cls = RecordIndexer
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
+    # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
 
     # pid = 'recidv2'
@@ -54,99 +136,29 @@ class RecordServiceConfig:
     # }
 
 
-class RecordService:
-    """Record Service interface."""
+class RecordService(Service):
+    """Record Service."""
 
-    config = RecordServiceConfig
-
-    @classmethod
-    def resolver(cls):
-        """Factory for creating a resolver class."""
-        return cls.config.resolver_cls(
-            pid_type=cls.config.pid_type,
-            getter=cls.config.record_cls.get_record,
-        )
-
-    @classmethod
-    def minter(cls):
-        """Factory for creating a minter class."""
-        return current_pidstore.minters[cls.config.pid_type]
-
-    @classmethod
-    def fetcher(cls):
-        """Factory for creating a fetcher class."""
-        return current_pidstore.fetchers[cls.config.pid_type]
-
-    @classmethod
-    def indexer(cls):
-        """Factory for creating a indexer class."""
-        return cls.config.indexer_cls()
-
-    @classmethod
-    def search_engine(cls):
-        """Factory for creating a search class."""
-        return cls.config.search_engine_cls(cls.config.search_cls)
-
-    @classmethod
-    def permission(cls, action_name, **kwargs):
-        """Factory for creating permissions from a permission policy."""
-        if cls.config.permission_policy_cls:
-            return cls.config.permission_policy_cls(action_name, **kwargs)
-        else:
-            return RecordPermissionPolicy(action=action_name, **kwargs)
-
-    @classmethod
-    def data_validator(cls):
-        """Factory for creating a data validator instance."""
-        return cls.config.data_validator
-
-    @classmethod
-    def record_cls(cls):
-        """Factory for creating a record class."""
-        return cls.config.record_cls
-
-    @classmethod
-    def record_state(cls, **kwargs):
-        """Create a new item state."""
-        return cls.config.record_state_cls(**kwargs)
-
-    #
-    # Permissions checking
-    #
-    @classmethod
-    def require_permission(cls, identity, action_name, **kwargs):
-        """Require a specific permission from the permission policy."""
-        if not cls.permission(action_name, **kwargs).allows(identity):
-            raise PermissionDeniedError(action_name)
-
-    #
-    # Persistent identifier resolution
-    #
-    @classmethod
-    def resolve(cls, id_):
-        """Resolve a persistent identifier to a record."""
-        return cls.resolver().resolve(id_)
+    default_config = RecordServiceConfig
 
     #
     # High-level API
     #
-    @classmethod
-    def get(cls, id_, identity):
+    def get(self, id_, identity):
         """Retrieve a record."""
-        pid, record = cls.resolve(id_)
-        cls.require_permission(identity, "read", record=record)
+        pid, record = self.resolve(id_)
+        self.require_permission(identity, "read", record=record)
         # Todo: how do we deal with tombstone pages
-        return cls.record_state(pid=pid, record=record)
+        return self.record_state(pid=pid, record=record)
 
-    @classmethod
-    def search(cls, querystring, identity, pagination=None, *args, **kwargs):
+    def search(self, querystring, identity, pagination=None, *args, **kwargs):
         """Search for records matching the querystring."""
         # Permissions
         # TODO rename by search in invenio-records-permission
-        cls.require_permission(identity, "list")
+        self.require_permission(identity, "list")
 
         # Create search engine object
-        search_engine = cls.search_engine()
+        search_engine = self.search_engine()
 
         # Add search arguments
         extras = {}
@@ -163,8 +175,8 @@ class RecordService:
         record_list = []
         for hit in search_result["hits"]["hits"]:
             # hit is ES AttrDict
-            record = es_to_record(hit.to_dict(), cls.record_cls())
-            pid = cls.fetcher()(data=record, record_uuid=None)
+            record = es_to_record(hit.to_dict(), self.record_cls())
+            pid = self.fetcher()(data=record, record_uuid=None)
             record_list.append(RecordState(record=record, pid=pid))
 
         total = (
@@ -177,49 +189,46 @@ class RecordService:
 
         return RecordSearchState(record_list, total, aggregations)
 
-    @classmethod
-    def create(cls, data, identity):
+    def create(self, data, identity):
         """Create a record."""
-        cls.require_permission(identity, "create")
-        cls.data_validator().validate(data)
-        record = cls.record_cls().create(data)  # Create record in DB
-        pid = cls.minter()(record_uuid=record.id, data=record)   # Mint PID
+        self.require_permission(identity, "create")
+        self.data_validator().validate(data)
+        record = self.record_cls().create(data)  # Create record in DB
+        pid = self.minter()(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
-        record_state = cls.record_state(pid=pid, record=record)
+        record_state = self.record_state(pid=pid, record=record)
         db.session.commit()  # Persist DB
         # Index the record
-        indexer = cls.indexer()
+        indexer = self.indexer()
         if indexer:
             indexer.index(record)
 
         return record_state
 
-    @classmethod
-    def delete(cls, id_, identity):
+    def delete(self, id_, identity):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
 
         # TODO: Removed based on id both DB and ES
-        pid, record = cls.resolve(id_)
+        pid, record = self.resolve(id_)
         # Permissions
-        cls.require_permission(identity, "delete", record=record)
+        self.require_permission(identity, "delete", record=record)
 
         record.delete()
         # TODO: mark all PIDs as DELETED
         db.session.commit()
-        indexer = cls.indexer()
+        indexer = self.indexer()
         if indexer:
             indexer.delete(record)
 
         # TODO: Shall it return true/false? The tombstone page?
 
-    @classmethod
-    def update(cls, id_, data, identity):
+    def update(self, id_, data, identity):
         """Replace a record."""
         # TODO: etag and versioning
-        pid, record = cls.resolve(id_)
+        pid, record = self.resolve(id_)
         # Permissions
-        cls.require_permission(identity, "update", record=record)
+        self.require_permission(identity, "update", record=record)
         # TODO: Data validation
 
         record.clear()
@@ -227,8 +236,8 @@ class RecordService:
         record.commit()
         db.session.commit()
 
-        indexer = cls.indexer()
+        indexer = self.indexer()
         if indexer:
             indexer.index(record)
 
-        return cls.record_state(pid=pid, record=record)
+        return self.record_state(pid=pid, record=record)

@@ -42,9 +42,11 @@ class AdminCanCreatePermissionPolicy(RecordPermissionPolicy):
 def app_with_custom_permissions(app):
     """Application factory fixture."""
     RecordServiceConfig.permission_policy_cls = AdminCanCreatePermissionPolicy
-    RecordService.config = RecordServiceConfig
+    # NOTE: Because the above is a "global" change, it is picked up by
+    #       RecordService() which already uses RecordServiceConfig
     custom_bp = RecordResource(
-        service_cls=RecordService).as_blueprint("custom_resource")
+        service=RecordService()
+    ).as_blueprint("custom_resource")
     app.register_blueprint(custom_bp)
     yield app
 

@@ -111,9 +111,11 @@ class AnyUserPermissionPolicy(RecordPermissionPolicy):
 def app(app):
     """Application factory fixture."""
     RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
-    RecordService.config = RecordServiceConfig
-    custom_bp = RecordResource(
-        service_cls=RecordService).as_blueprint("base_resource")
+    # NOTE: Because the above is a "global" change, it is picked up by
+    #       RecordService() which already uses RecordServiceConfig
+    custom_bp = (
+        RecordResource(service=RecordService()).as_blueprint("base_resource")
+    )
     app.register_blueprint(custom_bp)
     with app.app_context():
         yield app
