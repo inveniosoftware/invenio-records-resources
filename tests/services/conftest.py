@@ -17,9 +17,9 @@ import pytest
 from flask import Flask
 from flask_principal import Identity, Permission, UserNeed
 
-from invenio_records_resources.service import RecordService, \
+from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
-from invenio_records_resources.service.resolver import UUIDResolver
+from invenio_records_resources.services.resolver import UUIDResolver
 
 
 @pytest.fixture()

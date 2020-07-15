@@ -11,7 +11,7 @@
 
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
-from .service import Service
+from .service import Service, ServiceConfig
 
 
 class InvenioFile:
@@ -22,7 +22,7 @@ class InvenioFile:
         pass
 
 
-class FileServiceConfig:
+class FileServiceConfig(ServiceConfig):
     """File Service configuration."""
 
     # Don't know if any of these apply to be honest...
@@ -30,7 +30,7 @@ class FileServiceConfig:
     # resolver_cls = Resolver
     # resolver_obj_type = "rec"
     # pid_type = "recid"  # PID type for resolver, minter, and fetcher
-    # record_state_cls = RecordState
+    # record_state_cls = IdentifiedRecord
     # indexer_cls = RecordIndexer
     # search_cls = RecordsSearch
     # search_engine_cls = SearchEngine

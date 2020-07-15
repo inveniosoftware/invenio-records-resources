@@ -11,8 +11,8 @@
 
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
+from ..resource_unit import IdentifiedRecord, RecordSearchState
 from .service import Service, ServiceConfig
-from .state import RecordSearchState, RecordState
 
 
 class FileMetadata:

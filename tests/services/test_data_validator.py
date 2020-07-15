@@ -12,7 +12,7 @@ import pytest
 from marshmallow import Schema, fields
 from marshmallow.exceptions import ValidationError
 
-from invenio_records_resources.service import DataValidator, \
+from invenio_records_resources.services import DataValidator, \
     MarshmallowDataValidator
 
 

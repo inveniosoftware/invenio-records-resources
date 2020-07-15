@@ -6,12 +6,11 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""State API."""
+"""Resource unit."""
 
 
-# TODO: Would be nice to replace with less generic name than "state"
-class RecordState:
-    """State object for objects associated with a record."""
+class IdentifiedRecord:
+    """Resource unit representing pid + Record data clump."""
 
     def __init__(self, pid=None, record=None):
         """Initialize the record state."""
@@ -34,7 +33,7 @@ class RecordSearchState:
         self.aggregations = aggregations
 
 
-class TombstoneState(RecordState):
+class TombstoneState(IdentifiedRecord):
     """State for tombstones."""
 
     pid = None

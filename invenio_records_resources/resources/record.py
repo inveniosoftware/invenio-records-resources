@@ -18,7 +18,7 @@ from flask_resources.resources import ResourceConfig
 from ..responses import RecordResponse
 from ..schemas import RecordSchemaJSONV1
 from ..serializers import RecordJSONSerializer
-from ..service import RecordService
+from ..services import RecordService
 
 
 class RecordResourceConfig(ResourceConfig):
