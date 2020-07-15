@@ -15,7 +15,7 @@ import pytest
 from flask import url_for
 from invenio_accounts.testutils import login_user_via_view
 
-from invenio_records_resources.service.errors import PermissionDeniedError
+from invenio_records_resources.services.errors import PermissionDeniedError
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 

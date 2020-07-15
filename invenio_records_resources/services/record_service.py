@@ -18,11 +18,11 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
+from ..resource_unit import IdentifiedRecord, RecordSearchState
 from .data_validator import MarshmallowDataValidator
 from .search import SearchEngine
 from .search.serializers import es_to_record
 from .service import Service, ServiceConfig
-from .state import RecordSearchState, RecordState
 
 
 class RecordServiceConfig(ServiceConfig):
@@ -30,7 +30,7 @@ class RecordServiceConfig(ServiceConfig):
 
     # Common configuration
     permission_policy_cls = RecordPermissionPolicy
-    resource_unit_cls = RecordState
+    resource_unit_cls = IdentifiedRecord
     resource_list_cls = RecordSearchState
 
     # Record specific configuration

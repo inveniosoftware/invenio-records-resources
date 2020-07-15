@@ -13,7 +13,7 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from flask_resources.resources import ResourceConfig
 
-from invenio_records_resources.service import FileMetadataService, FileService
+from ..services import FileMetadataService, FileService
 
 
 class FileResourceConfig(ResourceConfig):

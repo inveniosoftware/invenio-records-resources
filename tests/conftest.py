@@ -27,7 +27,7 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
-from invenio_records_resources.service import RecordService, \
+from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 
 

@@ -18,7 +18,7 @@ from invenio_records_resources.responses import RecordResponse
 from invenio_records_resources.schemas import RecordSchemaJSONV1
 from invenio_records_resources.serializers import RecordJSONSerializer, \
     RecordXMLSerializer
-from invenio_records_resources.service import RecordService
+from invenio_records_resources.services import RecordService
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
