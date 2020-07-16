@@ -18,7 +18,7 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
-from ..resource_unit import IdentifiedRecord, RecordSearchState
+from ..resource_units import IdentifiedRecord, RecordSearchState
 from .data_validator import MarshmallowDataValidator
 from .search import SearchEngine
 from .search.serializers import es_to_record
