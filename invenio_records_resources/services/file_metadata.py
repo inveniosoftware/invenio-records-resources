@@ -11,12 +11,12 @@
 
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
-from ..resource_unit import IdentifiedRecord, RecordSearchState
+from ..resource_units import IdentifiedRecord, RecordSearchState
 from .service import Service, ServiceConfig
 
 
 class FileMetadata:
-    """Fake File metadata resource unit."""
+    """TODO: Replace this fake File metadata resource unit."""
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
@@ -24,7 +24,7 @@ class FileMetadata:
 
 
 class FilesMetadata:
-    """Fake list of Files metadata resource list."""
+    """TODO: Replace this fake File metadata resource list."""
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
@@ -36,8 +36,8 @@ class FileMetadataServiceConfig(ServiceConfig):
 
     # Configurations that are in common
     permission_policy_cls = RecordPermissionPolicy
-    resource_unit_cls = FileMetadata  # Fake for now
-    resource_list_cls = FilesMetadata  # Fake for now
+    resource_unit_cls = FileMetadata  # TODO: Replace with real
+    resource_list_cls = FilesMetadata  # TODO: Replace with real
 
 
 class FileMetadataService(Service):
