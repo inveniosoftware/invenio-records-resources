@@ -15,10 +15,44 @@ import os
 import pytest
 from flask import url_for
 from invenio_accounts.testutils import login_user_via_view
+from invenio_pidstore.minters import recid_minter
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
+    RecordIdentifier
+from invenio_pidstore.providers.recordid import RecordIdProvider
+from invenio_pidstore.proxies import current_pidstore
 
 from invenio_records_resources.services.errors import PermissionDeniedError
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
+
+
+@pytest.fixture(scope="function")
+def app_with_custom_minter(app):
+    """Application providing a minter creating unregistered pid values."""
+
+    def custom_minter(record_uuid, data):
+        """Custom class to mint a new pid in `NEW` state."""
+
+        class CustomRecordIdProvider(RecordIdProvider):
+            default_status = PIDStatus.NEW
+
+            @classmethod
+            def create(cls, object_type=None, object_uuid=None, **kwargs):
+                # Request next integer in recid sequence.
+                kwargs['pid_value'] = str(RecordIdentifier.next())
+                kwargs.setdefault('status', cls.default_status)
+                return super(RecordIdProvider, cls).create(
+                    object_type=object_type, object_uuid=object_uuid, **kwargs)
+
+        provider = CustomRecordIdProvider.create(
+            object_type='rec', object_uuid=record_uuid)
+        data['recid'] = provider.pid.pid_value
+        return provider.pid
+
+    current_pidstore.minters['recid'] = custom_minter
+    yield app
+
+    current_pidstore.minters['recid'] = recid_minter
 
 
 def test_create_read_record(client, input_record):
@@ -133,12 +167,12 @@ def test_create_update_record(client, input_record):
 
 
 def test_read_deleted_record(client, input_record):
-    """Test record deletion."""
+    """Test read a deleted record."""
     # Create dummy record to test delete
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     recid = response.json["pid"]
 
     # Delete the record
@@ -150,3 +184,99 @@ def test_read_deleted_record(client, input_record):
     response = client.get("/records/{}".format(recid), headers=HEADERS)
     assert response.status_code == 410
     assert response.json['message'] == "The record has been deleted."
+
+
+def test_read_record_with_non_existing_pid(client, input_record):
+    """Test read a record with a non existing pid."""
+
+    response = client.get("/records/randomid", headers=HEADERS)
+    assert response.status_code == 404
+
+    assert response.json["status"] == 404
+    assert response.json['message'] == "The pid does not exist."
+
+
+def test_read_record_with_unregistered_pid(app_with_custom_minter,
+                                           input_record):
+    """Test read a record with an unregistered pid."""
+
+    client = app_with_custom_minter.test_client()
+    # Create dummy record with unregistered pid value
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 201
+    recid = response.json["pid"]
+
+    response = client.get("/records/{}".format(recid), headers=HEADERS)
+    assert response.status_code == 404
+
+    assert response.json["status"] == 404
+    assert response.json['message'] == "The pid is not registered."
+
+
+def test_read_record_with_redirected_pid(client, input_record):
+    """Test read a record with a redirected pid."""
+
+    # Create dummy record
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 201
+    pid1 = PersistentIdentifier.get("recid", response.json["pid"])
+
+    # Create another dummy record
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 201
+    pid2 = PersistentIdentifier.get("recid", response.json["pid"])
+
+    # redirect pid1 to pid2
+    pid1.redirect(pid2)
+
+    response = client.get("/records/{}".format(pid1.pid_value),
+                          headers=HEADERS)
+    assert response.status_code == 301
+
+    assert response.json["status"] == 301
+    assert response.json['message'] == "Moved Permanently."
+
+
+def test_read_record_with_different_type_of_redirected_pid(app, client,
+                                                           input_record,
+                                                           monkeypatch):
+    """Test read a record with a redirected pid that is of different type."""
+
+    # monkeypatch the `testing` flask attribute so exceptions
+    # are not reraised
+    monkeypatch.setattr(app, "testing", False)
+
+    # Create dummy record
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 201
+    pid1 = PersistentIdentifier.get("recid", response.json["pid"])
+    assert pid1.pid_type == "recid"
+
+    # Create another dummy record
+    response = client.post(
+        "/records", headers=HEADERS, data=json.dumps(input_record)
+    )
+    assert response.status_code == 201
+    pid2 = PersistentIdentifier.get("recid", response.json["pid"])
+    assert pid2.pid_type == "recid"
+
+    # change the pid2 pid_type
+    pid2.pid_type = 'random'
+
+    # redirect pid1 to pid2
+    pid1.redirect(pid2)
+
+    response = client.get("/records/{}".format(pid1.pid_value),
+                          headers=HEADERS)
+    assert response.status_code == 500
+
+    assert response.json["status"] == 500
+    assert "internal error" in response.json["message"]
