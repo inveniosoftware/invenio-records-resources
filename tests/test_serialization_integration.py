@@ -52,7 +52,7 @@ def test_create_read_xml_record(client, input_record):
         "/serialization_test/records", headers=HEADERS,
         data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     # Save record pid for posterior operations
     recid = response.json["pid"]

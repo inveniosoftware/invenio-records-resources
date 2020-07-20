@@ -82,7 +82,7 @@ def test_create_record_permissions(app_with_custom_permissions, client,
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     response_fields = response.json.keys()
     fields_to_check = ['pid', 'metadata', 'revision',
                        'created', 'updated', 'links']
