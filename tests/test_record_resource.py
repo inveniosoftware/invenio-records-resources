@@ -26,7 +26,7 @@ def test_create_read_record(client, input_record):
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     response_fields = response.json.keys()
     fields_to_check = ['pid', 'metadata', 'revision',
                        'created', 'updated', 'links']
@@ -63,7 +63,7 @@ def test_create_search_record(client, input_record):
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     print("response.json", response.json)
 
     # Search content of record, should return the record
@@ -81,7 +81,7 @@ def test_create_delete_record(client, input_record):
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     recid = response.json["pid"]
 
     # Update the record
@@ -103,7 +103,7 @@ def test_create_update_record(client, input_record):
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     recid = response.json["pid"]
 
     # Update the record

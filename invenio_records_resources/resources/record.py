@@ -61,7 +61,7 @@ class RecordResource(CollectionResource):
         """Create an item."""
         data = resource_requestctx.request_content
         identity = g.identity
-        return self.service.create(data, identity), 200
+        return self.service.create(data, identity), 201
 
     def read(self, *args, **kwargs):
         """Read an item."""
