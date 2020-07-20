@@ -15,8 +15,10 @@ from flask_resources.context import resource_requestctx
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.loaders import RequestLoader
 from flask_resources.resources import ResourceConfig
-from invenio_pidstore.errors import PIDDeletedError
+from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
+    PIDMissingObjectError, PIDRedirectedError, PIDUnregistered
 
+from ..errors import create_pid_redirected_error_handler
 from ..responses import RecordResponse
 from ..schemas import RecordSchemaJSONV1
 from ..serializers import RecordJSONSerializer
@@ -53,6 +55,19 @@ class RecordResourceConfig(ResourceConfig):
                 description="The record has been deleted.",
             )
         ),
+        PIDDoesNotExistError: create_errormap_handler(
+            HTTPJSONException(
+                code=404,
+                description="The pid does not exist.",
+            )
+        ),
+        PIDUnregistered: create_errormap_handler(
+            HTTPJSONException(
+                code=404,
+                description="The pid is not registered.",
+            )
+        ),
+        PIDRedirectedError: create_pid_redirected_error_handler(),
     }
 
 
