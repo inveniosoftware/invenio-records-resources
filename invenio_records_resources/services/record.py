@@ -37,7 +37,7 @@ class RecordServiceConfig(ServiceConfig):
     record_cls = Record
     resolver_cls = Resolver
     resolver_obj_type = "rec"
-    pid_type = "recid"  # PID type for resolver, minter, and fetcher
+    pid_type = "recid_v2"  # PID type for resolver, minter, and fetcher
     indexer_cls = RecordIndexer
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
