@@ -43,7 +43,7 @@ class UUIDResolver(object):
         #       detected here)
         return (
             PersistentIdentifier(
-                pid_type="recid_v2",
+                pid_type="recid",
                 pid_value=pid_value,
                 object_type="rec",
                 object_uuid=object_uuid,

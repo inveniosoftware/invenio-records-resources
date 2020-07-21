@@ -15,7 +15,7 @@ import os
 import pytest
 from flask import url_for
 from invenio_accounts.testutils import login_user_via_view
-from invenio_pidstore.minters import recid_minter
+from invenio_pidstore.minters import recid_minter_v2
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
     RecordIdentifier
 from invenio_pidstore.providers.recordid import RecordIdProvider
@@ -52,7 +52,7 @@ def app_with_custom_minter(app):
     current_pidstore.minters['recid_v2'] = custom_minter
     yield app
 
-    current_pidstore.minters['recid_v2'] = recid_minter
+    current_pidstore.minters['recid_v2'] = recid_minter_v2
 
 
 def test_create_read_record(client, input_record):

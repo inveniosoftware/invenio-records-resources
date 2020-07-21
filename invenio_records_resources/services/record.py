@@ -54,10 +54,7 @@ class RecordService(Service):
     #
     # Low-level API
     #
-
-    #
-    # Persistent identifier resolution
-    #
+    @property
     def resolver(self):
         """Factory for creating a resolver instance."""
         return self.config.resolver_cls(
@@ -65,36 +62,39 @@ class RecordService(Service):
             getter=self.config.record_cls.get_record
         )
 
-    def resolve(self, id_):
-        """Resolve a persistent identifier to a record."""
-        return self.resolver().resolve(id_)
-
+    @property
     def minter(self):
         """Returns the minter function."""
         return current_pidstore.minters[self.config.minter_pid_type]
 
+    @property
     def fetcher(self):
         """Returns the fetcher function."""
         return current_pidstore.fetchers[self.config.resolver_pid_type]
 
+    @property
     def indexer(self):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls()
 
+    @property
     def search_engine(self):
         """Factory for creating a search instance."""
         return self.config.search_engine_cls(self.config.search_cls)
 
-    #
-    # Data validation and representation
-    #
+    @property
     def data_validator(self):
         """Returns the data validator instance."""
-        return self.config.data_validator
+        return self.config.data_validator  # Already an instance
 
+    @property
     def record_cls(self):
         """Factory for creating a record class."""
         return self.config.record_cls
+
+    def resolve(self, id_):
+        """Resolve a persistent identifier to a record."""
+        return self.resolver.resolve(id_)
 
     #
     # High-level API
@@ -112,26 +112,26 @@ class RecordService(Service):
         # TODO rename by search in invenio-records-permission
         self.require_permission(identity, "list")
 
-        # Create search engine object
-        search_engine = self.search_engine()
-
         # Add search arguments
         extras = {}
         if not lt_es7:
             extras["track_total_hits"] = True
 
-        search_engine.search_arguments(pagination=pagination, extras=extras)
+        self.search_engine.search_arguments(
+            pagination=pagination,
+            extras=extras
+        )
 
         # Parse query and execute search
-        query = search_engine.parse_query(querystring)
-        search_result = search_engine.execute_search(query)
+        query = self.search_engine.parse_query(querystring)
+        search_result = self.search_engine.execute_search(query)
 
         # Mutate search results into a list of record states
         record_list = []
         for hit in search_result["hits"]["hits"]:
             # hit is ES AttrDict
-            record = es_to_record(hit.to_dict(), self.record_cls())
-            pid = self.fetcher()(data=record, record_uuid=None)
+            record = es_to_record(hit.to_dict(), self.record_cls)
+            pid = self.fetcher(data=record, record_uuid=None)
             record_list.append(self.resource_unit(record=record, pid=pid))
 
         total = (
@@ -147,16 +147,15 @@ class RecordService(Service):
     def create(self, data, identity):
         """Create a record."""
         self.require_permission(identity, "create")
-        self.data_validator().validate(data)
-        record = self.record_cls().create(data)  # Create record in DB
-        pid = self.minter()(record_uuid=record.id, data=record)   # Mint PID
+        self.data_validator.validate(data)
+        record = self.record_cls.create(data)  # Create record in DB
+        pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
         record_state = self.resource_unit(pid=pid, record=record)
         db.session.commit()  # Persist DB
         # Index the record
-        indexer = self.indexer()
-        if indexer:
-            indexer.index(record)
+        if self.indexer:
+            self.indexer.index(record)
 
         return record_state
 
@@ -174,9 +173,8 @@ class RecordService(Service):
 
         db.session.commit()
 
-        indexer = self.indexer()
-        if indexer:
-            indexer.delete(record)
+        if self.indexer:
+            self.indexer.delete(record)
 
         # TODO: Shall it return true/false? The tombstone page?
 
@@ -193,8 +191,7 @@ class RecordService(Service):
         record.commit()
         db.session.commit()
 
-        indexer = self.indexer()
-        if indexer:
-            indexer.index(record)
+        if self.indexer:
+            self.indexer.index(record)
 
         return self.resource_unit(pid=pid, record=record)
