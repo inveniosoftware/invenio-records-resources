@@ -49,10 +49,10 @@ def app_with_custom_minter(app):
         data['recid'] = provider.pid.pid_value
         return provider.pid
 
-    current_pidstore.minters['recid'] = custom_minter
+    current_pidstore.minters['recid_v2'] = custom_minter
     yield app
 
-    current_pidstore.minters['recid'] = recid_minter
+    current_pidstore.minters['recid_v2'] = recid_minter
 
 
 def test_create_read_record(client, input_record):

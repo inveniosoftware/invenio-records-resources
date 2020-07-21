@@ -37,7 +37,8 @@ class RecordServiceConfig(ServiceConfig):
     record_cls = Record
     resolver_cls = Resolver
     resolver_obj_type = "rec"
-    pid_type = "recid"  # PID type for resolver, minter, and fetcher
+    resolver_pid_type = "recid"  # PID type for resolver and fetch
+    minter_pid_type = "recid_v2"
     indexer_cls = RecordIndexer
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
@@ -60,8 +61,8 @@ class RecordService(Service):
     def resolver(self):
         """Factory for creating a resolver instance."""
         return self.config.resolver_cls(
-            pid_type=self.config.pid_type,
-            getter=self.config.record_cls.get_record,
+            pid_type=self.config.resolver_pid_type,
+            getter=self.config.record_cls.get_record
         )
 
     def resolve(self, id_):
@@ -70,11 +71,11 @@ class RecordService(Service):
 
     def minter(self):
         """Returns the minter function."""
-        return current_pidstore.minters[self.config.pid_type]
+        return current_pidstore.minters[self.config.minter_pid_type]
 
     def fetcher(self):
         """Returns the fetcher function."""
-        return current_pidstore.fetchers[self.config.pid_type]
+        return current_pidstore.fetchers[self.config.resolver_pid_type]
 
     def indexer(self):
         """Factory for creating an indexer instance."""
