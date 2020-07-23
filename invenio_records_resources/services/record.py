@@ -11,15 +11,12 @@
 
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
-from invenio_pidstore import current_pidstore
-from invenio_pidstore.resolver import Resolver
-from invenio_records.api import Record
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
-from ..resource_units import IdentifiedRecord, RecordSearchState
-from .data_validator import MarshmallowDataValidator
+from ..resource_units import RecordSearchState
+from ..record import PIDRecord
 from .search import SearchEngine
 from .search.serializers import es_to_record
 from .service import Service, ServiceConfig
@@ -30,20 +27,13 @@ class RecordServiceConfig(ServiceConfig):
 
     # Common configuration
     permission_policy_cls = RecordPermissionPolicy
-    resource_unit_cls = IdentifiedRecord
     resource_list_cls = RecordSearchState
 
     # Record specific configuration
-    record_cls = Record
-    resolver_cls = Resolver
-    resolver_obj_type = "rec"
-    resolver_pid_type = "recid"  # PID type for resolver and fetch
-    minter_pid_type = "recid_v2"
+    record_cls = PIDRecord
     indexer_cls = RecordIndexer
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
-    # Q: Do we want to keep same pattern as above and just pass classes?
-    data_validator = MarshmallowDataValidator()
 
 
 class RecordService(Service):
@@ -54,24 +44,6 @@ class RecordService(Service):
     #
     # Low-level API
     #
-    @property
-    def resolver(self):
-        """Factory for creating a resolver instance."""
-        return self.config.resolver_cls(
-            pid_type=self.config.resolver_pid_type,
-            getter=self.config.record_cls.get_record
-        )
-
-    @property
-    def minter(self):
-        """Returns the minter function."""
-        return current_pidstore.minters[self.config.minter_pid_type]
-
-    @property
-    def fetcher(self):
-        """Returns the fetcher function."""
-        return current_pidstore.fetchers[self.config.resolver_pid_type]
-
     @property
     def indexer(self):
         """Factory for creating an indexer instance."""
@@ -92,19 +64,15 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def resolve(self, id_):
-        """Resolve a persistent identifier to a record."""
-        return self.resolver.resolve(id_)
-
     #
     # High-level API
     #
     def read(self, id_, identity):
         """Retrieve a record."""
-        pid, record = self.resolve(id_)
-        self.require_permission(identity, "read", record=record)
+        unit = self.record_cls.get_from_id(id_)
+        self.require_permission(identity, "read", record=unit.record)
         # Todo: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=record)
+        return unit
 
     def search(self, querystring, identity, pagination=None, *args, **kwargs):
         """Search for records matching the querystring."""
@@ -145,17 +113,12 @@ class RecordService(Service):
     def create(self, data, identity):
         """Create a record."""
         self.require_permission(identity, "create")
-        self.data_validator.validate(data)
-        record = self.record_cls.create(data)  # Create record in DB
-        pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
-        # Create record state
-        record_state = self.resource_unit(pid=pid, record=record)
-        db.session.commit()  # Persist DB
+        unit = self.record_cls.create(data)
         # Index the record
         if self.indexer:
-            self.indexer.index(record)
+            self.indexer.index(unit.record)
 
-        return record_state
+        return unit
 
     def delete(self, id_, identity):
         """Delete a record from database and search indexes."""
