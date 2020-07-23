@@ -117,14 +117,12 @@ class RecordService(Service):
         if not lt_es7:
             extras["track_total_hits"] = True
 
-        self.search_engine.search_arguments(
-            pagination=pagination,
-            extras=extras
-        )
-
         # Parse query and execute search
         query = self.search_engine.parse_query(querystring)
-        search_result = self.search_engine.execute_search(query)
+        search_result = self.search_engine.search_arguments(
+            pagination=pagination,
+            extras=extras
+        ).execute_search(query)
 
         # Mutate search results into a list of record states
         record_list = []

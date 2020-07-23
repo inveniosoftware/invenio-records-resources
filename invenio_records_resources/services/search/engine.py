@@ -39,6 +39,8 @@ class SearchEngine():
         if extras:
             self.search = self.search.extra(**extras)
 
+        return self
+
     def parse_query(self, querystring):
         """Parses the query based on the interpreter."""
         return self.query_interpreter.parse(querystring)
