@@ -25,12 +25,22 @@ from invenio_accounts.models import Role
 from invenio_app.factory import create_api as _create_api
 from invenio_records_permissions.generators import Admin, AnyUser
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
+from invenio_search import InvenioSearch, RecordsSearch
 from werkzeug.exceptions import HTTPException
 
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
+
+
+class TestSearch(RecordsSearch):
+    """Test record search."""
+
+    class Meta:
+        """Test configuration."""
+
+        index = 'invenio-records-resources'
 
 
 @pytest.fixture(scope='module')
@@ -46,7 +56,8 @@ def app_config(app_config):
     https://github.com/inveniosoftware/invenio-records-permissions/issues/51
     """
     app_config["RECORDS_REST_ENDPOINTS"] = {}
-
+    app_config["INDEXER_DEFAULT_DOC_TYPE"] = "testrecord"
+    app_config["INDEXER_DEFAULT_INDEX"] = TestSearch.Meta.index
     return app_config
 
 
@@ -65,6 +76,21 @@ def input_record():
         "_created_by": 1,
         "title": "A Romans story",
         "description": "A looong description full of lorem ipsums"
+    }
+
+
+@pytest.fixture(scope="module")
+def input_service_data():
+    """Minimal record data as dict coming into RecordService.
+
+    WARNING: Same as input_record for now, but it might change!
+    """
+    return {
+        '_access': {'metadata_restricted': False, 'files_restricted': False},
+        '_owners': [1],
+        '_created_by': 1,
+        'title': 'A Romans story',
+        'description': 'A looong description full of lorem ipsums'
     }
 
 
@@ -112,7 +138,11 @@ class AnyUserPermissionPolicy(RecordPermissionPolicy):
 @pytest.fixture(scope="module")
 def app(app):
     """Application factory fixture."""
+    search = app.extensions["invenio-search"]
+    search.register_mappings(TestSearch.Meta.index, 'mock_module.mappings')
+
     RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
+    RecordServiceConfig.search_cls = TestSearch
     # NOTE: Because the above is a "global" change, it is picked up by
     #       RecordService() which already uses RecordServiceConfig
     custom_bp = (

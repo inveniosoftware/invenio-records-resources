@@ -61,11 +61,11 @@ install_requires = [
     "invenio-indexer>=1.1.1",
     "invenio-records>=1.3.2",
     "invenio-rest>=1.2.1",
-    "flask-resources>=0.2.0,<1.0.0",
+    "flask-resources>=0.2.1,<1.0.0",
     # Service
     "invenio-accounts>=1.3.0",
     "invenio-files-rest>=1.2.0",
-    "invenio-records-permissions>=0.8.0",
+    "invenio-records-permissions>=0.9.0,<1.0.0",
     "xmltodict~=0.12.0",
 ]
 
