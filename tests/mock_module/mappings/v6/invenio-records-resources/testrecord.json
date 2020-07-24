@@ -1,0 +1,11 @@
+{
+  "mappings": {
+    "testrecord": {
+      "properties": {
+        "title": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}

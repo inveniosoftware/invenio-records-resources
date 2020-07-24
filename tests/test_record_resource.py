@@ -82,12 +82,6 @@ def test_create_read_record(client, input_record):
         assert field in response_fields
 
 
-# This test DOES NOT clean after itself. It works every time on CI,
-# because the CI creates a new container for each test run. It will work
-# once locally, but fail on subsequent run.
-# TODO: FIX to make it clean up itself. Adding es_clear didn't work
-@pytest.mark.skipif(
-    os.environ.get('CI') != 'true', reason="Fix to make it clean up itself")
 def test_create_search_record(client, input_record):
     """Test record search."""
     # Search records, should return empty
@@ -99,7 +93,6 @@ def test_create_search_record(client, input_record):
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
     assert response.status_code == 201
-    print("response.json", response.json)
 
     # Search content of record, should return the record
     response = client.get("/records?q=story", headers=HEADERS)
