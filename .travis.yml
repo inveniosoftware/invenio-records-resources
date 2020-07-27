@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-RDM-Records is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -38,7 +39,7 @@ env:
     # - REQUIREMENTS=lowest ES_URL=$ES7_DOWNLOAD_URL
     # - REQUIREMENTS=release ES_URL=$ES7_DOWNLOAD_URL
     - REQUIREMENTS=release ES_URL=$ES6_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch6
-    - REQUIREMENTS=release ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7 DEPLOY=true
+    - REQUIREMENTS=release ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7
     - REQUIREMENTS=devel ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7
 
 python:
