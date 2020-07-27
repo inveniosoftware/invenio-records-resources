@@ -19,7 +19,7 @@ matrix:
   fast_finish: true
   allow_failures:
     # To allow failures, you need to specify the full environment
-    - env: REQUIREMENTS=devel
+    - env: REQUIREMENTS=devel ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7
 
 cache:
   - pip
@@ -37,7 +37,8 @@ env:
   matrix:
     # - REQUIREMENTS=lowest ES_URL=$ES7_DOWNLOAD_URL
     # - REQUIREMENTS=release ES_URL=$ES7_DOWNLOAD_URL
-    - REQUIREMENTS=devel ES_URL=$ES6_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch6
+    - REQUIREMENTS=release ES_URL=$ES6_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch6
+    - REQUIREMENTS=release ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7 DEPLOY=true
     - REQUIREMENTS=devel ES_URL=$ES7_DOWNLOAD_URL EXTRAS=all,postgresql,elasticsearch7
 
 python:
@@ -58,7 +59,8 @@ before_install:
 
 install:
   - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
-  - "travis_retry pip install -e .[all]"
+  - "travis_retry pip install -e .[$EXTRAS]"
+  - "pip freeze"
 
 script:
   - "./run-tests.sh"
