@@ -40,7 +40,7 @@ class TestSearch(RecordsSearch):
     class Meta:
         """Test configuration."""
 
-        index = 'invenio-records-resources'
+        index = "invenio-records-resources"
 
 
 @pytest.fixture(scope='module')
@@ -136,9 +136,9 @@ class AnyUserPermissionPolicy(RecordPermissionPolicy):
 
 
 @pytest.fixture(scope="module")
-def app(app):
+def base_app(base_app):
     """Application factory fixture."""
-    search = app.extensions["invenio-search"]
+    search = base_app.extensions["invenio-search"]
     search.register_mappings(TestSearch.Meta.index, 'mock_module.mappings')
 
     RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
@@ -148,7 +148,7 @@ def app(app):
     custom_bp = (
         RecordResource(service=RecordService()).as_blueprint("base_resource")
     )
-    app.register_blueprint(custom_bp)
-    app.register_error_handler(HTTPException, handle_http_exception)
-    with app.app_context():
-        yield app
+    base_app.register_blueprint(custom_bp)
+    base_app.register_error_handler(HTTPException, handle_http_exception)
+
+    yield base_app
