@@ -55,7 +55,7 @@ def app_with_custom_minter(app):
     current_pidstore.minters['recid_v2'] = recid_minter_v2
 
 
-def test_create_read_record(client, input_record):
+def test_create_read_record(client, input_record, es_clear):
     """Test record creation."""
     # Create new record
     response = client.post(
@@ -82,7 +82,7 @@ def test_create_read_record(client, input_record):
         assert field in response_fields
 
 
-def test_create_search_record(client, input_record):
+def test_create_search_record(client, input_record, es_clear):
     """Test record search."""
     # Search records, should return empty
     response = client.get("/records", headers=HEADERS)
@@ -103,7 +103,7 @@ def test_create_search_record(client, input_record):
     assert response.status_code == 200
 
 
-def test_create_delete_record(client, input_record):
+def test_create_delete_record(client, input_record, es_clear):
     """Test record deletion."""
     # Create dummy record to test delete
     response = client.post(
@@ -125,7 +125,7 @@ def test_create_delete_record(client, input_record):
     assert response.status_code == 204
 
 
-def test_create_update_record(client, input_record):
+def test_create_update_record(client, input_record, es_clear):
     """Test record update."""
     # Create dummy record to test update
     response = client.post(
@@ -159,7 +159,7 @@ def test_create_update_record(client, input_record):
 #     # TODO: Assert
 
 
-def test_read_deleted_record(client, input_record):
+def test_read_deleted_record(client, input_record, es_clear):
     """Test read a deleted record."""
     # Create dummy record to test delete
     response = client.post(
@@ -179,7 +179,7 @@ def test_read_deleted_record(client, input_record):
     assert response.json['message'] == "The record has been deleted."
 
 
-def test_read_record_with_non_existing_pid(client, input_record):
+def test_read_record_with_non_existing_pid(client, input_record, es_clear):
     """Test read a record with a non existing pid."""
 
     response = client.get("/records/randomid", headers=HEADERS)
@@ -190,7 +190,7 @@ def test_read_record_with_non_existing_pid(client, input_record):
 
 
 def test_read_record_with_unregistered_pid(app_with_custom_minter,
-                                           input_record):
+                                           input_record, es_clear):
     """Test read a record with an unregistered pid."""
 
     client = app_with_custom_minter.test_client()
@@ -208,7 +208,7 @@ def test_read_record_with_unregistered_pid(app_with_custom_minter,
     assert response.json['message'] == "The pid is not registered."
 
 
-def test_read_record_with_redirected_pid(client, input_record):
+def test_read_record_with_redirected_pid(client, input_record, es_clear):
     """Test read a record with a redirected pid."""
 
     # Create dummy record
@@ -236,9 +236,8 @@ def test_read_record_with_redirected_pid(client, input_record):
     assert response.json['message'] == "Moved Permanently."
 
 
-def test_read_record_with_different_type_of_redirected_pid(app, client,
-                                                           input_record,
-                                                           monkeypatch):
+def test_read_record_with_different_type_of_redirected_pid(
+        app, client, input_record, monkeypatch, es_clear):
     """Test read a record with a redirected pid that is of different type."""
 
     # monkeypatch the `testing` flask attribute so exceptions
