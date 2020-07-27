@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern Universtiy.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
@@ -45,9 +46,12 @@ extras_require = {
     "tests": tests_require,
 }
 
-extras_require["all"] = []
-for reqs in extras_require.values():
-    extras_require["all"].extend(reqs)
+all_requires = []
+for key, reqs in extras_require.items():
+    if key in {"elasticsearch6", "elasticsearch7"}:
+        continue
+    all_requires.extend(reqs)
+extras_require["all"] = all_requires
 
 setup_requires = [
     "Babel>=1.3",
