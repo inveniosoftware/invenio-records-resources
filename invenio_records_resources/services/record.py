@@ -145,7 +145,7 @@ class RecordService(Service):
     def create(self, data, identity):
         """Create a record."""
         self.require_permission(identity, "create")
-        self.data_validator.validate(data)
+        data = self.data_validator.validate(data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
