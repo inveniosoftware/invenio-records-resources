@@ -110,7 +110,7 @@ class RecordService(Service):
         """Search for records matching the querystring."""
         # Permissions
         # TODO rename by search in invenio-records-permission
-        self.require_permission(identity, "list")
+        self.require_permission(identity, "search")
 
         # Add search arguments
         extras = {}

@@ -127,7 +127,7 @@ def users(app, db):
 class AnyUserPermissionPolicy(RecordPermissionPolicy):
     """Custom permission policy."""
 
-    can_list = [AnyUser()]
+    can_search = [AnyUser()]
     can_create = [AnyUser()]
     can_read = [AnyUser()]
     can_update = [AnyUser()]
