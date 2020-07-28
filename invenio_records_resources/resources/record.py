@@ -9,66 +9,12 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from flask import g
+from flask import current_app, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
-from flask_resources.errors import HTTPJSONException, create_errormap_handler
-from flask_resources.loaders import RequestLoader
-from flask_resources.resources import ResourceConfig
-from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
-    PIDMissingObjectError, PIDRedirectedError, PIDUnregistered
 
-from ..errors import create_pid_redirected_error_handler
-from ..responses import RecordResponse
-from ..schemas import RecordSchemaJSONV1
-from ..serializers import RecordJSONSerializer
 from ..services import RecordService
-from ..services.errors import InvalidQueryError, PermissionDeniedError
-
-
-class RecordResourceConfig(ResourceConfig):
-    """Record resource config."""
-
-    item_route = "/records/<pid_value>"
-    list_route = "/records"
-    response_handlers = {
-        "application/json": RecordResponse(
-            RecordJSONSerializer(schema=RecordSchemaJSONV1)
-        )
-    }
-    error_map = {
-        InvalidQueryError: create_errormap_handler(
-            HTTPJSONException(
-                code=400,
-                description="Invalid query syntax.",
-            )
-        ),
-        PermissionDeniedError: create_errormap_handler(
-            HTTPJSONException(
-                code=403,
-                description="Permission denied.",
-            )
-        ),
-        PIDDeletedError: create_errormap_handler(
-            HTTPJSONException(
-                code=410,
-                description="The record has been deleted.",
-            )
-        ),
-        PIDDoesNotExistError: create_errormap_handler(
-            HTTPJSONException(
-                code=404,
-                description="The pid does not exist.",
-            )
-        ),
-        PIDUnregistered: create_errormap_handler(
-            HTTPJSONException(
-                code=404,
-                description="The pid is not registered.",
-            )
-        ),
-        PIDRedirectedError: create_pid_redirected_error_handler(),
-    }
+from .record_config import RecordResourceConfig
 
 
 class RecordResource(CollectionResource):
@@ -78,6 +24,7 @@ class RecordResource(CollectionResource):
 
     def __init__(self, service=None, *args, **kwargs):
         """Constructor."""
+        # NOTE: This constructor picks up self.default_config above
         super(RecordResource, self).__init__(*args, **kwargs)
         self.service = service or RecordService()
 
@@ -87,11 +34,15 @@ class RecordResource(CollectionResource):
     def search(self, *args, **kwargs):
         """Perform a search over the items."""
         identity = g.identity
+        querystring = resource_requestctx.request_args.pop("q", "")
+        pagination = resource_requestctx.request_args
+
         record_search = self.service.search(
-            querystring=resource_requestctx.request_args.get("q", ""),
+            querystring=querystring,
             identity=identity,
-            pagination=resource_requestctx.request_args.get("pagination"),
+            pagination=pagination,
         )
+
         return record_search, 200
 
     def create(self, *args, **kwargs):
