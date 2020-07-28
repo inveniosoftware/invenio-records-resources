@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,8 +13,6 @@ import json
 
 import pytz
 from flask_resources.serializers import SerializerMixin
-
-from ..links import link_for, search_links
 
 
 class RecordJSONSerializer(SerializerMixin):
@@ -40,10 +39,7 @@ class RecordJSONSerializer(SerializerMixin):
                 if record.updated and not record.updated.tzinfo
                 else None
             ),
-            links=dict(
-                self=link_for(api=True, tpl_key='record', pid=pid),
-                self_html=link_for(api=False, tpl_key='record', pid=pid),
-            )
+            links=record_state.links
         )
 
         return record_dict
@@ -60,10 +56,8 @@ class RecordJSONSerializer(SerializerMixin):
     ):
         """Dump the object list into a json string.
 
-        :param: obj_list a RecordSearchState object
+        :param: obj_list a IdentifiedRecords object
         """
-        url_args = response_ctx.get("url_args") if response_ctx else {}
-
         serialized_content = {
             "hits": {
                 "hits": [
@@ -72,7 +66,7 @@ class RecordJSONSerializer(SerializerMixin):
                 ],
                 "total": obj_list.total
             },
-            "links": search_links(url_args=url_args, total=obj_list.total),
+            "links": obj_list.links,
             "aggregations": obj_list.aggregations
         }
 

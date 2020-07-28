@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,56 +9,124 @@
 
 """Invenio Resources module to create REST APIs."""
 
+from urllib.parse import urlencode
+
 from flask import current_app
 
-from .config import LINK_URLS
+from .pagination import PagedIndexes
+from .schemas.url_args import DEFAULT_MAX_RESULTS
 
 
-def _base_url(api=False):
-    """Creates the base URL for API and UI endpoints."""
-    url = "{}/api" if api else "{}"
-    return url.format(current_app.config['SERVER_HOSTNAME'])
+def _base_url(
+        scheme="https", host=None, path="/", querystring="", api=False):
+    """Creates the URL for API and UI endpoints."""
+    assert path.startswith("/")
+    path = f"/api{path}" if api else path
+    host = host or current_app.config['SERVER_HOSTNAME']
+    return f"{scheme}://{host}{path}{querystring}"
 
 
-def link_for(api, tpl_key, **kwargs):
-    """Create a link using specific template."""
-    tpl = current_app.config["LINK_URLS"].get(tpl_key, "")
+class ResourceUnitLinks:
+    """Constructor."""
 
-    return tpl.format(base=_base_url(api), **kwargs)
+    def __init__(self, route, pid_value):
+        """Constructor."""
+        self.route = route
+        self.pid_value = pid_value
+
+    def links(self):
+        """Returns dict of links for the record associated with the pid."""
+        path = self.route.replace("<pid_value>", self.pid_value)
+        self_api_link = _base_url(path=path, api=True)
+        # TODO: The UI route should be passed down and used. It may not be the
+        #       same as the API item_route URL
+        self_html_link = _base_url(path=path, api=False)
+
+        return {
+            "self": self_api_link,
+            "self_html": self_html_link,
+        }
 
 
-def search_links(url_args, total):
-    """Create search query links."""
-    # Search links are api only
-    api_base = link_for(api=True, tpl_key='records')
-    links = {
-        'self': api_base,
-    }
+class ResourceListLinks:
+    """Constructor."""
 
-    if url_args:
-        pagination = url_args.pop('pagination')  # Assumes it is always there
-        links['self'] = "{}?page={}".format(
-            api_base,
-            pagination["links"]["self"]["page"],
+    def __init__(self, route, search_args):
+        """Constructor."""
+        self.route = route
+        self.search_args = search_args
+
+    def _api_search_url(self, querystring_seq):
+        querystring = "?" + urlencode(querystring_seq)
+        return _base_url(api=True, path=self.route, querystring=querystring)
+
+    def _list_querystring(self, size, page, q=None):
+        """Returns ordered sequence of querystring arguments."""
+        # NOTE: We order the querystring with the search query at the end,
+        #       to make the URLs consistent and more easy to change
+        querystring_seq = [
+            ("size", size),
+            ("page", page),
+        ]
+        if q:
+            querystring_seq.append(("q", q))
+
+        return querystring_seq
+
+    def _links_self(self):
+        """Return link to self."""
+        querystring_seq = self._list_querystring(
+            self.search_args["size"],
+            self.search_args["page"],
+            self.search_args["q"]
         )
-        url_args.pop('page')  # Remove since it is not needed
+        return self._api_search_url(querystring_seq)
 
-        if pagination['from_idx'] >= 1:
-            links['prev'] = "{}?page={}".format(
-                pagination["links"]["prev"]["page"],
-                api_base
+    def _links_prev(self):
+        """Returns link to previous page of search results.
+
+        Returns None if there is no previous page.
+        """
+        size = self.search_args["size"]
+        page = self.search_args["page"]
+        prev_page = PagedIndexes(size, page, DEFAULT_MAX_RESULTS).prev_page()
+
+        if prev_page:
+            querystring_seq = self._list_querystring(
+                size,
+                page - 1,
+                self.search_args["q"]
             )
-        # FIXME: < min(total, self.max_result_window) How access max_res_win
-        if pagination['to_idx'] < total:
-            links['next'] = "{}?page={}".format(
-                pagination["links"]["next"]["page"],
-                api_base
+            return self._api_search_url(querystring_seq)
+        else:
+            return None
+
+    def _links_next(self):
+        """Returns link to next page of search results.
+
+        Returns None if there is no next page.
+        """
+        size = self.search_args["size"]
+        page = self.search_args["page"]
+        next_page = PagedIndexes(size, page, DEFAULT_MAX_RESULTS).next_page()
+
+        if next_page:
+            querystring_seq = self._list_querystring(
+                size,
+                page + 1,
+                self.search_args["q"]
             )
+            return self._api_search_url(querystring_seq)
+        else:
+            return None
 
-        for key, link in links.items():
-            for arg, value in url_args.items():
-                links[key] = "{link}&{arg}={value}".format(
-                    link=link, arg=arg, value=value
-                )
-
-    return links
+    def links(self):
+        """Returns links associated with this resource list."""
+        _links = {
+            "self": self._links_self(),
+        }
+        if self._links_prev():
+            _links["prev"] = self._links_prev()
+        if self._links_next():
+            _links["next"] = self._links_next()
+        return _links

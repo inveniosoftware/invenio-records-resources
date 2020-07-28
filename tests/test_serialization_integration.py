@@ -18,7 +18,8 @@ from invenio_records_resources.responses import RecordResponse
 from invenio_records_resources.schemas import RecordSchemaJSONV1
 from invenio_records_resources.serializers import RecordJSONSerializer, \
     RecordXMLSerializer
-from invenio_records_resources.services import RecordService
+from invenio_records_resources.services import RecordService, \
+    RecordServiceConfig
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
@@ -36,17 +37,26 @@ class CustomRecordResourceConfig(RecordResourceConfig):
     }
 
 
+class CustomRecordServiceConfig(RecordServiceConfig):
+    """Custom record resource config."""
+
+    item_route = CustomRecordResourceConfig.item_route
+    list_route = CustomRecordResourceConfig.list_route
+
+
 @pytest.fixture(scope="module")
 def app(app):
     """Application factory fixture."""
-    custom_bp = RecordResource(
+    resource = RecordResource(
         config=CustomRecordResourceConfig,
-        service=RecordService()).as_blueprint("custom_resource")
+        service=RecordService(CustomRecordServiceConfig)
+    )
+    custom_bp = resource.as_blueprint("custom_resource")
     app.register_blueprint(custom_bp)
     yield app
 
 
-def test_create_read_xml_record(client, input_record):
+def test_create_read_xml_record(app, client, input_record):
     # Create new record
     response = client.post(
         "/serialization_test/records", headers=HEADERS,

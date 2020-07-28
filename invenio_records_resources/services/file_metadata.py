@@ -11,7 +11,7 @@
 
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
-from ..resource_units import IdentifiedRecord, RecordSearchState
+from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from .service import Service, ServiceConfig
 
 

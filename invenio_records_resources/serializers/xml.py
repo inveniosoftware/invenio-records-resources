@@ -32,6 +32,6 @@ class RecordXMLSerializer(SerializerMixin):
     ):
         """Dump the object list into an XML string.
 
-        :param: obj_list a RecordSearchState object
+        :param: obj_list an IdentifiedRecords object
         """
         raise NotImplementedError()

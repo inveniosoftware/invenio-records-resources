@@ -54,7 +54,7 @@ class Service:
         of a Resource. It is what a Resource transacts in and therefore
         what a Service must provide.
         """
-        return self.config.resource_unit_cls(**kwargs)
+        return self.config.resource_unit_cls(*args, **kwargs)
 
     def resource_list(self, *args, **kwargs):
         """Create a new instance of the resource list.

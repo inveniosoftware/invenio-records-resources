@@ -44,30 +44,6 @@ class TestSearch(RecordsSearch):
         index = "invenio-records-resources"
 
 
-@pytest.fixture(scope='module')
-def app_config(app_config):
-    """Override pytest-invenio app_config fixture.
-
-    For test purposes we need to enforce some configuration variables before
-    endpoints are created.
-
-    invenio-records-rest is imported from invenio-records-permissions, so
-    we need to disable its default endpoint, until we are completely
-    decoupled from invenio-records-rest. Issue:
-    https://github.com/inveniosoftware/invenio-records-permissions/issues/51
-    """
-    app_config["RECORDS_REST_ENDPOINTS"] = {}
-    app_config["INDEXER_DEFAULT_DOC_TYPE"] = "testrecord"
-    app_config["INDEXER_DEFAULT_INDEX"] = TestSearch.Meta.index
-    return app_config
-
-
-@pytest.fixture(scope="module")
-def create_app(instance_path):
-    """Application factory fixture."""
-    return _create_api
-
-
 @pytest.fixture(scope="function")
 def input_record():
     """Minimal record data as dict coming from the external world."""
@@ -93,6 +69,66 @@ def input_service_data():
         'title': 'A Romans story',
         'description': 'A looong description full of lorem ipsums'
     }
+
+
+class AnyUserPermissionPolicy(RecordPermissionPolicy):
+    """Custom permission policy."""
+
+    can_list = [AnyUser()]
+    can_create = [AnyUser()]
+    can_read = [AnyUser()]
+    can_update = [AnyUser()]
+    can_delete = [AnyUser()]
+    can_read_files = [AnyUser()]
+    can_update_files = [AnyUser()]
+
+
+@pytest.fixture(scope='module')
+def app_config(app_config):
+    """Override pytest-invenio app_config fixture.
+
+    For test purposes we need to enforce some configuration variables before
+    endpoints are created.
+
+    invenio-records-rest is imported from invenio-records-permissions, so
+    we need to disable its default endpoint, until we are completely
+    decoupled from invenio-records-rest. Issue:
+    https://github.com/inveniosoftware/invenio-records-permissions/issues/51
+    """
+    app_config["RECORDS_REST_ENDPOINTS"] = {}
+    app_config["INDEXER_DEFAULT_DOC_TYPE"] = "testrecord"
+    app_config["INDEXER_DEFAULT_INDEX"] = TestSearch.Meta.index
+    return app_config
+
+
+@pytest.fixture(scope="module")
+def create_app(instance_path):
+    """Application factory fixture."""
+    return _create_api
+
+
+@pytest.fixture(scope="module")
+def base_app(base_app):
+    """Base application factory fixture."""
+    search = base_app.extensions["invenio-search"]
+    search.register_mappings(TestSearch.Meta.index, 'mock_module.mappings')
+    yield base_app
+
+
+@pytest.fixture(scope="module")
+def app(app):
+    """Application factory fixture."""
+    RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
+    RecordServiceConfig.search_cls = TestSearch
+    # NOTE: Because the above is a "global" change, it is picked up by
+    #       RecordService() which already uses RecordServiceConfig
+    custom_bp = (
+        RecordResource(service=RecordService()).as_blueprint("base_resource")
+    )
+    app.register_blueprint(custom_bp)
+    app.register_error_handler(HTTPException, handle_http_exception)
+
+    yield app
 
 
 @pytest.fixture()
@@ -122,34 +158,3 @@ def users(app, db):
         'user1': dump_user(user1),
         'user2': dump_user(user2)
     }
-
-
-class AnyUserPermissionPolicy(RecordPermissionPolicy):
-    """Custom permission policy."""
-
-    can_search = [AnyUser()]
-    can_create = [AnyUser()]
-    can_read = [AnyUser()]
-    can_update = [AnyUser()]
-    can_delete = [AnyUser()]
-    can_read_files = [AnyUser()]
-    can_update_files = [AnyUser()]
-
-
-@pytest.fixture(scope="module")
-def base_app(base_app):
-    """Application factory fixture."""
-    search = base_app.extensions["invenio-search"]
-    search.register_mappings(TestSearch.Meta.index, 'mock_module.mappings')
-
-    RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
-    RecordServiceConfig.search_cls = TestSearch
-    # NOTE: Because the above is a "global" change, it is picked up by
-    #       RecordService() which already uses RecordServiceConfig
-    custom_bp = (
-        RecordResource(service=RecordService()).as_blueprint("base_resource")
-    )
-    base_app.register_blueprint(custom_bp)
-    base_app.register_error_handler(HTTPException, handle_http_exception)
-
-    yield base_app

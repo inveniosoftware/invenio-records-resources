@@ -18,7 +18,9 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
-from ..resource_units import IdentifiedRecord, RecordSearchState
+from ..links import ResourceListLinks, ResourceUnitLinks
+from ..resource_units import IdentifiedRecord, IdentifiedRecords
+from ..resources.record_config import RecordResourceConfig
 from .data_validator import MarshmallowDataValidator
 from .search import SearchEngine
 from .search.serializers import es_to_record
@@ -31,7 +33,7 @@ class RecordServiceConfig(ServiceConfig):
     # Common configuration
     permission_policy_cls = RecordPermissionPolicy
     resource_unit_cls = IdentifiedRecord
-    resource_list_cls = RecordSearchState
+    resource_list_cls = IdentifiedRecords
 
     # Record specific configuration
     record_cls = Record
@@ -44,6 +46,9 @@ class RecordServiceConfig(ServiceConfig):
     search_engine_cls = SearchEngine
     # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
+    # Service needs to know configured routes
+    item_route = RecordResourceConfig.item_route
+    list_route = RecordResourceConfig.list_route
 
 
 class RecordService(Service):
@@ -92,6 +97,16 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
+    @property
+    def list_route(self):
+        """Returns the configured list_route."""
+        return self.config.list_route
+
+    @property
+    def item_route(self):
+        """Returns the configured item_route."""
+        return self.config.item_route
+
     def resolve(self, id_):
         """Resolve a persistent identifier to a record."""
         return self.resolver.resolve(id_)
@@ -103,13 +118,13 @@ class RecordService(Service):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
+        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
         # Todo: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=record)
+        return self.resource_unit(pid=pid, record=record, links=links)
 
     def search(self, querystring, identity, pagination=None, *args, **kwargs):
         """Search for records matching the querystring."""
         # Permissions
-        # TODO rename by search in invenio-records-permission
         self.require_permission(identity, "search")
 
         # Add search arguments
@@ -130,7 +145,10 @@ class RecordService(Service):
             # hit is ES AttrDict
             record = es_to_record(hit.to_dict(), self.record_cls)
             pid = self.fetcher(data=record, record_uuid=None)
-            record_list.append(self.resource_unit(record=record, pid=pid))
+            links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+            record_list.append(
+                self.resource_unit(record=record, pid=pid, links=links)
+            )
 
         total = (
             search_result.hits.total
@@ -140,7 +158,12 @@ class RecordService(Service):
 
         aggregations = search_result.aggregations.to_dict()
 
-        return self.resource_list(record_list, total, aggregations)
+        search_args = dict(q=querystring, **pagination)
+        links = ResourceListLinks(self.list_route, search_args).links()
+
+        return self.resource_list(
+            record_list, total, aggregations, links
+        )
 
     def create(self, data, identity):
         """Create a record."""
@@ -149,7 +172,8 @@ class RecordService(Service):
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
-        record_state = self.resource_unit(pid=pid, record=record)
+        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+        record_state = self.resource_unit(pid=pid, record=record, links=links)
         db.session.commit()  # Persist DB
         # Index the record
         if self.indexer:
@@ -192,4 +216,5 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        return self.resource_unit(pid=pid, record=record)
+        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+        return self.resource_unit(pid=pid, record=record, links=links)
