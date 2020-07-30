@@ -19,6 +19,8 @@ class PagedIndexes:
         :param size: int >= 1
         :param page: int >= 1
         :param max_results: int >= 1
+
+        These are validated in valid().
         """
         self.size = size
         self.page = page
@@ -31,7 +33,10 @@ class PagedIndexes:
 
     def valid(self):
         """Returns True if valid, False if not."""
-        return 0 <= self.from_idx < self.max_results
+        pre_condition = (
+            self.size >= 1 and self.page >= 1 and self.max_results >= 1
+        )
+        return pre_condition and 0 <= self.from_idx < self.max_results
 
     @property
     def to_idx(self):
