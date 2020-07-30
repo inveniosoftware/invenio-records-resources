@@ -125,8 +125,13 @@ class ResourceListLinks:
         _links = {
             "self": self._links_self(),
         }
-        if self._links_prev():
-            _links["prev"] = self._links_prev()
-        if self._links_next():
-            _links["next"] = self._links_next()
+
+        prev_link = self._links_prev()
+        if prev_link:
+            _links["prev"] = prev_link
+
+        next_link = self._links_next()
+        if next_link:
+            _links["next"] = next_link
+
         return _links
