@@ -17,35 +17,19 @@ from .pagination import PagedIndexes
 from .schemas.url_args import DEFAULT_MAX_RESULTS
 
 
-def _base_url(
+def api_route(route):
+    """Prepends the route with '/api'."""
+    assert route.startswith("/")
+    return f"/api{route}"
+
+
+def base_url(
         scheme="https", host=None, path="/", querystring="", api=False):
     """Creates the URL for API and UI endpoints."""
     assert path.startswith("/")
     path = f"/api{path}" if api else path
     host = host or current_app.config['SERVER_HOSTNAME']
     return f"{scheme}://{host}{path}{querystring}"
-
-
-class ResourceUnitLinks:
-    """Constructor."""
-
-    def __init__(self, route, pid_value):
-        """Constructor."""
-        self.route = route
-        self.pid_value = pid_value
-
-    def links(self):
-        """Returns dict of links for the record associated with the pid."""
-        path = self.route.replace("<pid_value>", self.pid_value)
-        self_api_link = _base_url(path=path, api=True)
-        # TODO: The UI route should be passed down and used. It may not be the
-        #       same as the API item_route URL
-        self_html_link = _base_url(path=path, api=False)
-
-        return {
-            "self": self_api_link,
-            "self_html": self_html_link,
-        }
 
 
 class ResourceListLinks:
@@ -58,7 +42,7 @@ class ResourceListLinks:
 
     def _api_search_url(self, querystring_seq):
         querystring = "?" + urlencode(querystring_seq)
-        return _base_url(api=True, path=self.route, querystring=querystring)
+        return base_url(path=self.route, querystring=querystring)
 
     def _list_querystring(self, size, page, q=None):
         """Returns ordered sequence of querystring arguments."""
@@ -135,3 +119,109 @@ class ResourceListLinks:
             _links["next"] = next_link
 
         return _links
+
+
+class Linker:
+    """Linker class.
+
+    Generates all the links for a given namespace.
+    """
+
+    def __init__(self, link_builders):
+        """Constructor.
+
+        :param link_builders: dict(string, list<LinkBuilder>)
+        """
+        self.link_builders = link_builders
+
+    def links(self, namespace, identity, **kwargs):
+        """Returns dict of links."""
+        output_links = {}
+        for link_builder in self.link_builders[namespace]:
+            link = link_builder.route_to_link(identity, **kwargs)
+            output_links.update(link)
+        return output_links
+
+
+class RecordLinkBuilder:
+    """Common interface among most record link builders."""
+
+    def __init__(self, key, route, action, permission_policy):
+        """Constructor."""
+        self.key = key
+        self.route = route
+        self.action = action
+        self.permission_policy = permission_policy
+
+    def route_to_link(self, identity, **kwargs):
+        """Converts route to a link."""
+        if self.permission_policy(self.action, **kwargs).allows(identity):
+            pid_value = kwargs["pid_value"]
+            path = self.route.replace("<pid_value>", pid_value)
+            return {self.key: base_url(path=path)}
+        else:
+            return {}
+
+
+class RecordSelfLinkBuilder(RecordLinkBuilder):
+    """Builds record "self" link."""
+
+    def __init__(self, config):
+        """Constructor."""
+        super(RecordSelfLinkBuilder, self).__init__(
+            key="self",
+            route=api_route(config.record_route),
+            action="read",
+            permission_policy=config.permission_policy_cls
+        )
+
+
+class RecordSelfHtmlLinkBuilder(RecordLinkBuilder):
+    """Builds record "self_html" link."""
+
+    def __init__(self, config):
+        """Constructor."""
+        super(RecordSelfHtmlLinkBuilder, self).__init__(
+            key="self_html",
+            route=(
+                current_app.config.get("RECORDS_UI_ENDPOINTS", {})
+                .get("recid", {})
+                .get("route")
+            ),
+            action="read",
+            permission_policy=config.permission_policy_cls
+        )
+
+
+class RecordDeleteLinkBuilder(RecordLinkBuilder):
+    """Builds record "delete" link."""
+
+    def __init__(self, config):
+        """Constructor."""
+        super(RecordDeleteLinkBuilder, self).__init__(
+            key="delete",
+            route=api_route(config.record_route),
+            action="delete",
+            permission_policy=config.permission_policy_cls
+        )
+
+
+class RecordSearchLinkBuilder(RecordLinkBuilder):
+    """Builds the search links."""
+
+    def __init__(self, config):
+        """Constructor."""
+        super(RecordSearchLinkBuilder, self).__init__(
+            key=None,
+            route=api_route(config.record_search_route),
+            action="search",
+            permission_policy=config.permission_policy_cls
+        )
+
+    def route_to_link(self, identity, **kwargs):
+        """Converts route to a link."""
+        if self.permission_policy(self.action, **kwargs).allows(identity):
+            search_args = kwargs["search_args"]
+            return ResourceListLinks(self.route, search_args).links()
+        else:
+            return {}
