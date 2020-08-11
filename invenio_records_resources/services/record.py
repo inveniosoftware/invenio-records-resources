@@ -18,7 +18,8 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
-from ..links import ResourceListLinks, ResourceUnitLinks
+from ..links import Linker, RecordDeleteLinkBuilder, RecordSearchLinkBuilder, \
+    RecordSelfHtmlLinkBuilder, RecordSelfLinkBuilder
 from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from ..resources.record_config import RecordResourceConfig
 from .data_validator import MarshmallowDataValidator
@@ -46,15 +47,38 @@ class RecordServiceConfig(ServiceConfig):
     search_engine_cls = SearchEngine
     # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
-    # Service needs to know configured routes
-    item_route = RecordResourceConfig.item_route
-    list_route = RecordResourceConfig.list_route
+
+    # NOTE: Configuring routes here, allows their configuration and the
+    #       configured routes to be picked up by the link builders at runtime
+    record_route = RecordResourceConfig.item_route
+    record_search_route = RecordResourceConfig.list_route
+    record_link_builders = [
+        RecordSelfLinkBuilder,
+        RecordSelfHtmlLinkBuilder,
+        RecordDeleteLinkBuilder
+    ]
+    record_search_link_builders = [
+        RecordSearchLinkBuilder
+    ]
 
 
 class RecordService(Service):
     """Record Service."""
 
     default_config = RecordServiceConfig
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(RecordService, self).__init__(*args, **kwargs)
+        self.linker = Linker({
+            "record": [
+                lb(self.config) for lb in self.config.record_link_builders
+            ],
+            "record_search": [
+                lb(self.config) for lb in
+                self.config.record_search_link_builders
+            ]
+        })
 
     #
     # Low-level API
@@ -97,16 +121,6 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    @property
-    def list_route(self):
-        """Returns the configured list_route."""
-        return self.config.list_route
-
-    @property
-    def item_route(self):
-        """Returns the configured item_route."""
-        return self.config.item_route
-
     def resolve(self, id_):
         """Resolve a persistent identifier to a record."""
         return self.resolver.resolve(id_)
@@ -118,8 +132,10 @@ class RecordService(Service):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
-        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
-        # Todo: how do we deal with tombstone pages
+        links = self.linker.links(
+            "record", identity, pid_value=pid.pid_value, record=record
+        )
+        # TODO: how do we deal with tombstone pages
         return self.resource_unit(pid=pid, record=record, links=links)
 
     def search(self, querystring, identity, pagination=None, *args, **kwargs):
@@ -145,7 +161,9 @@ class RecordService(Service):
             # hit is ES AttrDict
             record = es_to_record(hit.to_dict(), self.record_cls)
             pid = self.fetcher(data=record, record_uuid=None)
-            links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+            links = self.linker.links(
+                "record", identity, pid_value=pid.pid_value, record=record
+            )
             record_list.append(
                 self.resource_unit(record=record, pid=pid, links=links)
             )
@@ -159,7 +177,9 @@ class RecordService(Service):
         aggregations = search_result.aggregations.to_dict()
 
         search_args = dict(q=querystring, **pagination)
-        links = ResourceListLinks(self.list_route, search_args).links()
+        links = self.linker.links(
+            "record_search", identity, search_args=search_args
+        )
 
         return self.resource_list(
             record_list, total, aggregations, links
@@ -172,7 +192,10 @@ class RecordService(Service):
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
         # Create record state
-        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+        links = self.linker.links(
+            "record", identity, pid_value=pid.pid_value, record=record
+        )
+
         record_state = self.resource_unit(pid=pid, record=record, links=links)
         db.session.commit()  # Persist DB
         # Index the record
@@ -216,5 +239,8 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        links = ResourceUnitLinks(self.item_route, pid.pid_value).links()
+        links = self.linker.links(
+            "record", identity, pid_value=pid.pid_value, record=record
+        )
+
         return self.resource_unit(pid=pid, record=record, links=links)

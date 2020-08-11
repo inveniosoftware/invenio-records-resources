@@ -98,6 +98,12 @@ def app_config(app_config):
     app_config["RECORDS_REST_ENDPOINTS"] = {}
     app_config["INDEXER_DEFAULT_DOC_TYPE"] = "testrecord"
     app_config["INDEXER_DEFAULT_INDEX"] = TestSearch.Meta.index
+    app_config["RECORDS_UI_ENDPOINTS"] = {
+        "recid": {
+            "route": "/records/<pid_value>"
+        }
+    }
+
     return app_config
 
 
