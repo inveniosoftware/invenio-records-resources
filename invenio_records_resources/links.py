@@ -142,6 +142,10 @@ class Linker:
             output_links.update(link)
         return output_links
 
+    def register_link_builders(self, link_builders):
+        """Updates the internal link_builders with new ones."""
+        self.link_builders.update(link_builders)
+
 
 class RecordLinkBuilder:
     """Common interface among most record link builders."""

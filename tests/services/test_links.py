@@ -17,7 +17,7 @@ from invenio_records_resources.services.record import RecordService
 
 @pytest.fixture()
 def identity_simple():
-    """Simple identity fixture."""
+    """Simple identity fixture with user 1 and any_user needs."""
     i = Identity(1)
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method='system_role', value='any_user'))
@@ -26,10 +26,8 @@ def identity_simple():
 
 @pytest.fixture()
 def identity_no_need():
-    """Simple identity fixture."""
+    """Simple identity fixture without needs."""
     i = Identity(1)
-    # i.provides.add(UserNeed(1))
-    # i.provides.add(Need(method='system_role', value='any_user'))
     return i
 
 
@@ -38,6 +36,9 @@ def test_record_links(app, identity_simple, input_service_data, es):
     record_unit = record_service.create(input_service_data, identity_simple)
     pid_value = record_unit.id
 
+    # NOTE: We are testing linker.links() as opposed to record_unit.links
+    #       because the former is used in all RecordService methods (not just
+    #       create)
     links = record_service.linker.links(
         "record", identity_simple, pid_value=pid_value,
         record=record_unit.record
