@@ -56,7 +56,8 @@ def test_marshmallow_data_validator_fail(input_record):
 class CustomSchemaJSONV1(Schema):
     """Custom schema class."""
 
-    custom_field = fields.String()
+    custom_field = fields.String(required=True)
+    extra_field = fields.String()
 
 
 def test_marshmallow_data_validator_with_custom_schema():
@@ -68,6 +69,24 @@ def test_marshmallow_data_validator_with_custom_schema():
     validated_data = validator.validate(data=input_record)
 
     assert "custom_field" in validated_data
+
+
+def test_marshmallow_data_validator_with_custom_schema_partial():
+    """Tests the marshmallow data validator."""
+
+    input_record = {"extra_field": "test_value"}
+
+    validator = MarshmallowDataValidator(schema=CustomSchemaJSONV1)
+    validated_data = validator.validate(data=input_record, partial=True)
+
+    assert "extra_field" in validated_data
+    assert "custom_field" not in validated_data
+
+    with pytest.raises(ValidationError) as validation_error:
+        invalidated_data = validator.validate(data=input_record)
+
+    error_message = validation_error.value.messages
+    assert "custom_field" in error_message.keys()
 
 
 def test_marshmallow_data_validator_with_custom_schema_fail(input_record):

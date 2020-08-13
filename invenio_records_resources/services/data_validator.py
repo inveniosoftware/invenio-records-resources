@@ -26,9 +26,11 @@ class MarshmallowDataValidator:
         """Constructor."""
         self.schema = schema
 
-    def validate(self, data, context=None):
+    def validate(self, data, partial=False, context=None):
         """Validate by dumping it on the marshmallow schema.
 
+        :params partial: If true validation will only be performed on existing
+        fields. Meaning, required fields can be missing.
         :returns: The validated data as a dict.
         """
-        return self.schema(context=context).load(data)
+        return self.schema(context=context).load(data, partial=partial)
