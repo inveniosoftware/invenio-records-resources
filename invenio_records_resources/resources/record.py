@@ -31,7 +31,7 @@ class RecordResource(CollectionResource):
     #
     # Primary Interface
     #
-    def search(self, *args, **kwargs):
+    def search(self):
         """Perform a search over the items."""
         identity = g.identity
         querystring = resource_requestctx.request_args.pop("q", "")
@@ -45,13 +45,13 @@ class RecordResource(CollectionResource):
 
         return record_search, 200
 
-    def create(self, *args, **kwargs):
+    def create(self):
         """Create an item."""
         data = resource_requestctx.request_content
         identity = g.identity
         return self.service.create(data, identity), 201
 
-    def read(self, *args, **kwargs):
+    def read(self):
         """Read an item."""
         identity = g.identity
         return (
@@ -61,7 +61,7 @@ class RecordResource(CollectionResource):
             200,
         )
 
-    def update(self, *args, **kwargs):
+    def update(self):
         """Update an item."""
         data = resource_requestctx.request_content
         identity = g.identity
@@ -74,12 +74,12 @@ class RecordResource(CollectionResource):
             200,
         )
 
-    def partial_update(self, *args, **kwargs):
+    def partial_update(self):
         """Patch an item."""
         # TODO
         pass
 
-    def delete(self, *args, **kwargs):
+    def delete(self):
         """Delete an item."""
         identity = g.identity
         return (

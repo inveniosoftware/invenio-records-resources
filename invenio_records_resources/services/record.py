@@ -138,7 +138,7 @@ class RecordService(Service):
         # TODO: how do we deal with tombstone pages
         return self.resource_unit(pid=pid, record=record, links=links)
 
-    def search(self, querystring, identity, pagination=None, *args, **kwargs):
+    def search(self, querystring, identity, pagination=None):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
