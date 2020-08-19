@@ -185,15 +185,25 @@ class RecordSelfHtmlLinkBuilder(RecordLinkBuilder):
 
     def __init__(self, config):
         """Constructor."""
-        super(RecordSelfHtmlLinkBuilder, self).__init__(
-            key="self_html",
-            route=(
-                current_app.config.get("RECORDS_UI_ENDPOINTS", {})
-                .get("recid", {})
-                .get("route")
-            ),
-            action="read",
-            permission_policy=config.permission_policy_cls
+        self.key = "self_html"
+        self.action = "read"
+        self.permission_policy = config.permission_policy_cls
+
+    @property
+    def route(self):
+        """Returns the route.
+
+        Problem: `current_app.config` cannot be called in the constructor since
+                 constructor is called outside of an application context.
+        Temporary solution: call `current_app.config` only when `.route` is
+                            called since `.route` is only called in an
+                            application context.
+        TODO: Longer-term solution should be addressed by issue #67
+        """
+        return (
+            current_app.config.get("RECORDS_UI_ENDPOINTS", {})
+            .get("recid", {})
+            .get("route")
         )
 
 
