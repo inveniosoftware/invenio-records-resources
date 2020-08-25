@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 from flask import current_app
 
 from .pagination import PagedIndexes
-from .schemas.url_args import DEFAULT_MAX_RESULTS
+from .schemas.url_args import DEFAULT_MAX_RESULTS, SearchURLArgsSchemaV1
 
 
 def api_route(route):
@@ -38,32 +38,24 @@ class ResourceListLinks:
     def __init__(self, route, search_args):
         """Constructor."""
         self.route = route
-        self.search_args = search_args
+        self.search_args = SearchURLArgsSchemaV1().dump(search_args)
 
     def _api_search_url(self, querystring_seq):
         querystring = "?" + urlencode(querystring_seq)
         return base_url(path=self.route, querystring=querystring)
 
-    def _list_querystring(self, size, page, q=None):
-        """Returns ordered sequence of querystring arguments."""
+    def _ordered_querystring(self):
+        """Returns the ordered list of querystring key, values."""
         # NOTE: We order the querystring with the search query at the end,
         #       to make the URLs consistent and more easy to change
-        querystring_seq = [
-            ("size", size),
-            ("page", page),
+        return [
+            (k, self.search_args[k]) for k in ["size", "page", "sort", "q"]
+            if k in self.search_args and self.search_args[k]
         ]
-        if q:
-            querystring_seq.append(("q", q))
-
-        return querystring_seq
 
     def _links_self(self):
         """Return link to self."""
-        querystring_seq = self._list_querystring(
-            self.search_args["size"],
-            self.search_args["page"],
-            self.search_args["q"]
-        )
+        querystring_seq = self._ordered_querystring()
         return self._api_search_url(querystring_seq)
 
     def _links_prev(self):
@@ -76,10 +68,9 @@ class ResourceListLinks:
         prev_page = PagedIndexes(size, page, DEFAULT_MAX_RESULTS).prev_page()
 
         if prev_page:
-            querystring_seq = self._list_querystring(
-                size,
-                page - 1,
-                self.search_args["q"]
+            querystring_seq = self._ordered_querystring()
+            querystring_seq[1] = (
+                querystring_seq[1][0], querystring_seq[1][1] - 1
             )
             return self._api_search_url(querystring_seq)
         else:
@@ -95,10 +86,9 @@ class ResourceListLinks:
         next_page = PagedIndexes(size, page, DEFAULT_MAX_RESULTS).next_page()
 
         if next_page:
-            querystring_seq = self._list_querystring(
-                size,
-                page + 1,
-                self.search_args["q"]
+            querystring_seq = self._ordered_querystring()
+            querystring_seq[1] = (
+                querystring_seq[1][0], querystring_seq[1][1] + 1
             )
             return self._api_search_url(querystring_seq)
         else:

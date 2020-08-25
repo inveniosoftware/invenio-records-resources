@@ -33,7 +33,7 @@ def identity_no_need():
 
 def test_record_links(app, identity_simple, input_service_data, es):
     record_service = RecordService()
-    record_unit = record_service.create(input_service_data, identity_simple)
+    record_unit = record_service.create(identity_simple, input_service_data)
     pid_value = record_unit.id
 
     # NOTE: We are testing linker.links() as opposed to record_unit.links
@@ -55,7 +55,7 @@ def test_record_links(app, identity_simple, input_service_data, es):
 def test_permission_record_links(
         app, identity_no_need, identity_simple, input_service_data, es):
     record_service = RecordService()
-    record_unit = record_service.create(input_service_data, identity_simple)
+    record_unit = record_service.create(identity_simple, input_service_data)
     pid_value = record_unit.id
 
     links = record_service.linker.links(

@@ -1,8 +1,12 @@
 {
   "mappings": {
+    "date_detection": false,
     "properties": {
       "title": {
         "type": "text"
+      },
+      "_created": {
+        "type": "date"
       }
     }
   }
