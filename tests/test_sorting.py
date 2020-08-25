@@ -13,25 +13,16 @@ import time
 from copy import deepcopy
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
 from invenio_search import current_search
 
 from invenio_records_resources.services import RecordService
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
-# 2 things to test
+# 3 things to test
+# 0- search options are configurable (see conftest.py)
 # 1- results are sorted
 # 2- links are generated
-
-
-@pytest.fixture("module")
-def identity_simple():
-    """Simple identity fixture."""
-    i = Identity(1)
-    i.provides.add(UserNeed(1))
-    i.provides.add(Need(method='system_role', value='any_user'))
-    return i
 
 
 @pytest.fixture("module")
@@ -77,50 +68,52 @@ def test_default_sorting_if_query(client, three_indexed_records):
         assert three_indexed_records[i].id == hit["pid"]
 
 
-# def test_explicit_sort(client, three_indexed_records):
-#     response = client.get("/records?sort=mostrecent", headers=HEADERS)
+def test_explicit_sort(client, three_indexed_records):
+    response = client.get("/records?sort=mostrecent", headers=HEADERS)
 
-#     assert response.json['hits']['hits'][0] == 1
-#     assert response.json['hits']['hits'][1] == 2
-#     assert response.json['hits']['hits'][2] == 3
-""
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[2-i].id == hit["pid"]
 
-# def test_explicit_sort_reversed(client, three_indexed_records):
-#     response = client.get("/records?sort=-mostrecent", headers=HEADERS)
 
-#     assert response.json['hits']['hits'][0] == 1
-#     assert response.json['hits']['hits'][1] == 2
-#     assert response.json['hits']['hits'][2] == 3
+def test_explicit_sort_reversed(client, three_indexed_records):
+    response = client.get("/records?sort=-mostrecent", headers=HEADERS)
 
-# configuration
-# def test_sort_by_callable_field()
-# mostviewed=dict(
-#             fields=['-_stats.version_views'],
-#             title='Most viewed',
-#             default_order='asc',
-#             order=1,
-#         ),
-# def test_sort_by_multiple_fields()
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[i].id == hit["pid"]
 
-# def test_search_configuration(client, three_indexed_records):
-# app.config["RECORDS_REST_SORT_OPTIONS"] = dict(
-#     myindex=dict(
-#         myfield=dict(
-#             fields=['field1', '-field2'],
-#         )
-#     ),
-# )
-# app.config["RECORDS_REST_DEFAULT_SORT"] = dict(
-#     myindex=dict(
-#         query='-myfield',
-#         noquery='myfield',
-#     ),
-# )
+
+def test_explicit_sort_callable_search_options_field(
+        client, three_indexed_records):
+    # NOTE: callable_baz expects the equivalent of -mostrecent ordering
+    response = client.get("/records?sort=callable_baz", headers=HEADERS)
+
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[i].id == hit["pid"]
+
+    response = client.get("/records?sort=-callable_baz", headers=HEADERS)
+
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[2-i].id == hit["pid"]
+
+
+def test_explicit_sort_dict_search_options_field(
+        client, three_indexed_records):
+    # NOTE: dict_baz expects the equivalent of -mostrecent ordering
+    response = client.get("/records?sort=dict_baz", headers=HEADERS)
+
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[i].id == hit["pid"]
+
+    response = client.get("/records?sort=-dict_baz", headers=HEADERS)
+
+    for i, hit in enumerate(response.json['hits']['hits']):
+        assert three_indexed_records[2-i].id == hit["pid"]
 
 
 #
 # 3- links are generated
 #
+
 
 def test_sort_in_links_if_and_only_if_sort_in_url(
         client, three_indexed_records):

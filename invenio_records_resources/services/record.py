@@ -50,7 +50,7 @@ class RecordServiceConfig(ServiceConfig):
     search_sort_options = dict(
         bestmatch=dict(
             title=_('Best match'),
-            fields=['_score'],
+            fields=['-_score'],
             # default_order='desc',
             # order=1,
             default_if_query=True,

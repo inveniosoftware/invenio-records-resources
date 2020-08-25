@@ -17,6 +17,7 @@ from datetime import date
 
 import pytest
 from flask import Flask
+from flask_principal import Identity, Need, UserNeed
 from flask_resources.errors import handle_http_exception
 from flask_security.utils import hash_password
 from invenio_access.models import ActionUsers
@@ -121,13 +122,40 @@ def base_app(base_app):
     yield base_app
 
 
+def mycallable(reverse):
+    """Callable search option field."""
+    return {'_created': {'order': 'desc' if reverse else 'asc'}}
+
+
 @pytest.fixture(scope="module")
-def app(app):
+def record_service_config():
+    """Configuration for the RecordService used in tests fixture."""
+
+    class CustomRecordServiceConfig(RecordServiceConfig):
+        """Custom RecordService configuration for tests."""
+
+        permission_policy_cls = AnyUserPermissionPolicy
+        search_cls = TestSearch
+        search_sort_options = {
+            **RecordServiceConfig.search_sort_options,
+            'callable_baz': {
+                'title': 'Most callable baz',
+                'fields': [mycallable],
+            },
+            'dict_baz': {
+                'title': 'Most dict baz',
+                'fields': [{'_created': {'order': 'asc', 'mode': 'avg'}}],
+            }
+        }
+    return CustomRecordServiceConfig
+
+
+@pytest.fixture(scope="module")
+def app(app, record_service_config):
     """Application factory fixture."""
-    RecordServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
-    RecordServiceConfig.search_cls = TestSearch
-    # NOTE: Because the above is a "global" change, it is picked up by
-    #       RecordService() which already uses RecordServiceConfig
+    # NOTE: Because this is a "global" change, it is picked up by
+    #       any RecordService() call with the `app` fixture
+    RecordService.default_config = record_service_config
     custom_bp = (
         RecordResource(service=RecordService()).as_blueprint("base_resource")
     )
@@ -164,3 +192,12 @@ def users(app, db):
         'user1': dump_user(user1),
         'user2': dump_user(user2)
     }
+
+
+@pytest.fixture("module")
+def identity_simple():
+    """Simple identity fixture."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(Need(method='system_role', value='any_user'))
+    return i
