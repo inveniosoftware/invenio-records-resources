@@ -9,6 +9,7 @@
 
 """Record Service API."""
 
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore import current_pidstore
@@ -43,8 +44,26 @@ class RecordServiceConfig(ServiceConfig):
     resolver_pid_type = "recid"  # PID type for resolver and fetch
     minter_pid_type = "recid_v2"
     indexer_cls = RecordIndexer
+
     search_cls = RecordsSearch
     search_engine_cls = SearchEngine
+    search_sort_options = dict(
+        bestmatch=dict(
+            title=_('Best match'),
+            fields=['_score'],
+            # default_order='desc',
+            # order=1,
+            default_if_query=True,
+        ),
+        mostrecent=dict(
+            title=_('Most recent'),
+            fields=['-_created'],
+            # default_order='asc',
+            # order=2,
+            default_if_no_query=True,
+        ),
+    )
+
     # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
 
@@ -109,7 +128,14 @@ class RecordService(Service):
     @property
     def search_engine(self):
         """Factory for creating a search instance."""
-        return self.config.search_engine_cls(self.config.search_cls)
+        # This might grow over time
+        options = {
+            "sorting": self.config.search_sort_options
+        }
+        return self.config.search_engine_cls(
+            self.config.search_cls,
+            options=options
+        )
 
     @property
     def data_validator(self):
@@ -128,7 +154,7 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def read(self, id_, identity):
+    def read(self, identity, id_):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
@@ -138,10 +164,17 @@ class RecordService(Service):
         # TODO: how do we deal with tombstone pages
         return self.resource_unit(pid=pid, record=record, links=links)
 
-    def search(self, querystring, identity, pagination=None):
+    def search(self, identity, querystring, pagination=None, sorting=None):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
+
+        # Pagination
+        pagination = pagination or {}
+
+        # Sorting
+        sorting = sorting or {}
+        sorting["has_q"] = True if querystring else False
 
         # Add search arguments
         extras = {}
@@ -152,6 +185,7 @@ class RecordService(Service):
         query = self.search_engine.parse_query(querystring)
         search_result = self.search_engine.search_arguments(
             pagination=pagination,
+            sorting=sorting,
             extras=extras
         ).execute_search(query)
 
@@ -176,7 +210,7 @@ class RecordService(Service):
 
         aggregations = search_result.aggregations.to_dict()
 
-        search_args = dict(q=querystring, **pagination)
+        search_args = dict(q=querystring, **pagination, **sorting)
         links = self.linker.links(
             "record_search", identity, search_args=search_args
         )
@@ -185,17 +219,17 @@ class RecordService(Service):
             record_list, total, aggregations, links
         )
 
-    def create(self, data, identity):
+    def create(self, identity, data):
         """Create a record."""
         self.require_permission(identity, "create")
         data = self.data_validator.validate(data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
-        # Create record state
         links = self.linker.links(
             "record", identity, pid_value=pid.pid_value, record=record
         )
 
+        # Create record state
         record_state = self.resource_unit(pid=pid, record=record, links=links)
         db.session.commit()  # Persist DB
         # Index the record
@@ -204,7 +238,7 @@ class RecordService(Service):
 
         return record_state
 
-    def delete(self, id_, identity):
+    def delete(self, identity, id_):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
 
@@ -223,7 +257,7 @@ class RecordService(Service):
 
         # TODO: Shall it return true/false? The tombstone page?
 
-    def update(self, id_, data, identity):
+    def update(self, identity, id_, data):
         """Replace a record."""
         # TODO: etag and versioning
         pid, record = self.resolve(id_)

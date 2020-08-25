@@ -46,7 +46,7 @@ def three_indexed_records(app, input_service_data, identity_simple, es):
     for i in range(3):
         data = deepcopy(input_service_data)
         data["title"] += f" {i}"
-        record_service.create(data, identity_simple)
+        record_service.create(identity_simple, data)
         current_search.flush_and_refresh(search_class.Meta.index)
 
 

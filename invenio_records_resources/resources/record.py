@@ -34,13 +34,19 @@ class RecordResource(CollectionResource):
     def search(self):
         """Perform a search over the items."""
         identity = g.identity
-        querystring = resource_requestctx.request_args.pop("q", "")
-        pagination = resource_requestctx.request_args
+        request_args = resource_requestctx.request_args
+        querystring = request_args.pop("q", "")
+        sorting = {
+            k: request_args.pop(k) for k in ["sort_by", "ascending"]
+            if k in request_args
+        }
+        pagination = request_args
 
         record_search = self.service.search(
-            querystring=querystring,
             identity=identity,
+            querystring=querystring,
             pagination=pagination,
+            sorting=sorting,
         )
 
         return record_search, 200
@@ -49,7 +55,7 @@ class RecordResource(CollectionResource):
         """Create an item."""
         data = resource_requestctx.request_content
         identity = g.identity
-        return self.service.create(data, identity), 201
+        return self.service.create(identity, data), 201
 
     def read(self):
         """Read an item."""
