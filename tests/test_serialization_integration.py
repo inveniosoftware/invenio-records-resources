@@ -37,16 +37,16 @@ class CustomRecordResourceConfig(RecordResourceConfig):
     }
 
 
-class CustomRecordServiceConfig(RecordServiceConfig):
-    """Custom record resource config."""
-
-    item_route = CustomRecordResourceConfig.item_route
-    list_route = CustomRecordResourceConfig.list_route
-
-
 @pytest.fixture(scope="module")
-def app(app):
+def app(app, record_service_config):
     """Application factory fixture."""
+
+    class CustomRecordServiceConfig(record_service_config):
+        """Custom record resource config."""
+
+        item_route = CustomRecordResourceConfig.item_route
+        list_route = CustomRecordResourceConfig.list_route
+
     resource = RecordResource(
         config=CustomRecordResourceConfig,
         service=RecordService(CustomRecordServiceConfig)

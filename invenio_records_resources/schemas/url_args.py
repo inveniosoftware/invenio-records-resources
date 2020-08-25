@@ -51,59 +51,30 @@ class SortURLArgsSchemaV1(Schema):
     sort_by = fields.Method(
         data_key="sort", serialize="unload_sort", deserialize="load_sort_by"
     )
-    ascending = fields.Method(
-        data_key="sort", load_only=True, deserialize="load_ascending"
+    reverse = fields.Method(
+        data_key="sort", load_only=True, deserialize="load_reverse"
     )
 
     def load_sort_by(self, data):
-        """Loads 'sort_by' field from "sort" string.
+        """Deserializes 'sort_by' field from "sort" string.
 
         :param data: Field value (e.g. 'key' or '-key').
         :returns: 'key'
         """
-        if data.startswith("-"):
-            return data[1:]
-        return data
+        return data[1:] if data.startswith("-") else data
 
-    def load_ascending(self, data):
-        """Loads 'ascending' field from "sort" string.
+    def load_reverse(self, data):
+        """Deserializes 'reverse' field from "sort" string.
 
         :param data: Field value (e.g. 'key' or '-key').
         :returns: False if '-key' else True
         """
-        if data.startswith("-"):
-            return False
-        return True
+        return data.startswith("-")
 
     def unload_sort(self, obj):
-        """Serialize 'sort' field from 'sort_by' and 'ascending' fields."""
-        prefix = "-" if not obj.get("ascending", True) else ""
+        """Serialize 'sort' field from 'sort_by' and 'reverse' fields."""
+        prefix = "-" if obj.get("reverse", False) else ""
         return prefix + obj.get("sort_by", "")
-
-    # sort_arg_name = 'sort'
-    # urlfield = request.values.get(sort_arg_name, '', type=str)
-
-    # # Get default sorting if sort is not specified.
-    # if not urlfield:
-    #     # cast to six.text_type to handle unicodes in Python 2
-    #     has_query = request.values.get('q', type=six.text_type)
-    #     urlfield = current_app.config['RECORDS_REST_DEFAULT_SORT'].get(
-    #         index, {}).get('query' if has_query else 'noquery', '')
-
-    # # Parse sort argument
-    # key, asc = parse_sort_field(urlfield)
-
-    # # Get sort options
-    # sort_options = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
-    #     index, {}).get(key)
-    # if sort_options is None:
-    #     return (search, {})
-
-    # # Get fields to sort query by
-    # search = search.sort(
-    #     *[eval_field(f, asc) for f in sort_options['fields']]
-    # )
-    # return (search, {sort_arg_name: urlfield})
 
 
 class SearchURLArgsSchemaV1(PaginationURLArgsSchemaV1, SortURLArgsSchemaV1):

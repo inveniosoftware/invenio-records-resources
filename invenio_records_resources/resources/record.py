@@ -37,7 +37,7 @@ class RecordResource(CollectionResource):
         request_args = resource_requestctx.request_args
         querystring = request_args.pop("q", "")
         sorting = {
-            k: request_args.pop(k) for k in ["sort_by", "ascending"]
+            k: request_args.pop(k) for k in ["sort_by", "reverse"]
             if k in request_args
         }
         pagination = request_args

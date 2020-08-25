@@ -9,29 +9,37 @@
 
 """Search engine."""
 
+import copy
+
 from .query import QueryInterpreter
 
 
-def eval_field(field, asc):
+def eval_field(field, reverse):
     """Evaluate a field for sorting purpose.
 
-    :param field: Field definition (string, dict or callable).
-    :param asc: ``True`` if order is ascending, ``False`` if descending.
+    :param field: Field definition (dict, callable, or string).
+    :param reverse: ``True`` if order should be reversed, ``False`` otherwise.
     :returns: Dictionary with the sort field query.
     """
-    # if isinstance(field, dict):
-    #     if asc:
-    #         return field
-    #     else:
-    #         # Field should only have one key and must have an order subkey.
-    #         field = copy.deepcopy(field)
-    #         key = list(field.keys())[0]
-    #         field[key]['order'] = reverse_order(field[key]['order'])
-    #         return field
-    # elif callable(field):
-    #     return field(asc)
-    # else:
-    return field
+    if isinstance(field, dict):
+        if not reverse:
+            return field
+        else:
+            # Field should only have one key and must have an order subkey.
+            field = copy.deepcopy(field)
+            key = list(field.keys())[0]
+            order = field[key]['order']
+            field[key]['order'] = 'desc' if order == 'asc' else 'asc'
+            return field
+    if callable(field):
+        return field(reverse)
+    else:
+        if field.startswith("-"):
+            key, ascending = field[1:], False
+        else:
+            key, ascending = field, True
+        ascending = not ascending if reverse else ascending
+        return {key: {'order': 'asc' if ascending else 'desc'}}
 
 
 class SearchEngine():
@@ -63,7 +71,7 @@ class SearchEngine():
         if sorting:
             sort_by_options = self.get_sort_by_options(sorting)
             sort_args = [
-                eval_field(f, sorting.get("ascending"))
+                eval_field(f, sorting.get("reverse"))
                 for f in sort_by_options.get('fields', [])
             ]
             self.search = self.search.sort(*sort_args)
