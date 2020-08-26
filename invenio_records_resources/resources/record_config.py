@@ -26,8 +26,6 @@ from ..services.errors import InvalidQueryError, PermissionDeniedError
 class RecordResourceConfig(ResourceConfig):
     """Record resource config."""
 
-    # NOTE: These are defaults. They are superseded by config.py's
-    # RECORDS_RESOURCES_ROUTES
     item_route = "/records/<pid_value>"
     list_route = "/records"
 

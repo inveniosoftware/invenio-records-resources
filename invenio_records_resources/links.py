@@ -210,6 +210,19 @@ class RecordDeleteLinkBuilder(RecordLinkBuilder):
         )
 
 
+class RecordFilesLinkBuilder(RecordLinkBuilder):
+    """Builds record "files" link."""
+
+    def __init__(self, config):
+        """Constructor."""
+        super(RecordFilesLinkBuilder, self).__init__(
+            key="files",
+            route=api_route(config.record_files_route),
+            action="read_files",
+            permission_policy=config.permission_policy_cls
+        )
+
+
 class RecordSearchLinkBuilder(RecordLinkBuilder):
     """Builds the search links."""
 

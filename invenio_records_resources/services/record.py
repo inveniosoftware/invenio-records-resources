@@ -19,8 +19,9 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ..config import lt_es7
-from ..links import Linker, RecordDeleteLinkBuilder, RecordSearchLinkBuilder, \
-    RecordSelfHtmlLinkBuilder, RecordSelfLinkBuilder
+from ..links import Linker, RecordDeleteLinkBuilder, RecordFilesLinkBuilder, \
+    RecordSearchLinkBuilder, RecordSelfHtmlLinkBuilder, \
+    RecordSelfLinkBuilder
 from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from ..resources.record_config import RecordResourceConfig
 from .data_validator import MarshmallowDataValidator
@@ -51,15 +52,11 @@ class RecordServiceConfig(ServiceConfig):
         bestmatch=dict(
             title=_('Best match'),
             fields=['-_score'],
-            # default_order='desc',
-            # order=1,
             default_if_query=True,
         ),
         mostrecent=dict(
             title=_('Most recent'),
             fields=['-_created'],
-            # default_order='asc',
-            # order=2,
             default_if_no_query=True,
         ),
     )
@@ -71,10 +68,12 @@ class RecordServiceConfig(ServiceConfig):
     #       configured routes to be picked up by the link builders at runtime
     record_route = RecordResourceConfig.item_route
     record_search_route = RecordResourceConfig.list_route
+    record_files_route = RecordResourceConfig.item_route + "/files"
     record_link_builders = [
         RecordSelfLinkBuilder,
         RecordSelfHtmlLinkBuilder,
-        RecordDeleteLinkBuilder
+        RecordDeleteLinkBuilder,
+        RecordFilesLinkBuilder,
     ]
     record_search_link_builders = [
         RecordSearchLinkBuilder
