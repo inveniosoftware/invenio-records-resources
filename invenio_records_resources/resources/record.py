@@ -12,6 +12,7 @@
 from flask import current_app, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
+from invenio_base.utils import load_or_import_from_config
 
 from ..services import RecordService
 from .record_config import RecordResourceConfig
@@ -20,12 +21,18 @@ from .record_config import RecordResourceConfig
 class RecordResource(CollectionResource):
     """Record resource."""
 
+    config_name = None  # Must be filled with str by concrete subclasses
     default_config = RecordResourceConfig
 
-    def __init__(self, service=None, *args, **kwargs):
+    def __init__(self, config=None, service=None):
         """Constructor."""
-        # NOTE: This constructor picks up self.default_config above
-        super(RecordResource, self).__init__(*args, **kwargs)
+        config = (
+            config or
+            load_or_import_from_config(
+                self.config_name, default=self.default_config
+            )
+        )
+        super(RecordResource, self).__init__(config=config)
         self.service = service or RecordService()
 
     #

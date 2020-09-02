@@ -9,6 +9,7 @@
 
 """Service API."""
 
+from invenio_base.utils import load_or_import_from_config
 from invenio_records_permissions.policies import BasePermissionPolicy
 
 from .errors import PermissionDeniedError
@@ -27,10 +28,16 @@ class Service:
     """Service interface."""
 
     default_config = ServiceConfig
+    config_name = None  # Must be filled with str by concrete subclasses
 
     def __init__(self, config=None):
         """Constructor."""
-        self.config = config or self.default_config
+        self.config = (
+            config or
+            load_or_import_from_config(
+                self.config_name, default=self.default_config
+            )
+        )
 
     #
     # Permissions checking
