@@ -20,8 +20,7 @@ from invenio_search import RecordsSearch
 
 from ..config import lt_es7
 from ..links import Linker, RecordDeleteLinkBuilder, RecordFilesLinkBuilder, \
-    RecordSearchLinkBuilder, RecordSelfHtmlLinkBuilder, \
-    RecordSelfLinkBuilder
+    RecordSearchLinkBuilder, RecordSelfLinkBuilder
 from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from ..resources.record_config import RecordResourceConfig
 from .data_validator import MarshmallowDataValidator
@@ -71,7 +70,6 @@ class RecordServiceConfig(ServiceConfig):
     record_files_route = RecordResourceConfig.item_route + "/files"
     record_link_builders = [
         RecordSelfLinkBuilder,
-        RecordSelfHtmlLinkBuilder,
         RecordDeleteLinkBuilder,
         RecordFilesLinkBuilder,
     ]
