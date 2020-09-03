@@ -46,7 +46,6 @@ def test_record_links(app, identity_simple, input_service_data, es):
 
     expected_links = {
         "self": f"https://localhost:5000/api/records/{pid_value}",
-        "self_html": f"https://localhost:5000/records/{pid_value}",
         "delete": f"https://localhost:5000/api/records/{pid_value}",
         # NOTE: Generate the link even if no file(s) for now
         "files": f"https://localhost:5000/api/records/{pid_value}/files",
