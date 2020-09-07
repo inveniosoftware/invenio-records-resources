@@ -25,6 +25,8 @@ from ..links import Linker, RecordDeleteLinkBuilder, RecordFilesLinkBuilder, \
     RecordSearchLinkBuilder, RecordSelfLinkBuilder
 from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from ..resources.record_config import RecordResourceConfig
+from .components import AccessComponent, FilesComponent, MetadataComponent, \
+    PIDSComponent
 from .data_validator import MarshmallowDataValidator
 from .search import SearchEngine
 from .search.serializers import es_to_record
@@ -78,6 +80,13 @@ class RecordServiceConfig(ServiceConfig):
     ]
     record_search_link_builders = [
         RecordSearchLinkBuilder
+    ]
+
+    components = [
+        MetadataComponent,
+        PIDSComponent,
+        AccessComponent,
+        FilesComponent,
     ]
 
 
@@ -153,6 +162,12 @@ class RecordService(Service):
         context.setdefault('field_permission_policy', field_permission_policy)
         context.setdefault('identity', identity)
         return self.config.data_schema(context=context)
+
+    @property
+    def components(self):
+        """Return initialized service components."""
+        return (c(self) for c in self.config.components)
+
     @property
     def record_cls(self):
         """Factory for creating a record class."""
@@ -169,6 +184,12 @@ class RecordService(Service):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'read'):
+                component.read(record, identity)
+
         record_projection = self.data_schema(
             identity=identity, pid=pid, record=record).dump(record)
         links = self.linker.links(
@@ -196,6 +217,19 @@ class RecordService(Service):
 
         # Parse query and execute search
         query = self.search_engine.parse_query(querystring)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'search'):
+                # TODO (Alex): also parse and pass request data here...this has
+                # to happen in the resource-level though filters, facets, etc.
+                query = component.search(
+                    query, identity,
+                    querystring=querystring,
+                    pagination=pagination,
+                    sorting=sorting,
+                )
+
         search_result = self.search_engine.search_arguments(
             pagination=pagination,
             sorting=sorting,
@@ -243,12 +277,12 @@ class RecordService(Service):
         data = self.data_schema(identity=identity).load(data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
-        links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record
-        )
 
-        # Create record state
-        record_state = self.resource_unit(pid=pid, record=record, links=links)
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'create'):
+                component.create(record, identity, data)
+
         db.session.commit()  # Persist DB
         # Index the record
         if self.indexer:
@@ -272,6 +306,11 @@ class RecordService(Service):
         # Permissions
         self.require_permission(identity, "delete", record=record)
 
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'delete'):
+                component.delete(record, identity)
+
         record.delete()
         pid.delete()
 
@@ -290,7 +329,12 @@ class RecordService(Service):
         self.require_permission(identity, "update", record=record)
         data = self.data_schema(identity=identity, pid=pid, record=record).load(data)
 
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'update'):
+                component.update(record, identity, data)
 
+        # TODO: Change once system fields and `Record.clean_none()` are there
         record.clear()
         record.update(data)
         record.commit()
