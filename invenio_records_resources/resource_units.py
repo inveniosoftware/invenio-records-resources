@@ -13,12 +13,13 @@
 class IdentifiedRecord:
     """Resource unit representing pid + Record data clump."""
 
-    def __init__(self, pid, record, links):
+    def __init__(self, pid, record, links, errors=None):
         """Constructor."""
         self.id = pid.pid_value
         self.pids = [pid]
         self.record = record
         self.links = links
+        self.errors = errors
 
     def is_revision(self, revision_id):
         """Check if record is in a specific revision."""
@@ -28,7 +29,7 @@ class IdentifiedRecord:
 class IdentifiedRecords:
     """Resource list representing the result of an IdentifiedRecord search."""
 
-    def __init__(self, records, total, aggregations, links):
+    def __init__(self, records, total, aggregations, links, errors=None):
         """Constructor.
 
         :params records: iterable of records
@@ -40,6 +41,7 @@ class IdentifiedRecords:
         self.total = total
         self.aggregations = aggregations
         self.links = links
+        self.errors = errors
 
 
 class TombstoneState(IdentifiedRecord):
