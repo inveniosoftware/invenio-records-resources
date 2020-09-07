@@ -27,7 +27,6 @@ class RecordJSONSerializer(SerializerMixin):
         record = record_state.record
         record_dict = dict(
             pid=pid,
-            metadata=record.dumps(),
             revision=record.revision_id,
             created=(
                 pytz.utc.localize(record.created).isoformat()
@@ -39,7 +38,10 @@ class RecordJSONSerializer(SerializerMixin):
                 if record.updated and not record.updated.tzinfo
                 else None
             ),
-            links=record_state.links
+            links=record_state.links,
+            # NOTE: since "metadata", "files", etc. are namespaced keys,
+            # we just dump them like this...
+            **record.dumps(),
         )
 
         return record_dict

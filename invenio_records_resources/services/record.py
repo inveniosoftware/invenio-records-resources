@@ -9,6 +9,8 @@
 
 """Record Service API."""
 
+from functools import partial
+
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
@@ -62,6 +64,7 @@ class RecordServiceConfig(ServiceConfig):
 
     # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
+    data_schema = None
 
     # NOTE: Configuring routes here, allows their configuration and the
     #       configured routes to be picked up by the link builders at runtime
@@ -139,6 +142,17 @@ class RecordService(Service):
         """Returns the data validator instance."""
         return self.config.data_validator  # Already an instance
 
+    def data_schema(self, identity=None, **context):
+        """Service data schema."""
+        # NOTE: Bind context to the permission policy to allow doing:
+        #   field_permission_policy('read').allows(identity)
+        field_permission_policy = partial(
+            self.config.permission_policy_cls,
+            **context,
+        )
+        context.setdefault('field_permission_policy', field_permission_policy)
+        context.setdefault('identity', identity)
+        return self.config.data_schema(context=context)
     @property
     def record_cls(self):
         """Factory for creating a record class."""
@@ -155,11 +169,13 @@ class RecordService(Service):
         """Retrieve a record."""
         pid, record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
+        record_projection = self.data_schema(
+            identity=identity, pid=pid, record=record).dump(record)
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record
+            "record", identity, pid_value=pid.pid_value, record=record_projection
         )
         # TODO: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=record, links=links)
+        return self.resource_unit(pid=pid, record=record_projection, links=links)
 
     def search(self, identity, querystring, pagination=None, sorting=None):
         """Search for records matching the querystring."""
@@ -190,8 +206,13 @@ class RecordService(Service):
         record_list = []
         for hit in search_result["hits"]["hits"]:
             # hit is ES AttrDict
+            # TODO: Replace with `self.record_cls.load(cls=ESLoader)`
             record = es_to_record(hit.to_dict(), self.record_cls)
             pid = self.fetcher(data=record, record_uuid=None)
+            # TODO: Since `RecordJSONSerializer._process_record` expects a
+            # proper record class, we can't just dump and pass a projection...
+            # record_projection = self.data_schema(
+            #     identity=identity, pid=pid, record=record).dump(record)
             links = self.linker.links(
                 "record", identity, pid_value=pid.pid_value, record=record
             )
@@ -219,7 +240,7 @@ class RecordService(Service):
     def create(self, identity, data):
         """Create a record."""
         self.require_permission(identity, "create")
-        data = self.data_validator.validate(data)
+        data = self.data_schema(identity=identity).load(data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
         links = self.linker.links(
@@ -233,7 +254,14 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        return record_state
+        # Create record state
+        # TODO (Alex): see how to replace resource unit
+        record_projection = self.data_schema(identity=identity, pid=pid, record=record).dump(record)
+        links = self.linker.links(
+            "record", identity, pid_value=pid.pid_value, record=record_projection
+        )
+
+        return self.resource_unit(pid=pid, record=record_projection, links=links)
 
     def delete(self, identity, id_):
         """Delete a record from database and search indexes."""
@@ -260,7 +288,8 @@ class RecordService(Service):
         pid, record = self.resolve(id_)
         # Permissions
         self.require_permission(identity, "update", record=record)
-        # TODO: Data validation
+        data = self.data_schema(identity=identity, pid=pid, record=record).load(data)
+
 
         record.clear()
         record.update(data)
@@ -270,8 +299,9 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
+        record_projection = self.data_schema(identity=identity, pid=pid, record=record).dump(record)
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record
+            "record", identity, pid_value=pid.pid_value, record=record_projection
         )
 
-        return self.resource_unit(pid=pid, record=record, links=links)
+        return self.resource_unit(pid=pid, record=record_projection, links=links)
