@@ -6,8 +6,8 @@
 # Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
-pydocstyle invenio_records_resources tests docs && \
-isort invenio_records_resources tests --check-only --diff && \
-check-manifest --ignore ".travis-*" && \
-sphinx-build -qnNW docs docs/_build/html && \
-pytest
+python -m pydocstyle invenio_records_resources tests docs && \
+python -m isort invenio_records_resources tests --check-only --diff && \
+python -m check_manifest --ignore ".travis-*" && \
+python -m sphinx.cmd.build -qnNW docs docs/_build/html && \
+python -m pytest
