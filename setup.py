@@ -66,7 +66,7 @@ install_requires = [
     "invenio-indexer>=1.1.1",
     "invenio-pidstore>=1.2.0",
     "invenio-records-permissions>=0.9.0,<1.0.0",
-    "invenio-records>=1.3.2",
+    "invenio-records>=1.4.0.dev0",
     "invenio-rest>=1.2.1",
     "xmltodict~=0.12.0",
 ]
