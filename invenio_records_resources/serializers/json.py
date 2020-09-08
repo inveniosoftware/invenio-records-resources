@@ -62,6 +62,7 @@ class RecordJSONSerializer(SerializerMixin):
 
         :param: obj_list a IdentifiedRecords object
         """
+        # TODO: This should also preferably also be just a json.dumps()
         serialized_content = {
             "hits": {
                 "hits": [
