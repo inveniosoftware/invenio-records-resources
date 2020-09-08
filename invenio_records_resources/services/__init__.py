@@ -8,19 +8,19 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
-from .data_validator import DataValidator, MarshmallowDataValidator
+from .data_schema import DataSchema, MarshmallowDataSchema
 from .file import FileService, FileServiceConfig
 from .file_metadata import FileMetadataService, FileMetadataServiceConfig
 from .record import RecordService, RecordServiceConfig
 from .service import Service, ServiceConfig
 
 __all__ = (
-    "DataValidator",
+    "DataSchema",
     "FileMetadataService",
     "FileMetadataServiceConfig",
     "FileService",
     "FileServiceConfig",
-    "MarshmallowDataValidator",
+    "MarshmallowDataSchema",
     "RecordService",
     "RecordServiceConfig",
     "Service",
