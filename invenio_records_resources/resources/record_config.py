@@ -9,6 +9,8 @@
 
 """Record Resource Configuration."""
 
+# TODO: rename file to config.py
+
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import ArgsParser
 from flask_resources.resources import ResourceConfig
