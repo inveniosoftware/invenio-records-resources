@@ -7,6 +7,7 @@
 # details.
 
 """Invenio Resources module to create REST APIs."""
+
 from flask import make_response
 from flask_resources.context import resource_requestctx
 from flask_resources.responses import Response
