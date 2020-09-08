@@ -6,7 +6,7 @@
 # Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
-"""Invenio Resources module to create REST APIs"""
+"""Invenio Resources module to create REST APIs."""
 
 import os
 
@@ -16,16 +16,16 @@ readme = open("README.rst").read()
 history = open("CHANGES.rst").read()
 
 tests_require = [
-    "pytest-invenio>=1.3.2",
+    "pytest-invenio>=1.3.3",
     "invenio-app>=1.3.0",
 ]
 
 # Should follow inveniosoftware/invenio versions
-invenio_search_version = '>=1.2.0,<2.0.0'
-invenio_db_version = '>=1.0.4,<2.0.0'
+invenio_search_version = '>=1.3.0,<2.0.0'
+invenio_db_version = '>=1.0.5,<2.0.0'
 
 extras_require = {
-    "docs": ["Sphinx>=1.5.1,<3"],
+    "docs": ["Sphinx>=2.4,<3"],
     # Elasticsearch version
     'elasticsearch6': [
         'invenio-search[elasticsearch6]{}'.format(invenio_search_version),
@@ -54,22 +54,20 @@ for key, reqs in extras_require.items():
 extras_require["all"] = all_requires
 
 setup_requires = [
-    "Babel>=1.3",
-    "pytest-runner>=3.0.0,<5",
+    "Babel>=2.8",
 ]
 
 install_requires = [
-    "Flask-BabelEx>=0.9.4",
+    "flask-resources>=0.2.1,<1.0.0",
+    "invenio-accounts>=1.3.0",
     "invenio-base>=1.2.3",
-    "invenio-pidstore>=1.2.0",
+    "invenio-files-rest>=1.2.0",
+    "invenio-i18n>=1.2.0",
     "invenio-indexer>=1.1.1",
+    "invenio-pidstore>=1.2.0",
+    "invenio-records-permissions>=0.9.0,<1.0.0",
     "invenio-records>=1.3.2",
     "invenio-rest>=1.2.1",
-    "flask-resources>=0.2.1,<1.0.0",
-    # Service
-    "invenio-accounts>=1.3.0",
-    "invenio-files-rest>=1.2.0",
-    "invenio-records-permissions>=0.9.0,<1.0.0",
     "xmltodict~=0.12.0",
 ]
 
@@ -87,7 +85,7 @@ setup(
     version=version,
     description=__doc__,
     long_description=readme + "\n\n" + history,
-    keywords="invenio TODO",
+    keywords="invenio records rest apis",
     license="MIT",
     author="CERN",
     author_email="info@inveniosoftware.org",
@@ -98,15 +96,18 @@ setup(
     platforms="any",
     entry_points={
         "invenio_base.apps": [
-            "invenio_records_resources = invenio_records_resources:InvenioRecordsResources",
+            "invenio_records_resources = "
+            "invenio_records_resources:InvenioRecordsResources",
         ],
         "invenio_base.api_apps": [
-            "invenio_records_resources = invenio_records_resources:InvenioRecordsResources",
+            "invenio_records_resources = "
+            "invenio_records_resources:InvenioRecordsResources",
         ],
         'invenio_config.module': [
             'invenio_records_resources = invenio_records_resources.config',
         ],
-        "invenio_i18n.translations": ["messages = invenio_records_resources",],
+        "invenio_i18n.translations": [
+            "messages = invenio_records_resources", ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
@@ -124,6 +125,6 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
-        "Development Status :: 1 - Planning",
+        "Development Status :: 3 - Alpha",
     ],
 )
