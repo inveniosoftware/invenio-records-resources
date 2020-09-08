@@ -12,38 +12,43 @@
 class ServiceComponent:
     """Base service component."""
 
-    schema = None
+    def __init__(self, service, *args, **kwargs):
+        """Constructor."""
+        self.service = service
 
-    def __init__(self, service):
+    def create(self, identity, **kwargs):
+        """Create handler."""
         pass
 
-    def create(self, record, identity, data):
+    def read(self, identity, **kwargs):
+        """Read handler."""
         pass
 
-    # TODO (Alex): is this needed?
-    def read(self, record, identity):
+    def update(self, identity, **kwargs):
+        """Update handler."""
         pass
 
-    def update(self, record, identity, data):
+    def delete(self, identity, **kwargs):
+        """Delete handler."""
         pass
 
-    def delete(self, record, identity):
-        pass
-
-    def search(self, query, identity, **kwargs):
+    def search(self, identity, query, **kwargs):
+        """Search handler."""
         return query
 
 
 class MetadataComponent(ServiceComponent):
     """Service component for metadata."""
 
-    def create(self, record, identity, data):
+    def create(self, identity, data=None, record=None, **kwargs):
+        """Inject parsed metadata to the record."""
         validated_data = data['metadata']
         # TODO (Alex): use when `MetadataField(SystemField)` is implemented
         # record.metadata = validated_data
         record.update({'metadata': validated_data})
 
-    def update(self, record, identity, data):
+    def update(self, identity, data=None, record=None, **kwargs):
+        """Inject parsed metadata to the record."""
         validated_data = data['metadata']
         # TODO (Alex): use when `MetadataField(SystemField)` is implemented
         # record.metadata = validated_data
@@ -61,9 +66,16 @@ class FilesComponent(ServiceComponent):
 class AccessComponent(ServiceComponent):
     """Service component for access integration."""
 
-    def create(self, record, identity, data):
+    def create(self, identity, data=None, record=None, **kwargs):
+        """Add basic ownership fields to the record."""
         validated_data = data['access']
         # TODO (Alex): replace with `record.access = ...`
         validated_data.setdefault('created_by', identity.id)
         validated_data.setdefault('owners', [identity.id])
+        record.update({'access': validated_data})
+
+    def update(self, identity, data=None, record=None, **kwargs):
+        validated_data = data['access']
+        # TODO (Alex): replace with `record.access = ...`
+        validated_data.pop('created_by', None)
         record.update({'access': validated_data})

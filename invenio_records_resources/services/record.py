@@ -174,7 +174,7 @@ class RecordService(Service):
         # Run components
         for component in self.components:
             if hasattr(component, 'read'):
-                component.read(record, identity)
+                component.read(identity, record=record)
 
         record_projection = self.data_schema.dump(
             identity, record, pid=pid, record=record)
@@ -210,7 +210,7 @@ class RecordService(Service):
                 # TODO (Alex): also parse and pass request data here...this has
                 # to happen in the resource-level though filters, facets, etc.
                 query = component.search(
-                    query, identity,
+                    identity, query,
                     querystring=querystring,
                     pagination=pagination,
                     sorting=sorting,
@@ -267,7 +267,7 @@ class RecordService(Service):
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
-                component.create(record, identity, data)
+                component.create(identity, data=data, record=record)
 
         db.session.commit()  # Persist DB
         # Index the record
@@ -296,7 +296,7 @@ class RecordService(Service):
         # Run components
         for component in self.components:
             if hasattr(component, 'delete'):
-                component.delete(record, identity)
+                component.delete(identity, record=record)
 
         record.delete()
         pid.delete()
@@ -319,7 +319,7 @@ class RecordService(Service):
         # Run components
         for component in self.components:
             if hasattr(component, 'update'):
-                component.update(record, identity, data)
+                component.update(identity, data=data, record=record)
 
         # TODO: Change once system fields and `Record.clean_none()` are there
         record.clear()
