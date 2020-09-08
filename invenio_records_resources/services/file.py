@@ -34,8 +34,7 @@ class FileServiceConfig(ServiceConfig):
     # indexer_cls = RecordIndexer
     # search_cls = RecordsSearch
     # search_engine_cls = SearchEngine
-    # # Q: Do we want to keep same pattern as above and just pass classes?
-    # data_validator = MarshmallowDataValidator()
+    # data_schema = MarshmallowDataSchema()
     resource_unit_cls = InvenioFile  # Fake for now
     permission_policy_cls = RecordPermissionPolicy
 

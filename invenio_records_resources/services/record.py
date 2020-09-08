@@ -27,7 +27,7 @@ from ..resource_units import IdentifiedRecord, IdentifiedRecords
 from ..resources.record_config import RecordResourceConfig
 from .components import AccessComponent, FilesComponent, MetadataComponent, \
     PIDSComponent
-from .data_validator import MarshmallowDataValidator
+from .data_schema import MarshmallowDataSchema
 from .search import SearchEngine
 from .search.serializers import es_to_record
 from .service import Service, ServiceConfig
@@ -64,9 +64,7 @@ class RecordServiceConfig(ServiceConfig):
         ),
     )
 
-    # Q: Do we want to keep same pattern as above and just pass classes?
-    data_validator = MarshmallowDataValidator()
-    data_schema = None
+    data_schema = MarshmallowDataSchema()
 
     # NOTE: Configuring routes here, allows their configuration and the
     #       configured routes to be picked up by the link builders at runtime
@@ -147,21 +145,9 @@ class RecordService(Service):
         )
 
     @property
-    def data_validator(self):
-        """Returns the data validator instance."""
-        return self.config.data_validator  # Already an instance
-
-    def data_schema(self, identity=None, **context):
-        """Service data schema."""
-        # NOTE: Bind context to the permission policy to allow doing:
-        #   field_permission_policy('read').allows(identity)
-        field_permission_policy = partial(
-            self.config.permission_policy_cls,
-            **context,
-        )
-        context.setdefault('field_permission_policy', field_permission_policy)
-        context.setdefault('identity', identity)
-        return self.config.data_schema(context=context)
+    def data_schema(self):
+        """Returns the data schema instance."""
+        return self.config.data_schema  # Already an instance
 
     @property
     def components(self):
@@ -190,8 +176,8 @@ class RecordService(Service):
             if hasattr(component, 'read'):
                 component.read(record, identity)
 
-        record_projection = self.data_schema(
-            identity=identity, pid=pid, record=record).dump(record)
+        record_projection = self.data_schema.dump(
+            identity, record, pid=pid, record=record)
         links = self.linker.links(
             "record", identity, pid_value=pid.pid_value, record=record_projection
         )
@@ -245,8 +231,8 @@ class RecordService(Service):
             pid = self.fetcher(data=record, record_uuid=None)
             # TODO: Since `RecordJSONSerializer._process_record` expects a
             # proper record class, we can't just dump and pass a projection...
-            # record_projection = self.data_schema(
-            #     identity=identity, pid=pid, record=record).dump(record)
+            # record_projection = self.data_schema.dump(
+            #     identity, record, pid=pid, record=record)
             links = self.linker.links(
                 "record", identity, pid_value=pid.pid_value, record=record
             )
@@ -274,7 +260,7 @@ class RecordService(Service):
     def create(self, identity, data):
         """Create a record."""
         self.require_permission(identity, "create")
-        data = self.data_schema(identity=identity).load(data)
+        data, _ = self.data_schema.load(identity, data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
 
@@ -290,7 +276,8 @@ class RecordService(Service):
 
         # Create record state
         # TODO (Alex): see how to replace resource unit
-        record_projection = self.data_schema(identity=identity, pid=pid, record=record).dump(record)
+        record_projection = self.data_schema.dump(
+            identity, record, pid=pid, record=record)
         links = self.linker.links(
             "record", identity, pid_value=pid.pid_value, record=record_projection
         )
@@ -327,7 +314,7 @@ class RecordService(Service):
         pid, record = self.resolve(id_)
         # Permissions
         self.require_permission(identity, "update", record=record)
-        data = self.data_schema(identity=identity, pid=pid, record=record).load(data)
+        data, _ = self.data_schema.load(identity, data, pid=pid, record=record)
 
         # Run components
         for component in self.components:
@@ -343,7 +330,8 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        record_projection = self.data_schema(identity=identity, pid=pid, record=record).dump(record)
+        record_projection = self.data_schema.dump(
+            identity, record, pid=pid, record=record)
         links = self.linker.links(
             "record", identity, pid_value=pid.pid_value, record=record_projection
         )
