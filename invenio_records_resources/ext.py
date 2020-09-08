@@ -8,8 +8,6 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from flask_babelex import gettext as _
-
 from . import config
 from .resources import RecordResource
 

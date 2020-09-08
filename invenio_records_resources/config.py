@@ -13,7 +13,5 @@ from elasticsearch import VERSION as ES_VERSION
 
 lt_es7 = ES_VERSION[0] < 7
 
-PIDSTORE_RECID_FIELD = "recid"
-
 # TODO: Might be something to place with the fundamental invenio config
 SERVER_HOSTNAME = "localhost:5000"
