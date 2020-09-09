@@ -65,94 +65,19 @@ class SearchEngine():
         self.query_interpreter = query_interpreter
         self.options = options or {}
 
-    def search_arguments(self, pagination=None, preference=True, version=True,
-                         sorting=None, faceting=None, extras=None):
-        """Adds arguments to the search object.
-
-        *faceting*
-
-        dict with following structure:
-
-        .. code-block:: python
-
-            {
-                'aggs': {
-                    '<key>': <aggregation definition>,
-                    ...
-                }
-                'filters': {
-                    '<key>': <filter func>,
-                    ...
-                }
-                'post_filters': {
-                    '<key>': <filter func>,
-                    ...
-                }
-            }
-        """
-        # Avoid query bounce problem
-        if preference:
-            self.search = self.search.with_preference_param()
-
-        # Add document version to ES response
-        if version:
-            self.search = self.search.params(version=True)
-
-        # Add other arguments
-        if pagination:
-            self.search = self.search[
-                pagination["from_idx"]: pagination["to_idx"]
-            ]
-        if sorting:
-            sort_by_options = self.get_sort_by_options(sorting)
-            sort_args = [
-                eval_field(f, sorting.get("reverse"))
-                for f in sort_by_options.get('fields', [])
-            ]
-            self.search = self.search.sort(*sort_args)
-
-        # TODO
-        # self.preference_search(preference)
-        # self.version_search(version)
-        # self.paginate_search(pagination)
-        # self.sort_search(sorting)
-        self.facet_search(faceting)
-        # Add extra args
-        if extras:
-            self.search = self.search.extra(**extras)
-        # self.extra_search(extra)
-
-        return self
-
-    def parse_query(self, querystring):
-        """Parses the query based on the interpreter."""
-        return self.query_interpreter.parse(querystring)
-
     def execute_search(self, query):
         """Executes an already parsed query."""
         return self.search.query(query).execute()
 
-    def get_sort_by_options(self, sorting):
-        """Return sort_by_options dict."""
-        sorting_options = self.options.get("sorting", {})
-        sort_by = sorting.get("sort_by")
+    def extra_search(self, extras):
+        """Add extra args to search object.
 
-        if sort_by:
-            sort_by_options = sorting_options.get(sort_by, {})
-        elif sorting.get("has_q"):
-            # TODO: When dealing with config validaion, we can verify that only
-            #       one option has default_if_query
-            sort_by_options = next((
-                options for options in sorting_options.values()
-                if "default_if_query" in options
-            ), {})
-        else:
-            sort_by_options = next((
-                options for options in sorting_options.values()
-                if "default_if_no_query" in options
-            ), {})
+        :params extras: dict of extra arguments
+        """
+        if extras:
+            self.search = self.search.extra(**extras)
 
-        return sort_by_options
+        return self
 
     def facet_search(self, faceting):
         """Facet search object.
@@ -180,3 +105,89 @@ class SearchEngine():
                 self.search = self.search.post_filter(
                     filter_factory(facet_values)
                 )
+
+        return self
+
+    def get_sort_by_options(self, sorting):
+        """Return sort_by_options dict."""
+        sorting_options = self.options.get("sorting", {})
+        sort_by = sorting.get("sort_by")
+
+        if sort_by:
+            sort_by_options = sorting_options.get(sort_by, {})
+        elif sorting.get("has_q"):
+            # TODO: When dealing with config validaion, we can verify that only
+            #       one option has default_if_query
+            sort_by_options = next((
+                options for options in sorting_options.values()
+                if "default_if_query" in options
+            ), {})
+        else:
+            sort_by_options = next((
+                options for options in sorting_options.values()
+                if "default_if_no_query" in options
+            ), {})
+
+        return sort_by_options
+
+    def paginate_search(self, pagination):
+        """Paginate search object.
+
+        :params pagination: pagination URL args
+        """
+        if pagination:
+            self.search = self.search[
+                pagination["from_idx"]: pagination["to_idx"]
+            ]
+
+        return self
+
+    def parse_query(self, querystring):
+        """Parses the query based on the interpreter."""
+        return self.query_interpreter.parse(querystring)
+
+    def preference_search(self, preference):
+        """Avoid query bounce problem on search object.
+
+        :params preference: bool set with_preference_param() or not
+        """
+        if preference:
+            self.search = self.search.with_preference_param()
+
+        return self
+
+    def search_arguments(self, pagination=None, preference=True, version=True,
+                         sorting=None, faceting=None, extras=None):
+        """Adds arguments to the search object."""
+        self.preference_search(preference)
+        self.version_search(version)
+        self.paginate_search(pagination)
+        self.sort_search(sorting)
+        self.facet_search(faceting)
+        self.extra_search(extras)
+        return self
+
+    def sort_search(self, sorting):
+        """Sort search object.
+
+        :params sorting: sorting URL args
+        """
+        if sorting:
+            sort_by_options = self.get_sort_by_options(sorting)
+            sort_args = [
+                eval_field(f, sorting.get("reverse"))
+                for f in sort_by_options.get('fields', [])
+            ]
+            self.search = self.search.sort(*sort_args)
+
+        return self
+
+    def version_search(self, version):
+        """Version search object.
+
+        :params version: bool add document version to ES response
+        """
+        if version:
+            self.search = self.search.params(version=True)
+
+        return self
