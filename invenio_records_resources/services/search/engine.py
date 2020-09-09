@@ -11,6 +11,8 @@
 
 import copy
 
+from elasticsearch_dsl import Q
+
 from .query import QueryInterpreter
 
 
@@ -42,6 +44,17 @@ def eval_field(field, reverse):
         return {key: {'order': 'asc' if ascending else 'desc'}}
 
 
+def terms_filter(field):
+    """Create a term filter.
+
+    :param field: Field name.
+    :returns: Function that returns the Terms query.
+    """
+    def inner(values):
+        return Q('terms', **{field: values})
+    return inner
+
+
 class SearchEngine():
     """Search records with specific configuration."""
 
@@ -53,8 +66,30 @@ class SearchEngine():
         self.options = options or {}
 
     def search_arguments(self, pagination=None, preference=True, version=True,
-                         sorting=None, extras=None):
-        """Adds arguments to the search object."""
+                         sorting=None, faceting=None, extras=None):
+        """Adds arguments to the search object.
+
+        *faceting*
+
+        dict with following structure:
+
+        .. code-block:: python
+
+            {
+                'aggs': {
+                    '<key>': <aggregation definition>,
+                    ...
+                }
+                'filters': {
+                    '<key>': <filter func>,
+                    ...
+                }
+                'post_filters': {
+                    '<key>': <filter func>,
+                    ...
+                }
+            }
+        """
         # Avoid query bounce problem
         if preference:
             self.search = self.search.with_preference_param()
@@ -63,7 +98,7 @@ class SearchEngine():
         if version:
             self.search = self.search.params(version=True)
 
-        # Add other aguments
+        # Add other arguments
         if pagination:
             self.search = self.search[
                 pagination["from_idx"]: pagination["to_idx"]
@@ -76,9 +111,16 @@ class SearchEngine():
             ]
             self.search = self.search.sort(*sort_args)
 
+        # TODO
+        # self.preference_search(preference)
+        # self.version_search(version)
+        # self.paginate_search(pagination)
+        # self.sort_search(sorting)
+        self.facet_search(faceting)
         # Add extra args
         if extras:
             self.search = self.search.extra(**extras)
+        # self.extra_search(extra)
 
         return self
 
@@ -111,3 +153,30 @@ class SearchEngine():
             ), {})
 
         return sort_by_options
+
+    def facet_search(self, faceting):
+        """Facet search object.
+
+        :params faceting: faceting URL args
+        """
+        faceting_options = self.options.get("faceting", {})
+
+        # Aggregations
+        aggregations = faceting_options.get("aggs", {})
+        for name, agg in aggregations.items():
+            # `aggs[]=` mutates `self.search`
+            self.search.aggs[name] = agg if not callable(agg) else agg()
+
+        faceting_args = faceting or {}
+        faceting_args = {
+            k: v if type(v) is list else [v] for k, v in faceting_args.items()
+        }
+
+        # Post filtering
+        post_filters = faceting_options.get("post_filters", {})
+        for name, filter_factory in post_filters.items():
+            facet_values = faceting_args.get(name)
+            if facet_values:
+                self.search = self.search.post_filter(
+                    filter_factory(facet_values)
+                )

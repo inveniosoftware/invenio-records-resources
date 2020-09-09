@@ -59,6 +59,7 @@ class RecordServiceConfig(ServiceConfig):
             default_if_no_query=True,
         ),
     )
+    search_faceting_options = {}  # Concrete Records override this
 
     # Q: Do we want to keep same pattern as above and just pass classes?
     data_validator = MarshmallowDataValidator()
@@ -127,6 +128,7 @@ class RecordService(Service):
         """Factory for creating a search instance."""
         # This might grow over time
         options = {
+            "faceting": self.config.search_faceting_options,
             "sorting": self.config.search_sort_options
         }
         return self.config.search_engine_cls(
@@ -161,7 +163,8 @@ class RecordService(Service):
         # TODO: how do we deal with tombstone pages
         return self.resource_unit(pid=pid, record=record, links=links)
 
-    def search(self, identity, querystring, pagination=None, sorting=None):
+    def search(self, identity, querystring, pagination=None, sorting=None,
+               faceting=None):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
@@ -183,6 +186,7 @@ class RecordService(Service):
         search_result = self.search_engine.search_arguments(
             pagination=pagination,
             sorting=sorting,
+            faceting=faceting,
             extras=extras
         ).execute_search(query)
 
