@@ -9,6 +9,8 @@
 
 """Record Service API."""
 
+from copy import deepcopy
+
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
@@ -169,14 +171,26 @@ class RecordService(Service):
         # Permissions
         self.require_permission(identity, "search")
 
-        # Pagination
+        # Search args
         pagination = pagination or {}
-
-        # Sorting
         sorting = sorting or {}
-        sorting["has_q"] = True if querystring else False
+        # Because faceting includes any url args not parsed, it can include
+        # garbage. We filter the garbage out, so that later generated links are
+        # clean.
+        faceting = self.search_engine.filter_facets(faceting or {})
 
-        # Add search arguments
+        # Take a snapshot of search args to be able to transform them back into
+        # a url
+        original_search_args = dict(
+            querystring=querystring,
+            pagination=pagination,
+            sorting=sorting,
+            faceting=faceting
+        )
+
+        # Prepare arguments to search_arguments
+        sorting = deepcopy(sorting)
+        sorting["has_q"] = True if querystring else False
         extras = {}
         if not lt_es7:
             extras["track_total_hits"] = True
@@ -211,9 +225,8 @@ class RecordService(Service):
 
         aggregations = search_result.aggregations.to_dict()
 
-        search_args = dict(q=querystring, **pagination, **sorting)
         links = self.linker.links(
-            "record_search", identity, search_args=search_args
+            "record_search", identity, search_args=original_search_args
         )
 
         return self.resource_list(

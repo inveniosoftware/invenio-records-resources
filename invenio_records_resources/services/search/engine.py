@@ -108,6 +108,15 @@ class SearchEngine():
 
         return self
 
+    def filter_facets(self, faceting):
+        """Filter faceting and keep keys in faceting options only.
+
+        :params faceting: faceting URL args
+        """
+        faceting_options = self.options.get("faceting", {})
+        post_filters = faceting_options.get("post_filters", {})
+        return {k: v for k, v in faceting.items() if k in post_filters}
+
     def get_sort_by_options(self, sorting):
         """Return sort_by_options dict."""
         sorting_options = self.options.get("sorting", {})
