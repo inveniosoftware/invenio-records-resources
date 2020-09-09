@@ -42,14 +42,14 @@ class MetadataComponent(ServiceComponent):
 
     def create(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
-        validated_data = data['metadata']
+        validated_data = data.get('metadata', {})
         # TODO (Alex): use when `MetadataField(SystemField)` is implemented
         # record.metadata = validated_data
         record.update({'metadata': validated_data})
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
-        validated_data = data['metadata']
+        validated_data = data.get('metadata', {})
         # TODO (Alex): use when `MetadataField(SystemField)` is implemented
         # record.metadata = validated_data
         record.update({'metadata': validated_data})
@@ -68,14 +68,14 @@ class AccessComponent(ServiceComponent):
 
     def create(self, identity, data=None, record=None, **kwargs):
         """Add basic ownership fields to the record."""
-        validated_data = data['access']
+        validated_data = data.get('access', {})
         # TODO (Alex): replace with `record.access = ...`
         validated_data.setdefault('created_by', identity.id)
         validated_data.setdefault('owners', [identity.id])
         record.update({'access': validated_data})
 
     def update(self, identity, data=None, record=None, **kwargs):
-        validated_data = data['access']
+        validated_data = data.get('access', {})
         # TODO (Alex): replace with `record.access = ...`
         validated_data.pop('created_by', None)
         record.update({'access': validated_data})
