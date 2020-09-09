@@ -3,11 +3,22 @@
     "testrecord": {
       "date_detection": false,
       "properties": {
+        "_created": {
+          "type": "date"
+        },
         "title": {
           "type": "text"
         },
-        "_created": {
-          "type": "date"
+        "type": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "subtype": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }

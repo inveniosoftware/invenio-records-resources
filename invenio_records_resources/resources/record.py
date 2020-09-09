@@ -9,6 +9,8 @@
 
 """Invenio Resources module to create REST APIs."""
 
+from copy import deepcopy
+
 from flask import current_app, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
@@ -41,19 +43,26 @@ class RecordResource(CollectionResource):
     def search(self):
         """Perform a search over the items."""
         identity = g.identity
-        request_args = resource_requestctx.request_args
+        request_args = deepcopy(resource_requestctx.request_args)
         querystring = request_args.pop("q", "")
         sorting = {
             k: request_args.pop(k) for k in ["sort_by", "reverse"]
             if k in request_args
         }
-        pagination = request_args
+        pagination = {
+            k: request_args.pop(k)
+            for k in ["page", "size", "from_idx", "to_idx"]
+            if k in request_args
+        }
+        # Anything left over is a facet
+        faceting = request_args
 
         record_search = self.service.search(
             identity=identity,
             querystring=querystring,
             pagination=pagination,
             sorting=sorting,
+            faceting=faceting,
         )
 
         return record_search, 200

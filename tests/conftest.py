@@ -34,6 +34,7 @@ from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
+from invenio_records_resources.services.search import terms_filter
 
 
 class TestSearch(RecordsSearch):
@@ -147,6 +148,23 @@ def record_service_config():
                 'fields': [{'_created': {'order': 'asc', 'mode': 'avg'}}],
             }
         }
+        search_faceting_options = {
+            'aggs': {
+                'type': {
+                    'terms': {'field': 'type.type'},
+                    'aggs': {
+                        'subtype': {
+                            'terms': {'field': 'type.subtype'},
+                        }
+                    }
+                }
+            },
+            'post_filters': {
+                'subtype': terms_filter('type.subtype'),
+                'type': terms_filter('type.type'),
+            }
+        }
+
     return CustomRecordServiceConfig
 
 

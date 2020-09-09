@@ -8,6 +8,9 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from .engine import SearchEngine
+from .engine import SearchEngine, terms_filter
 
-__all__ = "SearchEngine"
+__all__ = (
+    "SearchEngine",
+    "terms_filter"
+)
