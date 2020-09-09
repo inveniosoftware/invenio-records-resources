@@ -19,6 +19,10 @@ from invenio_records_resources.services import RecordService
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
+# 2 things to test
+# 1- results are aggregated / post_filtered
+# 2- links are generated
+
 
 @pytest.fixture("module")
 def identity_simple():
@@ -51,11 +55,8 @@ def three_indexed_records(app, input_service_data, identity_simple, es):
 
 
 #
-# 2- links are generated
+# 1- results are aggregated / post_filtered
 #
-# TODO: USe https://sandbox.zenodo.org/api/records?page=1&size=20
-#       as a guide
-
 
 def test_aggregating(client, three_indexed_records):
     response = client.get("/records", headers=HEADERS)
@@ -149,3 +150,28 @@ def test_post_filtering(client, three_indexed_records):
     assert set(["Record 1", "Record 2"]) == set(
         [h["metadata"]["title"] for h in response_hits]
     )
+
+
+#
+# 2- links are generated
+#
+
+def test_links_keep_facets(client, three_indexed_records):
+    response = client.get(
+        "/records?type=A&subtype=B",
+        headers=HEADERS
+    )
+
+    response_links = response.json["links"]
+    expected_links = {
+        "self": (
+            "https://localhost:5000/api/records?"
+            "size=25&page=1&subtype=B&type=A"
+        ),
+        "next": (
+            "https://localhost:5000/api/records?"
+            "size=25&page=2&subtype=B&type=A"
+        ),
+    }
+    for key, url in expected_links.items():
+        assert url == response_links[key]

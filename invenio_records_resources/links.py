@@ -35,23 +35,49 @@ def base_url(
 class ResourceListLinks:
     """Constructor."""
 
-    def __init__(self, route, search_args):
+    def __init__(self, route, original_search_args):
         """Constructor."""
         self.route = route
+        self.original_search_args = original_search_args
+        # NOTE: Dumping removes unknown fields and does some desired
+        #       transformations. This is why we add faceting after
+        search_args = dict(
+            q=original_search_args["querystring"],
+            **original_search_args["pagination"],
+            **original_search_args["sorting"],
+        )
         self.search_args = SearchURLArgsSchemaV1().dump(search_args)
+        self.search_args.update(original_search_args["faceting"])
 
     def _api_search_url(self, querystring_seq):
         querystring = "?" + urlencode(querystring_seq)
         return base_url(path=self.route, querystring=querystring)
 
     def _ordered_querystring(self):
-        """Returns the ordered list of querystring key, values."""
-        # NOTE: We order the querystring with the search query at the end,
-        #       to make the URLs consistent and more easy to change
-        return [
-            (k, self.search_args[k]) for k in ["size", "page", "sort", "q"]
-            if k in self.search_args and self.search_args[k]
+        """Returns the normalized and ordered list of querystring key, values.
+
+        NOTE: We order the querystring with the search query at the end,
+              to make the URLs consistent and more easy to change
+        """
+        # 1) filter empty (falsey) ["size", "page", "sort", "q"] out
+        search_args = {
+            k: v for k, v in self.search_args.items()
+            if k not in ["size", "page", "sort", "q"] or self.search_args[k]
+        }
+        # 2) order as ["size", "page", "sort", "<anything else>", "q"]
+        querystring_seq = [
+            (k, search_args.pop(k))
+            for k in ["size", "page", "sort"]
+            if k in search_args
         ]
+        # pop "q" (may have been filtered out bc empty though)
+        q = [("q", search_args.pop("q"))] if "q" in search_args else []
+        # extend with alphabetically sorted "<anything else>" + "q"
+        querystring_seq.extend(
+            sorted(search_args.items(), key=lambda e: e[0]) + q
+        )
+
+        return querystring_seq
 
     def _links_self(self):
         """Return link to self."""
