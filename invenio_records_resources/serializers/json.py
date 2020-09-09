@@ -10,6 +10,7 @@
 """Invenio Resources module to create REST APIs."""
 
 import json
+import re
 
 import pytz
 from flask_resources.serializers import SerializerMixin
@@ -18,33 +19,34 @@ from flask_resources.serializers import SerializerMixin
 class RecordJSONSerializer(SerializerMixin):
     """Record JSON serializer implementation."""
 
-    def __init__(self, schema=None):
-        """Constructor."""
-        self.schema = schema
-
     def _process_record(self, record_state, *args, **kwargs):
-        pid = record_state.id
-        record = record_state.record
-        record_dict = dict(
-            pid=pid,
-            revision=record.revision_id,
-            created=(
-                pytz.utc.localize(record.created).isoformat()
-                if record.created and not record.created.tzinfo
-                else None
-            ),
-            updated=(
-                pytz.utc.localize(record.updated).isoformat()
-                if record.updated and not record.updated.tzinfo
-                else None
-            ),
-            links=record_state.links,
-            # NOTE: since "metadata", "files", etc. are namespaced keys,
-            # we just dump them like this...
-            **record.dumps(),
-        )
-
-        return record_dict
+        # pid = record_state.id
+        # record = record_state.record
+        # return dict(
+        #     pid=pid,
+        #     revision=record.revision_id,
+        #     created=(
+        #         pytz.utc.localize(record.created).isoformat()
+        #         if record.created and not record.created.tzinfo
+        #         else None
+        #     ),
+        #     updated=(
+        #         pytz.utc.localize(record.updated).isoformat()
+        #         if record.updated and not record.updated.tzinfo
+        #         else None
+        #     ),
+        #     links=record_state.links,
+        #     # NOTE: since "metadata", "files", etc. are namespaced keys,
+        #     # we just dump them like this...
+        #     **record.dumps(),
+        # )
+        res = {
+            'links': record_state.links,
+            **record_state.record,
+        }
+        if record_state.errors:
+            res['errors'] = record_state.errors
+        return res
 
     def serialize_object(self, obj, response_ctx=None, *args, **kwargs):
         """Dump the object into a json string."""
