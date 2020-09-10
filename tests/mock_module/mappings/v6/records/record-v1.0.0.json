@@ -1,0 +1,27 @@
+{
+  "mappings": {
+    "date_detection": false,
+    "properties": {
+      "id": {
+        "type": "text"
+      },
+      "metadata": {
+        "properties": {
+          "title":  { "type": "text" }
+        }
+      },
+      "created": {
+        "type": "date"
+      },
+      "updated": {
+        "type": "date"
+      },
+      "@uuid": {
+        "type": "string"
+      },
+      "@version": {
+        "type": "integer"
+      }
+    }
+  }
+}
