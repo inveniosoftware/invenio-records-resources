@@ -14,7 +14,7 @@ fixtures are available.
 from uuid import uuid4
 
 import pytest
-from flask_principal import Identity, UserNeed
+from flask_principal import Identity, Need, UserNeed
 from mock_module.api import Record
 from mock_module.service import Service
 
@@ -24,6 +24,7 @@ def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
     i.provides.add(UserNeed(1))
+    i.provides.add(Need(method='system_role', value='any_user'))
 
 
 @pytest.fixture()
