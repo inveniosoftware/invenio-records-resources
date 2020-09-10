@@ -7,7 +7,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Test pagination."""
+"""Test faceting."""
 
 from copy import deepcopy
 
@@ -171,6 +171,25 @@ def test_links_keep_facets(client, three_indexed_records):
         "next": (
             "https://localhost:5000/api/records?"
             "size=25&page=2&subtype=B&type=A"
+        ),
+    }
+    for key, url in expected_links.items():
+        assert url == response_links[key]
+
+
+def test_links_keep_repeated_facets(client, three_indexed_records):
+    response = client.get(
+        "/records?type=B&type=A",
+        headers=HEADERS
+    )
+
+    response_links = response.json["links"]
+    expected_links = {
+        "self": (
+            "https://localhost:5000/api/records?size=25&page=1&type=A&type=B"
+        ),
+        "next": (
+            "https://localhost:5000/api/records?size=25&page=2&type=A&type=B"
         ),
     }
     for key, url in expected_links.items():
