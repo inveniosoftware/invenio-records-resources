@@ -10,10 +10,7 @@
 """Service tests."""
 
 
-def test_service_read(app, service_cls, identity_simple, fake_record_db):
-    """Get a record."""
-    service = service_cls()
-    for recid, fake_record in fake_record_db.items():
-        recstate = service.read(identity_simple, recid)
-        assert recstate.record == fake_record
-        assert recstate.id == str(recid)
+def test_service_read(service, example_record, identity_simple):
+    """Read a record with the service."""
+    recstate = service.read(identity_simple, example_record.id)
+    assert recstate.id == str(example_record.id)
