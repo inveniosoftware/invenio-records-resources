@@ -19,7 +19,7 @@ from flask_principal import Identity, Permission, UserNeed
 
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
-from invenio_records_resources.services.resolver import UUIDResolver
+from invenio_records_resources.records.resolver import UUIDResolver
 
 
 @pytest.fixture()
