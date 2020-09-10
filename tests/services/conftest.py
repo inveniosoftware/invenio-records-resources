@@ -14,12 +14,9 @@ fixtures are available.
 from uuid import uuid4
 
 import pytest
-from flask import Flask
-from flask_principal import Identity, Permission, UserNeed
-
-from invenio_records_resources.services import RecordService, \
-    RecordServiceConfig
-from invenio_records_resources.records.resolver import UUIDResolver
+from flask_principal import Identity, UserNeed
+from mock_module.api import Record
+from mock_module.service import Service
 
 
 @pytest.fixture()
@@ -30,54 +27,14 @@ def identity_simple():
 
 
 @pytest.fixture()
-def fake_record_db():
-    """A fake record."""
-    return {
-        uuid4(): {'title': 'Fake record'},
-    }
+def service(appctx):
+    """Service instance."""
+    return Service()
 
 
 @pytest.fixture()
-def fake_record_cls(fake_record_db):
-    """Fake record class."""
-    class FakeRecord(dict):
-        @classmethod
-        def get_record(cls, id_):
-            fake_record = fake_record_db.get(id_)
-            if fake_record:
-                return cls(fake_record)
-            else:
-                raise Exception('Record not found')
-
-    return FakeRecord
-
-
-@pytest.fixture()
-def fake_permission_policy_cls():
-    """Fake record fixture."""
-    class FakePermissionPolicy(Permission):
-        def __init__(self, action_name, **kwargs):
-            self.needs = set()
-            self.excludes = set()
-
-    return FakePermissionPolicy
-
-
-@pytest.fixture()
-def service_config_cls(fake_record_cls, fake_permission_policy_cls):
-    """Service configuration class."""
-    class TestRecordServiceConfig(RecordServiceConfig):
-        record_cls = fake_record_cls
-        resolver_cls = UUIDResolver
-        permission_policy_cls = fake_permission_policy_cls
-
-    return TestRecordServiceConfig
-
-
-@pytest.fixture()
-def service_cls(service_config_cls):
-    """Record service class."""
-    class TestRecordService(RecordService):
-        default_config = service_config_cls
-
-    return TestRecordService
+def example_record(app, db):
+    """Example record."""
+    record = Record.create({}, metadata={'title': 'Test'})
+    db.session.commit()
+    return record
