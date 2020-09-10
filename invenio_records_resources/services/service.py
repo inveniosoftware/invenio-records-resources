@@ -20,18 +20,39 @@ class ServiceConfig:
 
     # Common configuration for all Services
     permission_policy_cls = BasePermissionPolicy
+    """The permission policy class to use."""
+
     resource_unit_cls = dict
     resource_list_cls = list
 
 
 class Service:
-    """Service interface."""
+    """Service interface.
+
+    A service requires a service configuration. Several ways exist to provide
+    the config.
+
+    1. Injection via constructor
+    2. Loading from Flask application config (see ``config_name``).
+    3. Default config set as class attribute on service class (see
+       ``default_config``).
+    """
 
     default_config = ServiceConfig
-    config_name = None  # Must be filled with str by concrete subclasses
+    """Default service configuration."""
+
+    config_name = None
+    """Name of Flask configuration variable.
+
+    The variable is used to dynamically load a service configuration specified
+    by the user. A concrete service subclass most overwrite this attribute.
+    """
 
     def __init__(self, config=None):
-        """Constructor."""
+        """Constructor.
+
+        :param config: Provide the ser
+        """
         self.config = (
             config or
             load_or_import_from_config(
