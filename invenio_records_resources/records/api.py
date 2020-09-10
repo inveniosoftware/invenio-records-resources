@@ -11,7 +11,7 @@
 
 from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import ElasticsearchDumper
-from invenio_records.systemfields import SystemFieldsMixin, DictField
+from invenio_records.systemfields import DictField, SystemFieldsMixin
 
 
 class Record(RecordBase, SystemFieldsMixin):

@@ -8,14 +8,16 @@
 
 """Data validation API."""
 
-from .schemas import RecordSchemaV1
 from marshmallow import ValidationError
+
+from .schemas import RecordSchemaV1
 
 
 class DataSchema:
     """Data schema interface."""
 
     def __init__(self, service, *args, **kwargs):
+        """Constructor."""
         self.service = service
 
     def load(self, identity, data, *args, **kwargs):
