@@ -16,7 +16,6 @@ from invenio_records_resources import InvenioRecordsResources
 def test_version():
     """Test version import."""
     from invenio_records_resources import __version__
-
     assert __version__
 
 
