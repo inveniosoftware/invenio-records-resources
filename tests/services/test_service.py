@@ -39,5 +39,4 @@ def test_read(service, example_record, identity_simple):
 def test_create(app, service, identity_simple, input_data):
     """Create a record."""
     recstate = service.create(identity_simple, input_data)
-    print(recstate.record)
     assert recstate

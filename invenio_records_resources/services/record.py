@@ -46,7 +46,7 @@ class RecordServiceConfig(ServiceConfig):
     resolver_cls = Resolver
     resolver_obj_type = "rec"
     resolver_pid_type = "recid"  # PID type for resolver and fetch
-    minter_pid_type = "recid_v2"
+
     indexer_cls = RecordIndexer
 
     search_cls = RecordsSearch
@@ -116,11 +116,6 @@ class RecordService(Service):
             pid_type=self.config.resolver_pid_type,
             getter=self.config.record_cls.get_record
         )
-
-    @property
-    def minter(self):
-        """Returns the minter function."""
-        return current_pidstore.minters[self.config.minter_pid_type]
 
     @property
     def fetcher(self):
@@ -268,9 +263,9 @@ class RecordService(Service):
         """
         self.require_permission(identity, "create")
 
+        # Validate data and create record with pid
         data, _ = self.data_schema.load(identity, data)
-        record = self.record_cls.create(data)  # Create record in DB
-        pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
+        record = self.record_cls.create(data)
 
         # Run components
         for component in self.components:
@@ -285,15 +280,15 @@ class RecordService(Service):
         # Create record state
         # TODO (Alex): see how to replace resource unit
         record_projection = self.data_schema.dump(
-            identity, record, pid=pid, record=record)
+            identity, record, pid=record.pid, record=record)
 
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value,
+            "record", identity, pid_value=record.pid.pid_value,
             record=record_projection
         )
 
         return self.resource_unit(
-            pid=pid, record=record_projection, links=links)
+            pid=record.pid, record=record_projection, links=links)
 
     def delete(self, identity, id_):
         """Delete a record from database and search indexes."""
