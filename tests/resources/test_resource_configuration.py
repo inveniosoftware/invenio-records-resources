@@ -48,6 +48,7 @@ def app_config(app_config):
     return app_config
 
 
+@pytest.mark.skip()
 def test_resource_loads_configured_value_config(app):
     TestResource.config_name = "TEST_RESOURCE_CONFIG_1"
 
@@ -56,6 +57,7 @@ def test_resource_loads_configured_value_config(app):
     assert resource.config == TestResourceConfigA
 
 
+@pytest.mark.skip()
 def test_resource_loads_configured_string_config(app):
     TestResource.config_name = "TEST_RESOURCE_CONFIG_2"
 
@@ -64,6 +66,7 @@ def test_resource_loads_configured_string_config(app):
     assert resource.config == RecordResourceConfig
 
 
+@pytest.mark.skip()
 def test_resource_loads_default_config(app):
     # Set a config_name that evaluates False
     TestResource.config_name = "TEST_RESOURCE_CONFIG_3"

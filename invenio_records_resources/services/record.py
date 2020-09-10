@@ -179,10 +179,13 @@ class RecordService(Service):
         record_projection = self.data_schema.dump(
             identity, record, pid=pid, record=record)
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record_projection
+            "record", identity, pid_value=pid.pid_value,
+            record=record_projection
         )
+
         # TODO: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=record_projection, links=links)
+        return self.resource_unit(
+            pid=pid, record=record_projection, links=links)
 
     def search(self, identity, querystring, pagination=None, sorting=None):
         """Search for records matching the querystring."""
@@ -269,8 +272,6 @@ class RecordService(Service):
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
 
-        print(record)
-
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
@@ -285,11 +286,14 @@ class RecordService(Service):
         # TODO (Alex): see how to replace resource unit
         record_projection = self.data_schema.dump(
             identity, record, pid=pid, record=record)
+
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record_projection
+            "record", identity, pid_value=pid.pid_value,
+            record=record_projection
         )
 
-        return self.resource_unit(pid=pid, record=record_projection, links=links)
+        return self.resource_unit(
+            pid=pid, record=record_projection, links=links)
 
     def delete(self, identity, id_):
         """Delete a record from database and search indexes."""
@@ -340,7 +344,9 @@ class RecordService(Service):
         record_projection = self.data_schema.dump(
             identity, record, pid=pid, record=record)
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record_projection
+            "record", identity, pid_value=pid.pid_value,
+            record=record_projection
         )
 
-        return self.resource_unit(pid=pid, record=record_projection, links=links)
+        return self.resource_unit(
+            pid=pid, record=record_projection, links=links)

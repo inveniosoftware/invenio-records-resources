@@ -50,7 +50,8 @@ class FieldPermissionsMixin:
         if field_permission_check:
             for k in self.field_load_permissions:
                 if k in data:
-                    action = self.field_load_permissions[k] or self.default_load_action
+                    action = self.field_load_permissions[k] or \
+                        self.default_load_action
                     # TODO (Alex): Maybe cache?
                     if action and not field_permission_check(action):
                         raise FieldPermissionError(k)
@@ -59,13 +60,15 @@ class FieldPermissionsMixin:
     @post_dump
     def _permissions_filter_dump(self, data, **kwargs):
         field_permission_check = self.context.get("field_permission_check")
-        # NOTE: we make a copy since we don't want to modify the data when deleting keys
+        # NOTE: we make a copy since we don't want to modify the data when
+        # deleting keys
         # TODO (Alex): see if actually needed...
         # data = deepcopy(data)
         if field_permission_check:
             for k in self.field_dump_permissions:
                 if k in data:
-                    action = self.field_dump_permissions[k] or self.default_dump_action
+                    action = self.field_dump_permissions[k] or \
+                        self.default_dump_action
                     if action and not field_permission_check(action):
                         del data[k]
         return data
