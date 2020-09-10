@@ -25,6 +25,7 @@ def identity_simple():
     i = Identity(1)
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method='system_role', value='any_user'))
+    return i
 
 
 @pytest.fixture()
