@@ -258,19 +258,26 @@ class RecordService(Service):
         )
 
     def create(self, identity, data):
-        """Create a record."""
+        """Create a record.
+
+        :param identity: Identity of user creating the record.
+        :param data: Input data according to the data schema.
+        """
         self.require_permission(identity, "create")
+
         data, _ = self.data_schema.load(identity, data)
         record = self.record_cls.create(data)  # Create record in DB
         pid = self.minter(record_uuid=record.id, data=record)   # Mint PID
+
+        print(record)
 
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
                 component.create(identity, data=data, record=record)
 
-        db.session.commit()  # Persist DB
-        # Index the record
+        # Persist record (DB and index)
+        db.session.commit()
         if self.indexer:
             self.indexer.index(record)
 
