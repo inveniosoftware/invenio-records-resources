@@ -12,6 +12,8 @@ from .schema import RecordSchemaV1
 
 
 class ServiceConfig(RecordServiceConfig):
+    """Mock service configuration."""
+
     record_cls = Record
     resolver_cls = UUIDResolver
     permission_policy_cls = PermissionPolicy
@@ -19,4 +21,6 @@ class ServiceConfig(RecordServiceConfig):
 
 
 class Service(RecordService):
+    """Mock service."""
+
     default_config = ServiceConfig

@@ -15,16 +15,16 @@ from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 
 
-class TestResourceConfigA(RecordResourceConfig):
+class ConfigA(RecordResourceConfig):
     pass
 
 
-class TestResourceConfigB(RecordResourceConfig):
+class ConfigB(RecordResourceConfig):
     pass
 
 
-class TestResource(RecordResource):
-    default_config = TestResourceConfigB
+class MyResource(RecordResource):
+    default_config = ConfigB
 
 
 @pytest.fixture(scope='module')
@@ -39,7 +39,7 @@ def app_config(app_config):
     decoupled from invenio-records-rest. Issue:
     https://github.com/inveniosoftware/invenio-records-permissions/issues/51
     """
-    app_config["TEST_RESOURCE_CONFIG_1"] = TestResourceConfigA
+    app_config["TEST_RESOURCE_CONFIG_1"] = ConfigA
     app_config["TEST_RESOURCE_CONFIG_2"] = (
         "invenio_records_resources.resources.RecordResourceConfig"
     )
@@ -50,18 +50,18 @@ def app_config(app_config):
 
 @pytest.mark.skip()
 def test_resource_loads_configured_value_config(app):
-    TestResource.config_name = "TEST_RESOURCE_CONFIG_1"
+    MyResource.config_name = "TEST_RESOURCE_CONFIG_1"
 
-    resource = TestResource()
+    resource = MyResource()
 
-    assert resource.config == TestResourceConfigA
+    assert resource.config == ConfigA
 
 
 @pytest.mark.skip()
 def test_resource_loads_configured_string_config(app):
-    TestResource.config_name = "TEST_RESOURCE_CONFIG_2"
+    MyResource.config_name = "TEST_RESOURCE_CONFIG_2"
 
-    resource = TestResource()
+    resource = MyResource()
 
     assert resource.config == RecordResourceConfig
 
@@ -69,15 +69,15 @@ def test_resource_loads_configured_string_config(app):
 @pytest.mark.skip()
 def test_resource_loads_default_config(app):
     # Set a config_name that evaluates False
-    TestResource.config_name = "TEST_RESOURCE_CONFIG_3"
+    MyResource.config_name = "TEST_RESOURCE_CONFIG_3"
 
-    resource = TestResource()
+    resource = MyResource()
 
-    assert resource.config == TestResourceConfigB
+    assert resource.config == ConfigB
 
     # Set a config_name that is not defined
-    TestResource.config_name = "TEST_RESOURCE_CONFIG_4"
+    MyResource.config_name = "TEST_RESOURCE_CONFIG_4"
 
-    resource = TestResource()
+    resource = MyResource()
 
-    assert resource.config == TestResourceConfigB
+    assert resource.config == ConfigB

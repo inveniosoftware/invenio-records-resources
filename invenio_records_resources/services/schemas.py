@@ -8,7 +8,7 @@
 
 """Data validation API."""
 
-from marshmallow import INCLUDE, Schema, fields, validate, post_dump, pre_load
+from marshmallow import INCLUDE, Schema, fields, post_dump, pre_load, validate
 
 
 class FieldPermissionError(Exception):
