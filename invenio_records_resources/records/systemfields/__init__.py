@@ -8,3 +8,9 @@
 # details.
 
 """System fields for records."""
+
+from .pid import PIDField
+
+__all__ = (
+    'PIDField',
+)
