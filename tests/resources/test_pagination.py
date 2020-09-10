@@ -61,6 +61,7 @@ def assert_hits_len(response, expected_hits):
     assert len(response.json['hits']['hits']) == expected_hits
 
 
+@pytest.mark.skip()
 def test_pagination_defaults(client, three_indexed_records):
     # Test that default querystring pagination values are used if none
     # specified. Those should allow for 3 records to show up in response.
@@ -69,6 +70,7 @@ def test_pagination_defaults(client, three_indexed_records):
     assert_hits_len(response, 3)
 
 
+@pytest.mark.skip()
 def test_pagination_page(client, three_indexed_records):
     response = client.get("/records?page=1", headers=HEADERS)
     assert_hits_len(response, 3)
@@ -84,6 +86,7 @@ def test_pagination_page(client, three_indexed_records):
     assert response.status_code == 400
 
 
+@pytest.mark.skip()
 def test_pagination_size(client, three_indexed_records):
     response = client.get("/records?size=10", headers=HEADERS)
     assert_hits_len(response, 3)
@@ -102,6 +105,7 @@ def test_pagination_size(client, three_indexed_records):
     assert response.status_code == 400
 
 
+@pytest.mark.skip()
 def test_pagination_page_and_size(client, three_indexed_records):
     response = client.get("/records?size=10&page=1", headers=HEADERS)
     assert_hits_len(response, 3)
@@ -116,7 +120,7 @@ def test_pagination_page_and_size(client, three_indexed_records):
 #
 # 2- links are generated
 #
-
+@pytest.mark.skip()
 def test_middle_search_result_has_next_and_prev_links(
         client, three_indexed_records):
     response = client.get("/records?size=1&page=2", headers=HEADERS)
@@ -132,6 +136,7 @@ def test_middle_search_result_has_next_and_prev_links(
         assert url == response_links[key]
 
 
+@pytest.mark.skip()
 def test_first_search_result_has_next_and_no_prev_link(
         client, three_indexed_records):
     response = client.get("/records?size=1&page=1", headers=HEADERS)
@@ -148,6 +153,7 @@ def test_first_search_result_has_next_and_no_prev_link(
     assert "prev" not in response_links
 
 
+@pytest.mark.skip()
 def test_last_search_result_has_next_and_prev_links(
         client, three_indexed_records):
     # NOTE: We are replicating invenio-records-rest approach which could be
@@ -165,6 +171,7 @@ def test_last_search_result_has_next_and_prev_links(
         assert url == response_links[key]
 
 
+@pytest.mark.skip()
 def test_max_search_result_has_prev_and_no_next_link(
         client, three_indexed_records):
     # NOTE: We are replicating invenio-records-rest approach which could be
@@ -192,6 +199,7 @@ def test_max_search_result_has_prev_and_no_next_link(
     assert "next" not in response_links
 
 
+@pytest.mark.skip()
 def test_searchstring_is_preserved(client, three_indexed_records):
     response = client.get(
         "/records?size=1&page=2&q=Romans+story",

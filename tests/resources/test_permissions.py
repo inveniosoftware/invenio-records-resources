@@ -49,6 +49,7 @@ def app_with_custom_permissions(app, record_service_config):
     yield app
 
 
+@pytest.mark.skip()
 def test_create_record_permissions(app_with_custom_permissions, client,
                                    input_record, users):
     """Test record creation."""

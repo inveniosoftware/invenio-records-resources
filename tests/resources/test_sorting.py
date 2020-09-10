@@ -53,6 +53,7 @@ def three_indexed_records(app, input_service_data, identity_simple, es):
 #
 
 
+@pytest.mark.skip()
 def test_default_sorting_if_no_query(client, three_indexed_records):
     # NOTE: the default sorting in this case is by most recently created
     response = client.get("/records", headers=HEADERS)
@@ -61,6 +62,7 @@ def test_default_sorting_if_no_query(client, three_indexed_records):
         assert three_indexed_records[2-i].id == hit["pid"]
 
 
+@pytest.mark.skip()
 def test_default_sorting_if_query(client, three_indexed_records):
     response = client.get("/records?q=over+the+lazy+dog", headers=HEADERS)
 
@@ -68,6 +70,7 @@ def test_default_sorting_if_query(client, three_indexed_records):
         assert three_indexed_records[i].id == hit["pid"]
 
 
+@pytest.mark.skip()
 def test_explicit_sort(client, three_indexed_records):
     response = client.get("/records?sort=mostrecent", headers=HEADERS)
 
@@ -75,6 +78,7 @@ def test_explicit_sort(client, three_indexed_records):
         assert three_indexed_records[2-i].id == hit["pid"]
 
 
+@pytest.mark.skip()
 def test_explicit_sort_reversed(client, three_indexed_records):
     response = client.get("/records?sort=-mostrecent", headers=HEADERS)
 
@@ -82,6 +86,7 @@ def test_explicit_sort_reversed(client, three_indexed_records):
         assert three_indexed_records[i].id == hit["pid"]
 
 
+@pytest.mark.skip()
 def test_explicit_sort_callable_search_options_field(
         client, three_indexed_records):
     # NOTE: callable_baz expects the equivalent of -mostrecent ordering
@@ -96,6 +101,7 @@ def test_explicit_sort_callable_search_options_field(
         assert three_indexed_records[2-i].id == hit["pid"]
 
 
+@pytest.mark.skip()
 def test_explicit_sort_dict_search_options_field(
         client, three_indexed_records):
     # NOTE: dict_baz expects the equivalent of -mostrecent ordering
@@ -114,7 +120,7 @@ def test_explicit_sort_dict_search_options_field(
 # 3- links are generated
 #
 
-
+@pytest.mark.skip()
 def test_sort_in_links_if_and_only_if_sort_in_url(
         client, three_indexed_records):
     response = client.get(
@@ -152,6 +158,7 @@ def test_sort_in_links_if_and_only_if_sort_in_url(
         assert url == response_links[key]
 
 
+@pytest.mark.skip()
 def test_searchstring_is_preserved(client, three_indexed_records):
     response = client.get(
         "/records?q=Romans+story&sort=mostrecent",
