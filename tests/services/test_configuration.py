@@ -15,57 +15,62 @@ from invenio_records_resources.services import RecordServiceConfig, Service, \
     ServiceConfig
 
 
-class TestServiceConfigA(ServiceConfig):
+#
+# Helper classes
+#
+class ConfigA(ServiceConfig):
     pass
 
 
-class TestServiceConfigB(ServiceConfig):
+class ConfigB(ServiceConfig):
     pass
 
 
-class TestService(Service):
-    default_config = TestServiceConfigB
+class MyService(Service):
+    default_config = ConfigB
 
 
+#
+# Fixtures
+#
 @pytest.fixture(scope='module')
 def app_config(app_config):
     """Mimic an instance's configuration."""
-    app_config["TEST_SERVICE_CONFIG_1"] = TestServiceConfigA
+    app_config["TEST_SERVICE_CONFIG_1"] = ConfigA
     app_config["TEST_SERVICE_CONFIG_2"] = (
         "invenio_records_resources.services.RecordServiceConfig"
     )
     app_config["TEST_SERVICE_CONFIG_3"] = None
-
     return app_config
 
 
+#
+# Tests
+#
 def test_service_loads_configured_value_config(app):
-    TestService.config_name = "TEST_SERVICE_CONFIG_1"
-
-    service = TestService()
-
-    assert service.config == TestServiceConfigA
+    # Set app config name to load -  explicit class
+    MyService.config_name = "TEST_SERVICE_CONFIG_1"
+    assert MyService().config == ConfigA
 
 
 def test_service_loads_configured_string_config(app):
-    TestService.config_name = "TEST_SERVICE_CONFIG_2"
+    # Set app config name to load - dynamic import
+    MyService.config_name = "TEST_SERVICE_CONFIG_2"
+    assert MyService().config == RecordServiceConfig
 
-    service = TestService()
 
-    assert service.config == RecordServiceConfig
+def test_service_loads_constructor_injection(app):
+    # Set app config name to load - dynamic import (but won't be loaded because
+    # we inject tjhe config via __init__).
+    MyService.config_name = "TEST_SERVICE_CONFIG_2"
+    assert MyService(config=ConfigA).config == ConfigA
 
 
 def test_service_loads_default_config(app):
     # Set a config_name that evaluates False
-    TestService.config_name = "TEST_SERVICE_CONFIG_3"
-
-    service = TestService()
-
-    assert service.config == TestServiceConfigB
+    MyService.config_name = "TEST_SERVICE_CONFIG_3"
+    assert MyService().config == ConfigB
 
     # Set a config_name that is not defined
-    TestService.config_name = "TEST_SERVICE_CONFIG_4"
-
-    service = TestService()
-
-    assert service.config == TestServiceConfigB
+    MyService.config_name = "TEST_SERVICE_CONFIG_4"
+    assert MyService().config == ConfigB
