@@ -7,6 +7,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
+"""Link builders."""
+
 from .pagination import PaginationLinks
 from .urlutils import api_route, base_url
 
@@ -69,7 +71,7 @@ class SelfLinkBuilder(ConfigLinkBuilder):
 
 
 class DeleteLinkBuilder(ConfigLinkBuilder):
-    """Delete link"""
+    """Delete link."""
 
     key = "delete"
     action = "delete"
@@ -77,7 +79,7 @@ class DeleteLinkBuilder(ConfigLinkBuilder):
 
 
 class FilesLinkBuilder(ConfigLinkBuilder):
-    """Files link"""
+    """Files link."""
 
     key = "files"
     action = "delete"

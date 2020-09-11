@@ -23,7 +23,7 @@ from ...search import SearchEngine
 from ..base import ServiceConfig
 from .components import AccessComponent, FilesComponent, MetadataComponent, \
     PIDSComponent
-from .results import IdentifiedRecord, IdentifiedRecords
+from .results import RecordItem, RecordList
 from .schema import RecordSchema
 
 
@@ -32,8 +32,8 @@ class RecordServiceConfig(ServiceConfig):
 
     # Common configuration
     permission_policy_cls = RecordPermissionPolicy
-    result_item_cls = IdentifiedRecord
-    result_list_cls = IdentifiedRecords
+    result_item_cls = RecordItem
+    result_list_cls = RecordList
 
     # Record specific configuration
     record_cls = Record

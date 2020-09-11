@@ -14,12 +14,13 @@ from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import ArgsParser
 from flask_resources.resources import ResourceConfig
 from flask_resources.responses import Response
+from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
 
 from ..linker.schema import SearchURLArgsSchemaV1
-from ..serializers import JSONSerializer
-from ..services.errors import InvalidQueryError, PermissionDeniedError
+from ..search.errors import InvalidQueryError
+from ..services.errors import PermissionDeniedError
 from .errors import create_pid_redirected_error_handler
 
 

@@ -10,7 +10,7 @@
 """Service API."""
 
 from ..errors import PermissionDeniedError
-from .config import ServiceConfig, ConfigLoaderMixin
+from .config import ConfigLoaderMixin, ServiceConfig
 
 
 class Service(ConfigLoaderMixin):

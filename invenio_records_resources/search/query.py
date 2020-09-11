@@ -11,7 +11,7 @@
 from elasticsearch_dsl import Q
 from flask import current_app
 
-from ..errors import InvalidQueryError
+from .errors import InvalidQueryError
 
 
 def _default_parser(querystring=None):

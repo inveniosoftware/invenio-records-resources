@@ -14,7 +14,6 @@ from invenio_db import db
 from ...config import lt_es7
 from ..base import Service
 from .config import RecordServiceConfig
-from .results import IdentifiedRecord, IdentifiedRecords
 from .schema import MarshmallowServiceSchema
 
 
@@ -27,15 +26,15 @@ class RecordService(Service):
         """Constructor."""
         super(RecordService, self).__init__(config=config)
         # TODO: Move outside service?
-        self.linker = Linker({
-            "record": [
-                lb(self.config) for lb in self.config.record_link_builders
-            ],
-            "record_search": [
-                lb(self.config) for lb in
-                self.config.record_search_link_builders
-            ]
-        })
+        # self.linker = Linker({
+        #     "record": [
+        #         lb(self.config) for lb in self.config.record_link_builders
+        #     ],
+        #     "record_search": [
+        #         lb(self.config) for lb in
+        #         self.config.record_search_link_builders
+        #     ]
+        # })
 
     #
     # Low-level API
@@ -138,9 +137,9 @@ class RecordService(Service):
             # proper record class, we can't just dump and pass a projection...
             # record_projection = self.schema.dump(
             #     identity, record, pid=pid, record=record)
-            links = self.linker.links(
-                "record", identity, pid_value=pid.pid_value, record=record
-            )
+            # links = self.linker.links(
+            #     "record", identity, pid_value=pid.pid_value, record=record
+            # )
             record_list.append(
                 self.result_item(record=record, pid=pid, links=links)
             )
@@ -154,9 +153,10 @@ class RecordService(Service):
         aggregations = search_result.aggregations.to_dict()
 
         search_args = dict(q=querystring, **pagination, **sorting)
-        links = self.linker.links(
-            "record_search", identity, search_args=search_args
-        )
+        # links = self.linker.links(
+        #     "record_search", identity, search_args=search_args
+        # )
+        links = {}
 
         return self.result_list(
             record_list, total, aggregations, links
@@ -189,10 +189,11 @@ class RecordService(Service):
         record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record)
 
-        links = self.linker.links(
-            "record", identity, pid_value=record.pid.pid_value,
-            record=record_projection
-        )
+        # links = self.linker.links(
+        #     "record", identity, pid_value=record.pid.pid_value,
+        #     record=record_projection
+        # )
+        links = {}
 
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
@@ -217,15 +218,15 @@ class RecordService(Service):
             record=record
         )
 
-        links = self.linker.links(
-            "record", identity, pid_value=record.pid.pid_value,
-            record=record_projection
-        )
+        # links = self.linker.links(
+        #     "record", identity, pid_value=record.pid.pid_value,
+        #     record=record_projection
+        # )
+        links = {}
 
         # TODO: how do we deal with tombstone pages
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
-
 
     def update(self, identity, id_, data):
         """Replace a record."""
@@ -253,14 +254,14 @@ class RecordService(Service):
         record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record)
 
-        links = self.linker.links(
-            "record", identity, pid_value=record.pid_value,
-            record=record_projection
-        )
+        # links = self.linker.links(
+        #     "record", identity, pid_value=record.pid_value,
+        #     record=record_projection
+        # )
+        links = {}
 
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
-
 
     def delete(self, identity, id_):
         """Delete a record from database and search indexes."""

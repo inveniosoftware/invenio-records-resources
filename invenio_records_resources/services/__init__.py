@@ -11,16 +11,13 @@
 from .base import Service, ServiceConfig
 from .files import FileMetadataService, FileMetadataServiceConfig, \
     FileService, FileServiceConfig
-from .records import DataSchema, MarshmallowDataSchema, RecordService, \
-    RecordServiceConfig
+from .records import RecordService, RecordServiceConfig
 
 __all__ = (
-    "DataSchema",
     "FileMetadataService",
     "FileMetadataServiceConfig",
     "FileService",
     "FileServiceConfig",
-    "MarshmallowDataSchema",
     "RecordService",
     "RecordServiceConfig",
     "Service",

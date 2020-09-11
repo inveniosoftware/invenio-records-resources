@@ -8,10 +8,8 @@
 
 """Errors."""
 
-from flask_principal import PermissionDenied
 
+class InvalidQueryError(Exception):
+    """Invalid query syntax."""
 
-class PermissionDeniedError(PermissionDenied):
-    """Permission denied error."""
-
-    description = "Permission denied."
+    description = "Invalid query syntax."

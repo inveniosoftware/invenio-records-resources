@@ -10,11 +10,9 @@
 """Record Service API."""
 
 from .config import RecordServiceConfig
-from .validator import MarshmallowDataValidator
 from .service import RecordService
 
 __all__ = (
-    'MarshmallowDataValidator',
     'RecordService',
     'RecordServiceConfig',
 )
