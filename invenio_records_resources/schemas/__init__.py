@@ -6,10 +6,11 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Marshmallow schemas for serialization."""
+"""Marshmallow utilities."""
 
-from .url_args import SearchURLArgsSchemaV1
+from .permissions import FieldPermissionError, FieldPermissionsMixin
 
 __all__ = (
-    "SearchURLArgsSchemaV1",
+    'FieldPermissionError',
+    'FieldPermissionsMixin',
 )

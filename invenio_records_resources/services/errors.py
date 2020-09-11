@@ -9,7 +9,6 @@
 """Errors."""
 
 from flask_principal import PermissionDenied
-from invenio_rest.errors import RESTException
 
 
 class PermissionDeniedError(PermissionDenied):

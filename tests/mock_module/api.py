@@ -24,4 +24,4 @@ class Record(RecordBase):
     schema = ConstantField(
         '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
 
-    pid = PIDField(provider=RecordIdProviderV2)
+    pid = PIDField('id', provider=RecordIdProviderV2)

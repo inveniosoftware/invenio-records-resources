@@ -12,16 +12,16 @@
 import xmltodict
 from flask_resources.serializers import SerializerMixin
 
-from .json import RecordJSONSerializer
+from .json import JSONSerializer
 
 
-class RecordXMLSerializer(SerializerMixin):
+class XMLSerializer(SerializerMixin):
     """Record JSON serializer implementation."""
 
     def serialize_object(self, obj, response_ctx=None, *args, **kwargs):
         """Dump the object into an XML string."""
         if obj:  # e.g. delete op has no return body
-            json_serializer = RecordJSONSerializer()
+            json_serializer = JSONSerializer()
             processed_record = json_serializer._process_record(obj)
             return xmltodict.unparse({"root": processed_record})
         else:

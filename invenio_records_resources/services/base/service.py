@@ -9,24 +9,11 @@
 
 """Service API."""
 
-from invenio_base.utils import load_or_import_from_config
-from invenio_records_permissions.policies import BasePermissionPolicy
-
-from .errors import PermissionDeniedError
+from ..errors import PermissionDeniedError
+from .config import ServiceConfig, ConfigLoaderMixin
 
 
-class ServiceConfig:
-    """Service Configuration."""
-
-    # Common configuration for all Services
-    permission_policy_cls = BasePermissionPolicy
-    """The permission policy class to use."""
-
-    resource_unit_cls = dict
-    resource_list_cls = list
-
-
-class Service:
+class Service(ConfigLoaderMixin):
     """Service interface.
 
     A service requires a service configuration. Several ways exist to provide
@@ -38,27 +25,12 @@ class Service:
        ``default_config``).
     """
 
-    default_config = ServiceConfig
-    """Default service configuration."""
-
-    config_name = None
-    """Name of Flask configuration variable.
-
-    The variable is used to dynamically load a service configuration specified
-    by the user. A concrete service subclass most overwrite this attribute.
-    """
-
     def __init__(self, config=None):
         """Constructor.
 
-        :param config: Provide the ser
+        :param config: A service configuration
         """
-        self.config = (
-            config or
-            load_or_import_from_config(
-                self.config_name, default=self.default_config
-            )
-        )
+        self.config = self.load_config(config)
 
     #
     # Permissions checking
@@ -75,16 +47,16 @@ class Service:
     #
     # Units of transaction methods (creation...)
     #
-    def resource_unit(self, *args, **kwargs):
+    def result_item(self, *args, **kwargs):
         """Create a new instance of the resource unit.
 
         A resource unit is an instantiated object representing one unit
         of a Resource. It is what a Resource transacts in and therefore
         what a Service must provide.
         """
-        return self.config.resource_unit_cls(*args, **kwargs)
+        return self.config.result_item_cls(*args, **kwargs)
 
-    def resource_list(self, *args, **kwargs):
+    def result_list(self, *args, **kwargs):
         """Create a new instance of the resource list.
 
         A resource list is an instantiated object representing a grouping
@@ -93,4 +65,4 @@ class Service:
         Resource list methods transact in and therefore what
         a Service must provide.
         """
-        return self.config.resource_list_cls(*args, **kwargs)
+        return self.config.result_list_cls(*args, **kwargs)

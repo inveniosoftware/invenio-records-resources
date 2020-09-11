@@ -9,83 +9,13 @@
 
 """Record Service API."""
 
-from functools import partial
-
-from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_indexer.api import RecordIndexer
-from invenio_pidstore import current_pidstore
-from invenio_pidstore.resolver import Resolver
-from invenio_records.api import Record
-from invenio_records_permissions.policies.records import RecordPermissionPolicy
-from invenio_search import RecordsSearch
 
-from ..config import lt_es7
-from ..links import Linker, RecordDeleteLinkBuilder, RecordFilesLinkBuilder, \
-    RecordSearchLinkBuilder, RecordSelfLinkBuilder
-from ..resource_units import IdentifiedRecord, IdentifiedRecords
-from ..resources.record_config import RecordResourceConfig
-from .components import AccessComponent, FilesComponent, MetadataComponent, \
-    PIDSComponent
-from .data_schema import MarshmallowDataSchema
-from .search import SearchEngine
-from .search.serializers import es_to_record
-from .service import Service, ServiceConfig
-
-
-class RecordServiceConfig(ServiceConfig):
-    """Service factory configuration."""
-
-    # Common configuration
-    permission_policy_cls = RecordPermissionPolicy
-    resource_unit_cls = IdentifiedRecord
-    resource_list_cls = IdentifiedRecords
-
-    # Record specific configuration
-    record_cls = Record
-    resolver_cls = Resolver
-    resolver_obj_type = "rec"
-    resolver_pid_type = "recid"  # PID type for resolver and fetch
-
-    indexer_cls = RecordIndexer
-
-    search_cls = RecordsSearch
-    search_engine_cls = SearchEngine
-    search_sort_options = dict(
-        bestmatch=dict(
-            title=_('Best match'),
-            fields=['-_score'],
-            default_if_query=True,
-        ),
-        mostrecent=dict(
-            title=_('Most recent'),
-            fields=['-_created'],
-            default_if_no_query=True,
-        ),
-    )
-
-    data_schema = MarshmallowDataSchema()
-
-    # NOTE: Configuring routes here, allows their configuration and the
-    #       configured routes to be picked up by the link builders at runtime
-    record_route = RecordResourceConfig.item_route
-    record_search_route = RecordResourceConfig.list_route
-    record_files_route = RecordResourceConfig.item_route + "/files"
-    record_link_builders = [
-        RecordSelfLinkBuilder,
-        RecordDeleteLinkBuilder,
-        RecordFilesLinkBuilder,
-    ]
-    record_search_link_builders = [
-        RecordSearchLinkBuilder
-    ]
-
-    components = [
-        MetadataComponent,
-        PIDSComponent,
-        AccessComponent,
-        FilesComponent,
-    ]
+from ...config import lt_es7
+from ..base import Service
+from .config import RecordServiceConfig
+from .results import IdentifiedRecord, IdentifiedRecords
+from .schema import MarshmallowServiceSchema
 
 
 class RecordService(Service):
@@ -93,9 +23,10 @@ class RecordService(Service):
 
     default_config = RecordServiceConfig
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, config=None, *args, **kwargs):
         """Constructor."""
-        super(RecordService, self).__init__(*args, **kwargs)
+        super(RecordService, self).__init__(config=config)
+        # TODO: Move outside service?
         self.linker = Linker({
             "record": [
                 lb(self.config) for lb in self.config.record_link_builders
@@ -118,14 +49,9 @@ class RecordService(Service):
         )
 
     @property
-    def fetcher(self):
-        """Returns the fetcher function."""
-        return current_pidstore.fetchers[self.config.resolver_pid_type]
-
-    @property
     def indexer(self):
         """Factory for creating an indexer instance."""
-        return self.config.indexer_cls()
+        return self.config.indexer_cls(record_cls=self.config.record_cls)
 
     @property
     def search_engine(self):
@@ -140,9 +66,9 @@ class RecordService(Service):
         )
 
     @property
-    def data_schema(self):
+    def schema(self):
         """Returns the data schema instance."""
-        return self.config.data_schema  # Already an instance
+        return MarshmallowServiceSchema(schema=self.config.schema)
 
     @property
     def components(self):
@@ -156,32 +82,14 @@ class RecordService(Service):
 
     def resolve(self, id_):
         """Resolve a persistent identifier to a record."""
-        return self.resolver.resolve(id_)
+        pid, record = self.resolver.resolve(id_)
+        # TODO: Fix me - find a proper way to cache the object on the instance.
+        record._obj_cache['pid'] = pid
+        return record
 
     #
     # High-level API
     #
-    def read(self, identity, id_):
-        """Retrieve a record."""
-        pid, record = self.resolve(id_)
-        self.require_permission(identity, "read", record=record)
-
-        # Run components
-        for component in self.components:
-            if hasattr(component, 'read'):
-                component.read(identity, record=record)
-
-        record_projection = self.data_schema.dump(
-            identity, record, pid=pid, record=record)
-        links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value,
-            record=record_projection
-        )
-
-        # TODO: how do we deal with tombstone pages
-        return self.resource_unit(
-            pid=pid, record=record_projection, links=links)
-
     def search(self, identity, querystring, pagination=None, sorting=None):
         """Search for records matching the querystring."""
         # Permissions
@@ -224,18 +132,17 @@ class RecordService(Service):
         record_list = []
         for hit in search_result["hits"]["hits"]:
             # hit is ES AttrDict
-            # TODO: Replace with `self.record_cls.load(cls=ESLoader)`
-            record = es_to_record(hit.to_dict(), self.record_cls)
-            pid = self.fetcher(data=record, record_uuid=None)
+            record = self.record_cls.loads(hit.to_dict()['_source'])
+            pid = record.pid
             # TODO: Since `RecordJSONSerializer._process_record` expects a
             # proper record class, we can't just dump and pass a projection...
-            # record_projection = self.data_schema.dump(
+            # record_projection = self.schema.dump(
             #     identity, record, pid=pid, record=record)
             links = self.linker.links(
                 "record", identity, pid_value=pid.pid_value, record=record
             )
             record_list.append(
-                self.resource_unit(record=record, pid=pid, links=links)
+                self.result_item(record=record, pid=pid, links=links)
             )
 
         total = (
@@ -251,7 +158,7 @@ class RecordService(Service):
             "record_search", identity, search_args=search_args
         )
 
-        return self.resource_list(
+        return self.result_list(
             record_list, total, aggregations, links
         )
 
@@ -264,8 +171,8 @@ class RecordService(Service):
         self.require_permission(identity, "create")
 
         # Validate data and create record with pid
-        data, _ = self.data_schema.load(identity, data)
-        record = self.record_cls.create(data)
+        data, _ = self.schema.load(identity, data)
+        record = self.record_cls.create({})
 
         # Run components
         for component in self.components:
@@ -279,7 +186,7 @@ class RecordService(Service):
 
         # Create record state
         # TODO (Alex): see how to replace resource unit
-        record_projection = self.data_schema.dump(
+        record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record)
 
         links = self.linker.links(
@@ -287,15 +194,80 @@ class RecordService(Service):
             record=record_projection
         )
 
-        return self.resource_unit(
+        return self.result_item(
             pid=record.pid, record=record_projection, links=links)
+
+    def read(self, identity, id_):
+        """Retrieve a record."""
+        # Resolve and require permission
+        record = self.resolve(id_)
+        self.require_permission(identity, "read", record=record)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'read'):
+                component.read(identity, record=record)
+
+        # TODO: why record twice?
+        record_projection = self.schema.dump(
+            identity,
+            record,
+            # Schema context:
+            pid=record.pid,
+            record=record
+        )
+
+        links = self.linker.links(
+            "record", identity, pid_value=record.pid.pid_value,
+            record=record_projection
+        )
+
+        # TODO: how do we deal with tombstone pages
+        return self.result_item(
+            pid=record.pid, record=record_projection, links=links)
+
+
+    def update(self, identity, id_, data):
+        """Replace a record."""
+        # TODO: etag and versioning
+        record = self.resolve(id_)
+
+        # Permissions
+        self.require_permission(identity, "update", record=record)
+        data, _ = self.schema.load(
+            identity, data, pid=record.pid, record=record)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'update'):
+                component.update(identity, data=data, record=record)
+
+        record.update(data)
+        record.clear_none()
+        record.commit()
+        db.session.commit()
+
+        if self.indexer:
+            self.indexer.index(record)
+
+        record_projection = self.schema.dump(
+            identity, record, pid=record.pid, record=record)
+
+        links = self.linker.links(
+            "record", identity, pid_value=record.pid_value,
+            record=record_projection
+        )
+
+        return self.result_item(
+            pid=record.pid, record=record_projection, links=links)
+
 
     def delete(self, identity, id_):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
 
         # TODO: Removed based on id both DB and ES
-        pid, record = self.resolve(id_)
+        record = self.resolve(id_)
         # Permissions
         self.require_permission(identity, "delete", record=record)
 
@@ -305,43 +277,10 @@ class RecordService(Service):
                 component.delete(identity, record=record)
 
         record.delete()
-        pid.delete()
-
+        record.pid.delete()
         db.session.commit()
 
         if self.indexer:
             self.indexer.delete(record)
 
         # TODO: Shall it return true/false? The tombstone page?
-
-    def update(self, identity, id_, data):
-        """Replace a record."""
-        # TODO: etag and versioning
-        pid, record = self.resolve(id_)
-        # Permissions
-        self.require_permission(identity, "update", record=record)
-        data, _ = self.data_schema.load(identity, data, pid=pid, record=record)
-
-        # Run components
-        for component in self.components:
-            if hasattr(component, 'update'):
-                component.update(identity, data=data, record=record)
-
-        # TODO: Change once system fields and `Record.clean_none()` are there
-        record.clear()
-        record.update(data)
-        record.commit()
-        db.session.commit()
-
-        if self.indexer:
-            self.indexer.index(record)
-
-        record_projection = self.data_schema.dump(
-            identity, record, pid=pid, record=record)
-        links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value,
-            record=record_projection
-        )
-
-        return self.resource_unit(
-            pid=pid, record=record_projection, links=links)

@@ -6,7 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Records service copmonent base classes."""
+"""Records service component base classes."""
 
 
 class ServiceComponent:
@@ -42,17 +42,11 @@ class MetadataComponent(ServiceComponent):
 
     def create(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
-        validated_data = data.get('metadata', {})
-        # TODO (Alex): use when `MetadataField(SystemField)` is implemented
-        # record.metadata = validated_data
-        record.update({'metadata': validated_data})
+        record.metadata = data.get('metadata', {})
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
-        validated_data = data.get('metadata', {})
-        # TODO (Alex): use when `MetadataField(SystemField)` is implemented
-        # record.metadata = validated_data
-        record.update({'metadata': validated_data})
+        record.metadata = data.get('metadata', {})
 
 
 class PIDSComponent(ServiceComponent):

@@ -10,8 +10,38 @@
 """Invenio Resources module to create REST APIs."""
 
 from elasticsearch import VERSION as ES_VERSION
+from invenio_base.utils import load_or_import_from_config
 
 lt_es7 = ES_VERSION[0] < 7
 
 # TODO: Might be something to place with the fundamental invenio config
 SERVER_HOSTNAME = "localhost:5000"
+
+
+# TODO: Perhaps move to Flask-Resources (Resources and Services uses it)
+class ConfigLoaderMixin:
+    """Mixin for supporting configuration loading and overwriting."""
+
+    default_config = None
+    """Default service configuration."""
+
+    config_name = None
+    """Name of Flask configuration variable.
+
+    The variable is used to dynamically load a service configuration specified
+    by the user. A concrete service subclass most overwrite this attribute.
+    """
+
+    def load_config(self, config):
+        """Load a configuration.
+
+        Uses ``config`` if not None. Otherwise the method will try to load
+        the config from a Flask configuration variable (named using the
+        ``config_name`` attribute). Last it will use the config provided in
+        ``default_config``.
+
+        :param config: A service configuration or None.
+        """
+        return config or load_or_import_from_config(
+            self.config_name, default=self.default_config
+        )

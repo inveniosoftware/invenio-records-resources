@@ -7,10 +7,12 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Resource units."""
+"""Service results."""
+
+from ..base import ServiceItemResult, ServiceListResult
 
 
-class IdentifiedRecord:
+class RecordItem(ServiceItemResult):
     """Resource unit representing pid + Record data clump."""
 
     def __init__(self, pid, record, links, errors=None):
@@ -26,7 +28,7 @@ class IdentifiedRecord:
         return str(self.record.revision_id) == str(revision_id)
 
 
-class IdentifiedRecords:
+class RecordList(ServiceListResult):
     """Resource list representing the result of an IdentifiedRecord search."""
 
     def __init__(self, records, total, aggregations, links, errors=None):
@@ -44,7 +46,7 @@ class IdentifiedRecords:
         self.errors = errors
 
 
-class TombstoneState(IdentifiedRecord):
+class TombstoneState(RecordItem):
     """State for tombstones."""
 
     pid = None

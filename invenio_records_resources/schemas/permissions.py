@@ -15,27 +15,6 @@ class FieldPermissionError(Exception):
     """Marshmaallow field permission error."""
 
 
-class MetadataSchemaJSONV1(Schema):
-    """Basic metadata schema class."""
-
-    class Meta:
-        """Meta class to accept unknwon fields."""
-
-        unknown = INCLUDE
-
-    title = fields.Str(required=True, validate=validate.Length(min=3))
-
-
-class RecordSchemaV1(Schema):
-    """Schema for records v1 in JSON."""
-
-    id = fields.Str()
-    metadata = fields.Nested(MetadataSchemaJSONV1)
-    links = fields.Raw()
-    created = fields.Str()
-    updated = fields.Str()
-
-
 class FieldPermissionsMixin:
     """Mixin for filtering field-level permissions in marshmallow schemas."""
 

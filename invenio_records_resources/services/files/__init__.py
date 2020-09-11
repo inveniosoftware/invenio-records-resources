@@ -7,12 +7,14 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Records Resources Serializers."""
+"""Base Service API."""
 
-from .json import JSONSerializer
-from .xml import XMLSerializer
+from .config import FileServiceConfig, FileMetadataServiceConfig
+from .service import FileService, FileMetadataService
 
 __all__ = (
-    "JSONSerializer",
-    "XMLSerializer",
+    'FileMetadataService',
+    'FileMetadataServiceConfig',
+    'FileService',
+    'FileServiceConfig',
 )

@@ -11,7 +11,6 @@
 import json
 
 from flask import jsonify, make_response, request, url_for
-from invenio_rest.errors import RESTException, RESTValidationError
 from werkzeug.routing import BuildError
 
 

@@ -6,10 +6,9 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Resources module to create REST APIs."""
+"""Invenio Records Resources module to create REST APIs."""
 
 from . import config
-from .resources import RecordResource
 
 
 class InvenioRecordsResources(object):

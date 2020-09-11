@@ -20,12 +20,13 @@ from invenio_records.systemfields import SystemField
 class PIDField(SystemField):
     """Persistent identifier system field."""
 
-    def __init__(self, key='id', provider=None):
+    def __init__(self, key='id', provider=None, object_type='rec'):
         """Initialize the PIDField.
 
         :param key: Name of key to store the pid value in.
         """
         self._provider = provider
+        self._object_type = object_type
         super().__init__(key=key)
 
     #
@@ -39,13 +40,19 @@ class PIDField(SystemField):
         if record.pid is None:
             # Create a PID if the object doesn't already have one.
             record.pid = self._provider.create(
-                object_type='rec',
+                object_type=self.object_type,
                 object_uuid=record.id
             ).pid
+
+    # TODO: Add a resolve(val) method, that can be access from the record:
+    # Record.pid.resolve('12345-12345'); then we can get rid of the resolver
+    # on the recordservice(config)?.
 
     #
     # Object caching on instance
     #
+    # TODO: Move to Invenio-Records as a global cache that can be used by
+    # system fields.
     def _set_cache(self, instance, obj):
         """Set the object on the instance's cache."""
         if not hasattr(instance, '_obj_cache'):
@@ -78,7 +85,7 @@ class PIDField(SystemField):
                 pid_type=data.get('status'),
                 pid_value=pid_value,
                 status=data.get('status'),
-                object_type='rec',
+                object_type=data.get('obj_type'),,
                 object_uuid=instance.id,
             )
             # Cache object
@@ -102,6 +109,7 @@ class PIDField(SystemField):
         # Store data values on the attribute name (e.g. 'pid')
         instance[self.attr_name] = {
             'type': pid.pid_type,
+            'obj_type': pid.object_type,
             'status': str(pid.status),
             'pk': pid.id
         }
