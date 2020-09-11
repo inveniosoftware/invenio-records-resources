@@ -36,6 +36,7 @@ class PIDField(SystemField):
         """Called after a record is created."""
         if self._provider is None:
             return
+
         # This uses the data descriptor method __get__() below:
         if record.pid is None:
             # Create a PID if the object doesn't already have one.
@@ -63,6 +64,7 @@ class PIDField(SystemField):
 
         pid_value = self.get_dictkey(instance)
         data = instance.get(self.attr_name)
+
         # If both have data, we construct the object.
         if pid_value and data:
             obj = PersistentIdentifier(
@@ -104,13 +106,6 @@ class PIDField(SystemField):
 
         # Cache object
         self._set_cache(instance, pid)
-
-    def __set_name__(self, owner, name):
-        """Initialize the cache."""
-        super().__set_name__(owner, name)
-        # Initialize cache if not already done.
-        if not hasattr(owner, '_obj_cache'):
-            owner._obj_cache = {}
 
     #
     # Object caching on instance

@@ -82,7 +82,9 @@ class RecordService(Service):
     def resolve(self, id_):
         """Resolve a persistent identifier to a record."""
         pid, record = self.resolver.resolve(id_)
-        # TODO: Fix me - find a proper way to cache the object on the instance.
+        # TODO: Fix me - this should be part of meta class for system fields.
+        if not hasattr(record, '_obj_cache'):
+            record._obj_cache = {}
         record._obj_cache['pid'] = pid
         return record
 
@@ -130,19 +132,17 @@ class RecordService(Service):
         # Mutate search results into a list of record states
         record_list = []
         for hit in search_result["hits"]["hits"]:
-            # hit is ES AttrDict
+            # Load record from ES dump.
             record = self.record_cls.loads(hit.to_dict()['_source'])
-            pid = record.pid
-            # TODO: Since `RecordJSONSerializer._process_record` expects a
-            # proper record class, we can't just dump and pass a projection...
-            # record_projection = self.schema.dump(
-            #     identity, record, pid=pid, record=record)
+            record_projection = self.schema.dump(
+                identity, record, pid=record.pid, record=record)
             # links = self.linker.links(
             #     "record", identity, pid_value=pid.pid_value, record=record
             # )
-            record_list.append(
-                self.result_item(record=record, pid=pid, links=links)
-            )
+            links = {}
+            item = self.result_item(
+                record=record_projection, pid=record.pid, links=links)
+            record_list.append(item)
 
         total = (
             search_result.hits.total
@@ -180,6 +180,7 @@ class RecordService(Service):
                 component.create(identity, data=data, record=record)
 
         # Persist record (DB and index)
+        record.commit()
         db.session.commit()
         if self.indexer:
             self.indexer.index(record)
@@ -201,6 +202,7 @@ class RecordService(Service):
     def read(self, identity, id_):
         """Retrieve a record."""
         # Resolve and require permission
+        # TODO must handle delete records and tombstone pages
         record = self.resolve(id_)
         self.require_permission(identity, "read", record=record)
 
@@ -283,5 +285,7 @@ class RecordService(Service):
 
         if self.indexer:
             self.indexer.delete(record)
+
+        return True
 
         # TODO: Shall it return true/false? The tombstone page?
