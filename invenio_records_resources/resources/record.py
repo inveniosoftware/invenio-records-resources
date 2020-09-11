@@ -9,31 +9,47 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from flask import current_app, g
+from flask import abort, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 from invenio_base.utils import load_or_import_from_config
 
+# TODO: should it be in resources instead?
+from ..config import ConfigLoaderMixin
 from ..services import RecordService
 from .record_config import RecordResourceConfig
 
 
-class RecordResource(CollectionResource):
+class RecordResource(CollectionResource, ConfigLoaderMixin):
     """Record resource."""
 
-    config_name = None  # Must be filled with str by concrete subclasses
     default_config = RecordResourceConfig
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        config = (
-            config or
-            load_or_import_from_config(
-                self.config_name, default=self.default_config
-            )
-        )
-        super(RecordResource, self).__init__(config=config)
+        super(RecordResource, self).__init__(config=self.load_config(config))
         self.service = service or RecordService()
+
+    def _make_item_body(self, item_result, route):
+        """Make the body content."""
+        res = {
+            'links': item_result.links.resolve(....),
+            **item_result.record,
+        }
+        if item_result.errors:
+            res['errors'] = item_result.errors
+        return res
+
+    def _make_list_body(self, list_result):
+        """Make the body content for a list item."""
+        # TODO: Take from JSONSerializer.serialize_list_....
+        # res = {
+        #     'links': list_result.links.resolve(....),
+        #     **list_result.record,
+        # }
+        # if list_result.errors:
+        #     res['errors'] = list_result.errors
+        return res
 
     #
     # Primary Interface
@@ -49,6 +65,8 @@ class RecordResource(CollectionResource):
         }
         pagination = request_args
 
+        # TODO: Args parsing has to allow for easily adding new parameters,
+        # when someone extends the search engine.
         record_search = self.service.search(
             identity=identity,
             querystring=querystring,
@@ -61,43 +79,34 @@ class RecordResource(CollectionResource):
     def create(self):
         """Create an item."""
         data = resource_requestctx.request_content
-        identity = g.identity
-        return self.service.create(identity, data), 201
+        return self.service.create(g.identity, data), 201
 
     def read(self):
         """Read an item."""
-        identity = g.identity
-        return (
-            self.service.read(
-                id_=resource_requestctx.route["pid_value"], identity=identity
-            ),
-            200,
+        item = self.service.read(
+            id_=resource_requestctx.route["pid_value"],
+            identity=g.identity
         )
+        return self._make_item_body(item, route=self.config.item_route), 200
 
     def update(self):
         """Update an item."""
         data = resource_requestctx.request_content
-        identity = g.identity
-        return (
-            self.service.update(
-                id_=resource_requestctx.route["pid_value"],
-                data=data,
-                identity=identity
-            ),
-            200,
+        item = self.service.update(
+            id_=resource_requestctx.route["pid_value"],
+            data=data,
+            identity=g.identity
         )
+        return self._make_item_body(item, route=self.config.item_route), 200
 
     def partial_update(self):
         """Patch an item."""
-        # TODO
-        pass
+        abort(405)
 
     def delete(self):
         """Delete an item."""
-        identity = g.identity
-        return (
-            self.service.delete(
-                id_=resource_requestctx.route["pid_value"], identity=identity
-            ),
-            204,
+        self.service.delete(
+            id_=resource_requestctx.route["pid_value"],
+            identity=g.identity
         )
+        return None, 204

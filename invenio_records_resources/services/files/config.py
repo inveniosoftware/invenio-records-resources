@@ -11,17 +11,13 @@
 
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
-from .service import Service, ServiceConfig
+from ..base import ServiceConfig
+from .results import FileMetadata, FilesMetadata, InvenioFile
 
 
-class InvenioFile:
-    """Fake File resource unit."""
-
-    def __init__(self, *args, **kwargs):
-        """Constructor."""
-        pass
-
-
+#
+# Configurations
+#
 class FileServiceConfig(ServiceConfig):
     """File Service configuration."""
 
@@ -39,19 +35,10 @@ class FileServiceConfig(ServiceConfig):
     permission_policy_cls = RecordPermissionPolicy
 
 
-class FileService(Service):
-    """File Service.
+class FileMetadataServiceConfig(ServiceConfig):
+    """File Metadata Service configuration."""
 
-    Because actual files are not Records, it makes sense for them to have their
-    own service.
-    """
-
-    default_config = FileServiceConfig
-
-    #
-    # High-level API
-    #
-    def read(self, id_, identity):
-        """Retrieve ."""
-        # TODO: IMPLEMENT ME!
-        return self.resource_unit()
+    # Configurations that are in common
+    permission_policy_cls = RecordPermissionPolicy
+    resource_unit_cls = FileMetadata  # TODO: Replace with real
+    resource_list_cls = FilesMetadata  # TODO: Replace with real

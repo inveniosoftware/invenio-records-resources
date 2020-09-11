@@ -11,16 +11,9 @@
 
 from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
-from flask_resources.resources import ResourceConfig
 
 from ..services import FileMetadataService, FileService
-
-
-class FileResourceConfig(ResourceConfig):
-    """Record resource config."""
-
-    item_route = "/records/<pid_value>/files/<key>"
-    list_route = "/records/<pid_value>/files"
+from .file_config import FileActionResourceConfig, FileResourceConfig
 
 
 class FileResource(CollectionResource):
@@ -28,9 +21,9 @@ class FileResource(CollectionResource):
 
     default_config = FileResourceConfig
 
-    def __init__(self, service=None, *args, **kwargs):
+    def __init__(self, config=None, service=None):
         """Constructor."""
-        super(FileResource, self).__init__(*args, **kwargs)
+        super().__init__(config=config=self.load_config(config))
         self.service = service or FileMetadataService()
 
     def search(self, *args, **kwargs):
@@ -42,25 +35,14 @@ class FileResource(CollectionResource):
         return self.service.read(), 200
 
 
-class FileActionResourceConfig(ResourceConfig):
-    """Record resource config."""
-
-    # QUESTIONs:
-    # 1- Shouldn't the item_route be used for SingletonResource actually?
-    #    A change in Flask-Resource would be needed.
-    # 2- Should the list_route instead precede download with "actions" to be in
-    #    keeping with other actions endpoints?
-    list_route = "/records/<pid_value>/files/<key>/download"
-
-
 class FileActionResource(SingletonResource):
     """File action resource."""
 
     default_config = FileActionResourceConfig
 
-    def __init__(self, service=None, *args, **kwargs):
+    def __init__(self, config=None, service=None):
         """Constructor."""
-        super(FileActionResource, self).__init__(*args, **kwargs)
+        super().__init__(config=config=self.load_config(config))
         self.service = service or FileService()
 
     def read(self, *args, **kwargs):

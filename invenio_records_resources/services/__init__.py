@@ -8,11 +8,11 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
-from .data_schema import DataSchema, MarshmallowDataSchema
-from .file import FileService, FileServiceConfig
-from .file_metadata import FileMetadataService, FileMetadataServiceConfig
-from .record import RecordService, RecordServiceConfig
-from .service import Service, ServiceConfig
+from .base import Service, ServiceConfig
+from .files import FileMetadataService, FileMetadataServiceConfig, \
+    FileService, FileServiceConfig
+from .records import DataSchema, MarshmallowDataSchema, RecordService, \
+    RecordServiceConfig
 
 __all__ = (
     "DataSchema",

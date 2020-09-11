@@ -9,19 +9,18 @@
 
 """Record Resource Configuration."""
 
-# TODO: rename file to config.py
 
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import ArgsParser
 from flask_resources.resources import ResourceConfig
+from flask_resources.responses import Response
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
 
-from ..errors import create_pid_redirected_error_handler
-from ..responses import RecordResponse
-from ..schemas import SearchURLArgsSchemaV1
-from ..serializers import RecordJSONSerializer
+from ..linker.schema import SearchURLArgsSchemaV1
+from ..serializers import JSONSerializer
 from ..services.errors import InvalidQueryError, PermissionDeniedError
+from .errors import create_pid_redirected_error_handler
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -35,10 +34,9 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     response_handlers = {
-        "application/json": RecordResponse(
-            RecordJSONSerializer()
-        )
+        "application/json": Response(JSONSerializer())
     }
+
     error_map = {
         InvalidQueryError: create_errormap_handler(
             HTTPJSONException(

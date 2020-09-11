@@ -7,12 +7,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Records Resources Serializers."""
+"""Link factory used to generate URLs inside records."""
 
-from .json import JSONSerializer
-from .xml import XMLSerializer
-
-__all__ = (
-    "JSONSerializer",
-    "XMLSerializer",
-)
+from .base import Linker
+from .builders import DeleteLinkBuilder, FilesLinkBuilder, LinkBuilder, \
+    SearchLinkBuilder, SelfLinkBuilder

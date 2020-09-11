@@ -6,15 +6,40 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Data validation API."""
+"""Record schema."""
 
-from marshmallow import ValidationError
-
-from .schemas import RecordSchemaV1
+from marshmallow import INCLUDE, Schema, ValidationError, fields, validate
 
 
-class DataSchema:
-    """Data schema interface."""
+#
+# The default record schema
+#
+class MetadataSchema(Schema):
+    """Basic metadata schema class."""
+
+    class Meta:
+        """Meta class to accept unknown fields."""
+
+        unknown = INCLUDE
+
+    title = fields.Str(required=True, validate=validate.Length(min=3))
+
+
+class RecordSchema(Schema):
+    """Schema for records v1 in JSON."""
+
+    id = fields.Str()
+    metadata = fields.Nested(MetadataSchema)
+    links = fields.Raw()
+    created = fields.Str()
+    updated = fields.Str()
+
+
+#
+# Service schema implementation (adds e.g. permission filtering)
+#
+class ServiceSchema:
+    """Data validator interface."""
 
     def __init__(self, service, *args, **kwargs):
         """Constructor."""
@@ -29,10 +54,10 @@ class DataSchema:
         raise NotImplementedError()
 
 
-class MarshmallowDataSchema(DataSchema):
+class MarshmallowServiceSchema(ServiceSchema):
     """Data schema based on Marshmallow."""
 
-    def __init__(self, *args, schema=RecordSchemaV1, **kwargs):
+    def __init__(self, *args, schema=RecordSchema, **kwargs):
         """Constructor."""
         self.schema = schema
         super().__init__(self, *args, **kwargs)
