@@ -16,8 +16,11 @@ readme = open("README.rst").read()
 history = open("CHANGES.rst").read()
 
 tests_require = [
-    "pytest-invenio>=1.3.3",
     "invenio-app>=1.3.0",
+    "pytest-invenio>=1.3.3",
+    "pytest-isort>=1.2.0",
+    "pytest-pycodestyle>=2.2.0",
+    "pytest-pydocstyle>=2.2.0",
 ]
 
 # Should follow inveniosoftware/invenio versions
@@ -58,7 +61,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask-resources>=0.2.1,<1.0.0",
+    "flask-resources>=0.4.0,<1.0.0",
     "invenio-accounts>=1.3.0",
     "invenio-base>=1.2.3",
     "invenio-files-rest>=1.2.0",
@@ -68,7 +71,8 @@ install_requires = [
     "invenio-pidstore>=1.2.0",
     "invenio-records-permissions>=0.9.0,<1.0.0",
     "invenio-records>=1.4.0.dev0",
-    "marshmallow-utils>=0.1.0",
+    "marshmallow-utils>=0.1.1",
+    "ftfy<5.0,>=4.4.3",  # TODO: temporary until invenio-records-rest unpins
     "xmltodict~=0.12.0",
 ]
 

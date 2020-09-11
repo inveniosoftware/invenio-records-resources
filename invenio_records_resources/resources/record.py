@@ -14,7 +14,6 @@ from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 from invenio_base.utils import load_or_import_from_config
 
-# TODO: should it be in resources instead?
 from ..config import ConfigLoaderMixin
 from ..services import RecordService
 from .record_config import RecordResourceConfig
@@ -30,10 +29,10 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         super(RecordResource, self).__init__(config=self.load_config(config))
         self.service = service or RecordService()
 
-    def _make_item_body(self, item_result, route):
+    def _make_item_body(self, item_result):
         """Make the body content."""
         res = {
-            'links': item_result.links.resolve(....),
+            # 'links': item_result.links.resolve(....),
             **item_result.record,
         }
         if item_result.errors:
@@ -42,14 +41,17 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
 
     def _make_list_body(self, list_result):
         """Make the body content for a list item."""
-        # TODO: Take from JSONSerializer.serialize_list_....
-        # res = {
-        #     'links': list_result.links.resolve(....),
-        #     **list_result.record,
-        # }
-        # if list_result.errors:
-        #     res['errors'] = list_result.errors
-        return res
+        return {
+            "hits": {
+                "hits": [
+                    self._make_item_body(record)
+                    for record in list_result.records
+                ],
+                "total": list_result.total
+            },
+            "links": list_result.links,
+            "aggregations": list_result.aggregations
+        }
 
     #
     # Primary Interface
@@ -74,7 +76,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             sorting=sorting,
         )
 
-        return record_search, 200
+        return self._make_list_body(record_search), 200
 
     def create(self):
         """Create an item."""

@@ -10,8 +10,8 @@
 """Base Service API."""
 
 from .config import ServiceConfig
-from .service import Service
 from .results import ServiceItemResult, ServiceListResult
+from .service import Service
 
 __all__ = (
     'Service',

@@ -7,10 +7,10 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Base Service API."""
+"""Files Service API."""
 
-from .config import FileServiceConfig, FileMetadataServiceConfig
-from .service import FileService, FileMetadataService
+from .config import FileMetadataServiceConfig, FileServiceConfig
+from .service import FileMetadataService, FileService
 
 __all__ = (
     'FileMetadataService',

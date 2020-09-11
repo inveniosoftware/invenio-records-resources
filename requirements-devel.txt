@@ -9,3 +9,4 @@
 -e git+git://github.com/lnielsen/invenio-indexer.git@new-style-dumping#egg=invenio-indexer
 -e git+git://github.com/lnielsen/invenio-records.git@ng#egg=invenio-records
 -e git+git://github.com/lnielsen/pytest-invenio.git@entrypoints#egg=pytest-invenio
+-e git+git://github.com/lnielsen/flask-resources.git@nonevalues#egg=flask-resources

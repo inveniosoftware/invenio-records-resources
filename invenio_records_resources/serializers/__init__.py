@@ -9,10 +9,8 @@
 
 """Invenio Records Resources Serializers."""
 
-from .json import JSONSerializer
 from .xml import XMLSerializer
 
 __all__ = (
-    "JSONSerializer",
     "XMLSerializer",
 )

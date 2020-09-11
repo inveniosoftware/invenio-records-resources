@@ -40,28 +40,13 @@ class PIDField(SystemField):
         if record.pid is None:
             # Create a PID if the object doesn't already have one.
             record.pid = self._provider.create(
-                object_type=self.object_type,
+                object_type=self._object_type,
                 object_uuid=record.id
             ).pid
 
     # TODO: Add a resolve(val) method, that can be access from the record:
     # Record.pid.resolve('12345-12345'); then we can get rid of the resolver
     # on the recordservice(config)?.
-
-    #
-    # Object caching on instance
-    #
-    # TODO: Move to Invenio-Records as a global cache that can be used by
-    # system fields.
-    def _set_cache(self, instance, obj):
-        """Set the object on the instance's cache."""
-        if not hasattr(instance, '_obj_cache'):
-            instance._obj_cache = {}
-        instance._obj_cache[self.attr_name] = obj
-
-    def _get_cache(self, instance):
-        """Get the object from the instance's cache."""
-        return getattr(instance, '_obj_cache', {}).get(self.attr_name)
 
     #
     # Helpers
@@ -85,7 +70,7 @@ class PIDField(SystemField):
                 pid_type=data.get('status'),
                 pid_value=pid_value,
                 status=data.get('status'),
-                object_type=data.get('obj_type'),,
+                object_type=data.get('obj_type'),
                 object_uuid=instance.id,
             )
             # Cache object
@@ -119,3 +104,26 @@ class PIDField(SystemField):
 
         # Cache object
         self._set_cache(instance, pid)
+
+    def __set_name__(self, owner, name):
+        """Initialize the cache."""
+        super().__set_name__(owner, name)
+        # Initialize cache if not already done.
+        if not hasattr(owner, '_obj_cache'):
+            owner._obj_cache = {}
+
+    #
+    # Object caching on instance
+    #
+
+    # TODO: Move to Invenio-Records as a global cache that can be used by
+    # system fields.
+    def _set_cache(self, instance, obj):
+        """Set the object on the instance's cache."""
+        if not hasattr(instance, '_obj_cache'):
+            instance._obj_cache = {}
+        instance._obj_cache[self.attr_name] = obj
+
+    def _get_cache(self, instance):
+        """Get the object from the instance's cache."""
+        return getattr(instance, '_obj_cache', {}).get(self.attr_name)

@@ -18,7 +18,6 @@ lt_es7 = ES_VERSION[0] < 7
 SERVER_HOSTNAME = "localhost:5000"
 
 
-# TODO: Perhaps move to Flask-Resources (Resources and Services uses it)
 class ConfigLoaderMixin:
     """Mixin for supporting configuration loading and overwriting."""
 

@@ -23,7 +23,7 @@ class FileResource(CollectionResource):
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        super().__init__(config=config=self.load_config(config))
+        super().__init__(config=self.load_config(config))
         self.service = service or FileMetadataService()
 
     def search(self, *args, **kwargs):
@@ -42,7 +42,7 @@ class FileActionResource(SingletonResource):
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        super().__init__(config=config=self.load_config(config))
+        super().__init__(config=self.load_config(config))
         self.service = service or FileService()
 
     def read(self, *args, **kwargs):

@@ -11,15 +11,15 @@ import json
 from xml.etree import ElementTree as ET
 
 import pytest
+from flask_resources.responses import Response
+from flask_resources.serializers import JSONSerializer
 
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
-from invenio_records_resources.responses import RecordResponse
-from invenio_records_resources.serializers import RecordJSONSerializer, \
-    RecordXMLSerializer
+from invenio_records_resources.serializers import XMLSerializer
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
-from invenio_records_resources.services.schemas import RecordSchemaV1
+from invenio_records_resources.services.records.schema import RecordSchema
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
@@ -30,10 +30,10 @@ class CustomRecordResourceConfig(RecordResourceConfig):
     item_route = "/serialization_test/records/<pid_value>"
     list_route = "/serialization_test/records"
     response_handlers = {
-        "application/json": RecordResponse(
-            RecordJSONSerializer()
+        "application/json": Response(
+            JSONSerializer()
         ),
-        "application/xml": RecordResponse(RecordXMLSerializer())
+        "application/xml": Response(XMLSerializer())
     }
 
 
