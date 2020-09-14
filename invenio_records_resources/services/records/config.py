@@ -53,7 +53,7 @@ class RecordServiceConfig(ServiceConfig):
         ),
         mostrecent=dict(
             title=_('Most recent'),
-            fields=['-_created'],
+            fields=['created'],
             default_if_no_query=True,
         ),
     )

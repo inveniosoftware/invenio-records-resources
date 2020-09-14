@@ -16,8 +16,11 @@
       "updated": {
         "type": "date"
       },
+      "@expires_at": {
+        "type": "date"
+      },
       "@uuid": {
-        "type": "string"
+        "type": "keyword"
       },
       "@version": {
         "type": "integer"

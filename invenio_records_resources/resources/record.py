@@ -81,7 +81,8 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
     def create(self):
         """Create an item."""
         data = resource_requestctx.request_content
-        return self.service.create(g.identity, data), 201
+        item = self.service.create(g.identity, data)
+        return self._make_item_body(item), 201
 
     def read(self):
         """Read an item."""
@@ -89,7 +90,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             id_=resource_requestctx.route["pid_value"],
             identity=g.identity
         )
-        return self._make_item_body(item, route=self.config.item_route), 200
+        return self._make_item_body(item), 200
 
     def update(self):
         """Update an item."""
@@ -99,7 +100,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             data=data,
             identity=g.identity
         )
-        return self._make_item_body(item, route=self.config.item_route), 200
+        return self._make_item_body(item), 200
 
     def partial_update(self):
         """Patch an item."""
