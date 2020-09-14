@@ -9,8 +9,30 @@
 
 """Persistent identifier field.
 
-Notes:
-- Should work with UUIDs and PersistentIdentifiers
+The PIDField serializes a PersistentIdentifer object into a structure that
+looks like below:
+
+.. code-block:: python
+
+    {
+        'id': '12345-abcde',
+        'pid': {
+            'pk': 1,
+            'pid_type': 'recid',
+            'obj_type': 'rec',
+            'status': 'R',
+        }
+    }
+
+- The PID value is stored in ``id``, but can be changed using the ``key``
+argument. For instance, the folowing will also put the ``id`` below the ``pid``
+key in the record:
+
+.. code-block:: python
+
+    class Record():
+        pid = PIDField('pid.id')
+
 """
 
 from invenio_pidstore.models import PersistentIdentifier
@@ -20,12 +42,18 @@ from invenio_records.systemfields import SystemField
 class PIDField(SystemField):
     """Persistent identifier system field."""
 
-    def __init__(self, key='id', provider=None, object_type='rec'):
+    def __init__(self, key='id', provider=None, pid_type=None,
+                 object_type='rec'):
         """Initialize the PIDField.
 
         :param key: Name of key to store the pid value in.
+        :param provider: A PID provider used to create the internal persistent
+            identifier.
+        :param pid_type: The persistent identifier type (only used if no
+            provider is specified.
         """
         self._provider = provider
+        self._pid_type = provider.pid_type if provider else pid_type
         self._object_type = object_type
         super().__init__(key=key)
 
@@ -65,11 +93,11 @@ class PIDField(SystemField):
         pid_value = self.get_dictkey(instance)
         data = instance.get(self.attr_name)
 
-        # If both have data, we construct the object.
+        # If we have both data and pid_value, we construct the object:
         if pid_value and data:
             obj = PersistentIdentifier(
                 id=data.get('pk'),
-                pid_type=data.get('status'),
+                pid_type=data.get('pid_type'),
                 pid_value=pid_value,
                 status=data.get('status'),
                 object_type=data.get('obj_type'),
@@ -95,10 +123,10 @@ class PIDField(SystemField):
 
         # Store data values on the attribute name (e.g. 'pid')
         instance[self.attr_name] = {
-            'type': pid.pid_type,
-            'obj_type': pid.object_type,
+            'pk': pid.id,
+            'pid_type': pid.pid_type,
             'status': str(pid.status),
-            'pk': pid.id
+            'obj_type': pid.object_type,
         }
 
         # Set ID on desired dictionary key.

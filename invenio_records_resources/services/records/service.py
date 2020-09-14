@@ -245,6 +245,7 @@ class RecordService(Service):
             if hasattr(component, 'update'):
                 component.update(identity, data=data, record=record)
 
+        # TODO: remove next two lines.
         record.update(data)
         record.clear_none()
         record.commit()

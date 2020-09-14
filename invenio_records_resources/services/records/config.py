@@ -15,9 +15,6 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
-from ...config import lt_es7
-from ...linker import DeleteLinkBuilder, FilesLinkBuilder, Linker, \
-    SearchLinkBuilder, SelfLinkBuilder
 from ...records import Record
 from ...search import SearchEngine
 from ..base import ServiceConfig
@@ -60,25 +57,9 @@ class RecordServiceConfig(ServiceConfig):
 
     schema = RecordSchema
 
-    # NOTE: Configuring routes here, allows their configuration and the
-    #       configured routes to be picked up by the link builders at runtime
-    # record_route = RecordResourceConfig.item_route
-    # record_search_route = RecordResourceConfig.list_route
-    # record_files_route = RecordResourceConfig.item_route + "/files"
-
     components = [
         MetadataComponent,
         PIDSComponent,
         AccessComponent,
         FilesComponent,
-    ]
-
-    # TODO: Can they be moved outside?
-    record_link_builders = [
-        SelfLinkBuilder,
-        DeleteLinkBuilder,
-        FilesLinkBuilder,
-    ]
-    record_search_link_builders = [
-        SearchLinkBuilder
     ]
