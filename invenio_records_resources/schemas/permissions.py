@@ -12,7 +12,7 @@ from marshmallow import INCLUDE, Schema, fields, post_dump, pre_load, validate
 
 
 class FieldPermissionError(Exception):
-    """Marshmaallow field permission error."""
+    """Marshmallow field permission error."""
 
 
 class FieldPermissionsMixin:
