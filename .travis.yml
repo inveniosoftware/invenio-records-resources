@@ -6,6 +6,10 @@
 # Invenio-RDM-Records is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
+branches:
+  except:
+  - /^v\d+\.\d+(\.\d+)?(\S*)?$/
+
 addons:
   postgresql: 9.5
 
@@ -68,13 +72,3 @@ script:
 
 after_success:
   - coveralls
-
-deploy:
-  provider: pypi
-  user: inveniosoftware
-  password:
-    secure: "fYObmVdqpVabnIjTsUfBM+a50Rywcg6u/9wKrol2x10HqEebs/k7vwWeiaRNjHA5eCjORROyEbSnu9DnGoKYBW0Yrf1pE7Gsdtf+MqkEhOBEGQTKYzpRJ4fMVOYFyligj0xbIDVevDjBv7tPxYP1jFtXtPAGm/vyP/KIFq5haqqNqrZYxjvr3Z7EYTT+hCnva0TvaWTi2NZYdbsYmejjf09pnH6OoYH/SgGa0O1DyanbHN/OjQ0PKqHN1sUgN7bXUr/3pYdVTuf994uUket4xjnq4uIJHa+VDqWrRnCVg+UTI2PpPDtaolcgfVRV1NBaSHPMrH+PIqCvxHtxxiefxsuWuOgR8cjLssT51XTdfFb+Vd8ifXE9bL+VVooy74OGR5220SuLkJNCA+A32sLLficoSE4N7Roh6AbOsY/bmln6chRvuGG0YAoGMTq1g5ZxiT05g7/N91ILQgEXIh3COw7odtwME445yDlmYyNWH6MnIVh/UJYU4NpkCVT6zVp1R1yp5ZcCMYcibMmCr4Of9p6HKSmvAf4o0zncNEm6I4mpWpwhbQyy+BofWxOMA3+UD0JYRHz5KOAUScWRqluquBL0CpCGOndYnQtGAtqP5UdvUj07S5EFknEk21Cij7SUdqFsRzVfiTogEjD77S3y2zyEv8FMf4eBXgNc3+dxzvs="
-  distributions: "sdist bdist_wheel"
-  on:
-    tags: true
-    python: "3.6"
