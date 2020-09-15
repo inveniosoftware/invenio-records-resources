@@ -12,10 +12,10 @@
 from invenio_db import db
 
 from ...config import lt_es7
+from ...linker.base import LinkStore
 from ..base import Service
 from .config import RecordServiceConfig
 from .schema import MarshmallowServiceSchema
-from ...linker.base import LinkStore
 
 
 class RecordService(Service):
@@ -54,7 +54,7 @@ class RecordService(Service):
     @property
     def schema(self):
         """Returns the data schema instance."""
-        return MarshmallowServiceSchema(schema=self.config.schema)
+        return MarshmallowServiceSchema(self, schema=self.config.schema)
 
     @property
     def components(self):
@@ -172,7 +172,6 @@ class RecordService(Service):
             self.indexer.index(record)
 
         # Create record state
-        # TODO (Alex): see how to replace resource unit
         links = LinkStore()
         record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record, links_store=links)
@@ -201,7 +200,7 @@ class RecordService(Service):
             record=record,
             links_store=links,
         )
-        # TODO: how do we deal with tombstone pages
+
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
 
@@ -257,5 +256,3 @@ class RecordService(Service):
             self.indexer.delete(record)
 
         return True
-
-        # TODO: Shall it return true/false? The tombstone page?

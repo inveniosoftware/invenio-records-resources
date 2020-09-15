@@ -9,7 +9,6 @@
 
 """Record Resource Configuration."""
 
-from uritemplate import URITemplate
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import ArgsParser
 from flask_resources.resources import ResourceConfig
@@ -17,6 +16,7 @@ from flask_resources.responses import Response
 from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
+from uritemplate import URITemplate
 
 from ..linker.schema import SearchURLArgsSchemaV1
 from ..search.errors import InvalidQueryError
