@@ -74,6 +74,7 @@ install_requires = [
     "marshmallow-utils>=0.1.1",
     "ftfy<5.0,>=4.4.3",  # TODO: temporary until invenio-records-rest unpins
     "xmltodict~=0.12.0",
+    "uritemplate>=3.0.1",
 ]
 
 packages = find_packages()
