@@ -30,11 +30,11 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
 
     def _make_item_body(self, item_result):
         """Make the body content."""
-        res = {
-            'links': item_result.links.resolve(
-                config=self.config.links_config),
-            **item_result.record,
-        }
+        # Resolve links
+        item_result.links.resolve(config=self.config.links_config)
+        # Create the result
+        res = item_result.record
+        # Add errors if present
         if item_result.errors:
             res['errors'] = item_result.errors
         return res

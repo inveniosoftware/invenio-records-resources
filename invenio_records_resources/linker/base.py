@@ -10,7 +10,9 @@
 """Link factory that generate all the links for a given namespace."""
 
 from collections import defaultdict
-from marshmallow import fields
+
+from marshmallow import fields, missing
+
 from .urlutils import base_url
 
 
@@ -78,11 +80,11 @@ class LinkStore:
     def resolve(self, context=None, config=None):
         """Resolves in-place all the tracked link dictionaries."""
         config = config or self.config
-        assert config
+        assert config, "Links config is empty."
         context = context or {}
         for ns, link_objects in self._links.items():
             if ns not in config:
-                raise Exception('Unknown links namespace')
+                raise Exception(f'Unknown links namespace: {ns}')
             for links in link_objects:
                 for k, v in links.items():
                     links[k] = base_url(
@@ -100,7 +102,6 @@ class LinksField(fields.Field):
 
     def __init__(self, links_schema=None, namespace=None, **kwargs):
         """Constructor."""
-        kwargs['dump_only'] = True
         self.links_schema = links_schema
         self.namespace = namespace
         super().__init__(**kwargs)
@@ -111,3 +112,9 @@ class LinksField(fields.Field):
         result = self.links_schema(context=self.context).dump(obj)
         self.context['links_store'].add(self.namespace, result)
         return result
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        # NOTE: we don't deserialize the links, and we don't use dump_only=True
+        # because that will by default raise a validation error unless you have
+        # configured marshmallow to exclude unknown values.
+        return missing

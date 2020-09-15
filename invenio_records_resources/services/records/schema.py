@@ -8,12 +8,26 @@
 
 """Record schema."""
 
+from invenio_records_rest.schemas.fields import GenFunction
 from marshmallow import INCLUDE, Schema, ValidationError, fields, validate
+
+from ...linker.base import LinksField
+from ...schemas import FieldPermissionsMixin
 
 
 #
 # The default record schema
 #
+class RecordLinks(Schema, FieldPermissionsMixin):
+    """Links schema."""
+
+    field_dump_permissions = {
+        'self': 'read',
+    }
+
+    self = GenFunction(lambda obj, ctx: {'pid_value': obj.pid.pid_value})
+
+
 class MetadataSchema(Schema):
     """Basic metadata schema class."""
 
@@ -30,7 +44,7 @@ class RecordSchema(Schema):
 
     id = fields.Str()
     metadata = fields.Nested(MetadataSchema)
-    links = fields.Raw()
+    links = LinksField(links_schema=RecordLinks, namespace='record')
     created = fields.Str()
     updated = fields.Str()
 
@@ -57,14 +71,15 @@ class ServiceSchema:
 class MarshmallowServiceSchema(ServiceSchema):
     """Data schema based on Marshmallow."""
 
-    def __init__(self, *args, schema=RecordSchema, **kwargs):
+    def __init__(self, service, *args, schema=RecordSchema, **kwargs):
         """Constructor."""
         self.schema = schema
+        self._service = service
         super().__init__(self, *args, **kwargs)
 
     def _build_context(self, identity, **context):
         def _permission_check(action, identity=identity, **kwargs):
-            return self.service.config.permission_policy_cls(
+            return self._service.config.permission_policy_cls(
                 action, **context, **kwargs).allows(identity)
         context.setdefault('field_permission_check', _permission_check)
         context.setdefault('identity', identity)
