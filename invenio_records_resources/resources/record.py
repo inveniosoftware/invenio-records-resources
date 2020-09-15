@@ -12,7 +12,6 @@
 from flask import abort, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
-from invenio_base.utils import load_or_import_from_config
 
 from ..config import ConfigLoaderMixin
 from ..services import RecordService
@@ -32,7 +31,8 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
     def _make_item_body(self, item_result):
         """Make the body content."""
         res = {
-            # 'links': item_result.links.resolve(....),
+            'links': item_result.links.resolve(
+                config=self.config.links_config),
             **item_result.record,
         }
         if item_result.errors:

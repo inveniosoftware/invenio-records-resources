@@ -9,7 +9,7 @@
 
 """Record Resource Configuration."""
 
-
+from uritemplate import URITemplate
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import ArgsParser
 from flask_resources.resources import ResourceConfig
@@ -29,6 +29,8 @@ class RecordResourceConfig(ResourceConfig):
 
     item_route = "/records/<pid_value>"
     list_route = "/records"
+
+    links_config = {}
 
     request_url_args_parser = {
         "search": ArgsParser(SearchURLArgsSchemaV1)

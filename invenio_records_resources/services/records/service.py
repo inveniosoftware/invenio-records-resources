@@ -15,26 +15,13 @@ from ...config import lt_es7
 from ..base import Service
 from .config import RecordServiceConfig
 from .schema import MarshmallowServiceSchema
+from ...linker.base import LinkStore
 
 
 class RecordService(Service):
     """Record Service."""
 
     default_config = RecordServiceConfig
-
-    def __init__(self, config=None, *args, **kwargs):
-        """Constructor."""
-        super(RecordService, self).__init__(config=config)
-        # TODO: Move outside service?
-        # self.linker = Linker({
-        #     "record": [
-        #         lb(self.config) for lb in self.config.record_link_builders
-        #     ],
-        #     "record_search": [
-        #         lb(self.config) for lb in
-        #         self.config.record_search_link_builders
-        #     ]
-        # })
 
     #
     # Low-level API
@@ -134,12 +121,11 @@ class RecordService(Service):
         for hit in search_result["hits"]["hits"]:
             # Load record from ES dump.
             record = self.record_cls.loads(hit.to_dict()['_source'])
+
+            links = LinkStore()
             record_projection = self.schema.dump(
-                identity, record, pid=record.pid, record=record)
-            # links = self.linker.links(
-            #     "record", identity, pid_value=pid.pid_value, record=record
-            # )
-            links = {}
+                identity, record, pid=record.pid, record=record,
+                links_store=links)
             item = self.result_item(
                 record=record_projection, pid=record.pid, links=links)
             record_list.append(item)
@@ -187,15 +173,9 @@ class RecordService(Service):
 
         # Create record state
         # TODO (Alex): see how to replace resource unit
+        links = LinkStore()
         record_projection = self.schema.dump(
-            identity, record, pid=record.pid, record=record)
-
-        # links = self.linker.links(
-        #     "record", identity, pid_value=record.pid.pid_value,
-        #     record=record_projection
-        # )
-        links = {}
-
+            identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
 
@@ -212,20 +192,15 @@ class RecordService(Service):
                 component.read(identity, record=record)
 
         # TODO: why record twice?
+        links = LinkStore()
         record_projection = self.schema.dump(
             identity,
             record,
             # Schema context:
             pid=record.pid,
-            record=record
+            record=record,
+            links_store=links,
         )
-
-        # links = self.linker.links(
-        #     "record", identity, pid_value=record.pid.pid_value,
-        #     record=record_projection
-        # )
-        links = {}
-
         # TODO: how do we deal with tombstone pages
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
@@ -254,15 +229,9 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
+        links = LinkStore()
         record_projection = self.schema.dump(
-            identity, record, pid=record.pid, record=record)
-
-        # links = self.linker.links(
-        #     "record", identity, pid_value=record.pid_value,
-        #     record=record_projection
-        # )
-        links = {}
-
+            identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
             pid=record.pid, record=record_projection, links=links)
 
