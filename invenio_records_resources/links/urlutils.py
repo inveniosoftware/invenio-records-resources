@@ -19,9 +19,3 @@ def base_url(
     path = f"/api{path}" if api else path
     host = host or current_app.config['SERVER_HOSTNAME']
     return f"{scheme}://{host}{path}{querystring}"
-
-
-def api_route(route):
-    """Prepends the route with '/api'."""
-    assert route.startswith("/")
-    return f"/api{route}"
