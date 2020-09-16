@@ -11,7 +11,7 @@
 from invenio_records_rest.schemas.fields import GenFunction
 from marshmallow import INCLUDE, Schema, ValidationError, fields, validate
 
-from ...linker.base import LinksField
+from ...links.base import LinksField
 from ...schemas import FieldPermissionsMixin
 
 

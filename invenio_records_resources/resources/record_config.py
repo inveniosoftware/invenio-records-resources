@@ -18,7 +18,7 @@ from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
 from uritemplate import URITemplate
 
-from ..linker.schema import SearchURLArgsSchemaV1
+from ..links.schema import SearchURLArgsSchemaV1
 from ..search.errors import InvalidQueryError
 from ..services.errors import PermissionDeniedError
 from .errors import create_pid_redirected_error_handler
