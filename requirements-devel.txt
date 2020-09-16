@@ -6,7 +6,3 @@
 # Invenio-Records-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 #
--e git+git://github.com/lnielsen/invenio-indexer.git@new-style-dumping#egg=invenio-indexer
--e git+git://github.com/lnielsen/invenio-records.git@ng#egg=invenio-records
--e git+git://github.com/lnielsen/pytest-invenio.git@entrypoints#egg=pytest-invenio
--e git+git://github.com/lnielsen/flask-resources.git@nonevalues#egg=flask-resources
