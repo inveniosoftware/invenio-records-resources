@@ -12,7 +12,6 @@
 from urllib.parse import urlencode
 
 from .schema import DEFAULT_MAX_RESULTS, PagedIndexes, SearchURLArgsSchemaV1
-from .urlutils import base_url
 
 
 class PaginationLinks:

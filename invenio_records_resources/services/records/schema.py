@@ -54,6 +54,18 @@ class RecordSchema(Schema):
     links = LinksField(links_schema=RecordLinks, namespace='record')
 
 
+
+class RecordListSchema(Schema):
+    class Meta:
+        """Meta class to accept unknown fields."""
+
+        unknown = INCLUDE
+
+    links = LinksField(links_schema=SearchResultLinks, namespace='search')
+
+
+
+
 #
 # Service schema implementation (adds e.g. permission filtering)
 #

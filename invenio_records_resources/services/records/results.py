@@ -9,9 +9,17 @@
 
 """Service results."""
 
+from flask import current_app
+from marshmallow_utils.links import LinksStore
+
 from ...config import lt_es7
-from ...links import LinksStore
 from ..base import ServiceItemResult, ServiceListResult
+
+
+def _current_host():
+    if current_app:
+        return current_app.config['SERVER_HOSTNAME']
+    return None
 
 
 class RecordItem(ServiceItemResult):
@@ -42,7 +50,7 @@ class RecordItem(ServiceItemResult):
         if self._data:
             return self._data
 
-        links = LinksStore()
+        links = LinksStore(host=_current_host())
 
         self._data = self._service.schema.dump(
             self._identity,
@@ -112,7 +120,7 @@ class RecordList(ServiceListResult):
             )
 
             # Project the record
-            links = LinksStore()
+            links = LinksStore(host=_current_host())
             projection = self._service.schema.dump(
                 self._identity,
                 record,
