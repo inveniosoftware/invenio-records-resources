@@ -29,5 +29,5 @@ class InvenioRecordsResources(object):
         # TODO: This one will actually not load the config specified in
         # config.py because the vars doesn't start with RECORDS_RESOURCES_
         for k in dir(config):
-            if k.startswith("RECORDS_RESOURCES_"):
+            if k.startswith("RECORDS_RESOURCES_") or k in ['SERVER_HOSTNAME']:
                 app.config.setdefault(k, getattr(config, k))

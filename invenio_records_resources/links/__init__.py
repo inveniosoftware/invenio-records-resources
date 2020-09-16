@@ -8,10 +8,3 @@
 # details.
 
 """Link factory used to generate URLs inside records."""
-
-from .base import LinksField, LinksStore
-
-__all__ = (
-    'LinksField',
-    'LinksStore',
-)

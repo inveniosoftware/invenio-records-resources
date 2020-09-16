@@ -12,7 +12,6 @@
 from invenio_db import db
 
 from ...config import lt_es7
-from ...links.base import LinksStore
 from ..base import Service
 from .config import RecordServiceConfig
 from .schema import MarshmallowServiceSchema
