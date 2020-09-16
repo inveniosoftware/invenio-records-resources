@@ -8,8 +8,8 @@
 
 """Record schema."""
 
-from invenio_records_rest.schemas.fields import GenFunction
 from marshmallow import INCLUDE, Schema, ValidationError, fields, validate
+from marshmallow_utils.fields import GenFunction
 
 from ...links.base import LinksField
 from ...schemas import FieldPermissionsMixin
@@ -18,6 +18,11 @@ from ...schemas import FieldPermissionsMixin
 #
 # The default record schema
 #
+def pid_value_dict(record, context):
+    """PID value dictionary serializer."""
+    return {'pid_value': record.pid.pid_value}
+
+
 class RecordLinks(Schema, FieldPermissionsMixin):
     """Links schema."""
 
@@ -25,7 +30,7 @@ class RecordLinks(Schema, FieldPermissionsMixin):
         'self': 'read',
     }
 
-    self = GenFunction(lambda obj, ctx: {'pid_value': obj.pid.pid_value})
+    self = GenFunction(pid_value_dict)
 
 
 class MetadataSchema(Schema):
@@ -44,9 +49,9 @@ class RecordSchema(Schema):
 
     id = fields.Str()
     metadata = fields.Nested(MetadataSchema)
-    links = LinksField(links_schema=RecordLinks, namespace='record')
     created = fields.Str()
     updated = fields.Str()
+    links = LinksField(links_schema=RecordLinks, namespace='record')
 
 
 #

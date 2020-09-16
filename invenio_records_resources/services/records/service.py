@@ -12,7 +12,7 @@
 from invenio_db import db
 
 from ...config import lt_es7
-from ...links.base import LinkStore
+from ...links.base import LinksStore
 from ..base import Service
 from .config import RecordServiceConfig
 from .schema import MarshmallowServiceSchema
@@ -122,7 +122,7 @@ class RecordService(Service):
             # Load record from ES dump.
             record = self.record_cls.loads(hit.to_dict()['_source'])
 
-            links = LinkStore()
+            links = LinksStore()
             record_projection = self.schema.dump(
                 identity, record, pid=record.pid, record=record,
                 links_store=links)
@@ -172,7 +172,7 @@ class RecordService(Service):
             self.indexer.index(record)
 
         # Create record state
-        links = LinkStore()
+        links = LinksStore()
         record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
@@ -191,7 +191,7 @@ class RecordService(Service):
                 component.read(identity, record=record)
 
         # TODO: why record twice?
-        links = LinkStore()
+        links = LinksStore()
         record_projection = self.schema.dump(
             identity,
             record,
@@ -228,7 +228,7 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        links = LinkStore()
+        links = LinksStore()
         record_projection = self.schema.dump(
             identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
