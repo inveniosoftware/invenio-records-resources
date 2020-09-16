@@ -39,10 +39,9 @@ def test_simple_flow(app, service, identity_simple, input_data):
     id_ = item.id
 
     # Read it
-    read_item = service.read(identity_simple, id_)
+    read_item = service.read(id_, identity_simple)
     assert item.id == read_item.id
-    assert item.record == read_item.record
-    assert item.pids == read_item.pids
+    assert item.data == read_item.data
 
     # TODO: Should this be part of the service? we don't know the index easily
     current_search.flush_and_refresh(idx)
@@ -50,23 +49,22 @@ def test_simple_flow(app, service, identity_simple, input_data):
     # Search it
     res = service.search(identity_simple, f"id:{id_}")
     assert res.total == 1
-    assert res.records[0].record == read_item.record
+    assert list(res.hits)[0] == read_item.data
 
     # Update it
-    data = read_item.record
+    data = read_item.data
     data['metadata']['title'] = 'New title'
-    update_item = service.update(identity_simple, id_, data)
+    update_item = service.update(id_, identity_simple, data)
     assert item.id == update_item.id
-    assert update_item.record['metadata']['title'] == 'New title'
-    assert item.pids == update_item.pids
+    assert update_item['metadata']['title'] == 'New title'
 
     # Delete it
-    assert service.delete(identity_simple, id_)
+    assert service.delete(id_, identity_simple)
     current_search.flush_and_refresh(idx)
 
     # Retrieve it - deleted so cannot
     # - db
-    pytest.raises(PIDDeletedError, service.read, identity_simple, id_)
+    pytest.raises(PIDDeletedError, service.read, id_, identity_simple)
     # - search
     res = service.search(identity_simple, f"id:{id_}")
     assert res.total == 0

@@ -78,7 +78,8 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, querystring, pagination=None, sorting=None):
+    def search(self, identity, querystring, pagination=None, sorting=None,
+               links_config=None):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
@@ -116,39 +117,14 @@ class RecordService(Service):
             extras=extras
         ).execute_search(query)
 
-        # Mutate search results into a list of record states
-        record_list = []
-        for hit in search_result["hits"]["hits"]:
-            # Load record from ES dump.
-            record = self.record_cls.loads(hit.to_dict()['_source'])
-
-            links = LinksStore()
-            record_projection = self.schema.dump(
-                identity, record, pid=record.pid, record=record,
-                links_store=links)
-            item = self.result_item(
-                record=record_projection, pid=record.pid, links=links)
-            record_list.append(item)
-
-        total = (
-            search_result.hits.total
-            if lt_es7
-            else search_result.hits.total["value"]
-        )
-
-        aggregations = search_result.aggregations.to_dict()
-
-        search_args = dict(q=querystring, **pagination, **sorting)
-        # links = self.linker.links(
-        #     "record_search", identity, search_args=search_args
-        # )
-        links = {}
-
         return self.result_list(
-            record_list, total, aggregations, links
+            self,
+            identity,
+            search_result,
+            links_config=links_config
         )
 
-    def create(self, identity, data):
+    def create(self, identity, data, links_config=None):
         """Create a record.
 
         :param identity: Identity of user creating the record.
@@ -171,14 +147,14 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        # Create record state
-        links = LinksStore()
-        record_projection = self.schema.dump(
-            identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
-            pid=record.pid, record=record_projection, links=links)
+            self,
+            identity,
+            record,
+            links_config=links_config
+        )
 
-    def read(self, identity, id_):
+    def read(self, id_, identity, links_config=None):
         """Retrieve a record."""
         # Resolve and require permission
         # TODO must handle delete records and tombstone pages
@@ -190,21 +166,14 @@ class RecordService(Service):
             if hasattr(component, 'read'):
                 component.read(identity, record=record)
 
-        # TODO: why record twice?
-        links = LinksStore()
-        record_projection = self.schema.dump(
+        return self.result_item(
+            self,
             identity,
             record,
-            # Schema context:
-            pid=record.pid,
-            record=record,
-            links_store=links,
+            links_config=links_config
         )
 
-        return self.result_item(
-            pid=record.pid, record=record_projection, links=links)
-
-    def update(self, identity, id_, data):
+    def update(self, id_, identity, data, links_config=None):
         """Replace a record."""
         # TODO: etag and versioning
         record = self.resolve(id_)
@@ -228,13 +197,14 @@ class RecordService(Service):
         if self.indexer:
             self.indexer.index(record)
 
-        links = LinksStore()
-        record_projection = self.schema.dump(
-            identity, record, pid=record.pid, record=record, links_store=links)
         return self.result_item(
-            pid=record.pid, record=record_projection, links=links)
+            self,
+            identity,
+            record,
+            links_config=links_config
+        )
 
-    def delete(self, identity, id_):
+    def delete(self, id_, identity):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
 

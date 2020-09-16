@@ -9,29 +9,66 @@
 
 """Service results."""
 
+from ...config import lt_es7
+from ...links import LinksStore
 from ..base import ServiceItemResult, ServiceListResult
 
 
 class RecordItem(ServiceItemResult):
     """Resource unit representing pid + Record data clump."""
 
-    def __init__(self, pid, record, links, errors=None):
+    def __init__(self, service, identity, record, errors=None,
+                 links_config=None):
         """Constructor."""
-        self.id = pid.pid_value
-        self.pids = [pid]
-        self.record = record
-        self.links = links
-        self.errors = errors
+        self._errors = errors
+        self._identity = identity
+        self._links_config = links_config
+        self._record = record
+        self._service = service
+        self._data = None
 
-    def is_revision(self, revision_id):
-        """Check if record is in a specific revision."""
-        return str(self.record.revision_id) == str(revision_id)
+    @property
+    def id(self):
+        """Get the record id."""
+        return self._record.pid.pid_value
+
+    def __getitem__(self, key):
+        """Key a key from the data."""
+        return self.data[key]
+
+    @property
+    def data(self):
+        """Property to get the record."""
+        if self._data:
+            return self._data
+
+        links = LinksStore()
+
+        self._data = self._service.schema.dump(
+            self._identity,
+            self._record,
+            pid=self._record.pid,
+            record=self._record,
+            links_store=links
+        )
+
+        if self._links_config:
+            links.resolve(config=self._links_config)
+
+        return self._data
+
+    def to_dict(self):
+        """Get a dictionary for the record."""
+        res = self.data
+        if self._errors:
+            res['errors'] = self._errors
+        return res
 
 
 class RecordList(ServiceListResult):
     """Resource list representing the result of an IdentifiedRecord search."""
 
-    def __init__(self, records, total, aggregations, links, errors=None):
+    def __init__(self, service, identity, search_result, links_config=None):
         """Constructor.
 
         :params records: iterable of records
@@ -39,15 +76,64 @@ class RecordList(ServiceListResult):
         :params aggregations: dict of ES aggregations
         :params search_args: dict(page, size, to_idx, from_idx, q)
         """
-        self.records = records
-        self.total = total
-        self.aggregations = aggregations
-        self.links = links
-        self.errors = errors
+        self._identity = identity
+        self._links_config = links_config
+        self._results = search_result
+        self._service = service
 
+    def __len__(self):
+        """Return the total numer of hits."""
+        return self.total
 
-class TombstoneState(RecordItem):
-    """State for tombstones."""
+    def __iter__(self):
+        """Iterator over the hits."""
+        return self.hits
 
-    pid = None
-    record = None
+    @property
+    def total(self):
+        """Get total number of hits."""
+        if lt_es7:
+            return self._results.hits.total
+        else:
+            return self._results.hits.total["value"]
+
+    @property
+    def aggregations(self):
+        """Get the search result aggregations."""
+        return self._results.aggregations.to_dict()
+
+    @property
+    def hits(self):
+        """Iterator over the hits."""
+        for hit in self._results.hits.hits:
+            # Load dump
+            record = self._service.record_cls.loads(
+                hit.to_dict()['_source']
+            )
+
+            # Project the record
+            links = LinksStore()
+            projection = self._service.schema.dump(
+                self._identity,
+                record,
+                pid=record.pid,
+                record=record,
+                links_store=links,
+            )
+
+            # Create the links if needed
+            if self._links_config:
+                links.resolve(config=self._links_config)
+
+            yield projection
+
+    def to_dict(self):
+        """Return result as a dictionary."""
+        return{
+            "hits": {
+                "hits": list(self.hits),
+                "total": self.total
+            },
+            # "links": self.links,
+            "aggregations": self.aggregations
+        }

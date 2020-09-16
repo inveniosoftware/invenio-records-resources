@@ -28,31 +28,6 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         super(RecordResource, self).__init__(config=self.load_config(config))
         self.service = service or RecordService()
 
-    def _make_item_body(self, item_result):
-        """Make the body content."""
-        # Resolve links
-        item_result.links.resolve(config=self.config.links_config)
-        # Create the result
-        res = item_result.record
-        # Add errors if present
-        if item_result.errors:
-            res['errors'] = item_result.errors
-        return res
-
-    def _make_list_body(self, list_result):
-        """Make the body content for a list item."""
-        return {
-            "hits": {
-                "hits": [
-                    self._make_item_body(record)
-                    for record in list_result.records
-                ],
-                "total": list_result.total
-            },
-            "links": list_result.links,
-            "aggregations": list_result.aggregations
-        }
-
     #
     # Primary Interface
     #
@@ -67,40 +42,41 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         }
         pagination = request_args
 
-        # TODO: Args parsing has to allow for easily adding new parameters,
-        # when someone extends the search engine.
-        record_search = self.service.search(
+        hits = self.service.search(
             identity=identity,
             querystring=querystring,
             pagination=pagination,
             sorting=sorting,
+            links_config=self.config.links_config,
         )
-
-        return self._make_list_body(record_search), 200
+        return hits.to_dict(), 200
 
     def create(self):
         """Create an item."""
         data = resource_requestctx.request_content
-        item = self.service.create(g.identity, data)
-        return self._make_item_body(item), 201
+        item = self.service.create(
+            g.identity, data, links_config=self.config.links_config)
+        return item.to_dict(), 201
 
     def read(self):
         """Read an item."""
         item = self.service.read(
-            id_=resource_requestctx.route["pid_value"],
-            identity=g.identity
+            resource_requestctx.route["pid_value"],
+            g.identity,
+            links_config=self.config.links_config,
         )
-        return self._make_item_body(item), 200
+        return item.to_dict(), 200
 
     def update(self):
         """Update an item."""
         data = resource_requestctx.request_content
         item = self.service.update(
-            id_=resource_requestctx.route["pid_value"],
-            data=data,
-            identity=g.identity
+            resource_requestctx.route["pid_value"],
+            g.identity,
+            data,
+            links_config=self.config.links_config,
         )
-        return self._make_item_body(item), 200
+        return item.to_dict(), 200
 
     def partial_update(self):
         """Patch an item."""
@@ -109,7 +85,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
     def delete(self):
         """Delete an item."""
         self.service.delete(
-            id_=resource_requestctx.route["pid_value"],
-            identity=g.identity
+            resource_requestctx.route["pid_value"],
+            g.identity,
         )
         return None, 204
