@@ -111,18 +111,18 @@ class PIDField(SystemField):
     #
     # Data descriptor methods (i.e. attribute access)
     #
-    def __get__(self, instance, value):
+    def __get__(self, record, owner=None):
         """Get the persistent identifier."""
-        if instance is None:
+        if record is None:
             return self  # returns the field itself.
-        return self.obj(instance)
+        return self.obj(record)
 
-    def __set__(self, instance, pid):
+    def __set__(self, record, pid):
         """Set persistent identifier on record."""
         assert isinstance(pid, PersistentIdentifier)
 
         # Store data values on the attribute name (e.g. 'pid')
-        instance[self.attr_name] = {
+        record[self.attr_name] = {
             'pk': pid.id,
             'pid_type': pid.pid_type,
             'status': str(pid.status),
@@ -130,10 +130,10 @@ class PIDField(SystemField):
         }
 
         # Set ID on desired dictionary key.
-        self.set_dictkey(instance, pid.pid_value)
+        self.set_dictkey(record, pid.pid_value)
 
         # Cache object
-        self._set_cache(instance, pid)
+        self._set_cache(record, pid)
 
     #
     # Object caching on instance
