@@ -6,8 +6,11 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Resources module to create REST APIs."""
+"""Search parameter interpreter API."""
 
-from .engine import SearchEngine
 
-__all__ = "SearchEngine"
+class ParamInterpreter:
+    """Evaluate the 'q' parameter."""
+
+    def apply(self, identity, search, params):
+        """Apply the parameters."""

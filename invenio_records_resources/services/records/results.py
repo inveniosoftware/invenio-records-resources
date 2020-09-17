@@ -15,8 +15,6 @@ from marshmallow_utils.links import LinksStore
 from ...config import lt_es7
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
-from .links import SearchLinks
-from .schema import MarshmallowServiceSchema
 
 
 def _current_host():
@@ -155,7 +153,7 @@ class RecordList(ServiceListResult):
     def links(self):
         """Get the search result links."""
         links = LinksStore(host=_current_host)
-        schema = MarshmallowServiceSchema(self._service, schema=SearchLinks)
+        schema = self._service.schema_search_links
 
         data = schema.dump(
             self._identity,

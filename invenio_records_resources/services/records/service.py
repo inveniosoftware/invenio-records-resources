@@ -10,6 +10,7 @@
 """Record Service API."""
 
 from invenio_db import db
+from invenio_search import current_search_client
 
 from ...config import lt_es7
 from ..base import Service
@@ -39,21 +40,15 @@ class RecordService(Service):
         return self.config.indexer_cls(record_cls=self.config.record_cls)
 
     @property
-    def search_engine(self):
-        """Factory for creating a search instance."""
-        # This might grow over time
-        options = {
-            "sorting": self.config.search_sort_options
-        }
-        return self.config.search_engine_cls(
-            self.config.search_cls,
-            options=options
-        )
-
-    @property
     def schema(self):
         """Returns the data schema instance."""
         return MarshmallowServiceSchema(self, schema=self.config.schema)
+
+    @property
+    def schema_search_links(self):
+        """Returns the schema used for making search links."""
+        return MarshmallowServiceSchema(
+            self, schema=self.config.schema_search_links)
 
     @property
     def components(self):
@@ -67,6 +62,7 @@ class RecordService(Service):
 
     def resolve(self, id_):
         """Resolve a persistent identifier to a record."""
+        # TODO: move resolve completely to a system field in the record.
         pid, record = self.resolver.resolve(id_)
         # TODO: Fix me - this should be part of meta class for system fields.
         if not hasattr(record, '_obj_cache'):
@@ -74,36 +70,61 @@ class RecordService(Service):
         record._obj_cache['pid'] = pid
         return record
 
+    def create_search(self, identity, preference=True):
+        """Instantiate a search class."""
+        search = self.config.search_cls(using=current_search_client)
+
+        # Avoid query bounce problem
+        if preference:
+            search = search.with_preference_param()
+
+        # Add document version to ES response
+        search = search.params(version=True)
+
+        # Extras
+        extras = {}
+        if not lt_es7:
+            extras["track_total_hits"] = True
+        search = search.extra(**extras)
+
+        return search
+
+    def search_request(self, identity, params, preference=True):
+        """Factory for creating a Search DSL instance."""
+        search = self.create_search(identity)
+
+        # Run search args evaluator
+        for interpreter in self.config.search_params_interpreters:
+            search = interpreter.apply(identity, search, params)
+
+        return search
+
     #
     # High-level API
     #
-    def search(self, identity, params=None, links_config=None):
+    def search(self, identity, params=None, links_config=None, **kwargs):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
 
-        # Add search arguments
-        extras = {}
-        if not lt_es7:
-            extras["track_total_hits"] = True
+        # Merge params
+        # NOTE: We allow using both the params variable, as well as kwargs. The
+        # params is used by the resource, and kwargs is used to have an easier
+        # programatic interface .search(idty, q='...') instead of
+        # .search(idty, params={'q': '...'}).
+        params = params or {}
+        params.update(kwargs)
 
-        # Parse query and execute search
-        query = self.search_engine.parse_query(params['q'])
+        # Create a Elasticsearch DSL
+        search = self.search_request(identity, params)
 
         # Run components
         for component in self.components:
             if hasattr(component, 'search'):
-                # TODO (Alex): also parse and pass request data here...this has
-                # to happen in the resource-level though filters, facets, etc.
-                query = component.search(
-                    identity, query,
-                    params=params,
-                )
+                search = component.search(identity, search, params)
 
-        search_result = self.search_engine.search_arguments(
-            params=params,
-            extras=extras
-        ).execute_search(query)
+        # Execute the search
+        search_result = search.execute()
 
         return self.result_list(
             self,

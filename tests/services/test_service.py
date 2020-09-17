@@ -47,8 +47,7 @@ def test_simple_flow(app, service, identity_simple, input_data):
     current_search.flush_and_refresh(idx)
 
     # Search it
-    res = service.search(identity_simple, params=dict(
-        q=f"id:{id_}", size=25, page=1))
+    res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 1
     assert list(res.hits)[0] == read_item.data
 
@@ -67,6 +66,5 @@ def test_simple_flow(app, service, identity_simple, input_data):
     # - db
     pytest.raises(PIDDeletedError, service.read, id_, identity_simple)
     # - search
-    res = service.search(identity_simple, params=dict(
-        q=f"id:{id_}", size=25, page=1))
+    res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 0
