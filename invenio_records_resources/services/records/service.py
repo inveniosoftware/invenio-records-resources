@@ -10,6 +10,8 @@
 """Record Service API."""
 
 from invenio_db import db
+from invenio_records_permissions.api import records_permission_filter
+from invenio_search.api import DefaultFilter
 
 from ...config import lt_es7
 from ...links.base import LinksStore
@@ -39,16 +41,30 @@ class RecordService(Service):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls(record_cls=self.config.record_cls)
 
-    @property
-    def search_engine(self):
+    # @property
+    # FIXME: tmp made a function due to lack of methods to pass the identity
+    # to the permission. Filter is calculated upon `search_cls` instantiation
+    # which happens in the engine constructor. Refactor should fix this too.
+    def search_engine(self, identity=None):
         """Factory for creating a search instance."""
         # This might grow over time
-        options = {
+        query_options = {
             "sorting": self.config.search_sort_options
         }
+
+        permission = self.permission_policy(
+            action_name="read", identity=identity
+        )
+
+        search_options = {
+            "index": "records",
+            "default_filter": records_permission_filter(permission=permission)
+        }
+
         return self.config.search_engine_cls(
             self.config.search_cls,
-            options=options
+            search_options=search_options,
+            query_options=query_options
         )
 
     @property
@@ -97,7 +113,8 @@ class RecordService(Service):
             extras["track_total_hits"] = True
 
         # Parse query and execute search
-        query = self.search_engine.parse_query(querystring)
+        engine = self.search_engine(identity)
+        query = engine.parse_query(querystring)
 
         # Run components
         for component in self.components:
@@ -111,10 +128,10 @@ class RecordService(Service):
                     sorting=sorting,
                 )
 
-        search_result = self.search_engine.search_arguments(
+        search_result = engine.search_arguments(
             pagination=pagination,
             sorting=sorting,
-            extras=extras
+            extras=extras,
         ).execute_search(query)
 
         return self.result_list(

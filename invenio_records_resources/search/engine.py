@@ -46,13 +46,36 @@ class SearchEngine():
     """Search records with specific configuration."""
 
     def __init__(self, search_cls, query_interpreter=QueryInterpreter(),
-                 options=None, *args, **kwargs):
+                 query_options=None, search_options=None, permission=None):
         """Constructor."""
-        self.search = search_cls(*args, **kwargs)
+        search_options = search_options or {}
         self.query_interpreter = query_interpreter
-        self.options = options or {}
+        self.query_options = query_options or {}
+        self.search = search_cls(**search_options)
 
-    def search_arguments(self, pagination=None, preference=True, version=True,
+    def get_sort_by_options(self, sorting):
+        """Return sort_by_options dict."""
+        sorting_options = self.query_options.get("sorting", {})
+        sort_by = sorting.get("sort_by")
+
+        if sort_by:
+            sort_by_options = sorting_options.get(sort_by, {})
+        elif sorting.get("has_q"):
+            # TODO: When dealing with config validaion, we can verify that only
+            #       one option has default_if_query
+            sort_by_options = next((
+                options for options in sorting_options.values()
+                if "default_if_query" in options
+            ), {})
+        else:
+            sort_by_options = next((
+                options for options in sorting_options.values()
+                if "default_if_no_query" in options
+            ), {})
+
+        return sort_by_options
+
+    def search_arguments(self, pagination=None, preference=False, version=True,
                          sorting=None, extras=None):
         """Adds arguments to the search object."""
         # Avoid query bounce problem
@@ -90,24 +113,23 @@ class SearchEngine():
         """Executes an already parsed query."""
         return self.search.query(query).execute()
 
-    def get_sort_by_options(self, sorting):
-        """Return sort_by_options dict."""
-        sorting_options = self.options.get("sorting", {})
-        sort_by = sorting.get("sort_by")
 
-        if sort_by:
-            sort_by_options = sorting_options.get(sort_by, {})
-        elif sorting.get("has_q"):
-            # TODO: When dealing with config validaion, we can verify that only
-            #       one option has default_if_query
-            sort_by_options = next((
-                options for options in sorting_options.values()
-                if "default_if_query" in options
-            ), {})
-        else:
-            sort_by_options = next((
-                options for options in sorting_options.values()
-                if "default_if_no_query" in options
-            ), {})
+# def _get_user_agent(self):
+#     """Retrieve the request's User-Agent, if available.
 
-        return sort_by_options
+#     Taken from Flask Login utils.py.
+#     """
+#     user_agent = request.headers.get('User-Agent')
+#     if user_agent:
+#         user_agent = user_agent.encode('utf-8')
+#     return user_agent or ''
+
+# def _get_user_hash(self):
+#     """Calculate a digest based on request's User-Agent and IP address."""
+#     if request:
+#         user_hash = '{ip}-{ua}'.format(ip=request.remote_addr,
+#                                         ua=self._get_user_agent())
+#         alg = hashlib.md5()
+#         alg.update(user_hash.encode('utf8'))
+#         return alg.hexdigest()
+#     return None
