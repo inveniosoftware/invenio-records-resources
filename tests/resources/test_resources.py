@@ -58,6 +58,7 @@ def test_simple_flow(app, client, input_data, headers):
     assert res.status_code == 200
     assert res.json['hits']['total'] == 1
     assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    print(res.json)
 
     # Delete it
     res = client.delete(f'/mocks/{id_}')

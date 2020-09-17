@@ -13,10 +13,14 @@ from flask import current_app
 from marshmallow_utils.links import LinksStore
 
 from ...config import lt_es7
+from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
+from .links import SearchLinks
+from .schema import MarshmallowServiceSchema
 
 
 def _current_host():
+    """Function used to provide the current hostname to the link store."""
     if current_app:
         return current_app.config['SERVER_HOSTNAME']
     return None
@@ -50,7 +54,7 @@ class RecordItem(ServiceItemResult):
         if self._data:
             return self._data
 
-        links = LinksStore(host=_current_host())
+        links = LinksStore(host=_current_host)
 
         self._data = self._service.schema.dump(
             self._identity,
@@ -76,18 +80,21 @@ class RecordItem(ServiceItemResult):
 class RecordList(ServiceListResult):
     """Resource list representing the result of an IdentifiedRecord search."""
 
-    def __init__(self, service, identity, search_result, links_config=None):
+    def __init__(self, service, identity, results, params,
+                 links_config=None):
         """Constructor.
 
-        :params records: iterable of records
-        :params total: total number of records
-        :params aggregations: dict of ES aggregations
-        :params search_args: dict(page, size, to_idx, from_idx, q)
+        :params service: a service instance
+        :params identity: an identity that performed the service request
+        :params results: the search results
+        :params params: dictionary of the query parameters
+        :params links_config: a links store config
         """
         self._identity = identity
         self._links_config = links_config
-        self._results = search_result
+        self._results = results
         self._service = service
+        self._params = params
 
     def __len__(self):
         """Return the total numer of hits."""
@@ -120,7 +127,7 @@ class RecordList(ServiceListResult):
             )
 
             # Project the record
-            links = LinksStore(host=_current_host())
+            links = LinksStore(host=_current_host)
             projection = self._service.schema.dump(
                 self._identity,
                 record,
@@ -135,13 +142,43 @@ class RecordList(ServiceListResult):
 
             yield projection
 
+    @property
+    def pagination(self):
+        """Create a pagination object."""
+        return Pagination(
+            self._params['size'],
+            self._params['page'],
+            self._params['_max_results'],
+        )
+
+    @property
+    def links(self):
+        """Get the search result links."""
+        links = LinksStore(host=_current_host)
+        schema = MarshmallowServiceSchema(self._service, schema=SearchLinks)
+
+        data = schema.dump(
+            self._identity,
+            self._params,
+            pagination=self.pagination,
+            links_store=links,
+        )
+
+        if self._links_config:
+            links.resolve(config=self._links_config)
+
+        return data
+
     def to_dict(self):
         """Return result as a dictionary."""
-        return{
+        res = {
             "hits": {
                 "hits": list(self.hits),
-                "total": self.total
+                "total": self.total,
             },
-            # "links": self.links,
-            "aggregations": self.aggregations
+            "links": self.links,
+            "aggregations": self.aggregations,
         }
+        if res['links'] is None:
+            del res['links']
+        return res

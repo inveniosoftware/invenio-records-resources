@@ -32,7 +32,7 @@ class ServiceComponent:
         """Delete handler."""
         pass
 
-    def search(self, identity, query, **kwargs):
+    def search(self, identity, query, params=None, **kwargs):
         """Search handler."""
         return query
 
