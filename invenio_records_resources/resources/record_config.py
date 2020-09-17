@@ -18,10 +18,9 @@ from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
 from uritemplate import URITemplate
 
-from ..search.errors import InvalidQueryError
 from ..services.errors import PermissionDeniedError
 from .errors import create_pid_redirected_error_handler
-from .record_args import SearchArgsSchema
+from .record_args import SearchURLArgsSchema
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -42,7 +41,7 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     request_url_args_parser = {
-        "search": ArgsParser(SearchArgsSchema)
+        "search": ArgsParser(SearchURLArgsSchema)
     }
 
     response_handlers = {
@@ -50,12 +49,12 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     error_map = {
-        InvalidQueryError: create_errormap_handler(
-            HTTPJSONException(
-                code=400,
-                description="Invalid query syntax.",
-            )
-        ),
+        # InvalidQueryError: create_errormap_handler(
+        #     HTTPJSONException(
+        #         code=400,
+        #         description="Invalid query syntax.",
+        #     )
+        # ),
         PermissionDeniedError: create_errormap_handler(
             HTTPJSONException(
                 code=403,

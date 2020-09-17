@@ -16,10 +16,12 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearch
 
 from ...records import Record
-from ...search import SearchEngine
 from ..base import ServiceConfig
 from .components import AccessComponent, FilesComponent, MetadataComponent, \
     PIDSComponent
+from .links import SearchLinks
+from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
+    SortParam
 from .results import RecordItem, RecordList
 from .schema import RecordSchema
 
@@ -41,7 +43,13 @@ class RecordServiceConfig(ServiceConfig):
     indexer_cls = RecordIndexer
 
     search_cls = RecordsSearch
-    search_engine_cls = SearchEngine
+    search_params_interpreters = [
+        QueryStrParam(parser_cls=QueryParser),
+        PaginationParam(),
+        SortParam(),
+        FacetsParam(),
+    ]
+
     search_sort_options = dict(
         bestmatch=dict(
             title=_('Best match'),
@@ -56,6 +64,7 @@ class RecordServiceConfig(ServiceConfig):
     )
 
     schema = RecordSchema
+    schema_search_links = SearchLinks
 
     components = [
         MetadataComponent,

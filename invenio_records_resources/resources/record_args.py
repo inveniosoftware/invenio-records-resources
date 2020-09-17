@@ -19,7 +19,7 @@ DEFAULT_RESULTS_PER_PAGE = 25
 DEFAULT_MAX_RESULTS = 10000
 
 
-class SearchArgsSchema(Schema):
+class SearchURLArgsSchema(Schema):
     """Schema for search URL args."""
 
     q = fields.String()

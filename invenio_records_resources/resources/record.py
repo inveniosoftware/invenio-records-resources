@@ -34,10 +34,9 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
     def search(self):
         """Perform a search over the items."""
         identity = g.identity
-        search_args = resource_requestctx.request_args
         hits = self.service.search(
             identity=identity,
-            params=search_args,
+            params=resource_requestctx.request_args,
             links_config=self.config.links_config,
         )
         return hits.to_dict(), 200
