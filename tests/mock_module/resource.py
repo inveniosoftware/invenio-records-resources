@@ -9,12 +9,17 @@ from invenio_records_resources.resources import RecordResource, \
 class ResourceConfig(RecordResourceConfig):
     """Mock service configuration."""
 
-    item_route = '/mocks/<pid_value>'
-    list_route = '/mocks'
+    list_route = "/mocks"
+    item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        'record': {
-            'self': URITemplate('/mocks{/pid_value}'),
+        "record": {
+            "self": URITemplate(f"{list_route}{{/pid_value}}"),
+        },
+        "search": {
+            "self": URITemplate(f"{list_route}{{?params*}}"),
+            "prev": URITemplate(f"{list_route}{{?params*}}"),
+            "next": URITemplate(f"{list_route}{{?params*}}"),
         }
     }
 

@@ -11,6 +11,7 @@
 
 import copy
 
+from ..pagination import Pagination
 from .query import QueryInterpreter
 
 
@@ -52,8 +53,8 @@ class SearchEngine():
         self.query_interpreter = query_interpreter
         self.options = options or {}
 
-    def search_arguments(self, pagination=None, preference=True, version=True,
-                         sorting=None, extras=None):
+    def search_arguments(self, params=None, preference=True, version=True,
+                         extras=None):
         """Adds arguments to the search object."""
         # Avoid query bounce problem
         if preference:
@@ -63,18 +64,18 @@ class SearchEngine():
         if version:
             self.search = self.search.params(version=True)
 
-        # Add other aguments
-        if pagination:
-            self.search = self.search[
-                pagination["from_idx"]: pagination["to_idx"]
-            ]
-        if sorting:
-            sort_by_options = self.get_sort_by_options(sorting)
-            sort_args = [
-                eval_field(f, sorting.get("reverse"))
-                for f in sort_by_options.get('fields', [])
-            ]
-            self.search = self.search.sort(*sort_args)
+        # Add other arguments
+        # TODO: configurable max results
+        pagination = Pagination(params['size'], params['page'], 10000)
+        self.search = self.search[pagination.from_idx:pagination.to_idx]
+
+        # if params.get('sort'):
+        #     sort_by_options = self.get_sort_by_options(sorting)
+        #     sort_args = [
+        #         eval_field(f, sorting.get("reverse"))
+        #         for f in sort_by_options.get('fields', [])
+        #     ]
+        #     self.search = self.search.sort(*sort_args)
 
         # Add extra args
         if extras:

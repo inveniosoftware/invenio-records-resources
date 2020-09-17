@@ -77,18 +77,10 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, querystring, pagination=None, sorting=None,
-               links_config=None):
+    def search(self, identity, params=None, links_config=None):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
-
-        # Pagination
-        pagination = pagination or {}
-
-        # Sorting
-        sorting = sorting or {}
-        sorting["has_q"] = True if querystring else False
 
         # Add search arguments
         extras = {}
@@ -96,7 +88,7 @@ class RecordService(Service):
             extras["track_total_hits"] = True
 
         # Parse query and execute search
-        query = self.search_engine.parse_query(querystring)
+        query = self.search_engine.parse_query(params['q'])
 
         # Run components
         for component in self.components:
@@ -105,14 +97,11 @@ class RecordService(Service):
                 # to happen in the resource-level though filters, facets, etc.
                 query = component.search(
                     identity, query,
-                    querystring=querystring,
-                    pagination=pagination,
-                    sorting=sorting,
+                    params=params,
                 )
 
         search_result = self.search_engine.search_arguments(
-            pagination=pagination,
-            sorting=sorting,
+            params=params,
             extras=extras
         ).execute_search(query)
 
@@ -120,6 +109,7 @@ class RecordService(Service):
             self,
             identity,
             search_result,
+            params,
             links_config=links_config
         )
 

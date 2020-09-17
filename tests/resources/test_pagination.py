@@ -16,8 +16,8 @@ import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_search import current_search
 
-from invenio_records_resources.links.schema import DEFAULT_MAX_RESULTS, \
-    DEFAULT_RESULTS_PER_PAGE
+from invenio_records_resources.resources.record_args import \
+    DEFAULT_MAX_RESULTS, DEFAULT_RESULTS_PER_PAGE
 from invenio_records_resources.services import RecordService
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}

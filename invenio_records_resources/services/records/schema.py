@@ -9,30 +9,14 @@
 """Record schema."""
 
 from marshmallow import INCLUDE, Schema, ValidationError, fields, validate
-from marshmallow_utils.fields import GenFunction
+from marshmallow_utils.fields import LinksField
 
-from ...links.base import LinksField
-from ...schemas import FieldPermissionsMixin
+from .links import RecordLinks
 
 
 #
 # The default record schema
 #
-def pid_value_dict(record, context):
-    """PID value dictionary serializer."""
-    return {'pid_value': record.pid.pid_value}
-
-
-class RecordLinks(Schema, FieldPermissionsMixin):
-    """Links schema."""
-
-    field_dump_permissions = {
-        'self': 'read',
-    }
-
-    self = GenFunction(pid_value_dict)
-
-
 class MetadataSchema(Schema):
     """Basic metadata schema class."""
 
@@ -52,18 +36,6 @@ class RecordSchema(Schema):
     created = fields.Str()
     updated = fields.Str()
     links = LinksField(links_schema=RecordLinks, namespace='record')
-
-
-
-class RecordListSchema(Schema):
-    class Meta:
-        """Meta class to accept unknown fields."""
-
-        unknown = INCLUDE
-
-    links = LinksField(links_schema=SearchResultLinks, namespace='search')
-
-
 
 
 #
