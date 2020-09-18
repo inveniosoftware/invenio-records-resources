@@ -28,10 +28,6 @@ class QueryParser:
 class QueryStrParam(ParamInterpreter):
     """Evaluate the 'q' parameter."""
 
-    def __init__(self, parser_cls=QueryParser):
-        """Initialize with the query parser."""
-        self.parser_cls = parser_cls
-
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
         query_str = params.get('q')
@@ -39,7 +35,8 @@ class QueryStrParam(ParamInterpreter):
             return search
 
         try:
-            query = self.parser_cls(identity).parse(query_str)
+            parser_cls = self.config.search_query_parser_cls
+            query = parser_cls(identity).parse(query_str)
             return search.query(query)
         except SyntaxError:
             # TOOD: raise a proper type of exception

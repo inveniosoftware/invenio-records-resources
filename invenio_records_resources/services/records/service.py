@@ -84,8 +84,10 @@ class RecordService(Service):
         search = self.create_search(identity)
 
         # Run search args evaluator
-        for interpreter in self.config.search_params_interpreters:
-            search = interpreter.apply(identity, search, params)
+        for interpreter_cls in self.config.search_params_interpreters_cls:
+            search = interpreter_cls(self.config).apply(
+                identity, search, params
+            )
 
         return search
 
