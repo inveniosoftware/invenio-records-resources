@@ -140,11 +140,21 @@ class RecordService(Service):
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
+        return self._create(
+            self.record_cls, identity, data, links_config=links_config)
+
+    def _create(self, record_cls, identity, data, links_config=None):
+        """Create a record.
+
+        :param identity: Identity of user creating the record.
+        :param data: Input data according to the data schema.
+        """
         self.require_permission(identity, "create")
 
         # Validate data and create record with pid
         data, _ = self.schema.load(identity, data)
-        record = self.record_cls.create({})
+        # It's the components who saves the actual data in the record.
+        record = record_cls.create({})
 
         # Run components
         for component in self.components:
