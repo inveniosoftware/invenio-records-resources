@@ -9,8 +9,6 @@
 
 """Data access layer tests."""
 
-from datetime import datetime
-
 import pytest
 from invenio_search import current_search_client
 from jsonschema import ValidationError
