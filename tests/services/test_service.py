@@ -16,6 +16,7 @@ Test to add:
 """
 
 import pytest
+from marshmallow import ValidationError
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_search import current_search, current_search_client
 
@@ -68,3 +69,38 @@ def test_simple_flow(app, service, identity_simple, input_data):
     # - search
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 0
+
+
+def test_sorting_in_search(app, service, identity_simple, input_data):
+    """Search a record."""
+    idx = 'records-record-v1.0.0'
+
+    # Create an item
+    first_item = service.create(identity_simple, input_data)
+
+    input_data["metadata"]["title"] = "Another Test"
+    second_item = service.create(identity_simple, input_data)
+
+    # TODO: Should this be part of the service? we don't know the index easily
+    current_search.flush_and_refresh(idx)
+
+    # Search no query and no sort should sort by the most recent created record
+    res = service.search(identity_simple)
+
+    assert res.total == 2
+    assert list(res.hits)[0] == second_item.data
+
+    # Search with query and no sort should sort by the bestmatch record
+    res = service.search(identity_simple, q="title:Test")
+
+    assert res.total == 2
+    assert list(res.hits)[0] == first_item.data
+
+    # Search with existing sort parameter
+    res = service.search(identity_simple, sort="mostrecent")
+
+    assert res.total == 2
+    assert list(res.hits)[0] == second_item.data
+
+    # Search with non existing sort parameter
+    pytest.raises(ValidationError, service.search, identity_simple, sort="foo")

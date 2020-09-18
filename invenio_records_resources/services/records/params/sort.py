@@ -8,24 +8,31 @@
 
 """Query interpreter API."""
 
+import copy
+
+from marshmallow import ValidationError
 from elasticsearch_dsl import Q
 
 from .base import ParamInterpreter
 
-
 class SortParam(ParamInterpreter):
     """Evaluate the 'sort' parameter."""
 
-    def __init__(self, options=None):
-        """Initialize with the query parser."""
-        self.options = options or None
+    def _default_sort(self, params, options):
+        if 'q' in params:
+            return self.config.search_sort_default
+        else:
+            return self.config.search_sort_default_no_query
 
     def apply(self, identity, search, params):
-        """Evaluate the query str on the search."""
-        sort = params.get('sort')
-        if sort is None:
-            return search
+        """Evaluate the sort parameter on the search."""
+        options = self.config.search_sort_options
 
-        # TODO
+        if 'sort' not in params:
+            params['sort'] = self._default_sort(params, options)
 
-        return search
+        sort = options.get(params['sort'])
+        if sort is none:
+            raise ValidationError(f"Invalid sort option '{params['sort']}'.")
+
+        return search.sort(*sort['fields'])

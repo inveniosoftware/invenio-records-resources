@@ -17,8 +17,6 @@ from .base import ParamInterpreter
 class PaginationParam(ParamInterpreter):
     """Pagination evaluator."""
 
-    param_names = ['page', 'size']
-
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
         p = Pagination(

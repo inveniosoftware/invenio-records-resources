@@ -10,7 +10,10 @@
 
 
 class ParamInterpreter:
-    """Evaluate the 'q' parameter."""
+    """Evaluate a url parameter."""
+
+    def __init__(self, config):
+        self.config = config
 
     def apply(self, identity, search, params):
         """Apply the parameters."""
