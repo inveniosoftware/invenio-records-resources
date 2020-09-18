@@ -11,6 +11,7 @@
 
 from invenio_records_permissions.policies import BasePermissionPolicy
 
+# NOTE: needed to allow only one `.config` import in the service file
 from ...config import ConfigLoaderMixin
 from .results import ServiceItemResult, ServiceListResult
 
