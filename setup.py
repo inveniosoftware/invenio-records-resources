@@ -113,9 +113,6 @@ setup(
             "invenio_records_resources = "
             "invenio_records_resources:InvenioRecordsResources",
         ],
-        'invenio_config.module': [
-            'invenio_records_resources = invenio_records_resources.config',
-        ],
         "invenio_i18n.translations": [
             "messages = invenio_records_resources", ],
     },
