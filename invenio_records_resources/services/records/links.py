@@ -25,7 +25,7 @@ def pid_value_dict(record, context):
     return {'pid_value': record.pid.pid_value}
 
 
-def search_args_dict(page_offset):
+def search_link_params(page_offset):
     """Search dictionary serializer."""
     def _inner(params, ctx):
         p = ctx['pagination']
@@ -64,6 +64,6 @@ class SearchLinks(LinksSchema, FieldPermissionsMixin):
         'next': 'read',
     }
 
-    prev = GenFunction(search_args_dict(-1))
-    self = GenFunction(search_args_dict(0))
-    next = GenFunction(search_args_dict(1))
+    prev = GenFunction(search_link_params(-1))
+    self = GenFunction(search_link_params(0))
+    next = GenFunction(search_link_params(1))

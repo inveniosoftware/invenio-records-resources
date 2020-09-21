@@ -38,3 +38,5 @@ class RevisionIdMismatchError(Exception):
 
 class QuerystringValidationError(ValidationError):
     """Error thrown when there is an issue with the querystring."""
+
+    pass
