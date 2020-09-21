@@ -36,14 +36,44 @@ key in the record:
 """
 
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.systemfields import SystemField
+from invenio_pidstore.resolver import Resolver
+from invenio_records.systemfields import SystemField, SystemFieldContext
+
+
+class PIDFieldContext(SystemFieldContext):
+    """PIDField context.
+
+    This class implements the class-level methods available on a PIDField. I.e.
+    when you access the field through the class, for instance:
+
+    .. code-block:: python
+
+        Record.pid.resolve('...')
+    """
+
+    def resolve(self, pid_value):
+        """Resolve identifier."""
+        # Create resolver
+        resolver = self.field._resolver_cls(
+            pid_type=self.field._pid_type,
+            object_type=self.field._object_type,
+            getter=self.record_cls.get_record,
+        )
+
+        # Resolve
+        pid, record = resolver.resolve(pid_value)
+
+        # Store pid in cache on record.
+        self.field._set_cache(record, pid)
+
+        return record
 
 
 class PIDField(SystemField):
     """Persistent identifier system field."""
 
     def __init__(self, key='id', provider=None, pid_type=None,
-                 object_type='rec'):
+                 object_type='rec', resolver_cls=None):
         """Initialize the PIDField.
 
         :param key: Name of key to store the pid value in.
@@ -51,10 +81,13 @@ class PIDField(SystemField):
             identifier.
         :param pid_type: The persistent identifier type (only used if no
             provider is specified.
+        :param pid_type: The resolver to use.
+        :param resolver_cls: The resolver class to use for resolving the PID.
         """
         self._provider = provider
         self._pid_type = provider.pid_type if provider else pid_type
         self._object_type = object_type
+        self._resolver_cls = resolver_cls or Resolver
         super().__init__(key=key)
 
     #
@@ -72,10 +105,6 @@ class PIDField(SystemField):
                 object_type=self._object_type,
                 object_uuid=record.id
             ).pid
-
-    # TODO: Add a resolve(val) method, that can be access from the record:
-    # Record.pid.resolve('12345-12345'); then we can get rid of the resolver
-    # on the recordservice(config)?.
 
     #
     # Helpers
@@ -114,7 +143,7 @@ class PIDField(SystemField):
     def __get__(self, record, owner=None):
         """Get the persistent identifier."""
         if record is None:
-            return self  # returns the field itself.
+            return PIDFieldContext(self, owner)
         return self.obj(record)
 
     def __set__(self, record, pid):
@@ -134,19 +163,3 @@ class PIDField(SystemField):
 
         # Cache object
         self._set_cache(record, pid)
-
-    #
-    # Object caching on instance
-    #
-
-    # TODO: Move to Invenio-Records as a global cache that can be used by
-    # system fields.
-    def _set_cache(self, instance, obj):
-        """Set the object on the instance's cache."""
-        if not hasattr(instance, '_obj_cache'):
-            instance._obj_cache = {}
-        instance._obj_cache[self.attr_name] = obj
-
-    def _get_cache(self, instance):
-        """Get the object from the instance's cache."""
-        return getattr(instance, '_obj_cache', {}).get(self.attr_name)

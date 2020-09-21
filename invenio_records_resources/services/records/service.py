@@ -60,16 +60,6 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def resolve(self, id_):
-        """Resolve a persistent identifier to a record."""
-        # TODO: move resolve completely to a system field in the record.
-        pid, record = self.resolver.resolve(id_)
-        # TODO: Fix me - this should be part of meta class for system fields.
-        if not hasattr(record, '_obj_cache'):
-            record._obj_cache = {}
-        record._obj_cache['pid'] = pid
-        return record
-
     def create_search(self, identity, preference=True):
         """Instantiate a search class."""
         search = self.config.search_cls(using=current_search_client)
@@ -178,7 +168,7 @@ class RecordService(Service):
         """Retrieve a record."""
         # Resolve and require permission
         # TODO must handle delete records and tombstone pages
-        record = self.resolve(id_)
+        record = self.record_cls.pid.resolve(id_)
         self.require_permission(identity, "read", record=record)
 
         # Run components
@@ -196,7 +186,7 @@ class RecordService(Service):
     def update(self, id_, identity, data, links_config=None):
         """Replace a record."""
         # TODO: etag and versioning
-        record = self.resolve(id_)
+        record = self.record_cls.pid.resolve(id_)
 
         # Permissions
         self.require_permission(identity, "update", record=record)
@@ -229,7 +219,7 @@ class RecordService(Service):
         # TODO: etag and versioning
 
         # TODO: Removed based on id both DB and ES
-        record = self.resolve(id_)
+        record = self.record_cls.pid.resolve(id_)
         # Permissions
         self.require_permission(identity, "delete", record=record)
 
