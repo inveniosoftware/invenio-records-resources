@@ -52,6 +52,7 @@ class ServiceConfig(RecordServiceConfig):
         FacetsParam
     ]
 
+
 class Service(RecordService):
     """Mock service."""
 
