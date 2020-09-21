@@ -2,11 +2,13 @@
 
 from datetime import datetime
 
+from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ConstantField, DictField, ModelField
 
 from invenio_records_resources.records.api import Record as RecordBase
-from invenio_records_resources.records.systemfields import PIDField
+from invenio_records_resources.records.systemfields import PIDField, \
+    PIDStatusCheckField
 
 from .models import RecordMetadata
 
@@ -25,3 +27,5 @@ class Record(RecordBase):
         '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
 
     pid = PIDField('id', provider=RecordIdProviderV2)
+
+    is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)

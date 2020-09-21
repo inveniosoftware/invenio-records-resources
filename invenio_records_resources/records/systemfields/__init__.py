@@ -10,7 +10,9 @@
 """System fields for records."""
 
 from .pid import PIDField
+from .pid_statuscheck import PIDStatusCheckField
 
 __all__ = (
     'PIDField',
+    'PIDStatusCheckField',
 )
