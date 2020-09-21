@@ -236,6 +236,7 @@ class RecordService(Service):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
         record = self.record_cls.pid.resolve(id_)
+
         # Permissions
         self.require_permission(identity, "delete", record=record)
 
@@ -245,7 +246,6 @@ class RecordService(Service):
                 component.delete(identity, record=record)
 
         record.delete()
-        record.pid.delete()
         db.session.commit()
 
         if self.indexer:
