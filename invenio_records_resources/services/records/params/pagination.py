@@ -6,9 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Query interpreter API."""
-
-from elasticsearch_dsl import Q
+"""Pagination parameter interpreter API."""
 
 from ....pagination import Pagination
 from .base import ParamInterpreter

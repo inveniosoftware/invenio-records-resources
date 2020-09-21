@@ -13,6 +13,7 @@ class ParamInterpreter:
     """Evaluate a url parameter."""
 
     def __init__(self, config):
+        """Initialise the parameter interpreter."""
         self.config = config
 
     def apply(self, identity, search, params):

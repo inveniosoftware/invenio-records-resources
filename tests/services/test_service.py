@@ -16,9 +16,9 @@ Test to add:
 """
 
 import pytest
-from marshmallow import ValidationError
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_search import current_search, current_search_client
+from marshmallow import ValidationError
 
 
 @pytest.fixture()

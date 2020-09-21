@@ -6,14 +6,12 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Query interpreter API."""
-
-import copy
+"""Sort parameter interpreter API."""
 
 from marshmallow import ValidationError
-from elasticsearch_dsl import Q
 
 from .base import ParamInterpreter
+
 
 class SortParam(ParamInterpreter):
     """Evaluate the 'sort' parameter."""
@@ -32,7 +30,7 @@ class SortParam(ParamInterpreter):
             params['sort'] = self._default_sort(params, options)
 
         sort = options.get(params['sort'])
-        if sort is none:
+        if sort is None:
             raise ValidationError(f"Invalid sort option '{params['sort']}'.")
 
         return search.sort(*sort['fields'])

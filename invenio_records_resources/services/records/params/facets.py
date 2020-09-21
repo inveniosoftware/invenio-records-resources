@@ -6,9 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Query interpreter API."""
-
-from elasticsearch_dsl import Q
+"""Facets parameter interpreter API."""
 
 from .base import ParamInterpreter
 
@@ -17,7 +15,7 @@ class FacetsParam(ParamInterpreter):
     """Evaluate facets."""
 
     def iter_facet_args(self, params):
-        """Iterate over all possible facet arguments"""
+        """Iterate over all possible facet arguments."""
         return {
             k: v if type(v) is list else [v] for k, v in (params or {}).items()
         }.items()

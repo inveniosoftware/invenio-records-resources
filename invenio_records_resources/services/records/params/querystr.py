@@ -6,7 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Query interpreter API."""
+"""Query parameter interpreter API."""
 
 from elasticsearch_dsl import Q
 

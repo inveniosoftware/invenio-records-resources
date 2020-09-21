@@ -18,21 +18,7 @@ class ServiceConfig(RecordServiceConfig):
     record_cls = Record
     schema = RecordSchema
     search_cls = RecordsSearch
-    search_sort_default = 'bestmatch'
-    search_sort_default_no_query = 'mostrecent'
-    search_sort_options = dict(
-        bestmatch=dict(
-            title='Best match',
-            fields=['_score'],
-        ),
-        mostrecent=dict(
-            title='Most recent',
-            fields=['-created'],
-        ),
-    )
-    search_params_interpreters_cls = [
-        SortParam
-    ]
+
 
 class Service(RecordService):
     """Mock service."""

@@ -45,7 +45,7 @@ class RecordServiceConfig(ServiceConfig):
     search_sort_options = dict(
         bestmatch=dict(
             title=_('Best match'),
-            fields=['_score'], # ES defaults to desc on `_score` field
+            fields=['_score'],  # ES defaults to desc on `_score` field
         ),
         mostrecent=dict(
             title=_('Most recent'),

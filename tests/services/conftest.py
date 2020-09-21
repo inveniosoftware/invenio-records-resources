@@ -19,7 +19,7 @@ from mock_module.api import Record
 from mock_module.service import Service
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
@@ -28,7 +28,7 @@ def identity_simple():
     return i
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def service(appctx):
     """Service instance."""
     return Service()
