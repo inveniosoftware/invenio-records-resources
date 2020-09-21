@@ -42,7 +42,7 @@ def test_record_indexing(app, db, es, example_record, indexer):
 
     # Retrieve document from ES
     data = current_search_client.get(
-        'records-record-v1.0.0', example_record.id)
+        'records-record-v1.0.0', id=example_record.id, doc_type='_doc')
 
     # Loads the ES data and compare
     record = Record.loads(data['_source'])
