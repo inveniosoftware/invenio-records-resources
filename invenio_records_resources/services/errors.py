@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,6 +10,7 @@
 """Errors."""
 
 from flask_principal import PermissionDenied
+from marshmallow import ValidationError
 
 
 class PermissionDeniedError(PermissionDenied):
@@ -32,3 +34,6 @@ class RevisionIdMismatchError(Exception):
             f"Revision id provided({self.expected_revision_id}) doesn't match "
             f"record's one({self.record_revision_id})"
         )
+
+
+class QuerystringValidationError(ValidationError):    ss"""Error thrown when there is an issue with the querystring."""    passs

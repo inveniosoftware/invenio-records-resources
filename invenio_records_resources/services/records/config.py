@@ -38,24 +38,37 @@ class RecordServiceConfig(ServiceConfig):
     record_cls = Record
     indexer_cls = RecordIndexer
 
+    # # Search configuration
     search_cls = RecordsSearchV2
     search_query_parser_cls = QueryParser
     search_sort_default = 'bestmatch'
     search_sort_default_no_query = 'mostrecent'
-    search_sort_options = dict(
-        bestmatch=dict(
+    search_sort_options = {
+        "bestmatch": dict(
             title=_('Best match'),
             fields=['_score'],  # ES defaults to desc on `_score` field
         ),
-        mostrecent=dict(
+        "-bestmatch": dict(
+            title=_('Worst match'),
+            fields=['-_score'],
+        ),
+        "mostrecent": dict(
             title=_('Most recent'),
             fields=['-created'],
         ),
-    )
+        "-mostrecent": dict(
+            title=_('Least recent'),
+            fields=['created'],
+        ),
+    }
     search_facets_options = dict(
         aggs={},
         post_filters={}
     )
+    search_pagination_options = {
+        "default_results_per_page": 25,
+        "default_max_results": 10000
+    }
     search_params_interpreters_cls = [
         QueryStrParam,
         PaginationParam,

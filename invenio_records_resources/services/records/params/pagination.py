@@ -8,7 +8,10 @@
 
 """Pagination parameter interpreter API."""
 
+from marshmallow import ValidationError
+
 from ....pagination import Pagination
+from ...errors import QuerystringValidationError
 from .base import ParamInterpreter
 
 
@@ -17,12 +20,22 @@ class PaginationParam(ParamInterpreter):
 
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
+        options = self.config.search_pagination_options
+
+        default_size = options["default_results_per_page"]
+        default_max_results = options["default_max_results"]
+
+        params.setdefault("size", default_size)
+        params.setdefault("page", 1)
+        params.setdefault("_max_results", default_max_results)
+
         p = Pagination(
-            params.get('size'),
-            params.get('page'),
-            params.get('_max_results'),
+            params["size"],
+            params["page"],
+            params["_max_results"],
         )
 
-        if not p:
-            return search[p.from_idx:p.to_idx]
-        return search
+        if not p.valid():
+            raise QuerystringValidationError("Invalid pagination parameters.")
+
+        return search[p.from_idx:p.to_idx]
