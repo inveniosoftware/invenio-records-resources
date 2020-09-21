@@ -145,12 +145,13 @@ class RecordList(ServiceListResult):
         return Pagination(
             self._params['size'],
             self._params['page'],
-            self._params['_max_results'],
+            self.total,
         )
 
     @property
     def links(self):
         """Get the search result links."""
+        # TODO: Refactor because of magic below
         links = LinksStore(host=_current_host)
         schema = self._service.schema_search_links
 
@@ -161,6 +162,7 @@ class RecordList(ServiceListResult):
             links_store=links,
         )
 
+        # WARNING: This changes data!
         if self._links_config:
             links.resolve(config=self._links_config)
 

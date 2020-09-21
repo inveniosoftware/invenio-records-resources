@@ -12,14 +12,16 @@ class ResourceConfig(RecordResourceConfig):
     list_route = "/mocks"
     item_route = f"{list_route}/<pid_value>"
 
+    # IDEA: Formalize the concept of thunk in our codebase and use it
+    # TODO: Changing list_route / item_route shouldn't require redefining these
     links_config = {
         "record": {
-            "self": URITemplate(f"{list_route}{{/pid_value}}"),
+            "self": URITemplate(f"/api{list_route}{{/pid_value}}"),
         },
         "search": {
-            "self": URITemplate(f"{list_route}{{?params*}}"),
-            "prev": URITemplate(f"{list_route}{{?params*}}"),
-            "next": URITemplate(f"{list_route}{{?params*}}"),
+            "self": URITemplate(f"/api{list_route}{{?params*}}"),
+            "prev": URITemplate(f"/api{list_route}{{?params*}}"),
+            "next": URITemplate(f"/api{list_route}{{?params*}}"),
         }
     }
 

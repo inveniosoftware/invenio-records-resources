@@ -153,44 +153,35 @@ def test_post_filtering(client, three_indexed_records):
 #
 # 2- links are generated
 #
-@pytest.mark.skip()
 def test_links_keep_facets(client, three_indexed_records):
-    response = client.get(
-        "/mocks?type=A&subtype=B",
-        headers=HEADERS
-    )
+    response = client.get("/mocks?type=A&subtype=B", headers=HEADERS)
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?"
-            "page=1&size=25&sort=mostrecent&subtype=B&type=A"
-        ),
-        "next": (
-            "https://localhost:5000/api/records?"
-            "page=2&size=25&sort=mostrecent&subtype=B&type=A"
+            "https://localhost:5000/api/mocks?"
+            "page=1&size=25&sort=newest&subtype=B&type=A"
         ),
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
 
 
-@pytest.mark.skip()
 def test_links_keep_repeated_facets(client, three_indexed_records):
     response = client.get(
-        "/mocks?type=B&type=A",
+        "/mocks?size=1&type=B&type=A",
         headers=HEADERS
     )
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/api/records?page=1&size=25&sort=mostrecent"
-            "&type=A&type=B"
+            "https://localhost:5000/api/mocks?page=1&size=1&sort=newest"
+            "&type=B&type=A"
         ),
         "next": (
-            "https://localhost:5000/api/records?page=2&size=25&sort=mostrecent"
-            "&type=A&type=B"
+            "https://localhost:5000/api/mocks?page=2&size=1&sort=newest"
+            "&type=B&type=A"
         ),
     }
     for key, url in expected_links.items():

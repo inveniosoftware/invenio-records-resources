@@ -30,14 +30,18 @@ class RecordResourceConfig(ResourceConfig):
     list_route = "/records"
     item_route = f"{list_route}/<pid_value>"
 
+    # NOTE:
+    #   - /api prefix is needed here because above are mounted on /api
+    #   - links_configs that are dependent on the app context are filled at
+    #     RecordResource instantiation
     links_config = {
         "record": {
-            "self": URITemplate(f"{list_route}{{/pid_value}}"),
+            "self": URITemplate(f"/api{list_route}{{/pid_value}}"),
         },
         "search": {
-            "self": URITemplate(f"{list_route}{{?params*}}"),
-            "prev": URITemplate(f"{list_route}{{?params*}}"),
-            "next": URITemplate(f"{list_route}{{?params*}}"),
+            "self": URITemplate(f"/api{list_route}{{?params*}}"),
+            "prev": URITemplate(f"/api{list_route}{{?params*}}"),
+            "next": URITemplate(f"/api{list_route}{{?params*}}"),
         }
     }
 

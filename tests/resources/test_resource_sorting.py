@@ -91,20 +91,19 @@ def test_explicit_sort_reversed(client, three_indexed_records):
 # 3- links are generated
 #
 
-@pytest.mark.skip()
 def test_sort_in_links_no_matter_if_sort_in_url(
         client, three_indexed_records):
     response = client.get(
-        "/mocks?sort=newest", headers=HEADERS
+        "/mocks?size=1&sort=newest", headers=HEADERS
     )
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?page=1&size=25&sort=newest"
+            "https://localhost:5000/api/mocks?page=1&size=1&sort=newest"
         ),
         "next": (
-            "https://localhost:5000/mocks?page=2&size=25&sort=newest"
+            "https://localhost:5000/api/mocks?page=2&size=1&sort=newest"
         ),
     }
     # NOTE: This is done so that we only test for pagination links
@@ -112,47 +111,38 @@ def test_sort_in_links_no_matter_if_sort_in_url(
         assert url == response_links[key]
 
     response = client.get(
-        "/mocks", headers=HEADERS
+        "/mocks?size=1", headers=HEADERS
     )
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?page=1&size=25&sort=newest"
+            "https://localhost:5000/api/mocks?page=1&size=1&sort=newest"
         ),
         "next": (
-            "https://localhost:5000/mocks?page=2&size=25&sort=newest"
+            "https://localhost:5000/api/mocks?page=2&size=1&sort=newest"
         ),
     }
-    # NOTE: This is done so that we only test for pagination links
     for key, url in expected_links.items():
         assert url == response_links[key]
 
 
-@pytest.mark.skip()
 def test_searchstring_is_preserved(client, three_indexed_records):
     response = client.get(
-        "/mocks?q=Romans+story&sort=newest",
+        "/mocks?q=the+quick&sort=newest",
         headers=HEADERS
     )
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?page=1&q=Romans%20story&size=25"
-            "&sort=newest"
-        ),
-        "next": (
-            "https://localhost:5000/mocks?page=2&q=Romans%20story&size=25"
+            "https://localhost:5000/api/mocks?page=1&q=the%20quick&size=25"
             "&sort=newest"
         ),
     }
-    # NOTE: This is done so that we only test for pagination links
     for key, url in expected_links.items():
         assert url == response_links[key]
 
 
 # Q: Are '+' not dealt with appropriately when generating links?
-# Q: Is api/ prefix not dealt with appropriately when generating links?
-
 # Q: Should sort key be in output if key is undefined in backend?
