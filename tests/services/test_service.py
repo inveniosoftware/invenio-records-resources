@@ -19,6 +19,7 @@ import pytest
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_search import current_search, current_search_client
 from marshmallow import ValidationError
+from mock_module.api import Record
 
 
 @pytest.fixture()
@@ -33,8 +34,6 @@ def input_data():
 
 def test_simple_flow(app, service, identity_simple, input_data):
     """Create a record."""
-    idx = 'records-record-v1.0.0'
-
     # Create an item
     item = service.create(identity_simple, input_data)
     id_ = item.id
@@ -44,8 +43,8 @@ def test_simple_flow(app, service, identity_simple, input_data):
     assert item.id == read_item.id
     assert item.data == read_item.data
 
-    # TODO: Should this be part of the service? we don't know the index easily
-    current_search.flush_and_refresh(idx)
+    # Refresh to make changes live
+    Record.index.refresh()
 
     # Search it
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
@@ -61,7 +60,9 @@ def test_simple_flow(app, service, identity_simple, input_data):
 
     # Delete it
     assert service.delete(id_, identity_simple)
-    current_search.flush_and_refresh(idx)
+
+    # Refresh to make changes live
+    Record.index.refresh()
 
     # Retrieve it - deleted so cannot
     # - db

@@ -7,17 +7,11 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Service tests.
-
-Test to add:
-- Read a tombstone page
-- Read with missing permissions
-- Read with missing pid
-"""
+"""Sort tests."""
 
 import pytest
-from invenio_search import current_search
 from marshmallow import ValidationError
+from mock_module.api import Record
 
 
 #
@@ -47,7 +41,7 @@ def records(app, service, identity_simple):
             },
         }
         items.append(service.create(identity_simple, data))
-    current_search.flush_and_refresh('records-record-v1.0.0')
+    Record.index.refresh()
     return items
 
 

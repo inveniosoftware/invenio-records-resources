@@ -10,7 +10,7 @@
 """Facets tests."""
 
 import pytest
-from invenio_search import current_search
+from mock_module.api import Record
 
 
 #
@@ -31,7 +31,7 @@ def records(app, service, identity_simple):
             },
         }
         items.append(service.create(identity_simple, data))
-    current_search.flush_and_refresh('records-record-v1.0.0')
+    Record.index.refresh()
     return items
 
 

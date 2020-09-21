@@ -30,7 +30,17 @@ class RecordService(Service):
     @property
     def indexer(self):
         """Factory for creating an indexer instance."""
-        return self.config.indexer_cls(record_cls=self.config.record_cls)
+        return self.config.indexer_cls(
+            record_cls=self.config.record_cls,
+            record_to_index=self.record_to_index,
+        )
+
+    def record_to_index(self, record):
+        """Function used to map a record to an index."""
+        # We are returning "_doc" as document type as recommended by
+        # Elasticsearch documentation to have v6.x and v7.x equivalent. In v8
+        # document types will have been completely removed.
+        return record.index._name, '_doc'
 
     @property
     def schema(self):
@@ -53,7 +63,8 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def create_search(self, identity, action='read', preference=True):
+    def create_search(self, identity, record_cls, action='read',
+                      preference=True):
         """Instantiate a search class."""
         permission = self.permission_policy(
             action_name=action, identity=identity)
@@ -61,6 +72,7 @@ class RecordService(Service):
         search = self.config.search_cls(
             using=current_search_client,
             default_filter=permission_filter(permission=permission),
+            index=record_cls.index.search_alias,
         )
 
         # Avoid query bounce problem
@@ -78,10 +90,11 @@ class RecordService(Service):
 
         return search
 
-    def search_request(self, identity, params, preference=True):
+    def search_request(self, identity, params, record_cls, preference=True):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
+            record_cls,
             preference=preference,
         )
 
@@ -110,7 +123,8 @@ class RecordService(Service):
         params.update(kwargs)
 
         # Create a Elasticsearch DSL
-        search = self.search_request(identity, params, preference=False)
+        search = self.search_request(
+            identity, params, self.record_cls, preference=False)
 
         # Run components
         for component in self.components:
@@ -221,8 +235,6 @@ class RecordService(Service):
     def delete(self, id_, identity):
         """Delete a record from database and search indexes."""
         # TODO: etag and versioning
-
-        # TODO: Removed based on id both DB and ES
         record = self.record_cls.pid.resolve(id_)
         # Permissions
         self.require_permission(identity, "delete", record=record)

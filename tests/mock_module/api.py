@@ -7,8 +7,8 @@ from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ConstantField, DictField, ModelField
 
 from invenio_records_resources.records.api import Record as RecordBase
-from invenio_records_resources.records.systemfields import PIDField, \
-    PIDStatusCheckField
+from invenio_records_resources.records.systemfields import IndexField, \
+    PIDField, PIDStatusCheckField
 
 from .models import RecordMetadata
 
@@ -25,6 +25,8 @@ class Record(RecordBase):
     # System fields
     schema = ConstantField(
         '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
+
+    index = IndexField('records-record-v1.0.0', search_alias='records')
 
     pid = PIDField('id', provider=RecordIdProviderV2)
 
