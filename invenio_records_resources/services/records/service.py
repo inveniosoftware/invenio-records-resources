@@ -10,7 +10,7 @@
 """Record Service API."""
 
 from invenio_db import db
-from invenio_records_permissions.api import records_permission_filter
+from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 
 from ...config import lt_es7
@@ -85,8 +85,7 @@ class RecordService(Service):
 
     def search_request(self, identity, params, preference=True):
         """Factory for creating a Search DSL instance."""
-        default_filter = records_permission_filter(
-            permission=self.permission_policy(
+        default_filter = permission_filter(permission=self.permission_policy(
                 action_name="read", identity=identity
             ))
         # FIXME: Should be configurable

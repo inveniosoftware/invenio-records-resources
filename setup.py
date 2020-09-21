@@ -28,7 +28,7 @@ tests_require = [
 ]
 
 # Should follow inveniosoftware/invenio versions
-invenio_search_version = '>=1.3.0,<2.0.0'
+invenio_search_version = '>=1.4.0,<2.0.0'
 invenio_db_version = '>=1.0.5,<2.0.0'
 
 extras_require = {
@@ -73,7 +73,7 @@ install_requires = [
     "invenio-indexer>=1.2.0",
     "invenio-jsonschemas>=1.1.0",
     "invenio-pidstore>=1.2.0",
-    "invenio-records-permissions>=0.9.0,<1.0.0",
+    "invenio-records-permissions>=0.10.0,<1.0.0",
     "invenio-records>=1.4.0a2",
     "marshmallow-utils>=0.1.4",
     "ftfy<5.0,>=4.4.3",  # TODO: temporary until invenio-records-rest unpins
