@@ -15,3 +15,20 @@ class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
     description = "Permission denied."
+
+
+class RevisionIdMismatchError(Exception):
+    """Etag check exception."""
+
+    def __init__(self, record_revision_id, expected_revision_id):
+        """Constructor."""
+        self.record_revision_id = record_revision_id
+        self.expected_revision_id = expected_revision_id
+
+    @property
+    def description(self):
+        """Exception's description."""
+        return (
+            f"Revision id provided({self.expected_revision_id}) doesn't match "
+            f"record's one({self.record_revision_id})"
+        )

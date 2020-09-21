@@ -15,6 +15,7 @@ from invenio_search import current_search_client
 
 from ...config import lt_es7
 from ..base import Service
+from ..errors import RevisionIdMismatchError
 from .config import RecordServiceConfig
 from .schema import MarshmallowServiceSchema
 
@@ -62,6 +63,21 @@ class RecordService(Service):
     def record_cls(self):
         """Factory for creating a record class."""
         return self.config.record_cls
+
+    def check_revision_id(self, record, expected_revision_id):
+        """Validate the given revision_id with current record's one.
+
+        :param record: The record object.
+        :param int expected_revision_id: Expected revision id to be found in
+            record.
+        :raises services.errors.RevisionIdMismatchError: If the
+            condition is not met.
+        """
+        if expected_revision_id is not None \
+           and record.revision_id != expected_revision_id:
+            raise RevisionIdMismatchError(
+                record.revision_id, expected_revision_id
+            )
 
     def create_search(self, identity, record_cls, action='read',
                       preference=True):
@@ -201,13 +217,16 @@ class RecordService(Service):
             links_config=links_config
         )
 
-    def update(self, id_, identity, data, links_config=None):
+    def update(self, id_, identity, data, links_config=None,
+               revision_id=None):
         """Replace a record."""
-        # TODO: etag and versioning
         record = self.record_cls.pid.resolve(id_)
+
+        self.check_revision_id(record, revision_id)
 
         # Permissions
         self.require_permission(identity, "update", record=record)
+
         data, _ = self.schema.load(
             identity, data, pid=record.pid, record=record)
 
@@ -232,10 +251,11 @@ class RecordService(Service):
             links_config=links_config
         )
 
-    def delete(self, id_, identity):
+    def delete(self, id_, identity, revision_id=None):
         """Delete a record from database and search indexes."""
-        # TODO: etag and versioning
         record = self.record_cls.pid.resolve(id_)
+
+        self.check_revision_id(record, revision_id)
 
         # Permissions
         self.require_permission(identity, "delete", record=record)
