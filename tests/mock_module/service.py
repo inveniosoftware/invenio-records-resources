@@ -20,6 +20,7 @@ class ServiceConfig(RecordServiceConfig):
     search_cls = RecordsSearch
 
 
+
 class Service(RecordService):
     """Mock service."""
 
