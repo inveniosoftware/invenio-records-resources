@@ -53,11 +53,6 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def permission_filter(self, identity, action='read'):
-        """Factory for a new search permission filter."""
-
-        return
-
     def create_search(self, identity, action='read', preference=True):
         """Instantiate a search class."""
         permission = self.permission_policy(

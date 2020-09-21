@@ -1,11 +1,8 @@
 """Example service."""
 
 
-
-from invenio_records_resources.records.resolver import UUIDResolver
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
-from invenio_records_resources.services.records.params import SortParam
 
 from .api import Record
 from .permissions import PermissionPolicy
@@ -19,7 +16,6 @@ class ServiceConfig(RecordServiceConfig):
     permission_policy_cls = PermissionPolicy
     record_cls = Record
     schema = RecordSchema
-
     search_facets_options = {
         'aggs': {
             'type': {
