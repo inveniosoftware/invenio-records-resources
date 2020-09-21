@@ -16,7 +16,7 @@ For instance:
 
     class Record():
         pid = PIDField()
-        is_published = PIDStatusField('pid', status=PIDStatus.REGISTERED)
+        is_published = PIDStatusCheckField('pid', status=PIDStatus.REGISTERED)
 
 """
 
