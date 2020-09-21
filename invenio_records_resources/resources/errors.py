@@ -11,6 +11,7 @@
 import json
 
 from flask import jsonify, make_response, request, url_for
+from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from werkzeug.routing import BuildError
 
 
@@ -40,3 +41,11 @@ def create_pid_redirected_error_handler():
             raise e
 
     return pid_redirected_error_handler
+
+
+handle_querystring_validation_error = create_errormap_handler(
+    HTTPJSONException(
+        code=400,
+        description="Invalid querystring parameters.",
+    )
+)

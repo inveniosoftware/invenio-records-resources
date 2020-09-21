@@ -14,6 +14,7 @@ fixtures are available.
 """
 
 import pytest
+from flask_principal import Identity, Need, UserNeed
 from mock_module.resource import Resource, ResourceConfig
 from mock_module.service import Service, ServiceConfig
 
@@ -36,3 +37,12 @@ def base_app(base_app, resource):
     base_app.register_blueprint(resource.as_blueprint('mock'))
     # base_app.register_error_handler(HTTPException, handle_http_exception)
     yield base_app
+
+
+@pytest.fixture(scope="module")
+def identity_simple():
+    """Simple identity fixture."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(Need(method='system_role', value='any_user'))
+    return i
