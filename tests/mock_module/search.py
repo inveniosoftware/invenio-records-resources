@@ -1,13 +1,14 @@
 """Example search."""
 
-from invenio_search import RecordsSearch as RecordsSearchBase
+from elasticsearch_dsl import Q
 
 
-class RecordsSearch(RecordsSearchBase):
-    """Records search class."""
+def terms_filter(field):
+    """Create a term filter used for aggregations.
 
-    class Meta:
-        """Configuration."""
-
-        # TODO: should be 'records' but apparently the alias is not created.
-        index = 'records-record-v1.0.0'
+    :param field: Field name.
+    :returns: Function that returns the Terms query.
+    """
+    def inner(values):
+        return Q('terms', **{field: values})
+    return inner

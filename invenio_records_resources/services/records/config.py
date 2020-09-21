@@ -13,7 +13,7 @@ from flask_babelex import gettext as _
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.resolver import Resolver
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
-from invenio_search import RecordsSearch
+from invenio_search import RecordsSearchV2
 
 from ...records import Record
 from ..base import ServiceConfig
@@ -38,7 +38,7 @@ class RecordServiceConfig(ServiceConfig):
     record_cls = Record
     indexer_cls = RecordIndexer
 
-    search_cls = RecordsSearch
+    search_cls = RecordsSearchV2
     search_query_parser_cls = QueryParser
     search_sort_default = 'bestmatch'
     search_sort_default_no_query = 'mostrecent'

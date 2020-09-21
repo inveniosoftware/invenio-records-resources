@@ -1,5 +1,7 @@
 """Example service."""
 
+
+
 from invenio_records_resources.records.resolver import UUIDResolver
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
@@ -8,7 +10,7 @@ from invenio_records_resources.services.records.params import SortParam
 from .api import Record
 from .permissions import PermissionPolicy
 from .schema import RecordSchema
-from .search import RecordsSearch
+from .search import terms_filter
 
 
 class ServiceConfig(RecordServiceConfig):
@@ -17,8 +19,23 @@ class ServiceConfig(RecordServiceConfig):
     permission_policy_cls = PermissionPolicy
     record_cls = Record
     schema = RecordSchema
-    search_cls = RecordsSearch
 
+    search_facets_options = {
+        'aggs': {
+            'type': {
+                'terms': {'field': 'metadata.type.type'},
+                'aggs': {
+                    'subtype': {
+                        'terms': {'field': 'metadata.type.subtype'},
+                    }
+                }
+            }
+        },
+        'post_filters': {
+            'subtype': terms_filter('metadata.type.subtype'),
+            'type': terms_filter('metadata.type.type'),
+        }
+    }
 
 
 class Service(RecordService):

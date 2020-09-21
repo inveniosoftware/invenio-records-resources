@@ -10,6 +10,7 @@
 """Record Service API."""
 
 from invenio_db import db
+from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 
 from ...config import lt_es7
@@ -26,14 +27,6 @@ class RecordService(Service):
     #
     # Low-level API
     #
-    @property
-    def resolver(self):
-        """Factory for creating a resolver instance."""
-        return self.config.resolver_cls(
-            pid_type=self.config.resolver_pid_type,
-            getter=self.config.record_cls.get_record
-        )
-
     @property
     def indexer(self):
         """Factory for creating an indexer instance."""
@@ -60,9 +53,20 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def create_search(self, identity, preference=True):
+    def permission_filter(self, identity, action='read'):
+        """Factory for a new search permission filter."""
+
+        return
+
+    def create_search(self, identity, action='read', preference=True):
         """Instantiate a search class."""
-        search = self.config.search_cls(using=current_search_client)
+        permission = self.permission_policy(
+            action_name=action, identity=identity)
+
+        search = self.config.search_cls(
+            using=current_search_client,
+            default_filter=permission_filter(permission=permission),
+        )
 
         # Avoid query bounce problem
         if preference:
@@ -81,7 +85,10 @@ class RecordService(Service):
 
     def search_request(self, identity, params, preference=True):
         """Factory for creating a Search DSL instance."""
-        search = self.create_search(identity)
+        search = self.create_search(
+            identity,
+            preference=preference,
+        )
 
         # Run search args evaluator
         for interpreter_cls in self.config.search_params_interpreters_cls:
@@ -108,7 +115,7 @@ class RecordService(Service):
         params.update(kwargs)
 
         # Create a Elasticsearch DSL
-        search = self.search_request(identity, params)
+        search = self.search_request(identity, params, preference=False)
 
         # Run components
         for component in self.components:
