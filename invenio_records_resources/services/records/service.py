@@ -10,6 +10,7 @@
 """Record Service API."""
 
 from invenio_db import db
+from invenio_records_permissions.api import records_permission_filter
 from invenio_search import current_search_client
 
 from ...config import lt_es7
@@ -60,10 +61,13 @@ class RecordService(Service):
         """Factory for creating a record class."""
         return self.config.record_cls
 
-    def create_search(self, identity, preference=True):
+    def create_search(self, identity, preference=True, search_options=None):
         """Instantiate a search class."""
-        search = self.config.search_cls(using=current_search_client)
-
+        _search_options = search_options if search_options else {}
+        search = self.config.search_cls(
+            using=current_search_client,
+            **search_options
+        )
         # Avoid query bounce problem
         if preference:
             search = search.with_preference_param()
@@ -81,7 +85,19 @@ class RecordService(Service):
 
     def search_request(self, identity, params, preference=True):
         """Factory for creating a Search DSL instance."""
-        search = self.create_search(identity)
+        default_filter = records_permission_filter(
+            permission=self.permission_policy(
+                action_name="read", identity=identity
+            ))
+        # FIXME: Should be configurable
+        search_options = {
+            'default_filter': default_filter,
+        }
+        search = self.create_search(
+            identity,
+            preference=preference,
+            search_options=search_options
+        )
 
         # Run search args evaluator
         for interpreter_cls in self.config.search_params_interpreters_cls:
@@ -108,7 +124,7 @@ class RecordService(Service):
         params.update(kwargs)
 
         # Create a Elasticsearch DSL
-        search = self.search_request(identity, params)
+        search = self.search_request(identity, params, preference=False)
 
         # Run components
         for component in self.components:

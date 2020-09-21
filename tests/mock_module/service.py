@@ -1,5 +1,7 @@
 """Example service."""
 
+from invenio_search import RecordsSearchV2
+
 from invenio_records_resources.records.resolver import UUIDResolver
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
@@ -9,7 +11,7 @@ from invenio_records_resources.services.records.params import FacetsParam, \
 from .api import Record
 from .permissions import PermissionPolicy
 from .schema import RecordSchema
-from .search import RecordsSearch, terms_filter
+from .search import terms_filter
 
 
 class ServiceConfig(RecordServiceConfig):
@@ -18,7 +20,7 @@ class ServiceConfig(RecordServiceConfig):
     permission_policy_cls = PermissionPolicy
     record_cls = Record
     schema = RecordSchema
-    search_cls = RecordsSearch
+    search_cls = RecordsSearchV2
     search_sort_default = 'bestmatch'
     search_sort_default_no_query = 'mostrecent'
     search_sort_options = dict(
