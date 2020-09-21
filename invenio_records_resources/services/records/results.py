@@ -118,10 +118,10 @@ class RecordList(ServiceListResult):
     @property
     def hits(self):
         """Iterator over the hits."""
-        for hit in self._results.hits.hits:
+        for hit in self._results:
             # Load dump
             record = self._service.record_cls.loads(
-                hit.to_dict()['_source']
+                hit.to_dict()
             )
 
             # Project the record

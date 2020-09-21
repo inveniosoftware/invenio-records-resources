@@ -1,13 +1,15 @@
 {
   "mappings": {
-    "date_detection": false,
     "properties": {
       "id": {
-        "type": "text"
+        "type": "keyword"
       },
       "metadata": {
+        "type": "object",
         "properties": {
-          "title":  { "type": "text" },
+          "title": {
+            "type": "text"
+          },
           "type": {
             "type": "object",
             "properties": {
@@ -27,13 +29,13 @@
       "updated": {
         "type": "date"
       },
-      "@expires_at": {
+      "expires_at": {
         "type": "date"
       },
-      "@uuid": {
+      "uuid": {
         "type": "keyword"
       },
-      "@version": {
+      "version_id": {
         "type": "integer"
       }
     }

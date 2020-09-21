@@ -74,9 +74,8 @@ install_requires = [
     "invenio-jsonschemas>=1.1.0",
     "invenio-pidstore>=1.2.0",
     "invenio-records-permissions>=0.10.0,<1.0.0",
-    "invenio-records>=1.4.0a2",
+    "invenio-records>=1.4.0a3",
     "marshmallow-utils>=0.1.4",
-    "ftfy<5.0,>=4.4.3",  # TODO: temporary until invenio-records-rest unpins
     "xmltodict~=0.12.0",
     "uritemplate>=3.0.1",
 ]
