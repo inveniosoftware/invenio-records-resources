@@ -10,17 +10,17 @@
 """Record Resource Configuration."""
 
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
-from flask_resources.parsers import ArgsParser
+from flask_resources.parsers import HeadersParser, URLArgsParser
 from flask_resources.resources import ResourceConfig
-from flask_resources.responses import Response
 from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
 from uritemplate import URITemplate
 
-from ..services.errors import PermissionDeniedError
+from ..services.errors import PermissionDeniedError, RevisionIdMismatchError
 from .errors import create_pid_redirected_error_handler
-from .record_args import SearchURLArgsSchema
+from .record_args import RequestHeadersSchema, SearchURLArgsSchema
+from .record_response import RecordResponse
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -41,20 +41,25 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     request_url_args_parser = {
-        "search": ArgsParser(SearchURLArgsSchema)
+        "search": URLArgsParser(SearchURLArgsSchema)
+    }
+
+    request_headers_parser = {
+        "update": HeadersParser(RequestHeadersSchema, allow_unknown=False),
+        "delete": HeadersParser(RequestHeadersSchema, allow_unknown=False)
     }
 
     response_handlers = {
-        "application/json": Response(JSONSerializer())
+        "application/json": RecordResponse(JSONSerializer())
     }
 
     error_map = {
-        # InvalidQueryError: create_errormap_handler(
-        #     HTTPJSONException(
-        #         code=400,
-        #         description="Invalid query syntax.",
-        #     )
-        # ),
+        RevisionIdMismatchError: create_errormap_handler(
+            lambda e: HTTPJSONException(
+                code=412,
+                description=e.description,
+            )
+        ),
         PermissionDeniedError: create_errormap_handler(
             HTTPJSONException(
                 code=403,

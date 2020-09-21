@@ -36,7 +36,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         identity = g.identity
         hits = self.service.search(
             identity=identity,
-            params=resource_requestctx.request_args,
+            params=resource_requestctx.url_args,
             links_config=self.config.links_config,
         )
         return hits.to_dict(), 200
@@ -65,6 +65,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             g.identity,
             data,
             links_config=self.config.links_config,
+            revision_id=resource_requestctx.headers.get("if_match"),
         )
         return item.to_dict(), 200
 
@@ -77,5 +78,6 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         self.service.delete(
             resource_requestctx.route["pid_value"],
             g.identity,
+            revision_id=resource_requestctx.headers.get("if_match"),
         )
         return None, 204

@@ -49,3 +49,9 @@ class SearchURLArgsSchema(Schema):
         """Inject from_idx and to_idx into data bc they are valid."""
         data["_max_results"] = DEFAULT_MAX_RESULTS
         return data
+
+
+class RequestHeadersSchema(Schema):
+    """Schema for search URL args."""
+
+    if_match = fields.Integer()

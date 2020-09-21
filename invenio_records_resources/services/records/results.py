@@ -61,7 +61,6 @@ class RecordItem(ServiceItemResult):
             record=self._record,
             links_store=links
         )
-
         if self._links_config:
             links.resolve(config=self._links_config)
 
