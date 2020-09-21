@@ -106,6 +106,13 @@ class PIDField(SystemField):
                 object_uuid=record.id
             ).pid
 
+    def post_delete(self, record, force=False):
+        """Called after a record is deleted."""
+        pid = record.pid
+        if pid is not None:
+            self._provider(pid).delete()
+            pid.delete()
+
     #
     # Helpers
     #
