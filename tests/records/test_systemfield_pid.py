@@ -17,11 +17,12 @@ from mock_module.models import RecordMetadata
 
 from invenio_records_resources.records.api import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField
+from invenio_records_resources.records.systemfields.pid import PIDFieldContext
 
 
 def test_class_attribute_access():
     """Test that field is returned."""
-    assert isinstance(Record.pid, PIDField)
+    assert isinstance(Record.pid, PIDFieldContext)
 
 
 def test_record_pid_creation(base_app, db):
@@ -84,3 +85,10 @@ def test_reading_a_pid(base_app, db):
     assert record['pid']['status'] == record.pid.status
     assert record['pid']['obj_type'] == record.pid.object_type
     assert record['pid']['pid_type'] == record.pid.pid_type
+
+
+def test_resolver(base_app, db, example_record):
+    """Test the resolver."""
+    resolved_record = Record.pid.resolve(example_record.pid.pid_value)
+    loaded_record = Record.get_record(example_record.id)
+    assert resolved_record == loaded_record
