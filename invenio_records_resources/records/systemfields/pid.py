@@ -99,16 +99,18 @@ class PIDField(SystemField):
             return
 
         # This uses the data descriptor method __get__() below:
-        if record.pid is None:
+        if getattr(record, self.attr_name) is None:
             # Create a PID if the object doesn't already have one.
-            record.pid = self._provider.create(
+            _pid = self._provider.create(
                 object_type=self._object_type,
                 object_uuid=record.id
             ).pid
 
+            setattr(record, self.attr_name, _pid)
+
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""
-        pid = record.pid
+        pid = getattr(record, self.attr_name)
         if pid is not None:
             self._provider(pid).delete()
             pid.delete()
