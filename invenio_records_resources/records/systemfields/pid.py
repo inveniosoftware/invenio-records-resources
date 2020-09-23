@@ -35,7 +35,7 @@ key in the record:
 
 """
 
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records.systemfields import SystemField, SystemFieldContext
 
@@ -111,9 +111,8 @@ class PIDField(SystemField):
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""
         pid = getattr(record, self.attr_name)
-        if pid is not None:
+        if pid is not None and (pid.status != PIDStatus.REGISTERED or force):
             self._provider(pid).delete()
-            pid.delete()
 
     #
     # Helpers
