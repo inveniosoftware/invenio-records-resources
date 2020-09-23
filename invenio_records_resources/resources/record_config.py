@@ -61,6 +61,12 @@ class RecordResourceConfig(ResourceConfig):
                 description=e.description,
             )
         ),
+        QuerystringValidationError: create_errormap_handler(
+            HTTPJSONException(
+                code=400,
+                description="Invalid querystring parameters.",
+            )
+        ),
         PermissionDeniedError: create_errormap_handler(
             HTTPJSONException(
                 code=403,
