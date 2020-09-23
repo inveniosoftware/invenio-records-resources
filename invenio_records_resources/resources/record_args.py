@@ -13,7 +13,6 @@
 from marshmallow import Schema, fields, validate
 
 
-
 class SearchURLArgsSchema(Schema):
     """Schema for search URL args."""
 

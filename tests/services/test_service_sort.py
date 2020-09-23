@@ -52,7 +52,7 @@ def test_default_no_query(service, identity_simple, records):
     """Default sorting without a query."""
     res = service.search(
         identity_simple, page=1, size=10, _max_results=100).to_dict()
-    assert sort_method(res) == 'mostrecent'
+    assert sort_method(res) == 'newest'
 
 
 def test_default_with_query(service, identity_simple, records):
@@ -65,9 +65,9 @@ def test_default_with_query(service, identity_simple, records):
 def test_user_selected_sort(service, identity_simple, records):
     """Chosen sort method."""
     res = service.search(
-        identity_simple, q='test', sort='mostrecent', page=1, size=10,
+        identity_simple, q='test', sort='newest', page=1, size=10,
         _max_results=100).to_dict()
-    assert sort_method(res) == 'mostrecent'
+    assert sort_method(res) == 'newest'
 
 
 def test_invalid_sort(service, identity_simple, records):
@@ -76,10 +76,10 @@ def test_invalid_sort(service, identity_simple, records):
     pytest.raises(ValidationError, service.search, identity_simple, sort="foo")
 
 
-def test_mostrecent(service, identity_simple, records):
+def test_newest(service, identity_simple, records):
     """Chosen sort method."""
     res = service.search(
-        identity_simple, sort='mostrecent', page=1, size=10,
+        identity_simple, sort='newest', page=1, size=10,
         _max_results=100).to_dict()
-    assert sort_method(res) == 'mostrecent'
+    assert sort_method(res) == 'newest'
     assert order(res) == [2, 1, 0]

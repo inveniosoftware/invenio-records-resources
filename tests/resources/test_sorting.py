@@ -74,14 +74,14 @@ def test_default_sorting_if_query(client, three_indexed_records):
 
 
 def test_explicit_sort(client, three_indexed_records):
-    response = client.get("/mocks?sort=mostrecent", headers=HEADERS)
+    response = client.get("/mocks?sort=newest", headers=HEADERS)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[2-i].id == hit["id"]
 
 
 def test_explicit_sort_reversed(client, three_indexed_records):
-    response = client.get("/mocks?sort=-mostrecent", headers=HEADERS)
+    response = client.get("/mocks?sort=oldest", headers=HEADERS)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[i].id == hit["id"]
@@ -95,16 +95,16 @@ def test_explicit_sort_reversed(client, three_indexed_records):
 def test_sort_in_links_no_matter_if_sort_in_url(
         client, three_indexed_records):
     response = client.get(
-        "/mocks?sort=mostrecent", headers=HEADERS
+        "/mocks?sort=newest", headers=HEADERS
     )
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?page=1&size=25&sort=mostrecent"
+            "https://localhost:5000/mocks?page=1&size=25&sort=newest"
         ),
         "next": (
-            "https://localhost:5000/mocks?page=2&size=25&sort=mostrecent"
+            "https://localhost:5000/mocks?page=2&size=25&sort=newest"
         ),
     }
     # NOTE: This is done so that we only test for pagination links
@@ -118,10 +118,10 @@ def test_sort_in_links_no_matter_if_sort_in_url(
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/mocks?page=1&size=25&sort=mostrecent"
+            "https://localhost:5000/mocks?page=1&size=25&sort=newest"
         ),
         "next": (
-            "https://localhost:5000/mocks?page=2&size=25&sort=mostrecent"
+            "https://localhost:5000/mocks?page=2&size=25&sort=newest"
         ),
     }
     # NOTE: This is done so that we only test for pagination links
@@ -132,7 +132,7 @@ def test_sort_in_links_no_matter_if_sort_in_url(
 @pytest.mark.skip()
 def test_searchstring_is_preserved(client, three_indexed_records):
     response = client.get(
-        "/mocks?q=Romans+story&sort=mostrecent",
+        "/mocks?q=Romans+story&sort=newest",
         headers=HEADERS
     )
 
@@ -140,11 +140,11 @@ def test_searchstring_is_preserved(client, three_indexed_records):
     expected_links = {
         "self": (
             "https://localhost:5000/mocks?page=1&q=Romans%20story&size=25"
-            "&sort=mostrecent"
+            "&sort=newest"
         ),
         "next": (
             "https://localhost:5000/mocks?page=2&q=Romans%20story&size=25"
-            "&sort=mostrecent"
+            "&sort=newest"
         ),
     }
     # NOTE: This is done so that we only test for pagination links

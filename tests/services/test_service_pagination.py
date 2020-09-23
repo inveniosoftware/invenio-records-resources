@@ -16,8 +16,6 @@ NOTE: See tests/resources/test_pagination for more comprehensive tests.
 import pytest
 from invenio_search import current_search
 
-# from marshmallow import ValidationError
-
 
 #
 # Fixtures
@@ -33,7 +31,9 @@ def records(app, service, identity_simple):
             },
         }
         items.append(service.create(identity_simple, data))
-    current_search.flush_and_refresh('records-record-v1.0.0')
+
+    service.record_cls.index.refresh()
+
     return items
 
 

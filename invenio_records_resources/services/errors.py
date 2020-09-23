@@ -36,4 +36,5 @@ class RevisionIdMismatchError(Exception):
         )
 
 
-class QuerystringValidationError(ValidationError):    ss"""Error thrown when there is an issue with the querystring."""    passs
+class QuerystringValidationError(ValidationError):
+    """Error thrown when there is an issue with the querystring."""
