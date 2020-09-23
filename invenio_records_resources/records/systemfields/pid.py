@@ -58,6 +58,7 @@ class PIDFieldContext(SystemFieldContext):
             pid_type=self.field._pid_type,
             object_type=self.field._object_type,
             getter=self.record_cls.get_record,
+            registered_only=False,
         )
 
         # Resolve
