@@ -28,6 +28,7 @@ def example_data():
 def example_record(db, example_data):
     """Example record."""
     record = Record.create(example_data, expires_at=datetime(2020, 9, 7, 0, 0))
+    record.commit()
     db.session.commit()
     return record
 
