@@ -14,6 +14,7 @@ from datetime import datetime
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from mock_module.api import Record
 from mock_module.models import RecordMetadata
+from sqlalchemy import inspect
 
 from invenio_records_resources.records.api import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField
@@ -92,3 +93,17 @@ def test_resolver(base_app, db, example_record):
     resolved_record = Record.pid.resolve(example_record.pid.pid_value)
     loaded_record = Record.get_record(example_record.id)
     assert resolved_record == loaded_record
+
+
+def test_session_merge(base_app, db, example_record):
+    """Test the session merge."""
+    assert inspect(example_record.pid).persistent is True
+    assert inspect(example_record.conceptpid).persistent is True
+
+    record = Record.get_record(example_record.id)
+    assert inspect(record.pid).persistent is False
+    assert inspect(record.conceptpid).persistent is False
+
+    Record.pid.session_merge(record)
+    assert inspect(record.pid).persistent is True
+    assert inspect(record.conceptpid).persistent is False

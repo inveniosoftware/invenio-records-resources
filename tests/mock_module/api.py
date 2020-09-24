@@ -30,4 +30,6 @@ class Record(RecordBase):
 
     pid = PIDField('id', provider=RecordIdProviderV2)
 
+    conceptpid = PIDField('conceptid', provider=RecordIdProviderV2)
+
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
