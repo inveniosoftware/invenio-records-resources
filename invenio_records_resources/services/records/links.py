@@ -59,9 +59,9 @@ class SearchLinks(LinksSchema, FieldPermissionsMixin):
     namespace = 'search'
 
     field_dump_permissions = {
-        'prev': 'read',
-        'self': 'read',
-        'next': 'read',
+        'prev': 'search',
+        'self': 'search',
+        'next': 'search',
     }
 
     prev = GenFunction(search_link_params(-1))

@@ -1,12 +1,21 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
+#
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
 """Example service."""
 
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
+from invenio_records_resources.services.records.search import terms_filter
 
 from .api import Record
 from .permissions import PermissionPolicy
 from .schema import RecordSchema
-from .search import terms_filter
 
 
 class ServiceConfig(RecordServiceConfig):
