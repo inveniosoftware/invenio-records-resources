@@ -15,15 +15,6 @@ import pytest
 
 
 @pytest.fixture()
-def headers():
-    """Default headers for making requests."""
-    return {
-        'content-type': 'application/json',
-        'accept': 'application/json',
-    }
-
-
-@pytest.fixture()
 def input_data(client, headers):
     """Input data (as coming from the view layer)."""
     data = {

@@ -15,6 +15,8 @@ from uritemplate import URITemplate
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 
+from .schema import RecordLinksSchema, SearchLinksSchema
+
 
 class ResourceConfig(RecordResourceConfig):
     """Mock service configuration."""
@@ -23,14 +25,8 @@ class ResourceConfig(RecordResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "record": {
-            "self": URITemplate(f"/api{list_route}{{/pid_value}}"),
-        },
-        "search": {
-            "self": URITemplate(f"/api{list_route}{{?params*}}"),
-            "prev": URITemplate(f"/api{list_route}{{?params*}}"),
-            "next": URITemplate(f"/api{list_route}{{?params*}}"),
-        }
+        "record": RecordLinksSchema(),
+        "search": SearchLinksSchema()
     }
 
 

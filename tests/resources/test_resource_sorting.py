@@ -17,8 +17,6 @@ from flask_principal import Identity, Need, UserNeed
 from invenio_search import current_search
 from mock_module.service import Service
 
-HEADERS = {"content-type": "application/json", "accept": "application/json"}
-
 # 3 things to test
 # 0- search options are configurable (see mock_module)
 # 1- results are sorted
@@ -58,30 +56,30 @@ def three_indexed_records(app, identity_simple, es):
 #
 
 
-def test_default_sorting_if_no_query(client, three_indexed_records):
+def test_default_sorting_if_no_query(client, headers, three_indexed_records):
     # NOTE: the default sorting in this case is by most recently created
-    response = client.get("/mocks", headers=HEADERS)
+    response = client.get("/mocks", headers=headers)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[2-i].id == hit["id"]
 
 
-def test_default_sorting_if_query(client, three_indexed_records):
-    response = client.get("/mocks?q=over+the+lazy+dog", headers=HEADERS)
+def test_default_sorting_if_query(client, headers, three_indexed_records):
+    response = client.get("/mocks?q=over+the+lazy+dog", headers=headers)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[i].id == hit["id"]
 
 
-def test_explicit_sort(client, three_indexed_records):
-    response = client.get("/mocks?sort=newest", headers=HEADERS)
+def test_explicit_sort(client, headers, three_indexed_records):
+    response = client.get("/mocks?sort=newest", headers=headers)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[2-i].id == hit["id"]
 
 
-def test_explicit_sort_reversed(client, three_indexed_records):
-    response = client.get("/mocks?sort=oldest", headers=HEADERS)
+def test_explicit_sort_reversed(client, headers, three_indexed_records):
+    response = client.get("/mocks?sort=oldest", headers=headers)
 
     for i, hit in enumerate(response.json['hits']['hits']):
         assert three_indexed_records[i].id == hit["id"]
@@ -92,9 +90,9 @@ def test_explicit_sort_reversed(client, three_indexed_records):
 #
 
 def test_sort_in_links_no_matter_if_sort_in_url(
-        client, three_indexed_records):
+        client, headers, three_indexed_records):
     response = client.get(
-        "/mocks?size=1&sort=newest", headers=HEADERS
+        "/mocks?size=1&sort=newest", headers=headers
     )
 
     response_links = response.json["links"]
@@ -111,7 +109,7 @@ def test_sort_in_links_no_matter_if_sort_in_url(
         assert url == response_links[key]
 
     response = client.get(
-        "/mocks?size=1", headers=HEADERS
+        "/mocks?size=1", headers=headers
     )
 
     response_links = response.json["links"]
@@ -127,10 +125,10 @@ def test_sort_in_links_no_matter_if_sort_in_url(
         assert url == response_links[key]
 
 
-def test_searchstring_is_preserved(client, three_indexed_records):
+def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response = client.get(
         "/mocks?q=the+quick&sort=newest",
-        headers=HEADERS
+        headers=headers
     )
 
     response_links = response.json["links"]
@@ -142,7 +140,3 @@ def test_searchstring_is_preserved(client, three_indexed_records):
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
-
-
-# Q: Are '+' not dealt with appropriately when generating links?
-# Q: Should sort key be in output if key is undefined in backend?

@@ -17,9 +17,6 @@ from flask_principal import Identity, Need, UserNeed
 from invenio_search import current_search
 from mock_module.service import Service
 
-HEADERS = {"content-type": "application/json", "accept": "application/json"}
-
-
 # 2 things to test
 # 1- results are aggregated / post_filtered
 # 2- links are generated
@@ -48,16 +45,12 @@ def three_indexed_records(app, identity_simple, es):
     current_search.flush_and_refresh("*")
 
 
-# Q: Are '+' not dealt with appropriately when generating links?
-# Q: Is api/ prefix not dealt with appropriately when generating links?
-
-
 #
 # 1- results are aggregated / post_filtered
 #
 
-def test_aggregating(client, three_indexed_records):
-    response = client.get("/mocks", headers=HEADERS)
+def test_aggregating(client, headers, three_indexed_records):
+    response = client.get("/mocks", headers=headers)
     response_aggs = response.json["aggregations"]
 
     expected_aggs = {
@@ -98,8 +91,8 @@ def test_aggregating(client, three_indexed_records):
     assert expected_aggs == response_aggs
 
 
-def test_post_filtering(client, three_indexed_records):
-    response = client.get("/mocks?type=A", headers=HEADERS)
+def test_post_filtering(client, headers, three_indexed_records):
+    response = client.get("/mocks?type=A", headers=headers)
 
     assert response.status_code == 200
 
@@ -153,8 +146,8 @@ def test_post_filtering(client, three_indexed_records):
 #
 # 2- links are generated
 #
-def test_links_keep_facets(client, three_indexed_records):
-    response = client.get("/mocks?type=A&subtype=B", headers=HEADERS)
+def test_links_keep_facets(client, headers, three_indexed_records):
+    response = client.get("/mocks?type=A&subtype=B", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -167,10 +160,10 @@ def test_links_keep_facets(client, three_indexed_records):
         assert url == response_links[key]
 
 
-def test_links_keep_repeated_facets(client, three_indexed_records):
+def test_links_keep_repeated_facets(client, headers, three_indexed_records):
     response = client.get(
         "/mocks?size=1&type=B&type=A",
-        headers=HEADERS
+        headers=headers
     )
 
     response_links = response.json["links"]

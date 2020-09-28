@@ -25,15 +25,6 @@ def input_data():
     }
 
 
-@pytest.fixture()
-def headers():
-    """Default headers for making requests."""
-    return {
-        'content-type': 'application/json',
-        'accept': 'application/json',
-    }
-
-
 def test_simple_flow(app, client, input_data, headers):
     """Test a simple REST API flow."""
     idx = 'records-record-v1.0.0'
