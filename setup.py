@@ -24,7 +24,6 @@ tests_require = [
     "pytest-pycodestyle>=2.2.0",
     "pytest-pydocstyle>=2.2.0",
     "pytest>=6,<7",
-
 ]
 
 # Should follow inveniosoftware/invenio versions
@@ -65,7 +64,6 @@ setup_requires = [
 ]
 
 install_requires = [
-    "celery>=4.4,<5.0",
     "flask-resources>=0.3.2,<1.0.0",
     "invenio-accounts>=1.3.0",
     "invenio-base>=1.2.3",
