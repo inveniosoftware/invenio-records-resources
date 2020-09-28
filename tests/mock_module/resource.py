@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
+#
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
 """Example resource."""
 
 from uritemplate import URITemplate
@@ -12,8 +22,6 @@ class ResourceConfig(RecordResourceConfig):
     list_route = "/mocks"
     item_route = f"{list_route}/<pid_value>"
 
-    # IDEA: Formalize the concept of thunk in our codebase and use it
-    # TODO: Changing list_route / item_route shouldn't require redefining these
     links_config = {
         "record": {
             "self": URITemplate(f"/api{list_route}{{/pid_value}}"),
