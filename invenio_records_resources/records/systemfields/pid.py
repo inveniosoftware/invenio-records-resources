@@ -109,6 +109,14 @@ class PIDField(SystemField):
     #
     # Life-cycle hooks
     #
+    def pre_commit(self, record):
+        """Called before a record is committed."""
+        # Make sure we serialize the pid on record.commit() time as it might
+        # have changed.
+        pid = getattr(record, self.attr_name)
+        if pid is not None:
+            self.set_obj(record, pid)
+
     def post_create(self, record):
         """Called after a record is created."""
         if self._provider is None or not self._create:
@@ -175,17 +183,8 @@ class PIDField(SystemField):
             return obj
         return None
 
-    #
-    # Data descriptor methods (i.e. attribute access)
-    #
-    def __get__(self, record, owner=None):
-        """Get the persistent identifier."""
-        if record is None:
-            return PIDFieldContext(self, owner)
-        return self.obj(record)
-
-    def __set__(self, record, pid):
-        """Set persistent identifier on record."""
+    def set_obj(self, record, pid):
+        """Set the object."""
         assert isinstance(pid, PersistentIdentifier)
 
         # Store data values on the attribute name (e.g. 'pid')
@@ -201,3 +200,16 @@ class PIDField(SystemField):
 
         # Cache object
         self._set_cache(record, pid)
+
+    #
+    # Data descriptor methods (i.e. attribute access)
+    #
+    def __get__(self, record, owner=None):
+        """Get the persistent identifier."""
+        if record is None:
+            return PIDFieldContext(self, owner)
+        return self.obj(record)
+
+    def __set__(self, record, pid):
+        """Set persistent identifier on record."""
+        self.set_obj(record, pid)
