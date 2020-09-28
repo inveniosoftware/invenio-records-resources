@@ -23,7 +23,7 @@ HEADERS = {"content-type": "application/json", "accept": "application/json"}
 # 2- links are generated
 
 
-@pytest.fixture("module")
+@pytest.fixture(scope="module")
 def three_indexed_records(app, identity_simple, es):
     # NOTE: We make use of es fixture (and not es_clear) here because all tests
     #       assume 3 records have been indexed and NO tests in this module
@@ -41,7 +41,7 @@ def three_indexed_records(app, identity_simple, es):
     current_search.flush_and_refresh("*")
 
 
-@pytest.fixture("module")
+@pytest.fixture(scope="module")
 def search_options(app):
     service = Service()
     options = service.config.search_pagination_options
