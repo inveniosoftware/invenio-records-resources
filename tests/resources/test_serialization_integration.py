@@ -21,8 +21,6 @@ from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 from invenio_records_resources.services.records.schema import RecordSchema
 
-HEADERS = {"content-type": "application/json", "accept": "application/json"}
-
 
 class CustomRecordResourceConfig(RecordResourceConfig):
     """Custom record resource config."""
@@ -57,10 +55,10 @@ def app(app, record_service_config):
 
 
 @pytest.mark.skip()
-def test_create_read_xml_record(app, client, input_record):
+def test_create_read_xml_record(app, client, headers, input_record):
     # Create new record
     response = client.post(
-        "/serialization_test/records", headers=HEADERS,
+        "/serialization_test/records", headers=headers,
         data=json.dumps(input_record)
     )
     assert response.status_code == 201

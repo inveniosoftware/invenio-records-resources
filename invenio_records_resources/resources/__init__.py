@@ -11,5 +11,12 @@
 
 from .record import RecordResource
 from .record_config import RecordResourceConfig
+from .schema import RecordLinksSchema, SearchLinksSchema, search_link_params
 
-__all__ = ("RecordResource", "RecordResourceConfig")
+__all__ = (
+    "RecordResource",
+    "RecordResourceConfig",
+    "RecordLinksSchema",
+    "SearchLinksSchema",
+    "search_link_params"
+)

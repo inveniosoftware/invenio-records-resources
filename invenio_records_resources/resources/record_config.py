@@ -22,6 +22,7 @@ from ..services.errors import PermissionDeniedError, \
 from .errors import create_pid_redirected_error_handler
 from .record_args import RequestHeadersSchema, SearchURLArgsSchema
 from .record_response import RecordResponse
+from .schema import RecordLinksSchema, SearchLinksSchema
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -30,19 +31,9 @@ class RecordResourceConfig(ResourceConfig):
     list_route = "/records"
     item_route = f"{list_route}/<pid_value>"
 
-    # NOTE:
-    #   - /api prefix is needed here because above are mounted on /api
-    #   - links_configs that are dependent on the app context are filled at
-    #     RecordResource instantiation
     links_config = {
-        "record": {
-            "self": URITemplate(f"/api{list_route}{{/pid_value}}"),
-        },
-        "search": {
-            "self": URITemplate(f"/api{list_route}{{?params*}}"),
-            "prev": URITemplate(f"/api{list_route}{{?params*}}"),
-            "next": URITemplate(f"/api{list_route}{{?params*}}"),
-        }
+        "record": RecordLinksSchema(),
+        "search": SearchLinksSchema()
     }
 
     request_url_args_parser = {

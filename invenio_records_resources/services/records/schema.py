@@ -10,9 +10,7 @@
 
 from marshmallow import EXCLUDE, INCLUDE, Schema, ValidationError, fields, \
     validate
-from marshmallow_utils.fields import LinksField
-
-from .links import RecordLinks
+from marshmallow_utils.fields import Links
 
 
 #
@@ -41,7 +39,7 @@ class RecordSchema(Schema):
     metadata = fields.Nested(MetadataSchema)
     created = fields.Str()
     updated = fields.Str()
-    links = LinksField(links_schema=RecordLinks, namespace='record')
+    links = Links()
     revision_id = fields.Integer(dump_only=True)
 
 

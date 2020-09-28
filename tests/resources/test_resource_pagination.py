@@ -16,8 +16,6 @@ import pytest
 from invenio_search import current_search
 from mock_module.service import Service
 
-HEADERS = {"content-type": "application/json", "accept": "application/json"}
-
 # 2 things to test
 # 1- results are paginated
 # 2- links are generated
@@ -59,50 +57,52 @@ def assert_hits_len(response, expected_hits):
     assert expected_hits == len(response.json['hits']['hits'])
 
 
-def test_pagination_defaults(client, three_indexed_records):
+def test_pagination_defaults(client, headers, three_indexed_records):
     # Test that default querystring pagination values are used if none
     # specified. Those should allow for 3 records to show up in response.
-    response = client.get("/mocks", headers=HEADERS)
+    response = client.get("/mocks", headers=headers)
 
     assert_hits_len(response, 3)
 
 
-def test_pagination_page(client, search_options, three_indexed_records):
-    response = client.get("/mocks?page=1", headers=HEADERS)
+def test_pagination_page(client, headers, search_options,
+                         three_indexed_records):
+    response = client.get("/mocks?page=1", headers=headers)
     assert_hits_len(response, 3)
 
-    response = client.get("/mocks?page=2", headers=HEADERS)
+    response = client.get("/mocks?page=2", headers=headers)
     assert_hits_len(response, 0)
 
     default_max_results = search_options["default_max_results"]
     default_size = search_options["default_results_per_page"]
     invalid_page = default_max_results // default_size + 1
 
-    response = client.get(f"/mocks?page={invalid_page}", headers=HEADERS)
+    response = client.get(f"/mocks?page={invalid_page}", headers=headers)
     assert response.status_code == 400
 
 
-def test_pagination_size(client, search_options, three_indexed_records):
-    response = client.get("/mocks?size=10", headers=HEADERS)
+def test_pagination_size(client, headers, search_options,
+                         three_indexed_records):
+    response = client.get("/mocks?size=10", headers=headers)
     assert_hits_len(response, 3)
 
-    response = client.get("/mocks?size=1", headers=HEADERS)
+    response = client.get("/mocks?size=1", headers=headers)
     assert_hits_len(response, 1)
 
-    response = client.get("/mocks?size=0", headers=HEADERS)
+    response = client.get("/mocks?size=0", headers=headers)
     assert response.status_code == 400
 
     # NOTE: There are no invalid sizes. Size is always capped by max results
 
 
-def test_pagination_page_and_size(client, three_indexed_records):
-    response = client.get("/mocks?size=10&page=1", headers=HEADERS)
+def test_pagination_page_and_size(client, headers, three_indexed_records):
+    response = client.get("/mocks?size=10&page=1", headers=headers)
     assert_hits_len(response, 3)
 
-    response = client.get("/mocks?page=2&size=1", headers=HEADERS)
+    response = client.get("/mocks?page=2&size=1", headers=headers)
     assert_hits_len(response, 1)
 
-    response = client.get("/mocks?page=20size=1000", headers=HEADERS)
+    response = client.get("/mocks?page=20size=1000", headers=headers)
     assert response.status_code == 400
 
 
@@ -110,8 +110,8 @@ def test_pagination_page_and_size(client, three_indexed_records):
 # 2- links are generated
 #
 def test_middle_search_result_has_next_and_prev_links(
-        client, three_indexed_records):
-    response = client.get("/mocks?size=1&page=2", headers=HEADERS)
+        client, headers, three_indexed_records):
+    response = client.get("/mocks?size=1&page=2", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -122,14 +122,16 @@ def test_middle_search_result_has_next_and_prev_links(
         "next": "https://localhost:5000/api/mocks?page=3&size=1"
                 "&sort=newest",
     }
+
     # NOTE: This is done so that we only test for pagination links
     for key, url in expected_links.items():
+        assert key in response_links
         assert url == response_links[key]
 
 
 def test_first_search_result_has_next_and_no_prev_link(
-        client, three_indexed_records):
-    response = client.get("/mocks?size=1&page=1", headers=HEADERS)
+        client, headers, three_indexed_records):
+    response = client.get("/mocks?size=1&page=1", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -138,6 +140,7 @@ def test_first_search_result_has_next_and_no_prev_link(
         "next": "https://localhost:5000/api/mocks?page=2&size=1"
                 "&sort=newest",
     }
+    print("response_links", response_links)
     for key, url in expected_links.items():
         assert url == response_links[key]
 
@@ -145,8 +148,8 @@ def test_first_search_result_has_next_and_no_prev_link(
 
 
 def test_last_search_result_has_prev_link_and_no_next_link(
-        client, three_indexed_records):
-    response = client.get("/mocks?size=1&page=3", headers=HEADERS)
+        client, headers, three_indexed_records):
+    response = client.get("/mocks?size=1&page=3", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -160,8 +163,8 @@ def test_last_search_result_has_prev_link_and_no_next_link(
 
 
 def test_beyond_last_search_has_prev_link_and_no_next_link(
-        client, search_options, three_indexed_records):
-    response = client.get("/mocks?size=1&page=4", headers=HEADERS)
+        client, headers, search_options, three_indexed_records):
+    response = client.get("/mocks?size=1&page=4", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -175,8 +178,8 @@ def test_beyond_last_search_has_prev_link_and_no_next_link(
 
 
 def test_beyond_beyond_last_search_has_no_prev_or_next_link(
-        client, search_options, three_indexed_records):
-    response = client.get("/mocks?size=1&page=5", headers=HEADERS)
+        client, headers, search_options, three_indexed_records):
+    response = client.get("/mocks?size=1&page=5", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
@@ -189,10 +192,10 @@ def test_beyond_beyond_last_search_has_no_prev_or_next_link(
     assert "next" not in response_links
 
 
-def test_searchstring_is_preserved(client, three_indexed_records):
+def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response = client.get(
         "/mocks?size=1&page=2&q=test+foo",
-        headers=HEADERS
+        headers=headers
     )
 
     response_links = response.json["links"]

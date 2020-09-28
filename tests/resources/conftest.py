@@ -46,3 +46,12 @@ def identity_simple():
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method='system_role', value='any_user'))
     return i
+
+
+@pytest.fixture(scope="module")
+def headers():
+    """Default headers for making requests."""
+    return {
+        'content-type': 'application/json',
+        'accept': 'application/json',
+    }

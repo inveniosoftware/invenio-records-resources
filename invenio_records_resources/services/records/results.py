@@ -57,9 +57,9 @@ class RecordItem(ServiceItemResult):
         self._data = self._service.schema.dump(
             self._identity,
             self._record,
-            pid=self._record.pid,
-            record=self._record,
-            links_store=links
+            namespace="record",
+            links_store=links,
+            links_config=self._links_config
         )
         if self._links_config:
             links.resolve(config=self._links_config)
@@ -150,23 +150,23 @@ class RecordList(ServiceListResult):
 
     @property
     def links(self):
-        """Get the search result links."""
-        # TODO: Refactor because of magic below
+        """Get the search result links.
+
+        TODO: Would be nicer if this were a parallel of data above.
+        """
         links = LinksStore(host=_current_host)
         schema = self._service.schema_search_links
 
         data = schema.dump(
             self._identity,
-            self._params,
-            pagination=self.pagination,
+            # It ain't pretty but it will do
+            {**self._params, "_pagination": self.pagination},
+            links_config=self._links_config,
             links_store=links,
+            namespace="search",
         )
 
-        # WARNING: This changes data!
-        if self._links_config:
-            links.resolve(config=self._links_config)
-
-        return data
+        return data.get("links")
 
     def to_dict(self):
         """Return result as a dictionary."""

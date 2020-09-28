@@ -8,13 +8,9 @@
 
 """Link schemas for records."""
 
-from collections import OrderedDict
-from copy import deepcopy
-
-from marshmallow import Schema, fields, missing
-from marshmallow_utils.fields import GenFunction, LinksField
-from marshmallow_utils.links import LinksSchema
-from marshmallow_utils.permissions import FieldPermissionsMixin
+from marshmallow import Schema  # , fields, missing
+from marshmallow_utils.fields import GenFunction, Links, LinksField
+# from marshmallow_utils.permissions import FieldPermissionsMixin
 
 
 #
@@ -43,27 +39,19 @@ def search_link_params(page_offset):
     return _inner
 
 
-class RecordLinks(Schema, FieldPermissionsMixin):
-    """Links schema."""
-
-    field_dump_permissions = {
-        'self': 'read',
-    }
-
-    self = GenFunction(pid_value_dict)
-
-
-class SearchLinks(LinksSchema, FieldPermissionsMixin):
+class SearchLinks(Schema):
     """Search links schema."""
 
-    namespace = 'search'
+    links = Links()
 
-    field_dump_permissions = {
-        'prev': 'search',
-        'self': 'search',
-        'next': 'search',
-    }
+    # namespace = 'search'
 
-    prev = GenFunction(search_link_params(-1))
-    self = GenFunction(search_link_params(0))
-    next = GenFunction(search_link_params(1))
+    # field_dump_permissions = {
+    #     'prev': 'search',
+    #     'self': 'search',
+    #     'next': 'search',
+    # }
+
+    # prev = GenFunction(search_link_params(-1))
+    # self = GenFunction(search_link_params(0))
+    # next = GenFunction(search_link_params(1))
