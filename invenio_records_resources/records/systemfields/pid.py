@@ -35,6 +35,8 @@ key in the record:
 
 """
 
+from functools import partial
+
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
@@ -54,13 +56,14 @@ class PIDFieldContext(SystemFieldContext):
         Record.pid.session_merge(record)
     """
 
-    def resolve(self, pid_value, registered_only=True):
+    def resolve(self, pid_value, registered_only=True, with_deleted=False):
         """Resolve identifier."""
         # Create resolver
         resolver = self.field._resolver_cls(
             pid_type=self.field._pid_type,
             object_type=self.field._object_type,
-            getter=self.record_cls.get_record,
+            getter=partial(
+                self.record_cls.get_record, with_deleted=with_deleted),
             registered_only=registered_only,
         )
 
