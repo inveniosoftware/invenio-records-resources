@@ -72,9 +72,9 @@ install_requires = [
     "invenio-indexer>=1.2.0",
     "invenio-jsonschemas>=1.1.0",
     "invenio-pidstore>=1.2.0",
-    "invenio-records-permissions>=0.10.0,<1.0.0",
+    "invenio-records-permissions>=0.10.0,<0.11.0",
     "invenio-records>=1.4.0a3",
-    "marshmallow-utils>=0.1.5",
+    "marshmallow-utils>=0.2.0,<0.3.0",
     "xmltodict~=0.12.0",
     "uritemplate>=3.0.1",
 ]
