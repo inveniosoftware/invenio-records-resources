@@ -15,9 +15,10 @@ from marshmallow import Schema
 from marshmallow_utils.fields import Link
 from uritemplate import URITemplate
 
+from invenio_records_resources.resources import search_link_params, \
+    search_link_when
 # Import to make it look like we have defined our own schema.
 from invenio_records_resources.services.records.schema import RecordSchema
-from invenio_records_resources.resources import search_link_params
 
 
 class RecordLinksSchema(Schema):
@@ -40,15 +41,17 @@ class SearchLinksSchema(Schema):
     self = Link(
         template=URITemplate("/api/mocks{?params*}"),
         permission="search",
-        params=search_link_params(0)
+        params=search_link_params(0),
     )
     prev = Link(
         template=URITemplate("/api/mocks{?params*}"),
         permission="search",
-        params=search_link_params(-1)
+        params=search_link_params(-1),
+        when=search_link_when(-1)
     )
     next = Link(
         template=URITemplate("/api/mocks{?params*}"),
         permission="search",
-        params=search_link_params(+1)
+        params=search_link_params(+1),
+        when=search_link_when(+1)
     )

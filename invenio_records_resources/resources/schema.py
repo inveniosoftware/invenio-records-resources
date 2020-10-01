@@ -44,6 +44,20 @@ def search_link_params(page_offset):
     return _inner
 
 
+def search_link_when(page_offset):
+    """When function factory."""
+    def _inner(search_dict):
+        p = search_dict['_pagination']
+        if page_offset < 0 and p.prev_page is None:
+            return False
+        elif page_offset > 0 and p.next_page is None:
+            return False
+        else:
+            return True
+
+    return _inner
+
+
 class SearchLinksSchema(Schema):
     """Schema for a search result's links."""
 
@@ -57,10 +71,12 @@ class SearchLinksSchema(Schema):
     prev = Link(
         template=URITemplate("/api/records{?params*}"),
         permission="search",
-        params=search_link_params(-1)
+        params=search_link_params(-1),
+        when=search_link_when(-1)
     )
     next = Link(
         template=URITemplate("/api/records{?params*}"),
         permission="search",
-        params=search_link_params(+1)
+        params=search_link_params(+1),
+        when=search_link_when(+1)
     )
