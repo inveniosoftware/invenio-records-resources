@@ -43,6 +43,12 @@ class RecordSchema(Schema):
     revision_id = fields.Integer(dump_only=True)
 
 
+class SearchLinks(Schema):
+    """Search links schema."""
+
+    links = Links()
+
+
 #
 # Service schema implementation (adds e.g. permission filtering)
 #

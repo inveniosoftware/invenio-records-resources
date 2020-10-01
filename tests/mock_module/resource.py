@@ -25,8 +25,8 @@ class ResourceConfig(RecordResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "record": RecordLinksSchema(),
-        "search": SearchLinksSchema()
+        "record": RecordLinksSchema,
+        "search": SearchLinksSchema
     }
 
 

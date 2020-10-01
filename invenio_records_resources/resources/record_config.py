@@ -32,8 +32,8 @@ class RecordResourceConfig(ResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "record": RecordLinksSchema(),
-        "search": SearchLinksSchema()
+        "record": RecordLinksSchema,
+        "search": SearchLinksSchema
     }
 
     request_url_args_parser = {

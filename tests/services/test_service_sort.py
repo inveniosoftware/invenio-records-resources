@@ -8,6 +8,7 @@
 # details.
 
 """Sort tests."""
+import time
 
 import pytest
 from marshmallow import ValidationError
@@ -17,14 +18,9 @@ from mock_module.api import Record
 #
 # Helpers
 #
-def order(res_dict):
-    """Assert the order of records in a search result."""
-    return [int(h['metadata']['title']) for h in res_dict['hits']['hits']]
-
-
-def sort_method(res):
-    """Get the sort method from a result."""
-    return res['links']['self']['params']['sort']
+def ids(res):
+    """Returns ids of the result list."""
+    return [h["id"] for h in res]
 
 
 #
@@ -33,16 +29,23 @@ def sort_method(res):
 @pytest.fixture(scope='module')
 def records(app, service, identity_simple):
     """Input data (as coming from the view layer)."""
-    items = []
-    for idx in range(3):
+    parts = [
+        "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
+    ]
+    length = len(parts)
+    results = []
+    for i in range(3):
         data = {
            'metadata': {
-                'title': f'00{idx}'
+                'title': " ".join(parts[:length-3*i])
             },
         }
-        items.append(service.create(identity_simple, data))
+        time.sleep(0.01)
+        results += [service.create(identity_simple, data).to_dict()]
+
     Record.index.refresh()
-    return items
+
+    return results
 
 
 #
@@ -52,34 +55,32 @@ def test_default_no_query(service, identity_simple, records):
     """Default sorting without a query."""
     res = service.search(
         identity_simple, page=1, size=10, _max_results=100).to_dict()
-    assert sort_method(res) == 'newest'
+    # default no query is to order by newest (last created first)
+    assert ids(reversed(records)) == ids(res['hits']['hits'])
 
 
 def test_default_with_query(service, identity_simple, records):
     """Default sorting without a query."""
     res = service.search(
-        identity_simple, q='test', page=1, size=10, _max_results=100).to_dict()
-    assert sort_method(res) == 'bestmatch'
+        identity_simple,
+        q='over+the+lazy+dog',
+        page=1,
+        size=10,
+        _max_results=100
+    ).to_dict()
+    # default with query is to order by bestmatch
+    assert ids(records) == ids(res['hits']['hits'])
 
 
 def test_user_selected_sort(service, identity_simple, records):
     """Chosen sort method."""
     res = service.search(
-        identity_simple, q='test', sort='newest', page=1, size=10,
+        identity_simple, sort='newest', page=1, size=10,
         _max_results=100).to_dict()
-    assert sort_method(res) == 'newest'
+    assert ids(reversed(records)) == ids(res['hits']['hits'])
 
 
 def test_invalid_sort(service, identity_simple, records):
     """Test invalid sort key."""
     # Search with non existing sort parameter
     pytest.raises(ValidationError, service.search, identity_simple, sort="foo")
-
-
-def test_newest(service, identity_simple, records):
-    """Chosen sort method."""
-    res = service.search(
-        identity_simple, sort='newest', page=1, size=10,
-        _max_results=100).to_dict()
-    assert sort_method(res) == 'newest'
-    assert order(res) == [2, 1, 0]

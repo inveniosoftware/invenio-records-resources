@@ -10,7 +10,7 @@
 """Service results."""
 
 from flask import current_app
-from marshmallow_utils.links import LinksStore
+from marshmallow_utils.links import LinksFactory
 
 from ...config import lt_es7
 from ...pagination import Pagination
@@ -52,17 +52,14 @@ class RecordItem(ServiceItemResult):
         if self._data:
             return self._data
 
-        links = LinksStore(host=_current_host)
+        links = LinksFactory(host=_current_host, config=self._links_config)
 
         self._data = self._service.schema.dump(
             self._identity,
             self._record,
-            namespace="record",
-            links_store=links,
-            links_config=self._links_config
+            links_namespace="record",
+            links_factory=links,
         )
-        if self._links_config:
-            links.resolve(config=self._links_config)
 
         return self._data
 
@@ -119,23 +116,15 @@ class RecordList(ServiceListResult):
         """Iterator over the hits."""
         for hit in self._results:
             # Load dump
-            record = self._service.record_cls.loads(
-                hit.to_dict()
-            )
+            record = self._service.record_cls.loads(hit.to_dict())
 
             # Project the record
-            links = LinksStore(host=_current_host)
             projection = self._service.schema.dump(
                 self._identity,
                 record,
                 pid=record.pid,
                 record=record,
-                links_store=links,
             )
-
-            # Create the links if needed
-            if self._links_config:
-                links.resolve(config=self._links_config)
 
             yield projection
 
@@ -154,16 +143,15 @@ class RecordList(ServiceListResult):
 
         TODO: Would be nicer if this were a parallel of data above.
         """
-        links = LinksStore(host=_current_host)
+        links = LinksFactory(host=_current_host, config=self._links_config)
         schema = self._service.schema_search_links
 
         data = schema.dump(
             self._identity,
             # It ain't pretty but it will do
             {**self._params, "_pagination": self.pagination},
-            links_config=self._links_config,
-            links_store=links,
-            namespace="search",
+            links_factory=links,
+            links_namespace="search",
         )
 
         return data.get("links")

@@ -19,11 +19,10 @@ from ...records import Record
 from ..base import ServiceConfig
 from .components import AccessComponent, FilesComponent, MetadataComponent, \
     PIDSComponent
-from .links import SearchLinks
 from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
     SortParam
 from .results import RecordItem, RecordList
-from .schema import RecordSchema
+from .schema import RecordSchema, SearchLinks
 
 
 class RecordServiceConfig(ServiceConfig):
