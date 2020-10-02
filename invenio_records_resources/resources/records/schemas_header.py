@@ -7,6 +7,13 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Resources module to create REST APIs."""
+"""Schemas for header parsing."""
 
-from .records import *
+
+from marshmallow import Schema, fields
+
+
+class RequestHeadersSchema(Schema):
+    """Schema for search URL args."""
+
+    if_match = fields.Integer()

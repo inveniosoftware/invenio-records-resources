@@ -13,9 +13,9 @@ from flask import abort, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 
-from ..config import ConfigLoaderMixin
-from ..services import RecordService
-from .record_config import RecordResourceConfig
+from ...config import ConfigLoaderMixin
+from ...services import RecordService
+from .config import RecordResourceConfig
 
 
 class RecordResource(CollectionResource, ConfigLoaderMixin):

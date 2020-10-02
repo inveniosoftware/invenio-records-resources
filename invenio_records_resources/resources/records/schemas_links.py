@@ -29,18 +29,12 @@ class RecordLinksSchema(Schema):
 def search_link_params(page_offset):
     """Params function factory."""
     def _inner(search_dict):
-        p = search_dict['_pagination']
-        if page_offset < 0 and p.prev_page is None:
-            return missing
-        elif page_offset > 0 and p.next_page is None:
-            return missing
-        else:
-            # Filter out internal parameters
-            params = {
-                k: v for (k, v) in search_dict.items() if not k.startswith('_')
-            }
-            params['page'] += page_offset
-            return {'params': params}
+        # Filter out internal parameters
+        params = {
+            k: v for k, v in search_dict.items() if not k.startswith('_')
+        }
+        params['page'] += page_offset
+        return {'params': params}
     return _inner
 
 

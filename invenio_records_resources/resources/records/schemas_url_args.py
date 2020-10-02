@@ -20,9 +20,3 @@ class SearchURLArgsSchema(Schema):
     sort = fields.String()
     page = fields.Int(validate=validate.Range(min=1))
     size = fields.Int(validate=validate.Range(min=1))
-
-
-class RequestHeadersSchema(Schema):
-    """Schema for search URL args."""
-
-    if_match = fields.Integer()
