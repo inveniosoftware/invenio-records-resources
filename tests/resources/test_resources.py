@@ -13,6 +13,7 @@ import json
 
 import pytest
 from invenio_search import current_search, current_search_client
+from mock_module.api import Record
 
 
 @pytest.fixture()
@@ -42,7 +43,7 @@ def test_simple_flow(app, client, input_data, headers):
     assert res.json['metadata'] == input_data['metadata']
 
     # TODO: Should this be part of the service? we don't know the index easily
-    current_search.flush_and_refresh(idx)
+    Record.index.refresh()
 
     # Search it
     res = client.get('/mocks', query_string={'q': f'id:{id_}'}, headers=h)
@@ -62,7 +63,7 @@ def test_simple_flow(app, client, input_data, headers):
     assert res.status_code == 204
     assert res.get_data(as_text=True) == ''
 
-    current_search.flush_and_refresh(idx)
+    Record.index.refresh()
 
     # Try to get it again
     res = client.get(f'/mocks/{id_}', headers=h)
@@ -82,7 +83,7 @@ def test_search_empty_query_string(client, input_data, headers):
     assert res.status_code == 201
 
     # TODO: Should this be part of the service? we don't know the index easily
-    current_search.flush_and_refresh(idx)
+    Record.index.refresh()
 
     # Search it
     res = client.get('/mocks', headers=headers)

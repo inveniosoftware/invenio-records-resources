@@ -15,6 +15,7 @@ from copy import deepcopy
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_search import current_search
+from mock_module.api import Record
 from mock_module.service import Service
 
 # 2 things to test
@@ -42,7 +43,7 @@ def three_indexed_records(app, identity_simple, es):
     _create({"title": "Record 2", "type": {"type": "A", "subtype": "AB"}})
     _create({"title": "Record 3", "type": {"type": "B"}})
 
-    current_search.flush_and_refresh("*")
+    Record.index.refresh()
 
 
 #

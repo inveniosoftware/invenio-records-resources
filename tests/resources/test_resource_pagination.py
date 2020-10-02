@@ -14,6 +14,7 @@ from copy import deepcopy
 
 import pytest
 from invenio_search import current_search
+from mock_module.api import Record
 from mock_module.service import Service
 
 # 2 things to test
@@ -36,7 +37,7 @@ def three_indexed_records(app, identity_simple, es):
         }
         service.create(identity_simple, data)
 
-    current_search.flush_and_refresh("*")
+    Record.index.refresh()
 
 
 @pytest.fixture(scope="module")
