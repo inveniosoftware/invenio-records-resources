@@ -45,7 +45,7 @@ def test_simple_flow(app, client, input_data, headers):
     current_search.flush_and_refresh(idx)
 
     # Search it
-    res = client.get(f'/mocks', query_string={'q': f'id:{id_}'}, headers=h)
+    res = client.get('/mocks', query_string={'q': f'id:{id_}'}, headers=h)
     assert res.status_code == 200
     assert res.json['hits']['total'] == 1
     assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
@@ -69,6 +69,29 @@ def test_simple_flow(app, client, input_data, headers):
     assert res.status_code == 410
 
     # Try to get search it again
-    res = client.get(f'/mocks', query_string={'q': f'id:{id_}'}, headers=h)
+    res = client.get('/mocks', query_string={'q': f'id:{id_}'}, headers=h)
     assert res.status_code == 200
     assert res.json['hits']['total'] == 0
+
+
+def test_search_empty_query_string(client, input_data, headers):
+    idx = 'records-record-v1.0.0'
+
+    # Create a record
+    res = client.post('/mocks', headers=headers, data=json.dumps(input_data))
+    assert res.status_code == 201
+
+    # TODO: Should this be part of the service? we don't know the index easily
+    current_search.flush_and_refresh(idx)
+
+    # Search it
+    res = client.get('/mocks', headers=headers)
+    assert res.status_code == 200
+    assert res.json['hits']['total'] == 1
+    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+
+    # Search it
+    res = client.get('/mocks', query_string={'q': ''}, headers=headers)
+    assert res.status_code == 200
+    assert res.json['hits']['total'] == 1
+    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
