@@ -31,7 +31,7 @@ class QueryStrParam(ParamInterpreter):
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
         query_str = params.get('q')
-        if query_str is None:
+        if not query_str:
             return search
 
         try:
