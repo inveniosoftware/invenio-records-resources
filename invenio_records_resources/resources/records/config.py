@@ -15,14 +15,14 @@ from flask_resources.resources import ResourceConfig
 from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
-from uritemplate import URITemplate
 
-from ..services.errors import PermissionDeniedError, \
+from ...services.errors import PermissionDeniedError, \
     QuerystringValidationError, RevisionIdMismatchError
 from .errors import create_pid_redirected_error_handler
-from .record_args import RequestHeadersSchema, SearchURLArgsSchema
-from .record_response import RecordResponse
-from .schema import RecordLinksSchema, SearchLinksSchema
+from .response import RecordResponse
+from .schemas_header import RequestHeadersSchema
+from .schemas_links import RecordLinksSchema, SearchLinksSchema
+from .schemas_url_args import SearchURLArgsSchema
 
 
 class RecordResourceConfig(ResourceConfig):
