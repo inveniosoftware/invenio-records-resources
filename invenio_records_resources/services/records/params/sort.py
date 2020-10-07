@@ -17,7 +17,7 @@ class SortParam(ParamInterpreter):
     """Evaluate the 'sort' parameter."""
 
     def _default_sort(self, params, options):
-        if 'q' in params:
+        if params.get('q'):
             return self.config.search_sort_default
         else:
             return self.config.search_sort_default_no_query
