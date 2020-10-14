@@ -40,3 +40,13 @@ def example_record(app, db):
     record = Record.create({}, metadata={'title': 'Test'})
     db.session.commit()
     return record
+
+
+@pytest.fixture(scope="function")
+def input_data():
+    """Input data (as coming from the view layer)."""
+    return {
+        'metadata': {
+            'title': 'Test',
+        },
+    }

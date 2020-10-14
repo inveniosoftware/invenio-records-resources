@@ -114,6 +114,8 @@ class RecordList(ServiceListResult):
     @property
     def hits(self):
         """Iterator over the hits."""
+        links = LinksFactory(host=_current_host, config=self._links_config)
+
         for hit in self._results:
             # Load dump
             record = self._service.record_cls.loads(hit.to_dict())
@@ -124,6 +126,8 @@ class RecordList(ServiceListResult):
                 record,
                 pid=record.pid,
                 record=record,
+                links_namespace="record",
+                links_factory=links
             )
 
             yield projection
