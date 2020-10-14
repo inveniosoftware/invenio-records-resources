@@ -22,16 +22,6 @@ from marshmallow import ValidationError
 from mock_module.api import Record
 
 
-@pytest.fixture()
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test',
-        },
-    }
-
-
 def test_simple_flow(app, service, identity_simple, input_data):
     """Create a record."""
     # Create an item

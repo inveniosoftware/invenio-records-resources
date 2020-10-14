@@ -10,52 +10,51 @@
 """Test links."""
 
 import pytest
-from flask_principal import Identity
+from marshmallow import Schema, fields
 
 
-@pytest.fixture()
-def identity_no_need():
-    """Simple identity fixture without needs."""
-    i = Identity(1)
-    return i
+class MockResourceRequestCtx:
+
+    url_args = {"q": ""}
 
 
-@pytest.mark.skip()
-def test_links(service, identity_simple, example_record, es):
+class MockRecordLinksSchema(Schema):
+    """Schema for a record's links."""
+
+    self = fields.String(default="/api/records/12345-ABCDE")
+
+
+class MockSearchLinksSchema(Schema):
+    """Schema for a search result's links."""
+
+    self = fields.String(default="/api/records?q=")
+
+
+def test_search_links(app, service, identity_simple, input_data, es_clear):
     """Test record links creation."""
-    pid_value = str(example_record.id)
+    # Create a dummy record
+    item = service.create(identity_simple, input_data)
 
-    # NOTE: We are testing linker.links() as opposed to record_unit.links
-    #       because the former is used in all RecordService methods (not just
-    #       create)
-    links = service.linker.links(
-        "record",
-        identity_simple,
-        pid_value=pid_value,
-        record=example_record,
-    )
+    resource_requestctx = MockResourceRequestCtx()
+    links_config = {
+        "record": MockRecordLinksSchema,
+        "search": MockSearchLinksSchema
+    }
+    result_list = service.search(
+        identity=identity_simple,
+        params=resource_requestctx.url_args,
+        links_config=links_config,
+    ).to_dict()
 
-    expected_links = {
-        "self": f"https://localhost:5000/api/records/{pid_value}",
-        "delete": f"https://localhost:5000/api/records/{pid_value}",
-        # NOTE: Generate the link even if no file(s) for now
-        "files": f"https://localhost:5000/api/records/{pid_value}/files",
+    expected_search_links = {
+        "self": "/api/records?q="
     }
 
-    assert expected_links == links
+    assert result_list["links"] == expected_search_links
 
+    expected_item_links = {
+        "self": "/api/records/12345-ABCDE"
+    }
 
-# TODO: example record needs to be permission aware
-@pytest.mark.skip()
-def test_links_with_permissions(service, identity_no_need, example_record, es):
-    """Test record links creation with permissions."""
-    pid_value = str(example_record.id)
-
-    links = service.linker.links(
-        "record",
-        identity_no_need,  # an identity without access
-        pid_value=pid_value,
-        record=example_record,
-    )
-
-    assert {} == links
+    for hit in result_list["hits"]["hits"]:
+        assert hit["links"] == expected_item_links
