@@ -34,6 +34,7 @@ class RecordService(Service):
         return self.config.indexer_cls(
             record_cls=self.config.record_cls,
             record_to_index=self.record_to_index,
+            record_dumper=self.config.index_dumper,
         )
 
     def record_to_index(self, record):

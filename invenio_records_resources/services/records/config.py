@@ -36,6 +36,7 @@ class RecordServiceConfig(ServiceConfig):
     # Record specific configuration
     record_cls = Record
     indexer_cls = RecordIndexer
+    index_dumper = None  # use default dumper defined on record class
 
     # # Search configuration
     search_cls = RecordsSearchV2
