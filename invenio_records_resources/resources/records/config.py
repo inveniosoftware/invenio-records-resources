@@ -41,6 +41,7 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     request_headers_parser = {
+        "search": HeadersParser(None, allow_unknown=True),
         "update": HeadersParser(RequestHeadersSchema, allow_unknown=False),
         "delete": HeadersParser(RequestHeadersSchema, allow_unknown=False)
     }
