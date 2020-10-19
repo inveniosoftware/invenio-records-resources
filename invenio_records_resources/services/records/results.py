@@ -168,6 +168,7 @@ class RecordList(ServiceListResult):
                 "total": self.total,
             },
             "links": self.links,
+            "sortBy": self._params["sort"],
             "aggregations": self.aggregations,
         }
         if res['links'] is None:
