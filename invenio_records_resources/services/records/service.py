@@ -81,7 +81,7 @@ class RecordService(Service):
             )
 
     def create_search(self, identity, record_cls, action='read',
-                      preference=True):
+                      preference=None):
         """Instantiate a search class."""
         permission = self.permission_policy(
             action_name=action, identity=identity)
@@ -92,12 +92,13 @@ class RecordService(Service):
             index=record_cls.index.search_alias,
         )
 
-        # Avoid query bounce problem
-        if preference:
-            search = search.with_preference_param()
-
-        # Add document version to ES response
-        search = search.params(version=True)
+        search = (
+            search
+            # Avoid query bounce problem
+            .with_preference_param(preference)
+            # Add document version to ES response
+            .params(version=True)
+        )
 
         # Extras
         extras = {}
@@ -107,7 +108,7 @@ class RecordService(Service):
 
         return search
 
-    def search_request(self, identity, params, record_cls, preference=True):
+    def search_request(self, identity, params, record_cls, preference=None):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
@@ -126,7 +127,8 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, params=None, links_config=None, **kwargs):
+    def search(self, identity, params=None, links_config=None,
+               es_preference=None, **kwargs):
         """Search for records matching the querystring."""
         # Permissions
         self.require_permission(identity, "search")
@@ -141,7 +143,7 @@ class RecordService(Service):
 
         # Create a Elasticsearch DSL
         search = self.search_request(
-            identity, params, self.record_cls, preference=False)
+            identity, params, self.record_cls, preference=es_preference)
 
         # Run components
         for component in self.components:

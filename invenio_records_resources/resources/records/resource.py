@@ -9,7 +9,9 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from flask import abort, g
+import hashlib
+
+from flask import abort, g, request
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 
@@ -28,6 +30,15 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         super(RecordResource, self).__init__(config=self.load_config(config))
         self.service = service or RecordService()
 
+    def _get_es_preference(self):
+        user_agent = resource_requestctx.headers.get('User-Agent', "")
+        # TODO: Find a way to pass request.remote_addr in resource_requestctx
+        ip = request.remote_addr
+        user_hash = f"{ip}-{user_agent}".encode('utf8')
+        alg = hashlib.md5()
+        alg.update(user_hash)
+        return alg.hexdigest()
+
     #
     # Primary Interface
     #
@@ -38,6 +49,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             identity=identity,
             params=resource_requestctx.url_args,
             links_config=self.config.links_config,
+            es_preference=self._get_es_preference()
         )
         return hits.to_dict(), 200
 

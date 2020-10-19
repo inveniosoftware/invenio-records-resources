@@ -35,3 +35,6 @@ class Record(RecordBase, SystemFieldsMixin):
 
     #: Metadata system field.
     metadata = DictField(clear_none=True, create_if_missing=True)
+
+    #: Concrete implementations need to implement the index field.
+    # index = IndexField(...)
