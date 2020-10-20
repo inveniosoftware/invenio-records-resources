@@ -33,11 +33,6 @@ def app_config(app_config):
 
     For test purposes we need to enforce some configuration variables before
     endpoints are created.
-
-    invenio-records-rest is imported from invenio-records-permissions, so
-    we need to disable its default endpoint, until we are completely
-    decoupled from invenio-records-rest. Issue:
-    https://github.com/inveniosoftware/invenio-records-permissions/issues/51
     """
     app_config["TEST_RESOURCE_CONFIG_1"] = ConfigA
     app_config["TEST_RESOURCE_CONFIG_2"] = (
@@ -48,7 +43,6 @@ def app_config(app_config):
     return app_config
 
 
-@pytest.mark.skip()
 def test_resource_loads_configured_value_config(app):
     MyResource.config_name = "TEST_RESOURCE_CONFIG_1"
 
@@ -57,7 +51,6 @@ def test_resource_loads_configured_value_config(app):
     assert resource.config == ConfigA
 
 
-@pytest.mark.skip()
 def test_resource_loads_configured_string_config(app):
     MyResource.config_name = "TEST_RESOURCE_CONFIG_2"
 
@@ -66,7 +59,6 @@ def test_resource_loads_configured_string_config(app):
     assert resource.config == RecordResourceConfig
 
 
-@pytest.mark.skip()
 def test_resource_loads_default_config(app):
     # Set a config_name that evaluates False
     MyResource.config_name = "TEST_RESOURCE_CONFIG_3"
