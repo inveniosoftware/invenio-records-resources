@@ -10,8 +10,6 @@
 
 """Example resource."""
 
-from uritemplate import URITemplate
-
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 
