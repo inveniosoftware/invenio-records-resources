@@ -20,7 +20,7 @@ from ..base import ServiceItemResult, ServiceListResult
 def _current_host():
     """Function used to provide the current hostname to the link store."""
     if current_app:
-        return current_app.config['SERVER_HOSTNAME']
+        return current_app.config['SITE_HOSTNAME']
     return None
 
 

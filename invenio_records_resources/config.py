@@ -14,8 +14,7 @@ from invenio_base.utils import load_or_import_from_config
 
 lt_es7 = ES_VERSION[0] < 7
 
-# TODO: Might be something to place with the fundamental invenio config
-SERVER_HOSTNAME = "localhost:5000"
+SITE_HOSTNAME = "localhost:5000"
 
 
 class ConfigLoaderMixin:
