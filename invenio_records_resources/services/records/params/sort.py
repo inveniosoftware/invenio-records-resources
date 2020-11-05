@@ -22,12 +22,22 @@ class SortParam(ParamInterpreter):
         else:
             return self.config.search_sort_default_no_query
 
+    def _handle_empty_query(self, params, options):
+        """Handles cases of empty string not matching with sort options."""
+        if params['sort'] == 'bestmatch':
+            return self.config.search_sort_default_no_query
+        else:
+            return params['sort']
+
     def apply(self, identity, search, params):
         """Evaluate the sort parameter on the search."""
         options = self.config.search_sort_options
 
         if 'sort' not in params:
             params['sort'] = self._default_sort(params, options)
+
+        if not params.get('q'):
+            params['sort'] = self._handle_empty_query(params, options)
 
         sort = options.get(params['sort'])
         if sort is None:
