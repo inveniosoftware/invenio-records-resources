@@ -90,9 +90,40 @@ def test_search_empty_query_string(client, input_data, headers):
     assert res.status_code == 200
     assert res.json['hits']['total'] == 1
     assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    assert res.json['sortBy'] == 'newest'
 
     # Search it
     res = client.get('/mocks', query_string={'q': ''}, headers=headers)
     assert res.status_code == 200
     assert res.json['hits']['total'] == 1
     assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    assert res.json['sortBy'] == 'newest'
+
+    # Search it
+    res = client.get('/mocks', query_string={'q': ''}, headers=headers)
+    assert res.status_code == 200
+    assert res.json['hits']['total'] == 1
+    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    assert res.json['sortBy'] == 'newest'
+
+    # Search it
+    res = client.get(
+        '/mocks',
+        query_string={'q': 'test', 'sort': 'bestmatch'},
+        headers=headers
+    )
+    assert res.status_code == 200
+    assert res.json['hits']['total'] == 1
+    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    assert res.json['sortBy'] == 'bestmatch'
+
+    # Search it
+    res = client.get(
+        '/mocks',
+        query_string={'q': 'test'},
+        headers=headers
+    )
+    assert res.status_code == 200
+    assert res.json['hits']['total'] == 1
+    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
+    assert res.json['sortBy'] == 'bestmatch'
