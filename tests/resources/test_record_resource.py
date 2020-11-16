@@ -62,6 +62,7 @@ def test_create_read_record(client, input_record, es_clear):
     response = client.post(
         "/records", headers=HEADERS, data=json.dumps(input_record)
     )
+
     assert response.status_code == 201
     response_fields = response.json.keys()
     fields_to_check = ['pid', 'metadata', 'revision',

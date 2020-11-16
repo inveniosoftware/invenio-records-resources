@@ -10,14 +10,15 @@
 
 """Example resource."""
 
-from invenio_records_resources.resources import RecordResource, \
-    RecordResourceConfig
+from invenio_records_resources.resources import FileActionResource, \
+    FileActionResourceConfig, FileResource, FileResourceConfig, \
+    RecordResource, RecordResourceConfig
 
 from .schema import RecordLinksSchema, SearchLinksSchema
 
 
-class ResourceConfig(RecordResourceConfig):
-    """Mock service configuration."""
+class CustomRecordResourceConfig(RecordResourceConfig):
+    """Custom record resource configuration."""
 
     list_route = "/mocks"
     item_route = f"{list_route}/<pid_value>"
@@ -28,7 +29,32 @@ class ResourceConfig(RecordResourceConfig):
     }
 
 
-class Resource(RecordResource):
-    """Mock service."""
+class CustomRecordResource(RecordResource):
+    """Custom record resource"."""
 
-    default_config = ResourceConfig
+    default_config = CustomRecordResourceConfig
+
+
+class CustomFileResourceConfig(FileResourceConfig):
+    """Custom file resource configuration."""
+
+    item_route = "/mocks/<pid_value>/files/<key>"
+    list_route = "/mocks/<pid_value>/files"
+
+
+class CustomFileResource(FileResource):
+    """Custom file resource."""
+
+    default_config = CustomFileResourceConfig
+
+
+class CustomFileActionResourceConfig(FileActionResourceConfig):
+    """Custom file action resource config."""
+
+    list_route = "/mocks/<pid_value>/files/<key>/<action>"
+
+
+class CustomFileActionResource(FileActionResource):
+    """Custom file action resource."""
+
+    default_config = CustomFileActionResourceConfig
