@@ -11,6 +11,8 @@
 
 from flask_resources.resources import ResourceConfig
 
+from ..actions import ActionResourceConfig
+
 
 class FileResourceConfig(ResourceConfig):
     """Record resource config."""
@@ -19,12 +21,19 @@ class FileResourceConfig(ResourceConfig):
     list_route = "/records/<pid_value>/files"
 
 
-class FileActionResourceConfig(ResourceConfig):
+class FileActionResourceConfig(ActionResourceConfig):
     """Record resource config."""
 
-    # QUESTIONs:
-    # 1- Shouldn't the item_route be used for SingletonResource actually?
-    #    A change in Flask-Resource would be needed.
-    # 2- Should the list_route instead precede download with "actions" to be in
-    #    keeping with other actions endpoints?
-    list_route = "/records/<pid_value>/files/<key>/download"
+    list_route = "/records/<pid_value>/files/<key>/<action>"
+    action_commands = {
+        'create': {
+            'commit': 'commit_file'
+        },
+        'read': {
+            'content': 'download_file'
+        },
+        'update': {
+            'content': 'upload_file'
+        },
+        'delete': {}
+    }

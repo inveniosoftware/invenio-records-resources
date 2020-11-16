@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,5 +8,12 @@
 
 """Invenio Resources module to create REST APIs."""
 
-from .files import *
-from .records import *
+from .config import FileActionResourceConfig, FileResourceConfig
+from .resource import FileActionResource, FileResource
+
+__all__ = (
+    "FileActionResource",
+    "FileActionResourceConfig",
+    "FileResourceConfig",
+    "FileResource",
+)

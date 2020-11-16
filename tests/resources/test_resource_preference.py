@@ -10,19 +10,20 @@
 """Test preference."""
 
 import pytest
-from mock_module.resource import Resource, ResourceConfig
+from mock_module.resource import CustomRecordResource, \
+    CustomRecordResourceConfig
 from mock_module.service import Service, ServiceConfig
 
 
 @pytest.fixture(scope="module")
 def spy_resource():
 
-    class SpyResourceConfig(ResourceConfig):
+    class SpyResourceConfig(CustomRecordResourceConfig):
         """Same as Resource except a different list route to not clash."""
 
         list_route = "/preference-mocks"
 
-    class SpyResource(Resource):
+    class SpyResource(CustomRecordResource):
         """Same as Resource except that it logs preference."""
 
         def _get_es_preference(self):
