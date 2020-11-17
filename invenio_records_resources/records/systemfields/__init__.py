@@ -9,11 +9,13 @@
 
 """System fields for records."""
 
+from .files import FilesField
 from .index import IndexField
 from .pid import PIDField
 from .pid_statuscheck import PIDStatusCheckField
 
 __all__ = (
+    'FilesField',
     'IndexField',
     'PIDField',
     'PIDStatusCheckField',

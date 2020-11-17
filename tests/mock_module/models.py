@@ -11,9 +11,11 @@
 """Example of a record model."""
 
 from invenio_db import db
+from invenio_files_rest.models import Bucket
+from invenio_records.models import RecordMetadataBase
+from sqlalchemy_utils.types import UUIDType
 
-from invenio_records_resources.records.models import RecordFileBase, \
-    RecordMetadataBase
+from invenio_records_resources.records.models import RecordFileBase
 
 
 class RecordMetadata(db.Model, RecordMetadataBase):
@@ -25,6 +27,9 @@ class RecordMetadata(db.Model, RecordMetadataBase):
         db.DateTime(),
         nullable=True
     )
+
+    bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id))
+    bucket = db.relationship(Bucket)
 
 
 class RecordFile(db.Model, RecordFileBase):
