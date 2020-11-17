@@ -14,7 +14,7 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 
 from ...config import ConfigLoaderMixin
-from ...services import FileService
+from ...services import RecordFileService
 from ..actions import ActionResource
 from .config import FileActionResourceConfig, FileResourceConfig
 
@@ -27,36 +27,63 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
     def __init__(self, config=None, service=None):
         """Constructor."""
         super(FileResource, self).__init__(config=self.load_config(config))
-        self.service = service or FileService()
+        self.service = service or RecordFileService()
 
     # ListView GET
     def search(self, *args, **kwargs):
         """List files."""
-        return None, 200
+        files = self.service.search(
+            resource_requestctx.route["pid_value"],
+            g.identity,
+        )
+        # FIXME: should be item.to_dict() once results are implemented
+        return files, 200
 
     # ListView POST
     def create(self, *args, **kwargs):
         """Initialize an upload on a record."""
-        return None, 201
+        item = self.service.init_file_upload(
+            resource_requestctx.route["pid_value"],
+            g.identity,
+        )
+        # FIXME: should be item.to_dict() once results are implemented
+        return item, 201
 
     # ListView DELETE
     def delete_all(self, *args, **kwargs):
         """Delete all files."""
+        self.service.delete_all_files(
+            resource_requestctx.route["pid_value"],
+            g.identity,
+        )
+
         return None, 204
 
     # ItemView GET
     def read(self, *args, **kwargs):
         """Read a single file."""
-        return None, 200
+        item = self.service.read_file_metadata(
+            resource_requestctx.route["pid_value"],
+            resource_requestctx.route["key"],
+            g.identity,
+        )
+        # FIXME: should be item.to_dict() once results are implemented
+        return item, 200
 
     # ItemView PUT
     def update(self, *args, **kwargs):
         """Update the metadata a single file."""
-        return None, 200
+        abort(405)
 
     # ItemView DELETE
     def delete(self, *args, **kwargs):
         """Delete a file."""
+        self.service.delete_file(
+            resource_requestctx.route["pid_value"],
+            resource_requestctx.route["key"],
+            g.identity,
+        )
+
         return None, 204
 
 
