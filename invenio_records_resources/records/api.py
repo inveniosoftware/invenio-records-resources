@@ -9,9 +9,11 @@
 
 """Records API."""
 
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import ElasticsearchDumper
 from invenio_records.systemfields import DictField, SystemFieldsMixin
+from invenio_records.systemfields.model import ModelField
 
 
 class Record(RecordBase, SystemFieldsMixin):
@@ -38,3 +40,104 @@ class Record(RecordBase, SystemFieldsMixin):
 
     #: Concrete implementations need to implement the index field.
     # index = IndexField(...)
+
+    #: Concrete implementations need to implement the files field.
+    # files = FilesField(...)
+
+
+class RecordFile(RecordBase, SystemFieldsMixin):
+    """Base class for record file APIs."""
+
+    @classmethod
+    def get_by_key(cls, record_id, key):
+        return cls.model_cls.query.filter(
+            cls.record_id == record_id, cls.key == key).one_or_none()
+
+    @property
+    def file(self):
+        if self.object_version:
+            return File(object_model=self.object_version)
+
+    send_signals = False
+    enable_jsonref = False
+
+    #: Default model class used by the record API (specify in subclass).
+    model_cls = None
+
+    #: Default dumper (which happens to also be used for indexing).
+    dumper = ElasticsearchDumper()
+
+    #: Metadata system field.
+    metadata = DictField(clear_none=True, create_if_missing=True)
+
+    key = ModelField()
+    object_version_id = ModelField()
+    object_version = ModelField(dump=False)
+    record_id = ModelField()
+    record = ModelField(dump=False)
+
+    def __repr__(self, ):
+        return f"<{type(self).__name__}({self.key}, {self.metadata})"
+
+
+class File:
+
+    def __init__(self, object_model=None, file_model=None):
+        self.object_model = object_model
+        self.file_model = file_model or object_model.file
+
+    @classmethod
+    def from_dict(cls, data, bucket):
+        file_args = dict(
+            id=data['file_id'],
+            storage_class=data.get('storage_class'),
+            size=data.get('size'),
+            checksum=data.get('checksum'),
+        )
+        if 'uri' in data:
+            file_args['uri'] = data['uri']
+
+        fi = FileInstance(**file_args)
+        obj = ObjectVersion(
+            version_id=data['version_id'],
+            key=data['key'],
+            file_id=data['file_id'],
+            _mimetype=data['mimetype'],
+            is_head=True,
+            bucket=bucket,
+            bucket_id=data.get('bucket_id', bucket.id),
+        )
+        return cls(object_model=obj, file_model=fi)
+
+    def create(cls, bucket, key, **kwargs):
+        return cls(
+            model=ObjectVersion.create(bucket, key, **kwargs),
+        )
+
+    @classmethod
+    def delete(cls, **kwargs):
+        return ObjectVersion.delete(**kwargs)
+
+    def dumps(self):
+        return {
+            'version_id': str(self.object_model.version_id),
+            'key': self.object_model.key,
+            'bucket_id': str(self.object_model.bucket_id),
+            'file_id': str(self.object_model.file_id),
+            'uri': str(self.object_model.file.uri),
+            'storage_class': self.object_model.file.storage_class,
+            'mimetype': self.object_model.mimetype,
+            'size': self.object_model.file.size,
+            'checksum': self.object_model.file.checksum,
+        }
+
+    def __getattr__(self, name):
+        ret = getattr(self.object_model, name, None)
+        if not ret:
+            ret = getattr(self.file_model, name, None)
+        if not ret:
+            raise AttributeError
+        return ret
+
+    def __repr__(self):
+        return f"<{type(self).__name__}({self.key}, {self.file_id})"

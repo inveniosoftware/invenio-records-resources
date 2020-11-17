@@ -14,20 +14,27 @@ from datetime import datetime
 
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
-from invenio_records.systemfields import ConstantField, DictField, ModelField
+from invenio_records.systemfields import ConstantField, ModelField
 
 from invenio_records_resources.records.api import Record as RecordBase
-from invenio_records_resources.records.systemfields import IndexField, \
-    PIDField, PIDStatusCheckField
+from invenio_records_resources.records.api import RecordFile as RecordFileBase
+from invenio_records_resources.records.systemfields import FilesField, \
+    IndexField, PIDField, PIDStatusCheckField
 
-from .models import RecordMetadata
+from . import models
+
+
+class RecordFile(RecordFileBase):
+    """Example record file API."""
+
+    model_cls = models.RecordFile
 
 
 class Record(RecordBase):
     """Example record API."""
 
     # Configuration
-    model_cls = RecordMetadata
+    model_cls = models.RecordMetadata
 
     # Model fields
     expires_at = ModelField()
