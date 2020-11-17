@@ -9,12 +9,12 @@
 
 """Files Service API."""
 
-from .config import FileMetadataServiceConfig, FileServiceConfig
-from .service import FileMetadataService, FileService
+from .config import FileServiceConfig, RecordFileServiceConfig
+from .service import FileServiceMixin, RecordFileService
 
 __all__ = (
-    'FileMetadataService',
-    'FileMetadataServiceConfig',
-    'FileService',
     'FileServiceConfig',
+    'FileServiceMixin',
+    'RecordFileServiceConfig',
+    'RecordFileService',
 )

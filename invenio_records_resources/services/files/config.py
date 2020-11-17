@@ -12,6 +12,7 @@
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
 from ..base import ServiceConfig
+from ..records import RecordServiceConfig
 from .results import FileMetadata, FilesMetadata, InvenioFile
 
 
@@ -33,12 +34,10 @@ class FileServiceConfig(ServiceConfig):
     # data_schema = MarshmallowDataSchema()
     resource_unit_cls = InvenioFile  # Fake for now
     permission_policy_cls = RecordPermissionPolicy
-
-
-class FileMetadataServiceConfig(ServiceConfig):
-    """File Metadata Service configuration."""
-
-    # Configurations that are in common
     permission_policy_cls = RecordPermissionPolicy
     resource_unit_cls = FileMetadata  # TODO: Replace with real
     resource_list_cls = FilesMetadata  # TODO: Replace with real
+
+
+class RecordFileServiceConfig(FileServiceConfig, RecordServiceConfig):
+    """Service configuration for records with file support."""

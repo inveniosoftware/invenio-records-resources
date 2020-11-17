@@ -9,15 +9,15 @@
 """High-level API for wokring with records, files, pids and search."""
 
 from .base import Service, ServiceConfig
-from .files import FileMetadataService, FileMetadataServiceConfig, \
-    FileService, FileServiceConfig
+from .files import FileServiceConfig, FileServiceMixin, RecordFileService, \
+    RecordFileServiceConfig
 from .records import RecordService, RecordServiceConfig
 
 __all__ = (
-    "FileMetadataService",
-    "FileMetadataServiceConfig",
-    "FileService",
-    "FileServiceConfig",
+    'FileServiceConfig',
+    'FileServiceMixin',
+    'RecordFileServiceConfig',
+    'RecordFileService',
     "RecordService",
     "RecordServiceConfig",
     "Service",

@@ -9,19 +9,20 @@
 
 """File resource configuration."""
 
-from flask_resources.resources import ResourceConfig
-
 from ..actions import ActionResourceConfig
+from ..records import RecordResourceConfig
 
 
-class FileResourceConfig(ResourceConfig):
+# NOTE: Inheriting from record resource config enables access to record
+#       related configuration such as links
+class FileResourceConfig(RecordResourceConfig):
     """Record resource config."""
 
     item_route = "/records/<pid_value>/files/<key>"
     list_route = "/records/<pid_value>/files"
 
 
-class FileActionResourceConfig(ActionResourceConfig):
+class FileActionResourceConfig(RecordResourceConfig, ActionResourceConfig):
     """Record resource config."""
 
     list_route = "/records/<pid_value>/files/<key>/<action>"
@@ -30,10 +31,10 @@ class FileActionResourceConfig(ActionResourceConfig):
             'commit': 'commit_file'
         },
         'read': {
-            'content': 'download_file'
+            'content': 'retrieve_file'
         },
         'update': {
-            'content': 'upload_file'
+            'content': 'save_file'
         },
         'delete': {}
     }

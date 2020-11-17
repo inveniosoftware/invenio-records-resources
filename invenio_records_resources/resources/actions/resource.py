@@ -48,7 +48,7 @@ class ActionResource(SingletonResource, ConfigLoaderMixin):
         item = cmd_func(
             resource_requestctx.route["pid_value"],
             g.identity,
-            links_config=self.config.record_links_config
+            links_config=self.config.links_config
         )
 
         return item
