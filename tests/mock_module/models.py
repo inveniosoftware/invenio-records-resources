@@ -11,7 +11,9 @@
 """Example of a record model."""
 
 from invenio_db import db
-from invenio_records.models import RecordMetadataBase
+
+from invenio_records_resources.records.models import RecordFileBase, \
+    RecordMetadataBase
 
 
 class RecordMetadata(db.Model, RecordMetadataBase):
@@ -23,3 +25,11 @@ class RecordMetadata(db.Model, RecordMetadataBase):
         db.DateTime(),
         nullable=True
     )
+
+
+class RecordFile(db.Model, RecordFileBase):
+    """Model for mock module record files."""
+
+    record_model_cls = RecordMetadata
+
+    __tablename__ = 'mock_record_files'
