@@ -25,7 +25,7 @@ def _current_host():
 
 
 class RecordItem(ServiceItemResult):
-    """Resource unit representing pid + Record data clump."""
+    """Single record result."""
 
     def __init__(self, service, identity, record, errors=None,
                  links_config=None):
@@ -72,7 +72,7 @@ class RecordItem(ServiceItemResult):
 
 
 class RecordList(ServiceListResult):
-    """Resource list representing the result of an IdentifiedRecord search."""
+    """List of records result."""
 
     def __init__(self, service, identity, results, params,
                  links_config=None):

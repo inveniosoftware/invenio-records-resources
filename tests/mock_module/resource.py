@@ -14,7 +14,8 @@ from invenio_records_resources.resources import FileActionResource, \
     FileActionResourceConfig, FileResource, FileResourceConfig, \
     RecordResource, RecordResourceConfig
 
-from .schema import RecordLinksSchema, SearchLinksSchema
+from .schema import FileLinksSchema, FilesLinksSchema, RecordLinksSchema, \
+    SearchLinksSchema
 
 
 class CustomRecordResourceConfig(RecordResourceConfig):
@@ -24,8 +25,10 @@ class CustomRecordResourceConfig(RecordResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
+        "file": FileLinksSchema,
+        "files": FilesLinksSchema,
         "record": RecordLinksSchema,
-        "search": SearchLinksSchema
+        "search": SearchLinksSchema,
     }
 
 
