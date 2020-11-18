@@ -21,16 +21,46 @@ from invenio_records_resources.resources import search_link_params, \
 from invenio_records_resources.services.records.schema import RecordSchema
 
 
+class FilesLinksSchema(Schema):
+    """Schema for a record's links."""
+
+    # NOTE: /api prefix is needed here because above are mounted on /api
+    record = Link(
+        template=URITemplate("/api/mocks/{pid_value}/files/{key}"),
+        permission="read",
+        params=lambda record: { 'pid_value': record.pid.pid_value }
+    )
+    self_ = Link(
+        template=URITemplate("/api/mocks/{pid_value}/files/{key}"),
+        permission="read",
+        params=lambda record, file: {
+            'pid_value': record.pid.pid_value,
+            'key': file.key,
+        },
+        data_key="self"  # To avoid using self since is python reserved key
+    )
+
+
+class FileLinksSchema(FilesLinksSchema):
+    """Schema for a record's links."""
+    # self and record are declared in the parent
+    upload = { "href": f"{FilesLinksSchema.self_}/content", "method": "PUT"}
+    download = { "href": f"{FilesLinksSchema.self_}/content", "method": "GET"}
+    commit = { "href": f"{FilesLinksSchema.self_}/commit", "method": "POST"}
+
+
 class RecordLinksSchema(Schema):
     """Schema for a record's links."""
 
     # NOTE:
     #   - /api prefix is needed here because above are mounted on /api
-    self = Link(
+    self_ = Link(
         template=URITemplate("/api/mocks/{pid_value}"),
         permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
+        params=lambda record: {'pid_value': record.pid.pid_value},
+        data_key="self"  # To avoid using self since is python reserved key
     )
+    files = f"{self_}/files"
 
 
 class SearchLinksSchema(Schema):

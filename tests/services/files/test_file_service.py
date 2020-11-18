@@ -27,7 +27,7 @@ def test_file_flow(service, example_record, identity_simple):
     recid = example_record.id
 
     # Initialize file saving
-    result = service.init_file(recid, identity_simple)
+    result = service.init_file(recid, identity_simple, data={})
     assert result.files
 
     # Save 3 files
@@ -82,13 +82,14 @@ def test_file_flow(service, example_record, identity_simple):
 
 def _init_save_file(recid, file_id, identity, service):
     # Initialize file saving
-    result = service.init_file(recid, identity)
+    result = service.init_file(recid, identity, data={})
     assert result.files
     result = service.save_file(
         recid, file_id, identity, BytesIO(b"test file content"))
     assert result.files.get(file_id)
 
     return result
+
 
 def test_read_not_commited_file(service, example_record, identity_simple):
     recid = example_record.id

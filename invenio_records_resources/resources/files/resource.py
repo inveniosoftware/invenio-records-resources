@@ -42,9 +42,11 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
     # ListView POST
     def create(self, *args, **kwargs):
         """Initialize an upload on a record."""
-        item = self.service.init_file_upload(
+        data = resource_requestctx.request_content
+        item = self.service.init_file(
             resource_requestctx.route["pid_value"],
             g.identity,
+            data,
         )
         # FIXME: should be item.to_dict() once results are implemented
         return item, 201
