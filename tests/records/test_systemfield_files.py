@@ -126,6 +126,59 @@ def test_record_files_operations(base_app, db, location):
     assert FileInstance.query.count() == 1
     assert ObjectVersion.query.count() == 1
 
+    # Delete the file
+    del record.files['test.pdf']
+    record.commit()
+    db.session.commit()
+
+    assert models.RecordFile.query.count() == 0
+    assert FileInstance.query.count() == 1
+    assert ObjectVersion.query.count() == 2  # original + delete marker
+    assert Bucket.query.count() == 1
+    assert len(record.files) == 0
+    assert 'test.pdf' not in record.files
+    assert record['files']['entries'] == {}
+    assert record['files']['meta'] == {}
+
+
+def test_record_files_clear(base_app, db, location):
+    """Test clearing record files."""
+    record = Record.create({})
+
+    # Add a file with metadata + bytes
+    record.files['f1.pdf'] = (
+        BytesIO(b'testfile'),
+        {'description': 'Test file'}
+    )
+    # Add a file with only bytes
+    record.files['f2.pdf'] = BytesIO(b'testfile')
+    # Add a file with only metadata
+    record.files['f3.pdf'] = {'description': 'Metadata only'}
+    record.commit()
+    db.session.commit()
+
+    assert models.RecordFile.query.count() == 3
+    assert FileInstance.query.count() == 2
+    assert ObjectVersion.query.count() == 2
+    assert Bucket.query.count() == 1
+    assert len(record.files) == 3
+
+    # Delete all files
+    record.files.clear()
+    record.commit()
+    db.session.commit()
+
+    assert models.RecordFile.query.count() == 0
+    assert FileInstance.query.count() == 2
+    assert ObjectVersion.query.count() == 4  # 2 original + 2 delete markers
+    assert Bucket.query.count() == 1
+    assert len(record.files) == 0
+    assert 'f1.pdf' not in record.files
+    assert 'f2.pdf' not in record.files
+    assert 'f3.pdf' not in record.files
+    assert record['files']['entries'] == {}
+    assert record['files']['meta'] == {}
+
 
 def test_record_files_store(base_app, db, location):
     """Test JSON stored for files."""

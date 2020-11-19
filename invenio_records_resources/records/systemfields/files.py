@@ -60,7 +60,7 @@ from collections.abc import MutableMapping
 from functools import wraps
 
 from invenio_db import db
-from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_records.systemfields import SystemField
 
 
@@ -90,42 +90,55 @@ class Files(MutableMapping):
 
         self._entries = entries
 
-    def _init(self, key, data=None):
-        f = self.file_cls.create({}, key=key, record_id=self.record.id)
+    # TODO: "create" and "update" should be merged somehow...
+    @ensure_enabled
+    def create(self, key, obj=None, stream=None, data=None):
+        """Create/initialize a file."""
+        assert not (obj and stream)
+
+        if key in self:
+            raise Exception(f'File with key {key} already exists.')
+
+        rf = self.file_cls.create({}, key=key, record_id=self.record.id)
+        if stream:
+            obj = ObjectVersion.create(self.bucket, key, stream=stream)
+        if obj:
+            rf.object_version_id = obj.version_id
+            rf.object_version = obj
         if data:
-            f.metadata = data
-        return f
+            rf.metadata = data
+        self._entries[key] = rf
+        return rf
 
     @ensure_enabled
-    def init(self, key, data):
-        """Initialize a file."""
-        if key in self:
+    def update(self, key, obj=None, stream=None, data=None):
+        """Update a file."""
+        assert not (obj and stream)
+        rf = self.get(key)
+        if not rf:
             raise Exception(f'File with key {key} already exists.')
 
-        f = self._init(key, data)
-        self._entries[key] = f
-        return f
-
-    @ensure_enabled
-    def create(self, key, stream, data):
-        """Create a file."""
-        if key in self:
-            raise Exception(f'File with key {key} already exists.')
-
-        f = self._init(key, data)
-        obj = ObjectVersion.create(self.bucket, key, stream=stream)
-        f.object_version_id = obj.version_id
-        f.object_version = obj
-        self._entries[key] = f
-        return f
+        if stream:
+            obj = ObjectVersion.create(self.bucket, key, stream=stream)
+        if obj:
+            rf.object_version_id = obj.version_id
+            rf.object_version = obj
+        if data:
+            rf.metadata = data
+        return rf
 
     @ensure_enabled
     def delete(self, key):
         """Delete a file."""
-        # TODO: implement
-        # f = self.entries[key]
-        # f.delete()
-        pass
+        rf = self[key]
+        ov = rf.object_version
+        # Delete the entire row
+        rf.delete(force=True)
+        if ov:
+            # TODO: Should we also remove the FileInstance? Configurable?
+            ObjectVersion.delete(ov.bucket, key)
+        del self._entries[key]
+        return rf
 
     @property
     def entries(self):
@@ -157,8 +170,7 @@ class Files(MutableMapping):
         if value is False:
             self.default_preview = None
             self.order = []
-            # TODO: Delete or "empty" the bucket?
-            self.bucket.delete()
+            self.clear()
         self._enabled = value
 
     @property
@@ -202,6 +214,34 @@ class Files(MutableMapping):
                 return value
         raise KeyError(f'No file with key "{key}"')
 
+    def _parse_set_value(self, value):
+        obj, stream, data = None, None, None
+        # TODO: Raise appropriate exceptions instead of asserting
+        obj_or_stream = None
+        if isinstance(value, (tuple, list)):
+            assert len(value) == 2
+            obj_or_stream, data = value
+            assert isinstance(data, dict)
+        elif isinstance(value, dict):
+            data = value
+        elif isinstance(value, ObjectVersion):
+            obj = value
+        elif hasattr(value, 'read'):
+            stream = value
+        else:
+            raise Exception(f"Invalid set value: {value}")
+
+        if obj_or_stream:
+            if isinstance(obj_or_stream, ObjectVersion):
+                obj = obj_or_stream
+            elif hasattr(obj_or_stream, 'read'):
+                stream = obj_or_stream
+            else:
+                raise Exception(
+                    f"Item has to be ObjectVersion or file-like object")
+
+        return obj, stream, data
+
     @ensure_enabled
     def __setitem__(self, key, value):
         """Create or init a file.
@@ -210,34 +250,12 @@ class Files(MutableMapping):
         :param value: File-like object (stream), ``dict``, or a
             ``Tuple[File, Dict]``.
         """
-        if isinstance(value, (tuple, list)):
-            assert len(value) == 2
-            stream, data = value
-            assert hasattr(stream, 'read')
-            assert isinstance(data, dict)
-        else:
-            if hasattr(value, 'read'):
-                stream, data = value, None
-            elif isinstance(value, dict):
-                stream, data = None, value
-            else:
-                raise Exception(f"Invalid set value: {value}.")
+        obj, stream, data = self._parse_set_value(value)
 
-        old_value = self.get(key)
-        if stream:
-            if old_value:
-                obj = ObjectVersion.create(self.bucket, key, stream=stream)
-                old_value.object_version_id = obj.version_id
-                old_value.object_version = obj
-                if data:
-                    old_value.metadata = data
-            else:
-                self.create(key, stream, data)
+        if key in self:
+            self.update(key, obj=obj, stream=stream, data=data)
         else:
-            if old_value:
-                old_value.metadata = data
-            else:
-                self.init(key, data)
+            self.create(key, obj=obj, stream=stream, data=data)
 
     @ensure_enabled
     def __delitem__(self, key):
@@ -246,8 +264,9 @@ class Files(MutableMapping):
         # Unset the default preview if the file is removed
         if self.default_preview == key:
             self.default_preview = None
+        if key in self._order:
+            self._order.remove(key)
         self.delete(key)
-        del self.entries[key]
 
     # TODO: implement for efficiency?
     # @ensure_enabled
@@ -350,7 +369,7 @@ class FilesField(SystemField):
     def obj(self, instance):
         """Get the files object."""
         obj = self._get_cache(instance)
-        if obj:
+        if obj is not None:
             return obj
         data = self.get_dictkey(instance)
 
