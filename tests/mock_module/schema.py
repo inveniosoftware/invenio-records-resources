@@ -43,10 +43,31 @@ class FilesLinksSchema(Schema):
 
 class FileLinksSchema(FilesLinksSchema):
     """Schema for a record's links."""
+
     # self and record are declared in the parent
-    upload = { "href": f"{FilesLinksSchema.self_}/content", "method": "PUT"}
-    download = { "href": f"{FilesLinksSchema.self_}/content", "method": "GET"}
-    commit = { "href": f"{FilesLinksSchema.self_}/commit", "method": "POST"}
+
+    # TODO: Explore how to expose also the HTTP method
+    # commit = {
+    #   "href": URITemplate("/api/mocks/{pid_value}/files/{key}/commit"),
+    #   "method": "POST",
+    # }
+    content = Link(
+        template=URITemplate("/api/mocks/{pid_value}/files/{key}/content"),
+        permission="read",
+        params=lambda record, file: {
+            'pid_value': record.pid.pid_value,
+            'key': file.key,
+        },
+    )
+
+    commit = Link(
+        template=URITemplate("/api/mocks/{pid_value}/files/{key}/commit"),
+        permission="read",
+        params=lambda record, file: {
+            'pid_value': record.pid.pid_value,
+            'key': file.key,
+        },
+    )
 
 
 class RecordLinksSchema(Schema):
@@ -60,7 +81,11 @@ class RecordLinksSchema(Schema):
         params=lambda record: {'pid_value': record.pid.pid_value},
         data_key="self"  # To avoid using self since is python reserved key
     )
-    files = f"{self_}/files"
+    files = Link(
+        template=URITemplate("/api/mocks/{pid_value}/files"),
+        permission="read",
+        params=lambda record: {'pid_value': record.pid.pid_value},
+    )
 
 
 class SearchLinksSchema(Schema):
