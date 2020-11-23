@@ -15,6 +15,7 @@ fixtures are available.
 
 import pytest
 from invenio_app.factory import create_api as _create_api
+from invenio_files_rest.models import Location
 
 
 @pytest.fixture(scope="module")
@@ -37,3 +38,16 @@ def extra_entry_points():
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
+
+
+@pytest.fixture()
+def location(db, tmp_path):
+    """File system location."""
+    loc = Location(
+        name='testloc',
+        uri=str(tmp_path),
+        default=True
+    )
+    db.session.add(loc)
+    db.session.commit()
+    return loc

@@ -15,8 +15,8 @@ from uuid import uuid4
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
-from mock_module.api import Record
-from mock_module.service import Service
+from mock_module.api import Record, RecordWithFile
+from mock_module.service import FileService, Service
 
 
 @pytest.fixture(scope='module')
@@ -34,10 +34,25 @@ def service(appctx):
     return Service()
 
 
+@pytest.fixture(scope='module')
+def file_service(appctx):
+    """File service instance."""
+    return FileService()
+
+
 @pytest.fixture()
 def example_record(app, db):
     """Example record."""
     record = Record.create({}, metadata={'title': 'Test'})
+    db.session.commit()
+    return record
+
+
+@pytest.fixture()
+def example_file_record(db):
+    """Example record."""
+    record = RecordWithFile.create({}, metadata={'title': 'Test'})
+    record.commit()
     db.session.commit()
     return record
 
