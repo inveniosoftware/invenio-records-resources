@@ -50,6 +50,7 @@ class Service(RecordFileService):
 
 class FileServiceConfig(RecordFileServiceConfig):
     """Mock service configuration."""
+
     permission_policy_cls = PermissionPolicy
     record_cls = RecordWithFile
 

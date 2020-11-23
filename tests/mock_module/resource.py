@@ -25,10 +25,10 @@ class CustomRecordResourceConfig(RecordResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "file": FileLinksSchema,
-        "files": FilesLinksSchema,
         "record": RecordLinksSchema,
         "search": SearchLinksSchema,
+        "file": FileLinksSchema,
+        "files": FilesLinksSchema,
     }
 
 
@@ -44,6 +44,11 @@ class CustomFileResourceConfig(FileResourceConfig):
     item_route = "/mocks/<pid_value>/files/<key>"
     list_route = "/mocks/<pid_value>/files"
 
+    links_config = {
+        "file": FileLinksSchema,
+        "files": FilesLinksSchema,
+    }
+
 
 class CustomFileResource(FileResource):
     """Custom file resource."""
@@ -55,6 +60,11 @@ class CustomFileActionResourceConfig(FileActionResourceConfig):
     """Custom file action resource config."""
 
     list_route = "/mocks/<pid_value>/files/<key>/<action>"
+
+    links_config = {
+        "file": FileLinksSchema,
+        "files": FilesLinksSchema,
+    }
 
 
 class CustomFileActionResource(FileActionResource):

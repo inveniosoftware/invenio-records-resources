@@ -15,14 +15,22 @@ from uritemplate import URITemplate
 
 
 class FilesLinksSchema(Schema):
-    """Schema for a record's links."""
+    """Schema for files list links."""
 
     # NOTE: /api prefix is needed here because above are mounted on /api
-    record = Link(
-        template=URITemplate("/api/records/{pid_value}/files/{key}"),
+    self_ = Link(
+        template=URITemplate("/api/records/{pid_value}/files"),
         permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
+        params=lambda record: {
+            'pid_value': record.pid.pid_value,
+        },
+        data_key="self"  # To avoid using self since is python reserved key
     )
+
+
+class FileLinksSchema(Schema):
+    """Schema for a record file's links."""
+
     self_ = Link(
         template=URITemplate("/api/records/{pid_value}/files/{key}"),
         permission="read",
@@ -32,12 +40,6 @@ class FilesLinksSchema(Schema):
         },
         data_key="self"  # To avoid using self since is python reserved key
     )
-
-
-class FileLinksSchema(FilesLinksSchema):
-    """Schema for a record's links."""
-
-    # self and record are declared in the parent
 
     # TODO: Explore how to expose also the HTTP method
     # commit = {

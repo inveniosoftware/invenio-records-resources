@@ -14,7 +14,7 @@ from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from ..base import ServiceConfig
 from ..records import RecordServiceConfig
 from .results import FileItem, FileList
-from .schema import FileLinks, FileSchema, FilesLinks
+from .schema import FileSchema, FilesLinks
 
 
 #
@@ -28,7 +28,6 @@ class FileServiceConfig(ServiceConfig):
     file_result_list_cls = FileList
 
     file_schema = FileSchema
-    schema_file_links = FileLinks
     schema_files_links = FilesLinks
 
 

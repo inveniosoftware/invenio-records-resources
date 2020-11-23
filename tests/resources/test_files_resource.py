@@ -50,20 +50,28 @@ def base_app(base_app, file_resources):
     yield base_app
 
 
-def test_status_codes(app, client, es_clear, headers, location):
+def test_files_api_flow(app, client, es_clear, headers, location):
     """Test record creation."""
     # Initialize a draft
     res = client.post('/mocks', headers=headers)
     assert res.status_code == 201
     id_ = res.json['id']
+    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
 
     # Initialize files upload
     res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
         {'key': 'test.pdf', 'title': 'Test file'},
     ])
     assert res.status_code == 201
-    assert res.json['entries'][0]['key'] == 'test.pdf'
-    assert res.json['entries'][0]['metadata'] == {'title': 'Test file'}
+    res_file = res.json['entries'][0]
+    assert res_file['key'] == 'test.pdf'
+    assert res_file['metadata'] == {'title': 'Test file'}
+    assert res_file['links']['self'].endswith(
+        f'/api/mocks/{id_}/files/test.pdf')
+    assert res_file['links']['content'].endswith(
+        f'/api/mocks/{id_}/files/test.pdf/content')
+    assert res_file['links']['commit'].endswith(
+        f'/api/mocks/{id_}/files/test.pdf/commit')
 
     # Get the file metadata
     res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
@@ -90,7 +98,6 @@ def test_status_codes(app, client, es_clear, headers, location):
     assert res.status_code == 200
     assert res.json['key'] == 'test.pdf'
     assert res.json['metadata'] == {'title': 'Test file'}
-    print(res.json)
 
     # Read a file's content
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)

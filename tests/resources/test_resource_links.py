@@ -9,10 +9,7 @@
 
 """Service tests."""
 
-import json
-
 import pytest
-from invenio_search import current_search, current_search_client
 
 
 @pytest.fixture()
@@ -29,6 +26,7 @@ def assert_expected_links(pid_value, links, site_hostname="localhost:5000"):
     """Compare generated links to expected links."""
     expected_links = {
         "self": f"https://{site_hostname}/api/mocks/{pid_value}",
+        "files": f"https://{site_hostname}/api/mocks/{pid_value}/files",
     }
     assert expected_links == links
 
