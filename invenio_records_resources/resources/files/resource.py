@@ -62,6 +62,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
     #     }
     # }
     def update_all(self, *args, **kwargs):
+        """Update top-level files metadata."""
         data = resource_requestctx.request_content
         files = self.service.update_files(
             resource_requestctx.route["pid_value"],

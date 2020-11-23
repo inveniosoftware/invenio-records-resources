@@ -11,7 +11,7 @@
 
 from marshmallow_utils.links import LinksFactory
 
-from ..base import ServiceItemResult, ServiceListResult
+from ..base import ServiceListResult
 from ..records.results import RecordItem, RecordList, _current_host
 
 
@@ -54,6 +54,7 @@ class FileItem(RecordItem):
         """Return file stream."""
         return self._file.object_version.send_file(
             restricted=restricted, as_attachment=as_attachment)
+
 
 class FileList(ServiceListResult):
     """List of file items result."""

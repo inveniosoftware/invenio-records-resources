@@ -59,7 +59,7 @@ def test_file_flow(
         recid, file_to_initialise[0]['key'], identity_simple, content,
         content.getbuffer().nbytes
     )
-    #TODO figure response for succesfully saved file
+    # TODO figure response for succesfully saved file
     assert result.to_dict()['key'] == file_to_initialise[0]['key']
 
     result = file_service.commit_file(
@@ -102,6 +102,7 @@ def test_file_flow(
     # Assert deleted
     result = file_service.list_files(recid, identity_simple)
     assert result.files == {}
+
 
 def _add_file_to_record(recid, file_id, identity, service):
     # Initialize file saving
