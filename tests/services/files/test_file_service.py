@@ -10,8 +10,19 @@
 
 from io import BytesIO
 
+import pytest
+from invenio_files_rest.models import Bucket, FileInstance, Location, \
+    ObjectVersion
+from invenio_records.systemfields import ModelField
+from mock_module import models
+from mock_module.api import Record as RecordBase
+from mock_module.api import RecordFile
 
-def test_file_flow(service, example_record, identity_simple):
+from invenio_records_resources.records.systemfields.files import FilesField
+
+
+def test_file_flow(
+        file_service, location, example_file_record, identity_simple):
     """Test the lifecycle of a file.
 
     - Initialize file saving
@@ -24,68 +35,79 @@ def test_file_flow(service, example_record, identity_simple):
     - Delete all remaining files
     - List should be empty
     """
-    recid = example_record.id
-
+    recid = example_file_record['id']
+    file_to_initialise = [{
+        'key': 'article.txt',
+        'checksum': 'md5:c785060c866796cc2a1708c997154c8e',
+        'size': 17,  # 2kB
+        'metadata': {
+            'description': 'Published article PDF.',
+        }
+    }]
     # Initialize file saving
-    result = service.init_file(recid, identity_simple, data={})
-    assert result.files
+    result = file_service.init_files(
+        recid, identity_simple, file_to_initialise)
+    assert result.to_dict()['entries'][0]['key'] == \
+        file_to_initialise[0]['key']
+    # # Save 3 files
+    # to_files = ['one', 'two', 'three']
 
-    # Save 3 files
-    to_files = ["one", "two", "three"]
+    # for to_file in to_files:
+    content = BytesIO(b'test file content')
+    result = file_service.set_file_content(
+        recid, file_to_initialise[0]['key'], identity_simple, content,
+        content.getbuffer().nbytes
+    )
+    #TODO figure response for succesfully saved file
+    assert result.to_dict()['key'] == file_to_initialise[0]['key']
 
-    for to_file in to_files:
-        content = f"test file content {to_file}"
-        result = service.save_file(
-            recid, f"file_{to_file}.txt", identity_simple,
-            BytesIO(bytes(content, "utf-8"))
-        )
-        assert result.files.get(f"file_{to_file}.txt")
-
-        result = service.commit_file(
-            recid, f"file_{to_file}.txt", identity_simple)
-        assert result.files.get(f"file_{to_file}.txt")
+    result = file_service.commit_file(
+        recid, 'article.txt', identity_simple)
+    # TODO currently there is no status in the json between the initialisation
+    # and the commiting.
+    assert result.to_dict()['key'] == \
+        file_to_initialise[0]['key']
 
     # List files
-    result = service.list_files(recid, identity_simple)
-    assert result.files
-    for to_file in to_files:
-        assert result.files.get(f"file_{to_file}.txt")
+    result = file_service.list_files(recid, identity_simple)
+    assert result.to_dict()['entries'][0]['key'] == \
+        file_to_initialise[0]['key']
 
     # Read file metadata
-    result = service.read_file_metadata(
-        recid, "file_one.txt", identity_simple)
-    assert result.file_id == "file_one.txt"
+    result = file_service.read_file_metadata(
+        recid, 'article.txt', identity_simple)
+    assert result.to_dict()['key'] == \
+        file_to_initialise[0]['key']
 
     # Retrieve file
-    result = service.retrieve_file(
-        recid, "file_one.txt", identity_simple)
-    assert result.file_id == "file_one.txt"
+    result = file_service.get_file_content(
+        recid, 'article.txt', identity_simple)
+    assert result.file_id == 'article.txt'
 
     # Delete file
-    result = service.delete_file(
-        recid, "file_one.txt", identity_simple, 0)
-    assert result.file_id == "file_one.txt"
+    result = file_service.delete_file(
+        recid, 'article.txt', identity_simple, 0)
+    assert result.file_id == 'article.txt'
 
     # Assert deleted
-    result = service.list_files(recid, identity_simple)
+    result = file_service.list_files(recid, identity_simple)
     assert result.files
-    assert not result.files.get(f"file_one.txt")
+    assert not result.files.get('article.txt')
 
     # Delete all remaining files
-    result = service.delete_all_files(recid, identity_simple)
+    result = file_service.delete_all_files(recid, identity_simple)
     assert result.files == {}
 
     # Assert deleted
-    result = service.list_files(recid, identity_simple)
+    result = file_service.list_files(recid, identity_simple)
     assert result.files == {}
 
-
-def _init_save_file(recid, file_id, identity, service):
+def _add_file_to_record(recid, file_id, identity, service):
     # Initialize file saving
     result = service.init_file(recid, identity, data={})
     assert result.files
     result = service.save_file(
-        recid, file_id, identity, BytesIO(b"test file content"))
+        recid, file_id, identity, BytesIO(b'test file content'))
     assert result.files.get(file_id)
 
     return result
@@ -93,18 +115,18 @@ def _init_save_file(recid, file_id, identity, service):
 
 def test_read_not_commited_file(service, example_record, identity_simple):
     recid = example_record.id
-    file_id = "file.txt"
-    result = _init_save_file(recid, file_id, identity_simple, service)
+    file_id = 'file.txt'
+    result = _add_file_to_record(recid, file_id, identity_simple, service)
 
     # Read, should allow to get metadata
     result = service.read_file_metadata(recid, file_id, identity_simple)
-    assert result.file_id == "file_one.txt"
+    assert result.file_id == 'file_one.txt'
 
 
 def test_retrieve_not_commited_file(service, example_record, identity_simple):
     recid = example_record.id
-    file_id = "file.txt"
-    result = _init_save_file(recid, file_id, identity_simple, service)
+    file_id = 'file.txt'
+    result = _add_file_to_record(recid, file_id, identity_simple, service)
 
     # Retrieve, should not exist
     result = service.retrieve_file(recid, file_id, identity_simple)
@@ -113,8 +135,8 @@ def test_retrieve_not_commited_file(service, example_record, identity_simple):
 
 def test_delete_not_commited_file(service, example_record, identity_simple):
     recid = example_record.id
-    file_id = "file.txt"
-    result = _init_save_file(recid, file_id, identity_simple, service)
+    file_id = 'file.txt'
+    result = _add_file_to_record(recid, file_id, identity_simple, service)
 
     # Delete, should work
     result = service.delete_file(recid, file_id, identity_simple)
@@ -140,7 +162,7 @@ def _commit_delete_file(recid, file_id, identity, service):
 
 def test_read_deleted_file(service, example_record, identity_simple):
     recid = example_record.id
-    file_id = "file.txt"
+    file_id = 'file.txt'
     result = _commit_delete_file(recid, file_id, identity_simple, service)
 
     # Read, should not exist
@@ -150,7 +172,7 @@ def test_read_deleted_file(service, example_record, identity_simple):
 
 def test_retrieve_deleted_file(service, example_record, identity_simple):
     recid = example_record.id
-    file_id = "file.txt"
+    file_id = 'file.txt'
     result = _commit_delete_file(recid, file_id, identity_simple, service)
 
     # Read, should not exist

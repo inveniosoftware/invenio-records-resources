@@ -15,9 +15,7 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
-from mock_module.resource import CustomFileActionResource, \
-    CustomFileActionResourceConfig, CustomFileResource, \
-    CustomFileResourceConfig, CustomRecordResource, \
+from mock_module.resource import CustomRecordResource, \
     CustomRecordResourceConfig
 from mock_module.service import Service, ServiceConfig
 
@@ -35,30 +33,9 @@ def record_resource():
 
 
 @pytest.fixture(scope="module")
-def file_resource():
-    """File Resource."""
-    return CustomFileResource(
-        config=CustomFileResourceConfig,
-        service=Service(config=ServiceConfig)
-    )
-
-
-@pytest.fixture(scope="module")
-def file_action_resource():
-    """File Action Resource."""
-    return CustomFileActionResource(
-        config=CustomFileActionResourceConfig,
-        service=Service(config=ServiceConfig)
-    )
-
-
-@pytest.fixture(scope="module")
-def base_app(base_app, record_resource, file_resource, file_action_resource):
+def base_app(base_app, record_resource):
     """Application factory fixture."""
     base_app.register_blueprint(record_resource.as_blueprint('mock_record'))
-    base_app.register_blueprint(file_resource.as_blueprint('mock_file'))
-    base_app.register_blueprint(
-        file_action_resource.as_blueprint('mock_file_action'))
     # base_app.register_error_handler(HTTPException, handle_http_exception)
     yield base_app
 
