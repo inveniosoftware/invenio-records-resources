@@ -71,11 +71,19 @@ class RecordFile(RecordBase, SystemFieldsMixin):
         if self.object_version:
             return File(object_model=self.object_version)
 
+    @property
+    def record(self):
+        """Get the file's record."""
+        return self.record_cls(self._record.data, model=self._record)
+
     send_signals = False
     enable_jsonref = False
 
     #: Default model class used by the record API (specify in subclass).
     model_cls = None
+
+    #: Record API class.
+    record_cls = None
 
     #: Default dumper (which happens to also be used for indexing).
     dumper = ElasticsearchDumper()
@@ -87,7 +95,7 @@ class RecordFile(RecordBase, SystemFieldsMixin):
     object_version_id = ModelField()
     object_version = ModelField(dump=False)
     record_id = ModelField()
-    record = ModelField(dump=False)
+    _record = ModelField('record', dump=False)
 
     def __repr__(self, ):
         """Represenation string for the record file."""
