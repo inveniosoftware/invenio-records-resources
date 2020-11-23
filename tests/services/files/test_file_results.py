@@ -28,6 +28,7 @@ def file_entry():
     }
 
 
+@pytest.mark.skip()
 def test_file_item_result(service, identity_simple, file_entry,
                           example_record):
     """Test the file item result.
@@ -43,6 +44,7 @@ def test_file_item_result(service, identity_simple, file_entry,
     assert result == file_entry
 
 
+@pytest.mark.skip()
 def test_file_list_result(service, identity_simple, file_entry,
                           example_record):
     """Test the file item result.
@@ -52,8 +54,7 @@ def test_file_list_result(service, identity_simple, file_entry,
           `links_config=None` is tested.
     """
     entries = [file_entry, file_entry]
-    list_ = FileList(service, identity_simple, entries,
-                     example_record, links_config=None)
+    list_ = FileList(service, identity_simple, entries, links_config=None)
     result = list_.to_dict()
 
     assert result == {"entries": entries}
