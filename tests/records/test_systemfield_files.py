@@ -31,19 +31,6 @@ class Record(RecordBase):
     bucket = ModelField(dump=False)
 
 
-@pytest.fixture()
-def location(db, tmp_path):
-    """File system location."""
-    loc = Location(
-        name='testloc',
-        uri=str(tmp_path),
-        default=True
-    )
-    db.session.add(loc)
-    db.session.commit()
-    return loc
-
-
 def test_class_attribute_access():
     """Test that field is returned."""
     assert isinstance(Record.files, FilesField)

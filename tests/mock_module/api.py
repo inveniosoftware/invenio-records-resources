@@ -50,3 +50,11 @@ class Record(RecordBase):
     conceptpid = PIDField('conceptid', provider=RecordIdProviderV2)
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
+
+
+class RecordWithFile(Record):
+    """Example record with file API."""
+
+    files = FilesField(store=False, file_cls=RecordFile)
+    bucket_id = ModelField()
+    bucket = ModelField(dump=False)

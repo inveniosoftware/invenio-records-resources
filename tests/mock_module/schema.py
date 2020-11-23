@@ -17,8 +17,6 @@ from uritemplate import URITemplate
 
 from invenio_records_resources.resources import search_link_params, \
     search_link_when
-# Import to make it look like we have defined our own schema.
-from invenio_records_resources.services.records.schema import RecordSchema
 
 
 class FilesLinksSchema(Schema):
@@ -28,7 +26,7 @@ class FilesLinksSchema(Schema):
     record = Link(
         template=URITemplate("/api/mocks/{pid_value}/files/{key}"),
         permission="read",
-        params=lambda record: { 'pid_value': record.pid.pid_value }
+        params=lambda record: {'pid_value': record.pid.pid_value}
     )
     self_ = Link(
         template=URITemplate("/api/mocks/{pid_value}/files/{key}"),
