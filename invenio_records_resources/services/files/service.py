@@ -19,29 +19,9 @@ from ..records import RecordService
 from ..records.schema import MarshmallowServiceSchema
 from .config import RecordFileServiceConfig
 
-# FIXME: Remove when there is a proper file
-dummy_file_entry = {
-    "created": "2020-11-15T19:04:22",
-    "updated": "2020-11-15T19:04:22",
-    "key": "article.pdf",
-    "checksum": "md5:abcdef...",
-    "size": 2048,
-    "metadata": {
-        "description": "Published article PDF.",
-    },
-    "links": {
-        "upload": {
-            "href": "/api/records/jnmmp-51n47/files/article.pdf/content",
-            "method": "PUT"
-        },
-        "self": "/api/records/jnmmp-51n47/files/article.pdf",
-    }
-}
-
 
 # FIXME: Two functions and one property have to be prefixed `file_` to avoid
 #        collisions when using the mixing e.g. along with a RecordService.
-
 class FileServiceMixin:
     """File service mixin.
 
@@ -57,28 +37,22 @@ class FileServiceMixin:
         return MarshmallowServiceSchema(self, schema=self.config.file_schema)
 
     def file_result_item(self, *args, **kwargs):
-        """Create a new instance of the resource unit.
-
-        A resource unit is an instantiated object representing one unit
-        of a Resource. It is what a Resource transacts in and therefore
-        what a Service must provide.
-        """
+        """Create a new instance of the resource unit."""
         return self.config.file_result_item_cls(*args, **kwargs)
 
     def file_result_list(self, *args, **kwargs):
-        """Create a new instance of the resource list.
-
-        A resource list is an instantiated object representing a grouping
-        of Resource units. Sometimes this group has additional data making
-        a simple iterable of resource units inappropriate. It is what a
-        Resource list methods transact in and therefore what
-        a Service must provide.
-        """
+        """Create a new instance of the resource list."""
         return self.config.file_result_list_cls(*args, **kwargs)
+
+    @property
+    def schema_files_links(self):
+        """Returns the schema used for making search links."""
+        return MarshmallowServiceSchema(
+            self, schema=self.config.schema_files_links)
+
     #
     # High-level API
     #
-
     def list_files(self, id_, identity, links_config=None):
         """List the files of a record."""
         record = self.record_cls.pid.resolve(id_)
@@ -87,6 +61,7 @@ class FileServiceMixin:
             self,
             identity,
             results=record.files.values(),
+            record=record,
             links_config=links_config,
         )
 
@@ -109,6 +84,7 @@ class FileServiceMixin:
             self,
             identity,
             results,
+            record,
             links_config,
         )
 
@@ -179,20 +155,9 @@ class FileServiceMixin:
             self,
             identity,
             results,
+            record,
             links_config,
         )
-
-    # POST /api/records/1234/files
-    # [ {'key': 'article.pdf', 'checksum': '...'}, ]
-    #
-    # [{ 'links': {'upload': '/api/records/1234/files/article.pdf' } }]
-    # PUT /api/records/1234/files/article.pdf --upload-file bob.png
-    # POST /api/records/1234/files/article.pdf/commit
-    # "Wrong file bruder"
-
-    # PUT /api/records/1234/files/article.pdf --upload-file bob-correct.png
-    #
-    #
 
     def set_file_content(
             self, id_, file_key, identity, stream,

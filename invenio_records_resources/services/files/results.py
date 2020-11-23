@@ -12,10 +12,10 @@
 from marshmallow_utils.links import LinksFactory
 
 from ..base import ServiceListResult
-from ..records.results import RecordItem, RecordList, _current_host
+from ..records.results import RecordItem, _current_host
 
 
-# FIXME: This two classes (FileItem and FileList) can simply injerit more
+# FIXME: This two classes (FileItem and FileList) can simply inherit more
 # if the schema is customizable in the function? See e.g. `data()` only changes
 # `self._service.{schema|file_schema}.dump()` compared to RecordItem.
 class FileItem(RecordItem):
@@ -59,7 +59,7 @@ class FileItem(RecordItem):
 class FileList(ServiceListResult):
     """List of file items result."""
 
-    def __init__(self, service, identity, results, links_config=None):
+    def __init__(self, service, identity, results, record, links_config=None):
         """Constructor.
 
         :params service: a service instance
@@ -69,6 +69,7 @@ class FileList(ServiceListResult):
         """
         self._identity = identity
         self._links_config = links_config
+        self._record = record
         self._results = results
         self._service = service
         self._links = None
@@ -83,7 +84,7 @@ class FileList(ServiceListResult):
 
     @property
     def links(self):
-        """Get the search result links."""
+        """Get the list result links."""
         if self._links:
             return self._links
 
@@ -92,6 +93,7 @@ class FileList(ServiceListResult):
 
         data = schema.dump(
             self._identity,
+            self._record,
             links_factory=links,
             links_namespace="files",
         )
@@ -103,7 +105,6 @@ class FileList(ServiceListResult):
     def entries(self):
         """Iterator over the hits."""
         links = LinksFactory(host=_current_host, config=self._links_config)
-
         for entry in self._results:
             # Project the record
             projection = self._service.file_schema.dump(
@@ -119,16 +120,6 @@ class FileList(ServiceListResult):
         """Return result as a dictionary."""
         result = {
             "entries": list(self.entries),
+            "links": self.links,
         }
-        if self._links:
-            result['links'] = self._links
-
         return result
-
-
-class RecordFileItem(RecordItem):
-    """Single record with files result."""
-
-
-class RecordFileList(RecordList):
-    """List of records with files result."""

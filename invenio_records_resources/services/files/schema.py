@@ -30,12 +30,6 @@ class FileSchema(Schema):
     metadata = Dict()
 
 
-class FileLinks(Schema):
-    """Search links schema."""
-
-    links = Links()
-
-
 class FilesLinks(Schema):
     """Search links schema."""
 
