@@ -11,11 +11,11 @@
 
 from invenio_records_resources.services import RecordFileService, \
     RecordFileServiceConfig
+from invenio_records_resources.services.records.schema import RecordSchema
 from invenio_records_resources.services.records.search import terms_filter
 
 from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
-from .schema import RecordSchema
 
 
 class ServiceConfig(RecordFileServiceConfig):
