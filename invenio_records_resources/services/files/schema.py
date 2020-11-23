@@ -22,8 +22,8 @@ class FileSchema(Schema):
         unknown = EXCLUDE
 
     key = Str()
-    checksum = Str(data_key='file.checksum')
-    size = Number(data_key='file.size')
+    checksum = Str(attribute='file.checksum')
+    size = Number(attribute='file.size')
     created = Str()
     updated = Str()
     links = Links()
