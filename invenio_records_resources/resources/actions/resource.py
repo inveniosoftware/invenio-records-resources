@@ -47,6 +47,7 @@ class ActionResource(SingletonResource, ConfigLoaderMixin):
 
         item = cmd_func(
             resource_requestctx.route["pid_value"],
+            resource_requestctx.content,
             g.identity,
             links_config=self.config.links_config
         )
@@ -58,25 +59,26 @@ class ActionResource(SingletonResource, ConfigLoaderMixin):
         """POST operations on actions."""
         item = self.handle_action_request('create')
 
-        return item.to_dict(), 202
+        return item.to_dict(), 200
 
     # SingletonView PUT
     def update(self, *args, **kwargs):
         """PUT operations on actions."""
         item = self.handle_action_request('update')
 
-        return item.to_dict(), 202
+        return item.to_dict(), 200
 
     # SingletonView GET
     def read(self, *args, **kwargs):
         """GET operations on actions."""
         item = self.handle_action_request('read')
 
-        return item.to_dict(), 202
+        # TODO: change to better handle file stream response
+        return item, 200
 
     # SingletonView DELETE
     def delete(self, *args, **kwargs):
         """DELETE operations on actions."""
         item = self.handle_action_request('delete')
 
-        return item.to_dict(), 202
+        return item.to_dict(), 200

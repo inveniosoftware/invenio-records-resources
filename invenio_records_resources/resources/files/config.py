@@ -9,8 +9,14 @@
 
 """File resource configuration."""
 
+from flask_resources.deserializers import JSONDeserializer
+from flask_resources.loaders import RequestLoader
+from flask_resources.serializers import JSONSerializer
+
 from ..actions import ActionResourceConfig
 from ..records import RecordResourceConfig
+from .loaders import RequestStreamLoader
+from .response import RecordFileResponse
 
 
 # NOTE: Inheriting from record resource config enables access to record
@@ -25,16 +31,25 @@ class FileResourceConfig(RecordResourceConfig):
 class FileActionResourceConfig(RecordResourceConfig, ActionResourceConfig):
     """Record resource config."""
 
+    request_loaders = {
+        "application/json": RequestLoader(deserializer=JSONDeserializer()),
+        "application/octet-stream": RequestStreamLoader(),
+    }
+
+    response_handlers = {
+        "application/json": RecordFileResponse(JSONSerializer()),
+    }
+
     list_route = "/records/<pid_value>/files/<key>/<action>"
     action_commands = {
         'create': {
             'commit': 'commit_file'
         },
         'read': {
-            'content': 'retrieve_file'
+            'content': 'get_file_content'
         },
         'update': {
-            'content': 'save_file'
+            'content': 'set_file_content'
         },
         'delete': {}
     }
