@@ -61,7 +61,8 @@ class RecordFile(RecordBase, SystemFieldsMixin):
     @classmethod
     def list_by_record(cls, record_id):
         """List all record files by record ID."""
-        for obj in cls.model_cls.query.filter(cls.record_id == record_id):
+        for obj in cls.model_cls.query.filter(
+                cls.model_cls.record_id == record_id):
             yield cls(obj.data, model=obj)
 
     @property

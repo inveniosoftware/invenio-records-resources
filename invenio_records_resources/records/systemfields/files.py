@@ -87,7 +87,6 @@ class Files(MutableMapping):
         self._enabled = enabled
         self._order = order or []
         self._default_preview = default_preview
-
         self._entries = entries
 
     # TODO: "create" and "update" should be merged somehow...
@@ -107,6 +106,7 @@ class Files(MutableMapping):
             rf.object_version = obj
         if data:
             rf.metadata = data
+        rf.commit()
         self._entries[key] = rf
         return rf
 
@@ -125,6 +125,7 @@ class Files(MutableMapping):
             rf.object_version = obj
         if data:
             rf.metadata = data
+            rf.commit()
         return rf
 
     @ensure_enabled
@@ -372,7 +373,6 @@ class FilesField(SystemField):
         if obj is not None:
             return obj
         data = self.get_dictkey(instance)
-
         if data:
             obj = Files(
                 record=instance,
