@@ -31,9 +31,9 @@ class FilesLinksSchema(Schema):
     self_ = Link(
         template=URITemplate("/api/mocks/{pid_value}/files/{key}"),
         permission="read",
-        params=lambda record, file: {
-            'pid_value': record.pid.pid_value,
-            'key': file.key,
+        params=lambda record_file: {
+            'pid_value': record_file.record.pid.pid_value,
+            'key': record_file.key,
         },
         data_key="self"  # To avoid using self since is python reserved key
     )
@@ -52,18 +52,18 @@ class FileLinksSchema(FilesLinksSchema):
     content = Link(
         template=URITemplate("/api/mocks/{pid_value}/files/{key}/content"),
         permission="read",
-        params=lambda record, file: {
-            'pid_value': record.pid.pid_value,
-            'key': file.key,
+        params=lambda record_file: {
+            'pid_value': record_file.record.pid.pid_value,
+            'key': record_file.key,
         },
     )
 
     commit = Link(
         template=URITemplate("/api/mocks/{pid_value}/files/{key}/commit"),
         permission="read",
-        params=lambda record, file: {
-            'pid_value': record.pid.pid_value,
-            'key': file.key,
+        params=lambda record_file: {
+            'pid_value': record_file.record.pid.pid_value,
+            'key': record_file.key,
         },
     )
 
