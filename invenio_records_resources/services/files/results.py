@@ -50,12 +50,15 @@ class FileItem(RecordItem):
 
         return self._data
 
+    def send_file(self, restricted=True, as_attachment=False):
+        """Return file stream."""
+        return self._file.object_version.send_file(
+            restricted=restricted, as_attachment=as_attachment)
 
 class FileList(ServiceListResult):
     """List of file items result."""
 
-    def __init__(self, service, identity, results, params,
-                 links_config=None):
+    def __init__(self, service, identity, results, links_config=None):
         """Constructor.
 
         :params service: a service instance
