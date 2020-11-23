@@ -10,11 +10,10 @@
 
 """Example of a record API."""
 
-from datetime import datetime
-
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ConstantField, ModelField
+from werkzeug.local import LocalProxy
 
 from invenio_records_resources.records.api import Record as RecordBase
 from invenio_records_resources.records.api import RecordFile as RecordFileBase
@@ -28,6 +27,7 @@ class RecordFile(RecordFileBase):
     """Example record file API."""
 
     model_cls = models.RecordFile
+    record_cls = LocalProxy(lambda: RecordWithFile)
 
 
 class Record(RecordBase):
