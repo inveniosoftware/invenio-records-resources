@@ -59,7 +59,6 @@ necessarily persisted in the metadata.
 from collections.abc import MutableMapping
 from functools import wraps
 
-from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_records.systemfields import SystemField
 
@@ -115,8 +114,8 @@ class Files(MutableMapping):
         """Update a file."""
         assert not (obj and stream)
         rf = self.get(key)
-        if not rf:
-            raise Exception(f'File with key {key} already exists.')
+        if rf is None:
+            raise Exception(f'File with {key} does not exist.')
 
         if stream:
             obj = ObjectVersion.create(self.bucket, key, stream=stream)
