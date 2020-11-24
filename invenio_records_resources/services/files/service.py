@@ -182,9 +182,13 @@ class FileServiceMixin:
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         rf = record.files.get(file_key)
-        if not rf or rf.file:
-            # TODO bad request
-            return {}
+
+        # TODO: raise an appropriate exception
+        if rf is None:
+            raise Exception(
+                f'File with key "{file_key}" has not been initialized yet.')
+        if rf.file:
+            raise Exception(f'File with key "{file_key}" is commited.')
 
         bucket = record.bucket
         size_limit = bucket.size_limit
