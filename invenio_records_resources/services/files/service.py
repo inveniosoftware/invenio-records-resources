@@ -55,7 +55,9 @@ class FileServiceMixin:
     #
     def list_files(self, id_, identity, links_config=None):
         """List the files of a record."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, "read", record=record)
         return self.file_result_list(
             self,
@@ -67,7 +69,9 @@ class FileServiceMixin:
 
     def init_files(self, id_, identity, data, links_config=None):
         """Initialize the file upload for the record."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         # TODO implement permission, limit files?
         self.require_permission(identity, "create", record=record)
         # TODO: Load via marshmallow schema?
@@ -91,7 +95,9 @@ class FileServiceMixin:
     def update_file_metadata(
             self, id_, file_key, identity, data, links_config=None):
         """Update the metadata of a file."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, "create", record=record)
         rf = record.files.update(file_key, data=data)
         record.commit()
@@ -105,7 +111,9 @@ class FileServiceMixin:
 
     def read_file_metadata(self, id_, file_key, identity, links_config=None):
         """Read the metadata of a file."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         return self.file_result_item(
             self,
             identity,
@@ -116,7 +124,9 @@ class FileServiceMixin:
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
     def commit_file(self, id_, file_key, identity, links_config=None):
         """Commit a file upload."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         file_obj = ObjectVersion.get(record.bucket.id, file_key)
         if not file_obj:
             raise Exception(f'File with key {file_key} not uploaded yet.')
@@ -133,7 +143,9 @@ class FileServiceMixin:
 
     def delete_file(self, id_, file_key, identity, links_config=None):
         """Delete a single file."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         deleted_file = record.files.delete(file_key)
         record.commit()
         db.session.commit()
@@ -146,7 +158,9 @@ class FileServiceMixin:
 
     def delete_all_files(self, id_, identity, links_config=None):
         """Delete all the files of the record."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, "delete", record=record)
         results = []
         for file in record.files:
@@ -164,7 +178,9 @@ class FileServiceMixin:
             content_length=None, links_config=None):
         """Save file content."""
         # TODO stream not exhausted
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         rf = record.files.get(file_key)
         if not rf or rf.file:
             # TODO bad request
@@ -196,7 +212,9 @@ class FileServiceMixin:
 
     def get_file_content(self, id_, file_key, identity, links_config=None):
         """Retrieve file content."""
-        record = self.record_cls.pid.resolve(id_)
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
         # TODO Signal here or in resource?
         # file_downloaded.send(file_obj)
         return self.file_result_item(
