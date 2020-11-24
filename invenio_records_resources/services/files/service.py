@@ -82,14 +82,13 @@ class FileServiceMixin:
                 record.files.create(
                     temporary_obj.pop('key'), data=temporary_obj))
         # TODO: maybe do this automatically in the files field
-        record.commit()
         db.session.commit()
         return self.file_result_list(
             self,
             identity,
             results,
             record,
-            links_config,
+            links_config=links_config,
         )
 
     def update_file_metadata(
@@ -100,13 +99,13 @@ class FileServiceMixin:
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, "create", record=record)
         rf = record.files.update(file_key, data=data)
-        record.commit()
         db.session.commit()
         return self.file_result_item(
             self,
             identity,
             rf,
-            links_config,
+            record,
+            links_config=links_config,
         )
 
     def read_file_metadata(self, id_, file_key, identity, links_config=None):
@@ -118,7 +117,8 @@ class FileServiceMixin:
             self,
             identity,
             record.files[file_key],
-            links_config,
+            record,
+            links_config=links_config,
         )
 
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
@@ -132,13 +132,13 @@ class FileServiceMixin:
             raise Exception(f'File with key {file_key} not uploaded yet.')
         # TODO: Add other checks here (e.g. verify checksum, S3 upload)
         record.files[file_key] = file_obj
-        record.commit()
         db.session.commit()
         return self.file_result_item(
             self,
             identity,
             record.files[file_key],
-            links_config,
+            record,
+            links_config=links_config,
         )
 
     def delete_file(self, id_, file_key, identity, links_config=None):
@@ -147,13 +147,13 @@ class FileServiceMixin:
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         deleted_file = record.files.delete(file_key)
-        record.commit()
         db.session.commit()
         return self.file_result_item(
             self,
             identity,
             deleted_file,
-            links_config,
+            record,
+            links_config=links_config,
         )
 
     def delete_all_files(self, id_, identity, links_config=None):
@@ -170,7 +170,7 @@ class FileServiceMixin:
             identity,
             results,
             record,
-            links_config,
+            links_config=links_config,
         )
 
     def set_file_content(
@@ -211,7 +211,8 @@ class FileServiceMixin:
             self,
             identity,
             record.files[file_key],
-            links_config,
+            record,
+            links_config=links_config,
         )
 
     def get_file_content(self, id_, file_key, identity, links_config=None):
@@ -225,7 +226,8 @@ class FileServiceMixin:
             self,
             identity,
             record.files[file_key],
-            links_config,
+            record,
+            links_config=links_config,
         )
 
 
