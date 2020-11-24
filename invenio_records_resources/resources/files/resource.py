@@ -133,12 +133,13 @@ class FileActionResource(ActionResource):
     def create_commit(self, action, operation):
         """Commit a file."""
         cmd_func = self._get_cmd_func(action, operation)
-        return cmd_func(
+        item = cmd_func(
             resource_requestctx.route["pid_value"],
             resource_requestctx.route["key"],
             g.identity,
             links_config=self.config.links_config
         )
+        return item.to_dict(), 200
 
     def read_content(self, action, operation):
         """Read file content."""
@@ -149,24 +150,17 @@ class FileActionResource(ActionResource):
             g.identity,
             links_config=self.config.links_config
         )
-        return item.send_file()
+        return item.send_file(), 200
 
     def update_content(self, action, operation):
         """Upload file content."""
         cmd_func = self._get_cmd_func(action, operation)
         # TODO: Parse in `resource_requestctx`
-        return cmd_func(
+        item = cmd_func(
             resource_requestctx.route["pid_value"],
             resource_requestctx.route["key"],
             g.identity,
             stream=resource_requestctx.request_content,
             links_config=self.config.links_config
         )
-
-    def handle_action_request(self, operation):
-        """Execute an action based on an operation and the resource config."""
-        action = resource_requestctx.route["action"]
-        resource_func = getattr(self, f'{operation}_{action}')
-        if not resource_func:
-            abort(404)
-        return resource_func(action, operation)
+        return item.to_dict(), 200

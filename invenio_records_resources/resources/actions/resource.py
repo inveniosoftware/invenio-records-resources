@@ -43,42 +43,27 @@ class ActionResource(SingletonResource, ConfigLoaderMixin):
     def handle_action_request(self, operation):
         """Execute an action based on an operation and the resource config."""
         action = resource_requestctx.route["action"]
-        cmd_func = self._get_cmd_func(action, operation)
-
-        item = cmd_func(
-            resource_requestctx.route["pid_value"],
-            resource_requestctx.content,
-            g.identity,
-            links_config=self.config.links_config
-        )
-
-        return item
+        resource_func = getattr(self, f'{operation}_{action}', None)
+        if not resource_func:
+            abort(404)
+        return resource_func(action, operation)
 
     # SingletonView POST
     def create(self, *args, **kwargs):
         """POST operations on actions."""
-        item = self.handle_action_request('create')
-
-        return item.to_dict(), 200
+        return self.handle_action_request('create')
 
     # SingletonView PUT
     def update(self, *args, **kwargs):
         """PUT operations on actions."""
-        item = self.handle_action_request('update')
-
-        return item.to_dict(), 200
+        return self.handle_action_request('update')
 
     # SingletonView GET
     def read(self, *args, **kwargs):
         """GET operations on actions."""
-        item = self.handle_action_request('read')
-
-        # TODO: change to better handle file stream response
-        return item, 200
+        return self.handle_action_request('read')
 
     # SingletonView DELETE
     def delete(self, *args, **kwargs):
         """DELETE operations on actions."""
-        item = self.handle_action_request('delete')
-
-        return item.to_dict(), 200
+        return self.handle_action_request('delete')
