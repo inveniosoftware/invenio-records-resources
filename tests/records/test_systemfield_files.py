@@ -12,7 +12,6 @@
 
 from io import BytesIO
 
-import pytest
 from invenio_files_rest.models import Bucket, FileInstance, Location, \
     ObjectVersion
 from invenio_records.systemfields import ModelField
@@ -64,7 +63,7 @@ def test_record_files_deletion(base_app, db, location):
 
     record.delete()
     db.session.commit()
-    assert Bucket.query.count() == 0
+    assert Bucket.query.count() == 1  # we soft-delete the bucket
 
 
 def test_record_files_operations(base_app, db, location):
@@ -183,7 +182,6 @@ def test_record_files_store(base_app, db, location):
 
     rf1 = record.files['f1.pdf']
     rf2 = record.files['f2.pdf']
-    rf3 = record.files['f3.pdf']
     record.commit()
     assert record['files']['meta'] == {
         'f1.pdf': {'description': 'Test file'},

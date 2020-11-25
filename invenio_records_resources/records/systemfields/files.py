@@ -344,8 +344,11 @@ class FilesField(SystemField):
                 else:
                     bucket_args = self._bucket_args
                 bucket = Bucket.create(**bucket_args)
-                setattr(record, self._bucket_id_attr, bucket.id)
-                setattr(record, self._bucket_attr, bucket)
+                if not (getattr(record, self._bucket_id_attr, None) and
+                        getattr(record, self._bucket_attr, None)):
+                    # TODO: Setting these bumps the row's `revision_id`
+                    setattr(record, self._bucket_id_attr, bucket.id)
+                    setattr(record, self._bucket_attr, bucket)
         self.store(record, Files(
             record,
             file_cls=self.file_cls,
@@ -357,11 +360,14 @@ class FilesField(SystemField):
         if self._delete:
             files = getattr(record, self.attr_name)
             if files is not None:
-                # TODO: Check if this is all that's needed
-                bucket = record.bucket
-                record.bucket = None
-                record.bucket_id = None
-                bucket.remove()
+                if record.bucket:
+                    bucket = record.bucket
+                    if force:
+                        record.bucket = None
+                        record.bucket_id = None
+                        bucket.remove()
+                    else:
+                        Bucket.delete(bucket.id)
 
     #
     # Helpers
