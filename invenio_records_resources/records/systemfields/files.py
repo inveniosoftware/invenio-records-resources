@@ -138,6 +138,12 @@ class Files(MutableMapping):
             # TODO: Should we also remove the FileInstance? Configurable?
             ObjectVersion.delete(ov.bucket, key)
         del self._entries[key]
+
+        # Unset the default preview if the file is removed
+        if self.default_preview == key:
+            self.default_preview = None
+        if key in self._order:
+            self._order.remove(key)
         return rf
 
     @property
@@ -261,11 +267,6 @@ class Files(MutableMapping):
     def __delitem__(self, key):
         """Delete a file."""
         # TODO: Make this configurable?
-        # Unset the default preview if the file is removed
-        if self.default_preview == key:
-            self.default_preview = None
-        if key in self._order:
-            self._order.remove(key)
         self.delete(key)
 
     # TODO: implement for efficiency?

@@ -51,23 +51,12 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return item.to_dict(), 201
 
-    # TODO: see if this has to be implmented upstream
-    # ListView PUT
-    # PUT /api/records/:id/files
-    # {
-    #     'default_preview': 'article.pdf',
-    #     'order': ['article.pdf', 'data.zip'],
-    #     'entries': {
-    #          ...
-    #     }
-    # }
     def update_all(self, *args, **kwargs):
         """Update top-level files metadata."""
-        data = resource_requestctx.request_content
         files = self.service.update_files(
             resource_requestctx.route["pid_value"],
             g.identity,
-            data,
+            resource_requestctx.request_content,
             links_config=self.config.links_config,
         )
         return files.to_dict(), 200

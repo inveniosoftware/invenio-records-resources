@@ -127,3 +127,165 @@ def test_files_api_flow(app, client, es_clear, headers, location):
     res = client.get(f"/mocks/{id_}/files", headers=headers)
     assert res.status_code == 200
     assert len(res.json['entries']) == 0
+
+
+def test_default_preview_file(app, client, es_clear, headers, location):
+    # Initialize a draft
+    res = client.post('/mocks', headers=headers)
+    assert res.status_code == 201
+    id_ = res.json['id']
+    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+
+    # Initialize 3 file uploads
+    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
+        {'key': 'f1.pdf'},
+        {'key': 'f2.pdf'},
+        {'key': 'f3.pdf'},
+    ])
+    assert res.status_code == 201
+    file_entries = res.json['entries']
+    assert len(file_entries) == 3
+    assert {(f['key'], f['status']) for f in file_entries} == {
+        ('f1.pdf', 'pending'),
+        ('f2.pdf', 'pending'),
+        ('f3.pdf', 'pending'),
+    }
+    assert res.json['default_preview'] is None
+
+    # Upload and commit the 3 files
+    for f in file_entries:
+        res = client.put(
+            f"/mocks/{id_}/files/{f['key']}/content", headers={
+                'content-type': 'application/octet-stream',
+                'accept': 'application/json',
+            },
+            data=BytesIO(b'testfile'),
+        )
+        assert res.status_code == 200
+        assert res.json['status'] == 'pending'
+
+        res = client.post(
+            f"/mocks/{id_}/files/{f['key']}/commit", headers=headers)
+        assert res.status_code == 200
+        assert res.json['status'] == 'completed'
+
+    # Set the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f1.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f1.pdf'
+
+    # Change the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f2.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f2.pdf'
+
+    # Unset the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': None
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] is None
+
+    # Set the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f3.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f3.pdf'
+
+    # Delete the default preview file
+    res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers, json={
+        'default_preview': 'f3.pdf'
+    })
+    assert res.status_code == 204
+
+    # Get all files and check default preview
+    res = client.get(f"/mocks/{id_}/files", headers=headers)
+    assert res.status_code == 200
+    assert len(res.json['entries']) == 2
+    assert res.json['default_preview'] is None
+
+
+def test_enabled_files(app, client, es_clear, headers, location):
+    # Initialize a draft
+    res = client.post('/mocks', headers=headers)
+    assert res.status_code == 201
+    id_ = res.json['id']
+    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+
+    # Initialize 3 file uploads
+    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
+        {'key': 'f1.pdf'},
+        {'key': 'f2.pdf'},
+        {'key': 'f3.pdf'},
+    ])
+    assert res.status_code == 201
+    file_entries = res.json['entries']
+    assert len(file_entries) == 3
+    assert {(f['key'], f['status']) for f in file_entries} == {
+        ('f1.pdf', 'pending'),
+        ('f2.pdf', 'pending'),
+        ('f3.pdf', 'pending'),
+    }
+    assert res.json['default_preview'] is None
+
+    # Upload and commit the 3 files
+    for f in file_entries:
+        res = client.put(
+            f"/mocks/{id_}/files/{f['key']}/content", headers={
+                'content-type': 'application/octet-stream',
+                'accept': 'application/json',
+            },
+            data=BytesIO(b'testfile'),
+        )
+        assert res.status_code == 200
+        assert res.json['status'] == 'pending'
+
+        res = client.post(
+            f"/mocks/{id_}/files/{f['key']}/commit", headers=headers)
+        assert res.status_code == 200
+        assert res.json['status'] == 'completed'
+
+    # Set the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f1.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f1.pdf'
+
+    # Change the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f2.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f2.pdf'
+
+    # Unset the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': None
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] is None
+
+    # Set the default preview file
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'default_preview': 'f3.pdf'
+    })
+    assert res.status_code == 200
+    assert res.json['default_preview'] == 'f3.pdf'
+
+    # Delete the default preview file
+    res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers, json={
+        'default_preview': 'f3.pdf'
+    })
+    assert res.status_code == 204
+
+    # Get all files and check default preview
+    res = client.get(f"/mocks/{id_}/files", headers=headers)
+    assert res.status_code == 200
+    assert len(res.json['entries']) == 2
+    assert res.json['default_preview'] is None

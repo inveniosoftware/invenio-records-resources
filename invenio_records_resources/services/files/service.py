@@ -86,8 +86,35 @@ class FileServiceMixin:
         return self.file_result_list(
             self,
             identity,
-            results,
-            record,
+            results=results,
+            record=record,
+            links_config=links_config,
+        )
+
+    def update_files(self, id_, identity, data, links_config=None):
+        """Update the metadata of a file."""
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "create", record=record)
+
+        # TODO: Maybe there's a better programmatic API to apply these?
+        # e.g. record.files.update(...)
+        if data.get('enabled') is not None:
+            record.files.enabled = data['enabled']
+        if record.files.enabled:
+            if 'default_preview' in data:
+                record.files.default_preview = data['default_preview']
+            if 'order' in data:
+                record.files.order = data['order']
+
+        record.commit()
+        db.session.commit()
+        return self.file_result_list(
+            self,
+            identity,
+            results=record.files.values(),
+            record=record,
             links_config=links_config,
         )
 
@@ -147,6 +174,8 @@ class FileServiceMixin:
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         deleted_file = record.files.delete(file_key)
+        # We also commit the record in case the file was the `default_preview`
+        record.commit()
         db.session.commit()
         return self.file_result_item(
             self,
@@ -165,6 +194,7 @@ class FileServiceMixin:
         results = []
         for file in record.files:
             results.append(record.files.delete(file.key))
+        record.commit()
         return self.file_result_list(
             self,
             identity,
