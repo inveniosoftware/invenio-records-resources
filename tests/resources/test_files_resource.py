@@ -224,7 +224,35 @@ def test_enabled_files(app, client, es_clear, headers, location):
     id_ = res.json['id']
     assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
 
-    # Initialize 3 file uploads
+    # Get all files and check "enabled"
+    res = client.get(f"/mocks/{id_}/files", headers=headers)
+    assert res.status_code == 200
+    assert len(res.json['entries']) == 0
+    assert res.json['enabled'] is True
+
+    # Disable files
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'enabled': False
+    })
+    assert res.status_code == 200
+    assert res.json['enabled'] is False
+    assert 'self' in res.json['links']
+    assert 'entries' not in res.json
+    assert 'default_preview' not in res.json
+    assert 'order' not in res.json
+
+    # Enable again
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'enabled': True
+    })
+    assert res.status_code == 200
+    assert res.json['enabled'] is True
+    assert 'self' in res.json['links']
+    assert len(res.json['entries']) == 0
+    assert res.json['default_preview'] is None
+    assert res.json['order'] == []
+
+    # Initialize 3 files
     res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
         {'key': 'f1.pdf'},
         {'key': 'f2.pdf'},
@@ -238,7 +266,6 @@ def test_enabled_files(app, client, es_clear, headers, location):
         ('f2.pdf', 'pending'),
         ('f3.pdf', 'pending'),
     }
-    assert res.json['default_preview'] is None
 
     # Upload and commit the 3 files
     for f in file_entries:
@@ -257,42 +284,30 @@ def test_enabled_files(app, client, es_clear, headers, location):
         assert res.status_code == 200
         assert res.json['status'] == 'completed'
 
-    # Set the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f1.pdf'
-    })
-    assert res.status_code == 200
-    assert res.json['default_preview'] == 'f1.pdf'
-
-    # Change the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f2.pdf'
-    })
-    assert res.status_code == 200
-    assert res.json['default_preview'] == 'f2.pdf'
-
-    # Unset the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': None
-    })
-    assert res.status_code == 200
-    assert res.json['default_preview'] is None
-
-    # Set the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f3.pdf'
-    })
-    assert res.status_code == 200
-    assert res.json['default_preview'] == 'f3.pdf'
-
-    # Delete the default preview file
-    res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers, json={
-        'default_preview': 'f3.pdf'
-    })
-    assert res.status_code == 204
-
-    # Get all files and check default preview
+    # Get all files
     res = client.get(f"/mocks/{id_}/files", headers=headers)
     assert res.status_code == 200
-    assert len(res.json['entries']) == 2
+    assert len(res.json['entries']) == 3
+    assert res.json['enabled'] is True
+
+    # Disable files
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'enabled': False
+    })
+    assert res.status_code == 200
+    assert res.json['enabled'] is False
+    assert 'self' in res.json['links']
+    assert 'entries' not in res.json
+    assert 'default_preview' not in res.json
+    assert 'order' not in res.json
+
+    # Enable files again
+    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
+        'enabled': True
+    })
+    assert res.status_code == 200
+    assert res.json['enabled'] is True
+    assert 'self' in res.json['links']
+    assert len(res.json['entries']) == 0
     assert res.json['default_preview'] is None
+    assert res.json['order'] == []
