@@ -118,8 +118,17 @@ class FileList(ServiceListResult):
 
     def to_dict(self):
         """Return result as a dictionary."""
+        # TODO: Use a FilesSchema or something to dump the top-level object
+        record_files = self._record.files
         result = {
-            "entries": list(self.entries),
+            "enabled": record_files.enabled,
             "links": self.links,
         }
+
+        if result['enabled']:
+            result.update({
+                'entries': list(self.entries),
+                'default_preview': record_files.default_preview,
+                'order': record_files.order,
+            })
         return result

@@ -65,6 +65,7 @@ def test_files_api_flow(app, client, es_clear, headers, location):
     assert res.status_code == 201
     res_file = res.json['entries'][0]
     assert res_file['key'] == 'test.pdf'
+    assert res_file['status'] == 'pending'
     assert res_file['metadata'] == {'title': 'Test file'}
     assert res_file['links']['self'].endswith(
         f'/api/mocks/{id_}/files/test.pdf')
@@ -77,6 +78,7 @@ def test_files_api_flow(app, client, es_clear, headers, location):
     res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
     assert res.status_code == 200
     assert res.json['key'] == 'test.pdf'
+    assert res.json['status'] == 'pending'
     assert res.json['metadata'] == {'title': 'Test file'}
 
     # Upload a file
@@ -88,15 +90,18 @@ def test_files_api_flow(app, client, es_clear, headers, location):
         data=BytesIO(b'testfile'),
     )
     assert res.status_code == 200
+    assert res.json['status'] == 'pending'
 
     # Commit the uploaded file
     res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
     assert res.status_code == 200
+    assert res.json['status'] == 'completed'
 
     # Get the file metadata
     res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
     assert res.status_code == 200
     assert res.json['key'] == 'test.pdf'
+    assert res.json['status'] == 'completed'
     assert res.json['metadata'] == {'title': 'Test file'}
 
     # Read a file's content
@@ -110,6 +115,7 @@ def test_files_api_flow(app, client, es_clear, headers, location):
         json={'title': 'New title'})
     assert res.status_code == 200
     assert res.json['key'] == 'test.pdf'
+    assert res.json['status'] == 'completed'
     assert res.json['metadata'] == {'title': 'New title'}
 
     # Get all files
@@ -117,6 +123,7 @@ def test_files_api_flow(app, client, es_clear, headers, location):
     assert res.status_code == 200
     assert len(res.json['entries']) == 1
     assert res.json['entries'][0]['key'] == 'test.pdf'
+    assert res.json['entries'][0]['status'] == 'completed'
     assert res.json['entries'][0]['metadata'] == {'title': 'New title'}
 
     # Delete a file
