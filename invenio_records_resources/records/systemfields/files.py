@@ -279,7 +279,6 @@ class Files(MutableMapping):
         """File keys iterator."""
         return iter(self.entries)
 
-    @ensure_enabled
     def __len__(self):
         """Count of files."""
         return len(self.entries)
