@@ -173,7 +173,7 @@ class Files(MutableMapping):
     @enabled.setter
     def enabled(self, value):
         """Enable/disable files."""
-        if value is False:
+        if value is False and self.enabled:
             self.default_preview = None
             self.order = []
             self.clear()
