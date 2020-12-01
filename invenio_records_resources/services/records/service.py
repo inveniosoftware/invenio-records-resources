@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020 European Union.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -124,34 +125,38 @@ class RecordService(Service):
 
         return search
 
-    #
-    # High-level API
-    #
-    def search(self, identity, params=None, links_config=None,
-               es_preference=None, **kwargs):
-        """Search for records matching the querystring."""
-        # Permissions
-        self.require_permission(identity, "search")
+    def _search(self, action, identity, params, es_preference, **kwargs):
+        """Create the Elasticsearch DSL."""
+        # Both search(), scan() and reindex() uses the same permission.
+        self.require_permission(identity, 'search')
 
         # Merge params
         # NOTE: We allow using both the params variable, as well as kwargs. The
         # params is used by the resource, and kwargs is used to have an easier
         # programatic interface .search(idty, q='...') instead of
         # .search(idty, params={'q': '...'}).
-        params = params or {}
         params.update(kwargs)
 
-        # Create a Elasticsearch DSL
+        # Create an Elasticsearch DSL
         search = self.search_request(
             identity, params, self.record_cls, preference=es_preference)
 
         # Run components
         for component in self.components:
-            if hasattr(component, 'search'):
-                search = component.search(identity, search, params)
+            if hasattr(component, action):
+                search = getattr(component, action)(identity, search, params)
+        return search
 
-        # Execute the search
-        search_result = search.execute()
+    #
+    # High-level API
+    #
+    def search(self, identity, params=None, links_config=None,
+               es_preference=None, **kwargs):
+        """Search for records matching the querystring."""
+        # Prepare and execute the search
+        params = params or {}
+        search_result = self._search(
+            'search', identity, params, es_preference, **kwargs).execute()
 
         return self.result_list(
             self,
@@ -160,6 +165,34 @@ class RecordService(Service):
             params,
             links_config=links_config
         )
+
+    def scan(self, identity, params=None, links_config=None,
+             es_preference=None, **kwargs):
+        """Scan for records matching the querystring."""
+        # Prepare and execute the search as scan()
+        params = params or {}
+        search_result = self._search(
+            'scan', identity, params, es_preference, **kwargs).scan()
+
+        return self.result_list(
+            self,
+            identity,
+            search_result,
+            params,
+            links_config=links_config
+        )
+
+    def reindex(self, identity, params=None, es_preference=None, **kwargs):
+        """Reindex records matching the query parameters."""
+        # Prepare and execute the search as scan()
+        params = params or {}
+        search_result = self._search(
+            'reindex', identity, params, es_preference, **kwargs).scan()
+
+        iterable_ids = (res.id for res in search_result)
+
+        self.indexer.bulk_index(iterable_ids)
+        return True
 
     def create(self, identity, data, links_config=None):
         """Create a record.

@@ -14,8 +14,10 @@ fixtures are available.
 """
 
 import pytest
+from celery.messaging import establish_connection
 from invenio_app.factory import create_api as _create_api
 from invenio_files_rest.models import Location
+from kombu.compat import Consumer
 
 pytest_plugins = ("celery.contrib.pytest", )
 
@@ -53,3 +55,30 @@ def location(db, tmp_path):
     db.session.add(loc)
     db.session.commit()
     return loc
+
+
+@pytest.fixture(scope='function')
+def queue(app):
+    """Declare an clean the indexer queue."""
+    # TODO: Move this fixture to pytest-invenio
+    queue = app.config['INDEXER_MQ_QUEUE']
+
+    with establish_connection() as c:
+        q = queue(c)
+        q.declare()
+        q.purge()
+
+    return queue
+
+
+@pytest.fixture(scope='function')
+def consumer(app, queue):
+    """Get a consumer on the queue object for testing bulk operations."""
+    # TODO: Move this fixture to pytest-invenio
+    with establish_connection() as c:
+        yield Consumer(
+            connection=c,
+            queue=app.config['INDEXER_MQ_QUEUE'].name,
+            exchange=app.config['INDEXER_MQ_EXCHANGE'].name,
+            routing_key=app.config['INDEXER_MQ_ROUTING_KEY'],
+        )

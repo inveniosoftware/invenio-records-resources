@@ -22,7 +22,7 @@ from marshmallow import ValidationError
 from mock_module.api import Record
 
 
-def test_simple_flow(app, service, identity_simple, input_data):
+def test_simple_flow(app, consumer, service, identity_simple, input_data):
     """Create a record."""
     # Create an item
     item = service.create(identity_simple, input_data)
@@ -40,6 +40,16 @@ def test_simple_flow(app, service, identity_simple, input_data):
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 1
     assert list(res.hits)[0] == read_item.data
+
+    # Scan it
+    res = service.scan(identity_simple, q=f"id:{id_}")
+    assert res.total is None
+    assert list(res.hits)[0] == read_item.data
+
+    # Reindex
+    ret = service.reindex(identity_simple, q=f"id:{id_}")
+    assert ret is True
+    assert len(list(consumer.iterqueue())) == 1
 
     # Update it
     data = read_item.data

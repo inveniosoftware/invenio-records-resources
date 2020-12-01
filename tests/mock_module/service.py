@@ -19,7 +19,10 @@ from .permissions import PermissionPolicy
 
 
 class ServiceConfig(RecordFileServiceConfig):
-    """Mock service configuration."""
+    """Mock service configuration.
+
+    Needs both configs, with File overwritting the record ones.
+    """
 
     permission_policy_cls = PermissionPolicy
     record_cls = Record

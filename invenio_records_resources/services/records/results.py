@@ -101,10 +101,14 @@ class RecordList(ServiceListResult):
     @property
     def total(self):
         """Get total number of hits."""
-        if lt_es7:
-            return self._results.hits.total
+        if hasattr(self._results, 'hits'):
+            if lt_es7:
+                return self._results.hits.total
+            else:
+                return self._results.hits.total["value"]
         else:
-            return self._results.hits.total["value"]
+            # handle scan(): returns a generator
+            return None
 
     @property
     def aggregations(self):
