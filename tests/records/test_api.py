@@ -54,7 +54,7 @@ def test_record_indexing(app, db, es, example_record, indexer):
     assert record.expires_at == example_record.expires_at
 
     # Check system fields
-    record.metadata == example_record['metadata']
+    assert record.metadata == example_record['metadata']
 
 
 def test_record_delete_reindex(app, db, es, example_record, example_data,
