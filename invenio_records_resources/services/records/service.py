@@ -170,16 +170,27 @@ class RecordService(Service):
         return self._create(
             self.record_cls, identity, data, links_config=links_config)
 
-    def _create(self, record_cls, identity, data, links_config=None):
+    def _create(self, record_cls, identity, data, links_config=None,
+                raise_errors=True):
         """Create a record.
 
         :param identity: Identity of user creating the record.
-        :param data: Input data according to the data schema.
+        :param dict data: Input data according to the data schema.
+        :param links_config: Links configuration.
+        :param bool raise_errors: raise schema ValidationError or not.
         """
         self.require_permission(identity, "create")
+        # partial = partial or tuple()
 
         # Validate data and create record with pid
-        data, _ = self.schema.load(identity, data)
+        data, errors = self.schema.load(
+            identity,
+            data,
+            raise_errors=raise_errors  # if False, flow is continued with data
+                                       # only containing valid data, but errors
+                                       # are reported (as warnings)
+        )
+
         # It's the components who saves the actual data in the record.
         record = record_cls.create({})
 
@@ -198,7 +209,8 @@ class RecordService(Service):
             self,
             identity,
             record,
-            links_config=links_config
+            links_config=links_config,
+            errors=errors
         )
 
     def read(self, id_, identity, links_config=None):
