@@ -28,20 +28,20 @@ jobs:
           include:
           - services: release
             SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
-            POSTGRESQL_VERSION: POSTGRESQL_12_LATEST
-            ES_VERSION: "ES_7_LATEST"
+            POSTGRESQL_VERSION: postgresql12
+            ES_VERSION: elasticsearch7
             EXTRAS: "all,postgresql,elasticsearch7"
             REQUIREMENTS_LEVEL: "pypi"
           - services: lowest
             SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
-            POSTGRESQL_VERSION: POSTGRESQL_9_LATEST
-            ES_VERSION: "ES_6_LATEST"
+            POSTGRESQL_VERSION: postgresql9
+            ES_VERSION: elasticsearch6
             EXTRAS: "all,postgresql,elasticsearch6"
             REQUIREMENTS_LEVEL: "min"
           - services: devel
             SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
-            POSTGRESQL_VERSION: POSTGRESQL_12_LATEST
-            ES_VERSION: "ES_7_LATEST"
+            POSTGRESQL_VERSION: postgresql12
+            ES_VERSION: elasticsearch7
             EXTRAS: "all,postgresql,elasticsearch7"
             REQUIREMENTS_LEVEL: "dev"
 
