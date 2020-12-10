@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
 #
+# This file is part of Invenio.
 # Copyright (C) 2020 CERN.
 #
-# Invenio-Records-Resources is free software; you can redistribute it and/or modify
-# it under the terms of the MIT License; see LICENSE file for more details.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 # Quit on errors
 set -o errexit
@@ -14,14 +15,14 @@ set -o nounset
 
 # Always bring down docker services
 function cleanup() {
-    docker-services-cli down
+    eval "$(docker-services-cli down --env)"
 }
-
 trap cleanup EXIT
 
 python -m check_manifest --ignore ".*-requirements.txt"
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
-docker-services-cli up es postgresql redis
+eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-elasticsearch} --cache ${CACHE:-redis} --env)"
 python -m pytest
 tests_exit_code=$?
+python -m sphinx.cmd.build -qnNW -b doctest docs docs/_build/doctest
 exit "$tests_exit_code"

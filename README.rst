@@ -9,8 +9,8 @@
  Invenio-Records-Resources
 ==========================
 
-.. image:: https://img.shields.io/travis/inveniosoftware/invenio-records-resources.svg
-        :target: https://travis-ci.org/inveniosoftware/invenio-records-resources
+.. image:: https://github.com/inveniosoftware/invenio-records-resources/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-records-resources/actions?query=workflow%3ACI
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-records-resources.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-records-resources
