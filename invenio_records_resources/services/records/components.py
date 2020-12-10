@@ -59,18 +59,3 @@ class FilesComponent(ServiceComponent):
 
 class AccessComponent(ServiceComponent):
     """Service component for access integration."""
-
-    def create(self, identity, data=None, record=None, **kwargs):
-        """Add basic ownership fields to the record."""
-        validated_data = data.get('access', {})
-        # TODO (Alex): replace with `record.access = ...`
-        validated_data.setdefault('created_by', identity.id)
-        validated_data.setdefault('owners', [identity.id])
-        record.update({'access': validated_data})
-
-    def update(self, identity, data=None, record=None, **kwargs):
-        """Update handler."""
-        validated_data = data.get('access', {})
-        # TODO (Alex): replace with `record.access = ...`
-        validated_data.pop('created_by', None)
-        record.update({'access': validated_data})
