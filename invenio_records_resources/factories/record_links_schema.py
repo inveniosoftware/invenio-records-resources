@@ -15,13 +15,16 @@ from uritemplate import URITemplate
 
 
 class RecordLinksSchemaMeta(type):
+    """Record links schema type."""
+
     bases = (Schema,)
 
     def __new__(mcs, attrs, record_type_name, endpoint_route):
+        """Object creation."""
         mcs.name = f"{record_type_name}LinksSchema"
 
         # TODO better template building ?
-        url_template = f"{endpoint_route}" + "/{pid_value}"
+        url_template = f"/api{endpoint_route}" + "/{pid_value}"
 
         attrs.update(
             {
@@ -39,4 +42,5 @@ class RecordLinksSchemaMeta(type):
         return super().__new__(mcs, mcs.name, (), attrs)
 
     def __init__(cls, attrs, model_name, endpoint_route):
+        """Initialisation."""
         super().__init__(cls.name, cls.bases, attrs)

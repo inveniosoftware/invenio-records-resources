@@ -13,20 +13,19 @@ from marshmallow import Schema
 from marshmallow_utils.fields import Link
 from uritemplate import URITemplate
 
-from invenio_records_resources.resources import (
-    search_link_when,
-    search_link_params,
-)
+from invenio_records_resources.resources import search_link_params, \
+    search_link_when
 
 
 class RecordSearchLinksSchemaMeta(type):
+    """Record search links schema."""
 
     bases = (Schema,)
 
     def __new__(mcs, attrs, record_type_name, endpoint_route):
-
+        """Object creation."""
         # TODO better template building ?
-        url_template = f"{endpoint_route}" + "/{?params*}"
+        url_template = f"/api{endpoint_route}" + "/{?params*}"
 
         mcs.name = f"{record_type_name}SearchLinksSchema"
 
@@ -54,4 +53,5 @@ class RecordSearchLinksSchemaMeta(type):
         return super().__new__(mcs, mcs.name, (), attrs)
 
     def __init__(cls, attrs, model_name, endpoint_route):
+        """Initialisation."""
         super().__init__(cls.name, cls.bases, attrs)
