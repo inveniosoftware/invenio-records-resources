@@ -164,10 +164,11 @@ class RecordTypeFactory(object):
         config_cls_attributes = {
             "list_route": list_route,
             "item_route": item_route,
-            "links_config": {
-                "record": record_link_schema_cls,
-                "search": record_search_link_schema_cls,
-            },
+            # TODO fix links factory
+            # "links_config": {
+            #     "record": record_link_schema_cls,
+            #     "search": record_search_link_schema_cls,
+            # },
         }
 
         self.resource_config_cls = type(
