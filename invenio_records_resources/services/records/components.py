@@ -47,15 +47,3 @@ class MetadataComponent(ServiceComponent):
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
         record.metadata = data.get('metadata', {})
-
-
-class PIDSComponent(ServiceComponent):
-    """Service component for PIDs integration."""
-
-
-class FilesComponent(ServiceComponent):
-    """Service component for files integration."""
-
-
-class AccessComponent(ServiceComponent):
-    """Service component for access integration."""

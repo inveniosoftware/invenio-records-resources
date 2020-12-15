@@ -17,8 +17,7 @@ from invenio_search import RecordsSearchV2
 
 from ...records import Record
 from ..base import ServiceConfig
-from .components import AccessComponent, FilesComponent, MetadataComponent, \
-    PIDSComponent
+from .components import MetadataComponent
 from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
     SortParam
 from .results import RecordItem, RecordList
@@ -77,7 +76,4 @@ class RecordServiceConfig(ServiceConfig):
 
     components = [
         MetadataComponent,
-        PIDSComponent,
-        AccessComponent,
-        FilesComponent,
     ]
