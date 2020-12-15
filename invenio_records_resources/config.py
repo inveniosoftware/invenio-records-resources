@@ -10,7 +10,6 @@
 """Invenio Resources module to create REST APIs."""
 
 from elasticsearch import VERSION as ES_VERSION
-from invenio_base.utils import load_or_import_from_config
 
 lt_es7 = ES_VERSION[0] < 7
 
@@ -40,6 +39,4 @@ class ConfigLoaderMixin:
 
         :param config: A service configuration or None.
         """
-        return config or load_or_import_from_config(
-            self.config_name, default=self.default_config
-        )
+        return config or self.default_config
