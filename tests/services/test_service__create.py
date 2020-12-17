@@ -18,7 +18,8 @@ def test_default(app, service, identity_simple, input_data):
     assert item.data["metadata"]
 
 
-def test_allow_missing_required(app, service, identity_simple):
+def test_create_but_report_missing_required_field(
+        app, service, identity_simple):
     """Create a record without required fields."""
     input_data = {
         'metadata': {}
@@ -31,10 +32,14 @@ def test_allow_missing_required(app, service, identity_simple):
 
     assert item.id
     assert item_dict["metadata"] == {}
-    assert item_dict["errors"]["metadata"]["title"]
+    errors = [{
+        "field": "metadata.title",
+        "messages": ["Missing data for required field."]
+    }]
+    assert errors == item_dict["errors"]
 
 
-def test_allow_missing_required_incorrect_field(app, service, identity_simple):
+def test_create_but_report_incorrect_field(app, service, identity_simple):
     input_data = {
         'metadata': {
             'title': 10,
@@ -48,4 +53,8 @@ def test_allow_missing_required_incorrect_field(app, service, identity_simple):
 
     assert item.id
     assert item_dict["metadata"] == {}
-    assert item_dict["errors"]["metadata"]["title"]
+    errors = [{
+        "field": "metadata.title",
+        "messages": ["Not a valid string."]
+    }]
+    assert errors == item_dict["errors"]
