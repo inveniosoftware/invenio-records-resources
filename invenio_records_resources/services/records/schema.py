@@ -12,6 +12,8 @@ from marshmallow import EXCLUDE, INCLUDE, Schema, ValidationError, fields, \
     validate
 from marshmallow_utils.fields import Links
 
+from invenio_records_resources.errors import validation_error_to_list_errors
+
 
 #
 # The default record schema
@@ -97,7 +99,7 @@ class MarshmallowServiceSchema(ServiceSchema):
             if raise_errors:
                 raise
             valid_data = e.valid_data
-            errors = e.messages
+            errors = validation_error_to_list_errors(e)
         return valid_data, errors
 
     def dump(self, identity, data, schema_args=None, **kwargs):

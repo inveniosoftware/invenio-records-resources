@@ -58,7 +58,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask-resources>=0.3.3,<1.0.0",
+    "flask-resources>=0.4.0,<1.0.0",
     "invenio-accounts>=1.4.3",
     "invenio-base>=1.2.3",
     "invenio-files-rest>=1.2.0",
@@ -106,7 +106,8 @@ setup(
             "invenio_records_resources:InvenioRecordsResources",
         ],
         "invenio_i18n.translations": [
-            "messages = invenio_records_resources", ],
+            "messages = invenio_records_resources",
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

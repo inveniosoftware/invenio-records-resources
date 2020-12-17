@@ -8,7 +8,11 @@
 
 """File resource configuration."""
 
+from flask_resources.errors import create_errormap_handler
 from flask_resources.resources import ResourceConfig
+from marshmallow.exceptions import ValidationError
+
+from ..errors import HTTPJSONValidationException
 
 
 class ActionResourceConfig(ResourceConfig):
@@ -21,4 +25,10 @@ class ActionResourceConfig(ResourceConfig):
         'read': {},
         'update': {},
         'delete': {}
+    }
+
+    error_map = {
+        ValidationError: create_errormap_handler(
+            lambda e: HTTPJSONValidationException(e)
+        ),
     }

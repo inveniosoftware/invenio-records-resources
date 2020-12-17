@@ -15,9 +15,11 @@ from flask_resources.resources import ResourceConfig
 from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
     PIDRedirectedError, PIDUnregistered
+from marshmallow.exceptions import ValidationError
 
 from ...services.errors import PermissionDeniedError, \
     QuerystringValidationError, RevisionIdMismatchError
+from ..errors import HTTPJSONValidationException
 from .errors import create_pid_redirected_error_handler
 from .response import RecordResponse
 from .schemas_header import RequestHeadersSchema
@@ -51,6 +53,9 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     error_map = {
+        ValidationError: create_errormap_handler(
+            lambda e: HTTPJSONValidationException(e)
+        ),
         RevisionIdMismatchError: create_errormap_handler(
             lambda e: HTTPJSONException(
                 code=412,
