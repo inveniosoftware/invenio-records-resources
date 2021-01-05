@@ -17,6 +17,8 @@ import pytest
 from invenio_app.factory import create_api as _create_api
 from invenio_files_rest.models import Location
 
+pytest_plugins = ("celery.contrib.pytest", )
+
 
 @pytest.fixture(scope="module")
 def extra_entry_points():
