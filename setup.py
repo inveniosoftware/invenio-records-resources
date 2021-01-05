@@ -59,7 +59,7 @@ setup_requires = [
 
 install_requires = [
     "flask-resources>=0.3.3,<1.0.0",
-    "invenio-accounts>=1.3.0",
+    "invenio-accounts>=1.4.3",
     "invenio-base>=1.2.3",
     "invenio-files-rest>=1.2.0",
     "invenio-i18n>=1.2.0",
