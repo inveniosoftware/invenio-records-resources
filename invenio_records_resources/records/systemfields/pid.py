@@ -36,13 +36,14 @@ key in the record:
 """
 
 from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
-from invenio_records.systemfields import SystemField, SystemFieldContext
+from invenio_records.systemfields import RelatedModelField, \
+    RelatedModelFieldContext
 from sqlalchemy import inspect
 
 
-class PIDFieldContext(SystemFieldContext):
+class PIDFieldContext(RelatedModelFieldContext):
     """PIDField context.
 
     This class implements the class-level methods available on a PIDField. I.e.
@@ -72,20 +73,13 @@ class PIDFieldContext(SystemFieldContext):
 
         return record
 
-    def session_merge(self, record):
-        """Merge the PID to the session if not persistent."""
-        pid = self.field.obj(record)
-        if not inspect(pid).persistent:
-            pid = db.session.merge(pid)
-            self.field._set_cache(record, pid)
 
-
-class PIDField(SystemField):
+class PIDField(RelatedModelField):
     """Persistent identifier system field."""
 
     def __init__(self, key='id', provider=None, pid_type=None,
                  object_type='rec', resolver_cls=None, delete=True,
-                 create=True):
+                 create=True, context_cls=PIDFieldContext):
         """Initialize the PIDField.
 
         :param key: Name of key to store the pid value in.
@@ -104,19 +98,17 @@ class PIDField(SystemField):
         self._resolver_cls = resolver_cls or Resolver
         self._delete = delete
         self._create = create
-        super().__init__(key=key)
+        super().__init__(
+            PersistentIdentifier,
+            key=key,
+            dump=self.dump_obj,
+            load=self.load_obj,
+            context_cls=context_cls,
+        )
 
     #
     # Life-cycle hooks
     #
-    def pre_commit(self, record):
-        """Called before a record is committed."""
-        # Make sure we serialize the pid on record.commit() time as it might
-        # have changed.
-        pid = getattr(record, self.attr_name)
-        if pid is not None:
-            self.set_obj(record, pid)
-
     def post_create(self, record):
         """Called after a record is created."""
         if self._provider is None or not self._create:
@@ -127,7 +119,8 @@ class PIDField(SystemField):
             # Create a PID if the object doesn't already have one.
             _pid = self._provider.create(
                 object_type=self._object_type,
-                object_uuid=record.id
+                object_uuid=record.id,
+                record=record,
             ).pid
 
             setattr(record, self.attr_name, _pid)
@@ -144,29 +137,11 @@ class PIDField(SystemField):
     #
     # Helpers
     #
-    def obj(self, instance):
-        """Get the persistent identifier object.
-
-        Uses a cached object if it exists.
-
-        IMPORTANT: By default if the object is created based on the data in the
-        record, it is NOT added to the database session, thus the
-        PersistentIdentifier object will be in a transient state instead of
-        persistent state. This is useful for instance in search queries to
-        avoid hitting the database, however if you need to make operations
-        on it you should add it to the session using:
-
-        .. code-block::
-
-            Record.pid.session_merge(record)
-        """
-        # Check cache
-        obj = self._get_cache(instance)
-        if obj:
-            return obj
-
-        pid_value = self.get_dictkey(instance)
-        data = instance.get(self.attr_name)
+    @staticmethod
+    def load_obj(field, record):
+        """Serializer the object into a record."""
+        pid_value = field.get_dictkey(record)
+        data = record.get(field.attr_name)
 
         # If we have both data and pid_value, we construct the object:
         if pid_value and data:
@@ -176,19 +151,18 @@ class PIDField(SystemField):
                 pid_value=pid_value,
                 status=data.get('status'),
                 object_type=data.get('obj_type'),
-                object_uuid=instance.id,
+                object_uuid=record.id,
             )
-            # Cache object
-            self._set_cache(instance, obj)
             return obj
         return None
 
-    def set_obj(self, record, pid):
+    @staticmethod
+    def dump_obj(field, record, pid):
         """Set the object."""
         assert isinstance(pid, PersistentIdentifier)
 
         # Store data values on the attribute name (e.g. 'pid')
-        record[self.attr_name] = {
+        record[field.attr_name] = {
             'pk': pid.id,
             'pid_type': pid.pid_type,
             'status': str(pid.status),
@@ -196,20 +170,4 @@ class PIDField(SystemField):
         }
 
         # Set ID on desired dictionary key.
-        self.set_dictkey(record, pid.pid_value)
-
-        # Cache object
-        self._set_cache(record, pid)
-
-    #
-    # Data descriptor methods (i.e. attribute access)
-    #
-    def __get__(self, record, owner=None):
-        """Get the persistent identifier."""
-        if record is None:
-            return PIDFieldContext(self, owner)
-        return self.obj(record)
-
-    def __set__(self, record, pid):
-        """Set persistent identifier on record."""
-        self.set_obj(record, pid)
+        field.set_dictkey(record, pid.pid_value)
