@@ -106,33 +106,42 @@ class PIDField(RelatedModelField):
             context_cls=context_cls,
         )
 
-    #
-    # Life-cycle hooks
-    #
-    def post_create(self, record):
-        """Called after a record is created."""
-        if self._provider is None or not self._create:
-            return
-
-        # This uses the data descriptor method __get__() below:
-        if getattr(record, self.attr_name) is None:
+    def create(self, record):
+        """Method to create a new persistent identifier for the record."""
+        # This uses the fields __get__() data descriptor method below
+        pid = getattr(record, self.attr_name)
+        if pid is None:
             # Create a PID if the object doesn't already have one.
-            _pid = self._provider.create(
+            pid = self._provider.create(
                 object_type=self._object_type,
                 object_uuid=record.id,
                 record=record,
             ).pid
 
-            setattr(record, self.attr_name, _pid)
+            # Set using the __set__() method
+            setattr(record, self.attr_name, pid)
+        return pid
+
+    def delete(self, record):
+        """Method to delete a persistent identifier for the record."""
+        pid = getattr(record, self.attr_name)
+        if pid is not None:
+            if not inspect(pid).persistent:
+                pid = db.session.merge(pid)
+            self._provider(pid).delete()
+
+    #
+    # Life-cycle hooks
+    #
+    def post_create(self, record):
+        """Called after a record is created."""
+        if self._provider and self._create:
+            self.create(record)
 
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""
         if self._delete:
-            pid = getattr(record, self.attr_name)
-            if pid is not None:
-                if not inspect(pid).persistent:
-                    pid = db.session.merge(pid)
-                self._provider(pid).delete()
+            self.delete(record)
 
     #
     # Helpers
