@@ -10,6 +10,9 @@
 
 """Record Service API."""
 
+from elasticsearch_dsl import Q
+from elasticsearch_dsl.response import Response
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
@@ -287,6 +290,71 @@ class RecordService(Service):
             record,
             links_tpl=self.links_item_tpl,
         )
+
+    def _read_many(self, identity, es_query, fields=None, record_cls=None,
+                   search_opts=None, **kwargs):
+        """Search for records matching the ids."""
+        # We use create_search() to avoid the overhead of aggregations etc
+        # being added to the query with using search_request().
+        search = self.create_search(
+            identity=identity,
+            record_cls=record_cls or self.record_cls,
+            search_opts=search_opts or self.config.search,
+            permission_action='search',
+        )
+
+        # Fetch only certain fields - explicitly add internal system fields
+        # required to use the result list to dump the output.
+        if fields:
+            dumper_fields = [
+                "uuid", "version_id", "created", "updated", "expires_at"]
+            fields = fields + dumper_fields
+            # ES 7.11+ supports a more efficient way of fetching only certain
+            # fields using the "fields"-option to a query. However, ES 6 and
+            # ES 7 versions does not support it, so we use the source filtering
+            # method instead for now.
+            search = search.source(fields)
+
+        search_result = search.query(es_query).execute()
+
+        return search_result
+
+    def read_many(self, identity, ids, fields=None, **kwargs):
+        """Search for records matching the ids."""
+        clauses = []
+        for id_ in ids:
+            clauses.append(Q('term', **{"id": id_}))
+        query = Q('bool', minimum_should_match=1, should=clauses)
+
+        results = self._read_many(identity, query, fields, **kwargs)
+
+        return self.result_list(self, identity, results)
+
+    def read_all(self, identity, fields, cache=True, **kwargs):
+        """Search for records matching the querystring."""
+        cache_key = "-".join(fields)
+        results = current_cache.get(cache_key)
+        es_query = Q("match_all")
+
+        if not results:
+            results = self._read_many(
+                identity, es_query, fields, **kwargs)
+            if cache:
+                # ES DSL Response is not pickable.
+                # If saved in cache serialization wont work with to_dict()
+                current_cache.set(cache_key, results.to_dict())
+
+        else:
+            search = self.create_search(
+                identity=identity,
+                record_cls=self.record_cls,
+                search_opts=self.config.search,
+                permission_action='search',
+            ).query(es_query)
+
+            results = Response(search, results)
+
+        return self.result_list(self, identity, results)
 
     def update(self, id_, identity, data, revision_id=None):
         """Replace a record."""
