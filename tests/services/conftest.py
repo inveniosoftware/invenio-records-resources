@@ -15,6 +15,7 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from invenio_cache import current_cache
 from mock_module.api import Record, RecordWithFiles
 from mock_module.config import ServiceConfig
 
@@ -42,6 +43,9 @@ def input_data():
     return {
         'metadata': {
             'title': 'Test',
+            'type': {
+                'type': "test"
+            }
         },
     }
 
@@ -61,3 +65,13 @@ def example_file_record(db, input_data):
     record.commit()
     db.session.commit()
     return record
+
+
+# FIXME: https://github.com/inveniosoftware/pytest-invenio/issues/30
+@pytest.fixture()
+def cache():
+    """Empty cache."""
+    try:
+        yield current_cache
+    finally:
+        current_cache.clear()

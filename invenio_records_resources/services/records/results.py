@@ -108,7 +108,7 @@ class RecordItem(ServiceItemResult):
 class RecordList(ServiceListResult):
     """List of records result."""
 
-    def __init__(self, service, identity, results, params, links_tpl=None,
+    def __init__(self, service, identity, results, params=None, links_tpl=None,
                  links_item_tpl=None, schema=None):
         """Constructor.
 
@@ -149,7 +149,10 @@ class RecordList(ServiceListResult):
     def aggregations(self):
         """Get the search result aggregations."""
         # TODO: have a way to label or not label
-        return self._results.labelled_facets.to_dict()
+        try:
+            return self._results.labelled_facets.to_dict()
+        except AttributeError:
+            return None
 
     @property
     def hits(self):
@@ -188,10 +191,14 @@ class RecordList(ServiceListResult):
             "hits": {
                 "hits": list(self.hits),
                 "total": self.total,
-            },
-            "sortBy": self._params["sort"],
-            "aggregations": self.aggregations,
+            }
         }
-        if self._links_tpl:
-            res['links'] = self._links_tpl.expand(self.pagination)
+        if self.aggregations:
+            res["aggregations"] = self.aggregations
+
+        if self._params:
+            res["sortBy"] = self._params["sort"]
+            if self._links_tpl:
+                res['links'] = self._links_tpl.expand(self.pagination)
+
         return res

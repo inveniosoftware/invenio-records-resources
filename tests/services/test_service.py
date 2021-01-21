@@ -16,6 +16,7 @@ Test to add:
 """
 
 import pytest
+from invenio_cache import current_cache
 from invenio_pidstore.errors import PIDDeletedError
 from invenio_search import current_search, current_search_client
 from marshmallow import ValidationError
@@ -70,3 +71,86 @@ def test_simple_flow(app, consumer, service, identity_simple, input_data):
     # - search
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 0
+
+
+def _assert_read_all(service, identity_simple, cache=True):
+    records = service.read_all(
+        identity_simple, fields=["metadata.title"], cache=cache)
+
+    assert records.total == 2
+    for record in records.hits:
+        assert record["id"] is not None
+        assert list(record["metadata"].keys()) == ["title"]
+        assert record["metadata"]["title"] == "Test"
+
+
+def test_read_all_cache(
+    app, es_clear, service, cache, identity_simple, input_data
+):
+    # Create an items
+    item_one = service.create(identity_simple, input_data)
+    item_two = service.create(identity_simple, input_data)
+    Record.index.refresh()
+
+    _assert_read_all(service, identity_simple)
+
+    cached = current_cache.get("metadata.title")
+    assert cached is not None
+
+    _assert_read_all(service, identity_simple)
+
+
+def test_read_all_no_cache(
+    app, es_clear, service, cache, identity_simple, input_data
+):
+    # Create an items
+    item_one = service.create(identity_simple, input_data)
+    item_two = service.create(identity_simple, input_data)
+    Record.index.refresh()
+
+    _assert_read_all(service, identity_simple, cache=False)
+
+    cached = current_cache.get("metadata.title")
+    assert not cached
+
+
+def test_read_many_pid_values(
+    app, es_clear, service, identity_simple, input_data
+):
+    # Create an items
+    item_one = service.create(identity_simple, input_data)
+    item_two = service.create(identity_simple, input_data)
+    item_three = service.create(identity_simple, input_data)
+    Record.index.refresh()
+
+    records = service.read_many(
+        identity_simple,
+        ids=[item_one.id, item_two.id],
+        fields=["metadata.type.type"]
+    )
+
+    assert records.total == 2
+    for record in records.hits:
+        assert record["id"] is not None
+        assert list(record["metadata"].keys()) == ["type"]
+        assert list(record["metadata"]["type"].keys()) == ["type"]
+
+
+def test_read_many_no_filter(
+    app, es_clear, service, identity_simple, input_data
+):
+    # Create an items
+    item_one = service.create(identity_simple, input_data)
+    item_two = service.create(identity_simple, input_data)
+    item_three = service.create(identity_simple, input_data)
+    Record.index.refresh()
+
+    records = service.read_many(
+        identity_simple, ids=[item_one.id, item_two.id])
+
+    assert records.total == 2
+
+    for record in records.hits:
+        assert record["id"] is not None
+        assert record["metadata"]["title"] == "Test"
+        assert record["metadata"]["type"]["type"] == "test"
