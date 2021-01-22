@@ -11,19 +11,14 @@
 
 from marshmallow import Schema, missing
 from marshmallow_utils.fields import Link
-from uritemplate import URITemplate
 
 
-class RecordLinksSchema(Schema):
-    """Schema for a record's links."""
-
-    # NOTE:
-    #   - /api prefix is needed here because api routes are mounted on /api
-    self = Link(
-        template=URITemplate("/api/records/{pid_value}"),
-        permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
-    )
+#
+# Parameter mappers
+#
+def item_link_params(record):
+    """Params function to extract the pid_value."""
+    return {'pid_value': record.pid.pid_value}
 
 
 def search_link_params(page_offset):
@@ -52,25 +47,63 @@ def search_link_when(page_offset):
     return _inner
 
 
-class SearchLinksSchema(Schema):
+#
+# Fields
+#
+class ItemLink(Link):
+    """Item link defaults."""
+
+    def __init__(self, **kwargs):
+        """Initialize with default values."""
+        kwargs.setdefault('params', item_link_params)
+        kwargs.setdefault('permission', 'read')
+        super().__init__(**kwargs)
+
+
+class SearchLink(Link):
+    """Search link defaults."""
+
+    def __init__(self, page=0, params_func=search_link_params,
+                 when_func=search_link_when, **kwargs):
+        """Initialize with default values."""
+        kwargs.setdefault('permission', 'search')
+        kwargs.setdefault('params', params_func(page))
+        kwargs.setdefault('when', when_func(page))
+        super().__init__(**kwargs)
+
+
+#
+# Schemas
+#
+class LinksSchema(Schema):
+    """Base factory for creating link schemas."""
+
+    @classmethod
+    def create(cls, links=None):
+        """Create a new link schema."""
+        attrs = links or {}
+        return type('LinksSchema', (cls, ), attrs)
+
+
+class ItemLinksSchema(LinksSchema):
+    """Schema for a item links."""
+
+    @classmethod
+    def create(cls, **kwargs):
+        """Create a new search schema using defaults."""
+        links = kwargs.pop('links', {})
+        links.setdefault('self', ItemLink(**kwargs))
+        return super().create(links=links)
+
+
+class SearchLinksSchema(LinksSchema):
     """Schema for a search result's links."""
 
-    # NOTE:
-    #   - /api prefix is needed here because api routes are mounted on /api
-    self = Link(
-        template=URITemplate("/api/records{?params*}"),
-        permission="search",
-        params=search_link_params(0)
-    )
-    prev = Link(
-        template=URITemplate("/api/records{?params*}"),
-        permission="search",
-        params=search_link_params(-1),
-        when=search_link_when(-1)
-    )
-    next = Link(
-        template=URITemplate("/api/records{?params*}"),
-        permission="search",
-        params=search_link_params(+1),
-        when=search_link_when(+1)
-    )
+    @classmethod
+    def create(cls, **kwargs):
+        """Create a new search schema using defaults."""
+        links = kwargs.pop('links', {})
+        links.setdefault('prev', SearchLink(page=-1, **kwargs))
+        links.setdefault('self', SearchLink(page=0, **kwargs))
+        links.setdefault('next', SearchLink(page=1, **kwargs))
+        return super().create(links=links)

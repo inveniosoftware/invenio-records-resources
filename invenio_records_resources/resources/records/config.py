@@ -23,7 +23,7 @@ from ..errors import HTTPJSONValidationException
 from .errors import create_pid_redirected_error_handler
 from .response import RecordResponse
 from .schemas_header import RequestHeadersSchema
-from .schemas_links import RecordLinksSchema, SearchLinksSchema
+from .schemas_links import ItemLinksSchema, SearchLinksSchema
 from .schemas_url_args import SearchURLArgsSchema
 
 
@@ -34,8 +34,8 @@ class RecordResourceConfig(ResourceConfig):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "record": RecordLinksSchema,
-        "search": SearchLinksSchema
+        "record": ItemLinksSchema.create(template='/api/records/{pid_value}'),
+        "search": SearchLinksSchema.create(template='/api/records{?params*}'),
     }
 
     request_url_args_parser = {

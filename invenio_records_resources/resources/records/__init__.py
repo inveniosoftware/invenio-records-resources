@@ -14,19 +14,22 @@ from .errors import create_pid_redirected_error_handler
 from .resource import RecordResource
 from .response import RecordResponse
 from .schemas_header import RequestHeadersSchema
-from .schemas_links import RecordLinksSchema, SearchLinksSchema, \
-    search_link_params, search_link_when
+from .schemas_links import ItemLink, ItemLinksSchema, LinksSchema, \
+    SearchLink, SearchLinksSchema, search_link_params, search_link_when
 from .schemas_url_args import SearchURLArgsSchema
 
 __all__ = (
-    "RecordLinksSchema",
+    "create_pid_redirected_error_handler",
+    "ItemLink",
+    "ItemLinksSchema",
+    "LinksSchema",
     "RecordResource",
     "RecordResourceConfig",
     "RecordResponse",
     "RequestHeadersSchema",
+    "search_link_params",
+    "search_link_when",
+    "SearchLink",
     "SearchLinksSchema",
     "SearchURLArgsSchema",
-    "create_pid_redirected_error_handler",
-    "search_link_params",
-    "search_link_when"
 )
