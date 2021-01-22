@@ -9,7 +9,7 @@
 """Record schema."""
 
 from marshmallow import EXCLUDE, INCLUDE, Schema, ValidationError, fields, \
-    validate
+    validate, pre_load
 from marshmallow_utils.fields import Links
 
 from invenio_records_resources.errors import validation_error_to_list_errors
@@ -29,20 +29,29 @@ class MetadataSchema(Schema):
     title = fields.Str(required=True, validate=validate.Length(min=3))
 
 
-class RecordSchema(Schema):
+class BaseRecordSchema(Schema):
     """Schema for records v1 in JSON."""
 
-    class Meta:
-        """Meta class to reject unknown fields."""
-
-        unknown = EXCLUDE
-
     id = fields.Str()
-    metadata = fields.Nested(MetadataSchema)
-    created = fields.Str()
-    updated = fields.Str()
-    links = Links()
+    created = fields.Str(dump_only=True)
+    updated = fields.Str(dump_only=True)
+    links = Links(dump_only=True)
     revision_id = fields.Integer(dump_only=True)
+
+    @pre_load
+    def clean(self, data, **kwargs):
+        """Removes dump_only fields."""
+        data.pop('created', None)
+        data.pop('updated', None)
+        data.pop('links', None)
+        data.pop('revision_id', None)
+        return data
+
+
+class RecordSchema(BaseRecordSchema):
+    """Schema for records v1 in JSON."""
+
+    metadata = fields.Nested(MetadataSchema)
 
 
 class SearchLinks(Schema):
