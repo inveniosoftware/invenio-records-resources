@@ -13,8 +13,8 @@ from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from flask_resources.parsers import HeadersParser, URLArgsParser
 from flask_resources.resources import ResourceConfig
 from flask_resources.serializers import JSONSerializer
-from invenio_pidstore.errors import PIDDeletedError, PIDDoesNotExistError, \
-    PIDRedirectedError, PIDUnregistered
+from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
+    PIDDoesNotExistError, PIDRedirectedError, PIDUnregistered
 from marshmallow.exceptions import ValidationError
 
 from ...services.errors import PermissionDeniedError, \
@@ -80,16 +80,22 @@ class RecordResourceConfig(ResourceConfig):
                 description="The record has been deleted.",
             )
         ),
+        PIDAlreadyExists: create_errormap_handler(
+            HTTPJSONException(
+                code=400,
+                description="The persistent identifier is already registered.",
+            )
+        ),
         PIDDoesNotExistError: create_errormap_handler(
             HTTPJSONException(
                 code=404,
-                description="The pid does not exist.",
+                description="The persistent identifier does not exist.",
             )
         ),
         PIDUnregistered: create_errormap_handler(
             HTTPJSONException(
                 code=404,
-                description="The pid is not registered.",
+                description="The persistent identifier is not registered.",
             )
         ),
         PIDRedirectedError: create_pid_redirected_error_handler(),
