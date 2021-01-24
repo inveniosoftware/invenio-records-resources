@@ -16,6 +16,7 @@ from flask_resources.serializers import JSONSerializer
 from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
     PIDDoesNotExistError, PIDRedirectedError, PIDUnregistered
 from marshmallow.exceptions import ValidationError
+from sqlalchemy.orm.exc import NoResultFound
 
 from ...services.errors import PermissionDeniedError, \
     QuerystringValidationError, RevisionIdMismatchError
@@ -43,9 +44,9 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     request_headers_parser = {
-        "search": HeadersParser(None, allow_unknown=True),
-        "update": HeadersParser(RequestHeadersSchema, allow_unknown=False),
-        "delete": HeadersParser(RequestHeadersSchema, allow_unknown=False)
+        "search": HeadersParser(None),
+        "update": HeadersParser(RequestHeadersSchema),
+        "delete": HeadersParser(RequestHeadersSchema),
     }
 
     response_handlers = {
@@ -99,4 +100,10 @@ class RecordResourceConfig(ResourceConfig):
             )
         ),
         PIDRedirectedError: create_pid_redirected_error_handler(),
+        NoResultFound: create_errormap_handler(
+            HTTPJSONException(
+                code=404,
+                description="Not found.",
+            )
+        ),
     }
