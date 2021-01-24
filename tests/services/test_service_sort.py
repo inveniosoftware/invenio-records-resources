@@ -8,6 +8,7 @@
 # details.
 
 """Sort tests."""
+
 import time
 
 import pytest
