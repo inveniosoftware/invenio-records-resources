@@ -8,8 +8,8 @@
 
 """Record schema."""
 
-from marshmallow import EXCLUDE, INCLUDE, Schema, ValidationError, fields, \
-    validate, pre_load
+from marshmallow import INCLUDE, Schema, ValidationError, fields, pre_load, \
+    validate
 from marshmallow_utils.fields import Links
 
 from invenio_records_resources.errors import validation_error_to_list_errors

@@ -31,8 +31,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         self.service = service or RecordService()
 
     def _get_es_preference(self):
-        user_agent = resource_requestctx.headers.get('User-Agent', "")
-        # TODO: Find a way to pass request.remote_addr in resource_requestctx
+        user_agent = request.headers.get('User-Agent', '')
         ip = request.remote_addr
         user_hash = f"{ip}-{user_agent}".encode('utf8')
         alg = hashlib.md5()

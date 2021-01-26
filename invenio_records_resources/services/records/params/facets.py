@@ -14,12 +14,6 @@ from .base import ParamInterpreter
 class FacetsParam(ParamInterpreter):
     """Evaluate facets."""
 
-    def iter_facet_args(self, params):
-        """Iterate over all possible facet arguments."""
-        return {
-            k: v if type(v) is list else [v] for k, v in (params or {}).items()
-        }.items()
-
     def iter_aggs_options(self, options):
         """Iterate over aggregation options."""
         return options.get("aggs", {}).items()
@@ -34,11 +28,16 @@ class FacetsParam(ParamInterpreter):
             search.aggs[name] = agg if not callable(agg) else agg()
 
         # Apply post filters
+        facets_args = params.pop('facets', {})
         post_filters = options.get("post_filters", {})
 
-        for name, facet_values in self.iter_facet_args(params):
-            filter_factory = post_filters.get(name)
-            if facet_values and filter_factory:
-                search = search.post_filter(filter_factory(facet_values))
-
+        for k in set(facets_args.keys()) & set(post_filters.keys()):
+            filter_factory = post_filters[k]
+            values = facets_args[k]
+            values = values if isinstance(values, list) else [values]
+            # Execute filter on search
+            search = search.post_filter(filter_factory(values))
+            # Set facet values on params (so they are available for links
+            # generation)
+            params[k] = values
         return search
