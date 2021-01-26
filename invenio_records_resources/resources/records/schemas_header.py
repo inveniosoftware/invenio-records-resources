@@ -10,10 +10,15 @@
 """Schemas for header parsing."""
 
 
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class RequestHeadersSchema(Schema):
     """Schema for search URL args."""
+
+    class Meta:
+        """Throw away unknown headers."""
+
+        unknown = EXCLUDE
 
     if_match = fields.Integer()

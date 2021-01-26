@@ -86,7 +86,7 @@ def test_facets(app, service, identity_simple, records):
 def test_facets_post_filtering(app, service, identity_simple, records):
     """Create a record."""
     # Search it
-    res = service.search(identity_simple, type="Foo1")
+    res = service.search(identity_simple, facets={'type': 'Foo1'})
     service_aggs = res.aggregations
     expected_aggs = {
         "type": {

@@ -39,7 +39,6 @@ def spy_resource():
 @pytest.fixture(scope="module")
 def base_app(base_app, spy_resource):
     """Application factory fixture."""
-
     custom_bp = spy_resource.as_blueprint("spy_resource")
     base_app.register_blueprint(custom_bp)
     yield base_app
@@ -47,10 +46,11 @@ def base_app(base_app, spy_resource):
 
 def test_get_es_preference(app, client, headers, spy_resource):
     h = {**headers, 'User-Agent': 'Chrome'}
-    environ = {'REMOTE_ADDR': '212.54.1.8'}
+    environ = {'REMOTE_ADDR': '1.2.3.4'}
+    r = client.get('/preference-mocks', headers=h, environ_overrides=environ)
 
-    r = client.get('/preference-mocks', headers=h)
-
+    # Note, the magic value below changes if the algorithm used for computing
+    # the preference paramater is changed.
     assert (
-        'a218bb05cfa56e628055dc9269cb1c12' == spy_resource.exposed_preference
+        '74658ff283f10c597a9cf452464df78b' == spy_resource.exposed_preference
     )
