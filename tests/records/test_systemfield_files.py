@@ -48,8 +48,8 @@ def test_record_files_creation(base_app, db, location):
 
     assert record['files']
     assert record['files']['enabled'] is True
-    assert record['files']['default_preview'] is None
-    assert record['files']['order'] == []
+    assert 'default_preview' not in record['files']
+    assert 'order' not in record['files']
     assert record['files']['entries'] == {}
 
 

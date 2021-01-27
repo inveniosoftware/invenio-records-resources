@@ -383,7 +383,7 @@ class FilesField(SystemField):
                 record=instance,
                 file_cls=self.file_cls,
                 enabled=data.get('enabled', self._enabled),
-                order=data.get('order'),
+                order=data.get('order', []),
                 default_preview=data.get('default_preview'),
                 entries=data.get('entries', {}) if self._store else None,
             )
@@ -395,9 +395,11 @@ class FilesField(SystemField):
         """Set the object."""
         data = {
             'enabled': files.enabled,
-            'order': files.order,
-            'default_preview': files.default_preview,
         }
+        if files.order:
+            data['order'] = files.order
+        if files.default_preview:
+            data['default_preview'] = files.default_preview
 
         if self._store and files.enabled:
             data['entries'] = {}
