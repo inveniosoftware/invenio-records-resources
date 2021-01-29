@@ -125,7 +125,8 @@ class RecordService(Service):
 
         return search
 
-    def _search(self, action, identity, params, es_preference, **kwargs):
+    def _search(self, action, identity, params, es_preference, record_cls=None,
+                **kwargs):
         """Create the Elasticsearch DSL."""
         # Both search(), scan() and reindex() uses the same permission.
         self.require_permission(identity, 'search')
@@ -139,7 +140,8 @@ class RecordService(Service):
 
         # Create an Elasticsearch DSL
         search = self.search_request(
-            identity, params, self.record_cls, preference=es_preference)
+            identity, params, record_cls or self.record_cls,
+            preference=es_preference)
 
         # Run components
         for component in self.components:
