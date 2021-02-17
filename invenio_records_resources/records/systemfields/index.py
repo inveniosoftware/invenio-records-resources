@@ -21,6 +21,7 @@ class IndexField(SystemField):
         """Initialize the IndexField.
 
         :param index_or_alias: An index instance or name of index/alias.
+        :param key: The key name to store the property in the record.
         :param search_alias: Name of alias to use for searches.
         """
         if isinstance(index_or_alias, Index):

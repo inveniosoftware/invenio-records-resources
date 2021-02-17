@@ -111,9 +111,7 @@ class RecordService(Service):
 
     def search_request(self, identity, params, record_cls, preference=None):
         """Factory for creating a Search DSL instance."""
-        search = self.create_search(
-            identity,
-            record_cls,
+        search = self.create_search(identity, record_cls,
             preference=preference,
         )
 
