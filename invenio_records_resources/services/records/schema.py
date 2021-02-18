@@ -40,11 +40,14 @@ class BaseRecordSchema(Schema):
 
     @pre_load
     def clean(self, data, **kwargs):
-        """Removes dump_only fields."""
-        data.pop('created', None)
-        data.pop('updated', None)
-        data.pop('links', None)
-        data.pop('revision_id', None)
+        """Removes dump_only fields.
+
+        Why: We want to allow the output of a Schema dump, to be a valid input
+             to a Schema load without causing strange issues.
+        """
+        for name, field in self.fields.items():
+            if field.dump_only:
+                data.pop(name, None)
         return data
 
 
