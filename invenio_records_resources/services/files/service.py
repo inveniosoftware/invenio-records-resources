@@ -58,7 +58,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "read", record=record)
+        self.require_permission(identity, "read_files", record=record)
         return self.file_result_list(
             self,
             identity,
@@ -140,6 +140,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "read_files", record=record)
         return self.file_result_item(
             self,
             identity,
@@ -250,6 +251,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "read_files", record=record)
         # TODO Signal here or in resource?
         # file_downloaded.send(file_obj)
         return self.file_result_item(
