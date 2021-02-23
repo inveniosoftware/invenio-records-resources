@@ -82,14 +82,18 @@ class RecordService(Service):
             )
 
     def create_search(self, identity, record_cls, action='read',
-                      preference=None):
+                      preference=None, extra_filter=None):
         """Instantiate a search class."""
         permission = self.permission_policy(
             action_name=action, identity=identity)
 
+        default_filter = permission_filter(permission)
+        if extra_filter is not None:
+            default_filter = default_filter & extra_filter
+
         search = self.config.search_cls(
             using=current_search_client,
-            default_filter=permission_filter(permission=permission),
+            default_filter=default_filter,
             index=record_cls.index.search_alias,
         )
 
@@ -109,12 +113,14 @@ class RecordService(Service):
 
         return search
 
-    def search_request(self, identity, params, record_cls, preference=None):
+    def search_request(self, identity, params, record_cls, preference=None,
+                       extra_filter=None):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
             record_cls,
             preference=preference,
+            extra_filter=extra_filter,
         )
 
         # Run search args evaluator
@@ -126,7 +132,7 @@ class RecordService(Service):
         return search
 
     def _search(self, action, identity, params, es_preference, record_cls=None,
-                **kwargs):
+                extra_filter=None, **kwargs):
         """Create the Elasticsearch DSL."""
         # Both search(), scan() and reindex() uses the same permission.
         self.require_permission(identity, 'search')
@@ -141,7 +147,8 @@ class RecordService(Service):
         # Create an Elasticsearch DSL
         search = self.search_request(
             identity, params, record_cls or self.record_cls,
-            preference=es_preference)
+            preference=es_preference,
+            extra_filter=extra_filter)
 
         # Run components
         for component in self.components:
