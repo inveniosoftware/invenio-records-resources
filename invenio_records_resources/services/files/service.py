@@ -72,8 +72,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        # TODO implement permission, limit files?
-        self.require_permission(identity, "create", record=record)
+        self.require_permission(identity, "create_files", record=record)
         # TODO: Load via marshmallow schema?
         results = []
         for file_metadata in data:
@@ -91,12 +90,12 @@ class FileServiceMixin:
             links_config=links_config,
         )
 
-    def update_files(self, id_, identity, data, links_config=None):
-        """Update the metadata of a file."""
+    def update_files_options(self, id_, identity, data, links_config=None):
+        """Update the files' options."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "create", record=record)
+        self.require_permission(identity, "update_files", record=record)
 
         # TODO: Maybe there's a better programmatic API to apply these?
         # e.g. record.files.update(...)
@@ -155,6 +154,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "create_files", record=record)
         file_obj = ObjectVersion.get(record.bucket.id, file_key)
         if not file_obj:
             raise Exception(f'File with key {file_key} not uploaded yet.')
@@ -174,6 +174,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "delete_files", record=record)
         deleted_file = record.files.delete(file_key)
         # We also commit the record in case the file was the `default_preview`
         record.commit()
@@ -191,10 +192,11 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "delete", record=record)
-        results = []
-        for file in record.files:
-            results.append(record.files.delete(file.key))
+        self.require_permission(identity, "delete_files", record=record)
+        # NOTE: We have to separate the gathering of the keys from their
+        #       deletion because of how record.files is implemented.
+        file_keys = [fk for fk in record.files]
+        results = [record.files.delete(file_key) for file_key in file_keys]
         record.commit()
         return self.file_result_list(
             self,
@@ -212,6 +214,7 @@ class FileServiceMixin:
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "create_files", record=record)
         rf = record.files.get(file_key)
 
         # TODO: raise an appropriate exception
