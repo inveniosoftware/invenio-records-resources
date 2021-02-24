@@ -81,11 +81,11 @@ class RecordService(Service):
                 record.revision_id, expected_revision_id
             )
 
-    def create_search(self, identity, record_cls, action='read',
+    def create_search(self, identity, record_cls, permission_action='read',
                       preference=None, extra_filter=None):
         """Instantiate a search class."""
         permission = self.permission_policy(
-            action_name=action, identity=identity)
+            action_name=permission_action, identity=identity)
 
         default_filter = permission_filter(permission)
         if extra_filter is not None:
@@ -114,11 +114,12 @@ class RecordService(Service):
         return search
 
     def search_request(self, identity, params, record_cls, preference=None,
-                       extra_filter=None):
+                       extra_filter=None, permission_action='read'):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
             record_cls,
+            permission_action=permission_action,
             preference=preference,
             extra_filter=extra_filter,
         )
@@ -132,11 +133,8 @@ class RecordService(Service):
         return search
 
     def _search(self, action, identity, params, es_preference, record_cls=None,
-                extra_filter=None, **kwargs):
+                extra_filter=None, permission_action='read', **kwargs):
         """Create the Elasticsearch DSL."""
-        # Both search(), scan() and reindex() uses the same permission.
-        self.require_permission(identity, 'search')
-
         # Merge params
         # NOTE: We allow using both the params variable, as well as kwargs. The
         # params is used by the resource, and kwargs is used to have an easier
@@ -146,9 +144,13 @@ class RecordService(Service):
 
         # Create an Elasticsearch DSL
         search = self.search_request(
-            identity, params, record_cls or self.record_cls,
+            identity,
+            params,
+            record_cls or self.record_cls,
             preference=es_preference,
-            extra_filter=extra_filter)
+            extra_filter=extra_filter,
+            permission_action=permission_action,
+        )
 
         # Run components
         for component in self.components:
@@ -162,6 +164,8 @@ class RecordService(Service):
     def search(self, identity, params=None, links_config=None,
                es_preference=None, **kwargs):
         """Search for records matching the querystring."""
+        self.require_permission(identity, 'search')
+
         # Prepare and execute the search
         params = params or {}
         search_result = self._search(
@@ -178,6 +182,8 @@ class RecordService(Service):
     def scan(self, identity, params=None, links_config=None,
              es_preference=None, **kwargs):
         """Scan for records matching the querystring."""
+        self.require_permission(identity, 'search')
+
         # Prepare and execute the search as scan()
         params = params or {}
         search_result = self._search(
@@ -193,6 +199,8 @@ class RecordService(Service):
 
     def reindex(self, identity, params=None, es_preference=None, **kwargs):
         """Reindex records matching the query parameters."""
+        self.require_permission(identity, 'search')
+
         # Prepare and execute the search as scan()
         params = params or {}
         search_result = self._search(
