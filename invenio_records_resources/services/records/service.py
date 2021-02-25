@@ -331,6 +331,6 @@ class RecordService(Service):
         db.session.commit()
 
         if self.indexer:
-            self.indexer.delete(record)
+            self.indexer.delete(record, refresh=True)
 
         return True
