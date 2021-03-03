@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -40,23 +41,6 @@ def file_service(appctx):
     return FileService()
 
 
-@pytest.fixture()
-def example_record(app, db):
-    """Example record."""
-    record = Record.create({}, metadata={'title': 'Test'})
-    db.session.commit()
-    return record
-
-
-@pytest.fixture()
-def example_file_record(db):
-    """Example record."""
-    record = RecordWithFile.create({}, metadata={'title': 'Test'})
-    record.commit()
-    db.session.commit()
-    return record
-
-
 @pytest.fixture(scope="function")
 def input_data():
     """Input data (as coming from the view layer)."""
@@ -65,3 +49,20 @@ def input_data():
             'title': 'Test',
         },
     }
+
+
+@pytest.fixture()
+def example_record(app, db, input_data):
+    """Example data layer record."""
+    record = Record.create({}, **input_data)
+    db.session.commit()
+    return record
+
+
+@pytest.fixture()
+def example_file_record(db, input_data):
+    """Example record."""
+    record = RecordWithFile.create({}, **input_data)
+    record.commit()
+    db.session.commit()
+    return record

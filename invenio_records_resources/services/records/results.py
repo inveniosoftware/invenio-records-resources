@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -69,6 +69,32 @@ class RecordItem(ServiceItemResult):
         if self._errors:
             res['errors'] = self._errors
         return res
+
+    def has_permissions_to(self, actions):
+        """Returns dict of "can_<action>": bool.
+
+        Placing this functionality here because it is a projection of the
+        record item's characteristics and allows us to re-use the
+        underlying data layer record. Because it is selective about the actions
+        it checks for performance reasons, it is not embedded in the `to_dict`
+        method.
+
+        :params actions: list of action strings
+        :returns dict:
+
+        Example:
+        record_item.permissions_to(["update_draft", "read_files"])
+        {
+            "can_update_draft": False,
+            "can_read_files": True
+        }
+        """
+        return {
+            f"can_{action}": self._service.check_permission(
+                self._identity, action, record=self._record
+            )
+            for action in actions
+        }
 
 
 class RecordList(ServiceListResult):
