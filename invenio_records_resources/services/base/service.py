@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -39,9 +39,16 @@ class Service(ConfigLoaderMixin):
         """Factory for a permission policy instance."""
         return self.config.permission_policy_cls(action_name, **kwargs)
 
+    def check_permission(self, identity, action_name, **kwargs):
+        """Check a permission against the identity."""
+        return self.permission_policy(action_name, **kwargs).allows(identity)
+
     def require_permission(self, identity, action_name, **kwargs):
-        """Require a specific permission from the permission policy."""
-        if not self.permission_policy(action_name, **kwargs).allows(identity):
+        """Require a specific permission from the permission policy.
+
+        Like `check_permission` but raises an error if not allowed.
+        """
+        if not self.check_permission(identity, action_name, **kwargs):
             raise PermissionDeniedError(action_name)
 
     #
