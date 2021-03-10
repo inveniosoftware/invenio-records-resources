@@ -21,8 +21,8 @@ For instance:
 """
 
 from invenio_pidstore.models import PIDStatus
+from invenio_records.dictutils import dict_set
 from invenio_records.systemfields import SystemField
-
 
 class PIDStatusCheckField(SystemField):
     """PID status field which checks against an expected status."""
@@ -48,3 +48,15 @@ class PIDStatusCheckField(SystemField):
             return self  # returns the field itself.
         pid = getattr(record, self.key)
         return pid.status in self._pid_status
+
+    def pre_dump(self, record, **kwargs):
+        """Called before a record is dumped in a secondary storage system."""
+        dict_set(
+            record,
+            self.attr_name,
+            getattr(record, self.attr_name)
+        )
+
+    def post_load(self, record, **kwargs):
+        """Called after a record is loaded from a secondary storage system."""
+        record.pop(self.attr_name, None)
