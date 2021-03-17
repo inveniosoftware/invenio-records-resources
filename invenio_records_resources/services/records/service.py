@@ -334,3 +334,16 @@ class RecordService(Service):
             self.indexer.delete(record, refresh=True)
 
         return True
+
+    def rebuild_index(self, identity):
+        """Reindex all records managed by this service.
+
+        Note: Skips (soft) deleted records.
+        """
+        for rec_meta in self.record_cls.model_cls.query.all():
+            rec = self.record_cls(rec_meta.data, model=rec_meta)
+
+            if not rec.is_deleted:
+                self.indexer.index(rec)
+
+        return True
