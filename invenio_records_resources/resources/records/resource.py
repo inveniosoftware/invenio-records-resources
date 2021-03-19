@@ -18,6 +18,7 @@ from flask_resources.context import resource_requestctx
 from ...config import ConfigLoaderMixin
 from ...services import RecordService
 from .config import RecordResourceConfig
+from .utils import es_preference
 
 
 class RecordResource(CollectionResource, ConfigLoaderMixin):
@@ -30,14 +31,6 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
         super(RecordResource, self).__init__(config=self.load_config(config))
         self.service = service or RecordService()
 
-    def _get_es_preference(self):
-        user_agent = request.headers.get('User-Agent', '')
-        ip = request.remote_addr
-        user_hash = f"{ip}-{user_agent}".encode('utf8')
-        alg = hashlib.md5()
-        alg.update(user_hash)
-        return alg.hexdigest()
-
     #
     # Primary Interface
     #
@@ -48,7 +41,7 @@ class RecordResource(CollectionResource, ConfigLoaderMixin):
             identity=identity,
             params=resource_requestctx.url_args,
             links_config=self.config.links_config,
-            es_preference=self._get_es_preference()
+            es_preference=es_preference()
         )
         return hits.to_dict(), 200
 
