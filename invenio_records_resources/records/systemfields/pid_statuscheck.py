@@ -20,24 +20,26 @@ For instance:
 
 """
 
-from invenio_pidstore.models import PIDStatus
+from invenio_records.dictutils import dict_set
 from invenio_records.systemfields import SystemField
 
 
 class PIDStatusCheckField(SystemField):
     """PID status field which checks against an expected status."""
 
-    def __init__(self, key='pid', status=None):
+    def __init__(self, key='pid', status=None, dump=False):
         """Initialize the PIDField.
 
         :param key: Attribute name of the PIDField to use for status check.
         :param status: The status or list of statuses which will return true.
+        :param dump: Dump the status check in the index. Default to False.
         """
         super().__init__(key=key)
         assert status, "You must provide a PIDStatus to test against."
         if not isinstance(status, list):
             status = [status]
         self._pid_status = status
+        self._dump = dump
 
     #
     # Data descriptor methods (i.e. attribute access)
@@ -48,3 +50,12 @@ class PIDStatusCheckField(SystemField):
             return self  # returns the field itself.
         pid = getattr(record, self.key)
         return pid.status in self._pid_status
+
+    def pre_dump(self, record, data, **kwargs):
+        """Called before a record is dumped in a secondary storage system."""
+        if self._dump:
+            dict_set(
+                data,
+                self.attr_name,
+                getattr(record, self.attr_name)
+            )
