@@ -158,5 +158,5 @@ class File:
         return ret
 
     def __repr__(self):
-        """Represntation string for the file wrapper object."""
+        """Representation string for the file wrapper object."""
         return f"<{type(self).__name__}({self.key}, {self.file_id})"

@@ -19,6 +19,7 @@ from sqlalchemy_utils.types import UUIDType
 class RecordFileBase(base_models.RecordMetadataBase):
     """Base class for a record file, storing its state and metadata."""
 
+    # TODO: rename to __record_model_cls__ to align with SQLAlchemy models
     record_model_cls = None
     """Record model to be for the ``record_id`` foreign key."""
 
