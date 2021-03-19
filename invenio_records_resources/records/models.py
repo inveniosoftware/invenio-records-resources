@@ -16,11 +16,10 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy_utils.types import UUIDType
 
 
-class RecordFileBase(base_models.RecordMetadataBase):
+class RecordFileMixin:
     """Base class for a record file, storing its state and metadata."""
 
-    # TODO: rename to __record_model_cls__ to align with SQLAlchemy models
-    record_model_cls = None
+    __record_model_cls__ = None
     """Record model to be for the ``record_id`` foreign key."""
 
     key = db.Column(
@@ -34,14 +33,14 @@ class RecordFileBase(base_models.RecordMetadataBase):
         """Record ID foreign key."""
         return db.Column(
             UUIDType,
-            db.ForeignKey(cls.record_model_cls.id, ondelete='RESTRICT'),
+            db.ForeignKey(cls.__record_model_cls__.id, ondelete='RESTRICT'),
             nullable=False,
         )
 
     @declared_attr
     def record(cls):
         """Record the file belnogs to."""
-        return db.relationship(cls.record_model_cls)
+        return db.relationship(cls.__record_model_cls__)
 
     @declared_attr
     def object_version_id(cls):
