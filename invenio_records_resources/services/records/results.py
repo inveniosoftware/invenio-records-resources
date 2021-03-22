@@ -57,6 +57,7 @@ class RecordItem(ServiceItemResult):
         self._data = self._service.schema.dump(
             self._identity,
             self._record,
+            record=self._record,
             links_namespace="record",
             links_factory=links,
         )
