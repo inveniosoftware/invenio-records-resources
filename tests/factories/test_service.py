@@ -31,7 +31,7 @@ def test_simple_flow(app, identity_simple, db):
         },
     }
 
-    service = grant_type.service_cls()
+    service = grant_type.service_cls(grant_type.service_config_cls)
 
     # Create an item
     item = service.create(identity_simple, input_data)

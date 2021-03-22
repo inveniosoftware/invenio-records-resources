@@ -10,10 +10,9 @@
 """Service API."""
 
 from ..errors import PermissionDeniedError
-from .config import ConfigLoaderMixin, ServiceConfig
 
 
-class Service(ConfigLoaderMixin):
+class Service:
     """Service interface.
 
     A service requires a service configuration. Several ways exist to provide
@@ -25,12 +24,12 @@ class Service(ConfigLoaderMixin):
        ``default_config``).
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config):
         """Constructor.
 
         :param config: A service configuration
         """
-        self.config = self.load_config(config)
+        self.config = config
 
     #
     # Permissions checking

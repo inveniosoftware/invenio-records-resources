@@ -71,9 +71,14 @@ class RecordServiceConfig(ServiceConfig):
         FacetsParam
     ]
 
+    # Service schema
     schema = RecordSchema
+    # TODO: schema_search_links should probably rather be a schema_search which
+    # defines the entire schema for search results. This could also be used for
+    # e.g. bulk deletion and similar.
     schema_search_links = SearchLinks
 
+    # Service components
     components = [
         MetadataComponent,
     ]

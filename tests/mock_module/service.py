@@ -9,8 +9,7 @@
 
 """Example service."""
 
-from invenio_records_resources.services import RecordFileService, \
-    RecordFileServiceConfig
+from invenio_records_resources.services import FileService, FileServiceConfig
 from invenio_records_resources.services.records.schema import RecordSchema
 from invenio_records_resources.services.records.search import terms_filter
 
@@ -18,7 +17,7 @@ from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
 
 
-class ServiceConfig(RecordFileServiceConfig):
+class ServiceConfig(FileServiceConfig):
     """Mock service configuration.
 
     Needs both configs, with File overwritting the record ones.
@@ -45,20 +44,16 @@ class ServiceConfig(RecordFileServiceConfig):
     }
 
 
-class Service(RecordFileService):
+class Service(FileService):
     """Mock service."""
 
-    default_config = ServiceConfig
 
-
-class FileServiceConfig(RecordFileServiceConfig):
+class FileServiceConfig(FileServiceConfig):
     """Mock service configuration."""
 
     permission_policy_cls = PermissionPolicy
     record_cls = RecordWithFile
 
 
-class FileService(RecordFileService):
+class FileService(FileService):
     """Mock service."""
-
-    default_config = FileServiceConfig

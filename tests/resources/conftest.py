@@ -23,7 +23,8 @@ from mock_module.service import Service, ServiceConfig
 @pytest.fixture(scope="module")
 def record_resource():
     """Record Resource."""
-    return CustomRecordResource(service=Service())
+    return CustomRecordResource(
+        config=CustomRecordResourceConfig, service=Service(ServiceConfig))
 
 
 @pytest.fixture(scope="module")

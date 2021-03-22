@@ -17,14 +17,11 @@ from invenio_search import current_search_client
 from ...config import lt_es7
 from ..base import Service
 from ..errors import RevisionIdMismatchError
-from .config import RecordServiceConfig
 from .schema import ServiceSchemaWrapper
 
 
 class RecordService(Service):
     """Record Service."""
-
-    default_config = RecordServiceConfig
 
     #
     # Low-level API
@@ -50,6 +47,7 @@ class RecordService(Service):
         """Returns the data schema instance."""
         return ServiceSchemaWrapper(self, schema=self.config.schema)
 
+    # TODO: review this one?
     @property
     def schema_search_links(self):
         """Returns the schema used for making search links."""
@@ -265,7 +263,6 @@ class RecordService(Service):
     def read(self, id_, identity, links_config=None):
         """Retrieve a record."""
         # Resolve and require permission
-        # TODO must handle delete records and tombstone pages
         record = self.record_cls.pid.resolve(id_)
         self.require_permission(identity, "read", record=record)
 

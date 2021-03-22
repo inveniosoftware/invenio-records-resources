@@ -9,28 +9,23 @@
 
 """Invenio Record File Resources."""
 
-from flask import abort, g
+from flask import g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 
-from ...config import ConfigLoaderMixin
-from ...services import RecordFileService
 from ..actions import ActionResource
-from .config import FileActionResourceConfig, FileResourceConfig
 
 
-class FileResource(CollectionResource, ConfigLoaderMixin):
+class FileResource(CollectionResource):
     """File resource."""
-
-    default_config = FileResourceConfig
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        super(FileResource, self).__init__(config=self.load_config(config))
-        self.service = service or RecordFileService()
+        super(FileResource, self).__init__(config=config)
+        self.service = service
 
     # ListView GET
-    def search(self, *args, **kwargs):
+    def search(self):
         """List files."""
         files = self.service.list_files(
             resource_requestctx.route["pid_value"],
@@ -39,8 +34,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return files.to_dict(), 200
 
-    # ListView POST
-    def create(self, *args, **kwargs):
+    def create(self):
         """Initialize an upload on a record."""
         data = resource_requestctx.request_content
         item = self.service.init_files(
@@ -51,7 +45,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return item.to_dict(), 201
 
-    def update_all(self, *args, **kwargs):
+    def update_all(self):
         """Update top-level files metadata."""
         files = self.service.update_files_options(
             resource_requestctx.route["pid_value"],
@@ -61,8 +55,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return files.to_dict(), 200
 
-    # ListView DELETE
-    def delete_all(self, *args, **kwargs):
+    def delete_all(self):
         """Delete all files."""
         self.service.delete_all_files(
             resource_requestctx.route["pid_value"],
@@ -72,8 +65,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
 
         return None, 204
 
-    # ItemView GET
-    def read(self, *args, **kwargs):
+    def read(self):
         """Read a single file."""
         item = self.service.read_file_metadata(
             resource_requestctx.route["pid_value"],
@@ -83,8 +75,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return item.to_dict(), 200
 
-    # ItemView PUT
-    def update(self, *args, **kwargs):
+    def update(self):
         """Update the metadata a single file."""
         data = resource_requestctx.request_content
         item = self.service.update_file_metadata(
@@ -96,8 +87,7 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         )
         return item.to_dict(), 200
 
-    # ItemView DELETE
-    def delete(self, *args, **kwargs):
+    def delete(self):
         """Delete a file."""
         self.service.delete_file(
             resource_requestctx.route["pid_value"],
@@ -109,15 +99,12 @@ class FileResource(CollectionResource, ConfigLoaderMixin):
         return None, 204
 
 
-# ActionResource inherits ConfigLoaderMixin
 class FileActionResource(ActionResource):
     """File action resource.
 
     NOTE: `Commit` exists as an action to avoid having to split the
     `FileResource` into Collection + Singleton to have to POST operations.
     """
-
-    default_config = FileActionResourceConfig
 
     def create_commit(self, action, operation):
         """Commit a file."""

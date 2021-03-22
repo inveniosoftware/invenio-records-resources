@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy_utils.types import UUIDType
 
 
-class RecordFileMixin:
+class RecordFileModelMixin:
     """Base class for a record file, storing its state and metadata."""
 
     __record_model_cls__ = None

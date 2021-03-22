@@ -13,10 +13,8 @@ import time
 from copy import deepcopy
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
-from invenio_search import current_search
 from mock_module.api import Record
-from mock_module.service import Service
+from mock_module.service import Service, ServiceConfig
 
 # 3 things to test
 # 0- search options are configurable (see mock_module)
@@ -34,7 +32,7 @@ def three_indexed_records(app, identity_simple, es):
             'title': 'Test'
         },
     }
-    service = Service()
+    service = Service(ServiceConfig)
     title_parts = [
         "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
     ]

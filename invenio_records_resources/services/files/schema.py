@@ -14,12 +14,12 @@ from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode
 
 
 class FileSchema(Schema):
-    """Schema for records v1 in JSON."""
+    """Service schema for files."""
 
-    class Meta:
-        """Meta class to reject unknown fields."""
+    # class Meta:
+    #     """Meta class to reject unknown fields."""
 
-        unknown = EXCLUDE
+    #     unknown = EXCLUDE
 
     key = SanitizedUnicode(dump_only=True)
     created = Str(dump_only=True)

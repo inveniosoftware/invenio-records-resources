@@ -7,7 +7,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Record Service API."""
+"""File Service API."""
 
 from copy import deepcopy
 
@@ -17,17 +17,10 @@ from invenio_files_rest.models import ObjectVersion
 
 from ..records import RecordService
 from ..records.schema import ServiceSchemaWrapper
-from .config import RecordFileServiceConfig
 
 
-# FIXME: Two functions and one property have to be prefixed `file_` to avoid
-#        collisions when using the mixing e.g. along with a RecordService.
-class FileServiceMixin:
-    """File service mixin.
-
-    This service is meant to work as a mixin, along a service that
-    supports records. It is not meant to work as an standalone service.
-    """
+class FileService(RecordService):
+    """Files service with files support."""
 
     default_config = None  # It is defined when the mixin is used.
 
@@ -264,9 +257,3 @@ class FileServiceMixin:
             record,
             links_config=links_config,
         )
-
-
-class RecordFileService(RecordService, FileServiceMixin):
-    """Record service with files support."""
-
-    default_config = RecordFileServiceConfig

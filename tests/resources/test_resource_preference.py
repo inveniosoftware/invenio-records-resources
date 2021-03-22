@@ -10,9 +10,13 @@
 """Test preference."""
 
 import pytest
+from flask import g
+from flask_resources.context import resource_requestctx
 from mock_module.resource import CustomRecordResource, \
     CustomRecordResourceConfig
 from mock_module.service import Service, ServiceConfig
+
+from invenio_records_resources.resources.records.utils import es_preference
 
 
 @pytest.fixture(scope="module")
@@ -26,13 +30,20 @@ def spy_resource():
     class SpyResource(CustomRecordResource):
         """Same as Resource except that it logs preference."""
 
-        def _get_es_preference(self):
-            self.exposed_preference = super()._get_es_preference()
-            return self.exposed_preference
+        def search(self):
+            self.exposed_preference = es_preference()
+            identity = g.identity
+            hits = self.service.search(
+                identity=identity,
+                params=resource_requestctx.url_args,
+                links_config=self.config.links_config,
+                es_preference=self.exposed_preference,
+            )
+            return hits.to_dict(), 200
 
     # NOTE: Because this fixture is module scoped, only 1 SpyResource exists
     return SpyResource(
-        config=SpyResourceConfig, service=Service(config=ServiceConfig)
+        config=SpyResourceConfig, service=Service(ServiceConfig)
     )
 
 

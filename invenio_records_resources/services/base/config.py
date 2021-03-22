@@ -11,8 +11,6 @@
 
 from invenio_records_permissions.policies import BasePermissionPolicy
 
-# NOTE: needed to allow only one `.config` import in the service file
-from ...config import ConfigLoaderMixin
 from .results import ServiceItemResult, ServiceListResult
 
 
@@ -21,7 +19,5 @@ class ServiceConfig:
 
     # Common configuration for all Services
     permission_policy_cls = BasePermissionPolicy
-    """The permission policy class to use."""
-
     result_item_cls = ServiceItemResult
     result_list_cls = ServiceListResult

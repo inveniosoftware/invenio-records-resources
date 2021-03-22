@@ -35,8 +35,6 @@ class CustomRecordResourceConfig(RecordResourceConfig):
 class CustomRecordResource(RecordResource):
     """Custom record resource"."""
 
-    default_config = CustomRecordResourceConfig
-
 
 class CustomFileResourceConfig(FileResourceConfig):
     """Custom file resource configuration."""
@@ -53,8 +51,6 @@ class CustomFileResourceConfig(FileResourceConfig):
 class CustomFileResource(FileResource):
     """Custom file resource."""
 
-    default_config = CustomFileResourceConfig
-
 
 class CustomFileActionResourceConfig(FileActionResourceConfig):
     """Custom file action resource config."""
@@ -69,5 +65,3 @@ class CustomFileActionResourceConfig(FileActionResourceConfig):
 
 class CustomFileActionResource(FileActionResource):
     """Custom file action resource."""
-
-    default_config = CustomFileActionResourceConfig

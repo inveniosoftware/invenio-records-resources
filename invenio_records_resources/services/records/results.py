@@ -198,6 +198,8 @@ class RecordList(ServiceListResult):
 
     def to_dict(self):
         """Return result as a dictionary."""
+        # TODO: This part should imitate the result item above. I.e. add a
+        # "data" property which uses a ServiceSchema to dump the entire object.
         res = {
             "hits": {
                 "hits": list(self.hits),

@@ -9,23 +9,19 @@
 """Invenio Resources module to create REST APIs."""
 
 
-from flask import abort, g
+from flask import abort
 from flask_resources import SingletonResource
 from flask_resources.context import resource_requestctx
 
-from ...config import ConfigLoaderMixin
-from .config import ActionResourceConfig
 from .errors import ActionNotImplementedError
 
 
-class ActionResource(SingletonResource, ConfigLoaderMixin):
+class ActionResource(SingletonResource):
     """Action resource interface."""
-
-    default_config = ActionResourceConfig
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        super().__init__(config=self.load_config(config))
+        super().__init__(config=config)
         self.service = service  # No service on this abstract level
 
     def _get_cmd_func(self, action, operation):
@@ -49,21 +45,21 @@ class ActionResource(SingletonResource, ConfigLoaderMixin):
         return resource_func(action, operation)
 
     # SingletonView POST
-    def create(self, *args, **kwargs):
+    def create(self):
         """POST operations on actions."""
         return self.handle_action_request('create')
 
     # SingletonView PUT
-    def update(self, *args, **kwargs):
+    def update(self):
         """PUT operations on actions."""
         return self.handle_action_request('update')
 
     # SingletonView GET
-    def read(self, *args, **kwargs):
+    def read(self):
         """GET operations on actions."""
         return self.handle_action_request('read')
 
     # SingletonView DELETE
-    def delete(self, *args, **kwargs):
+    def delete(self):
         """DELETE operations on actions."""
         return self.handle_action_request('delete')

@@ -9,14 +9,10 @@
 
 """Test faceting."""
 
-import time
-from copy import deepcopy
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
-from invenio_search import current_search
 from mock_module.api import Record
-from mock_module.service import Service
+from mock_module.service import Service, ServiceConfig
 
 # 2 things to test
 # 1- results are aggregated / post_filtered
@@ -28,7 +24,7 @@ def three_indexed_records(app, identity_simple, es):
     # NOTE: es is used (and not es_clear) here because all tests
     #       assume 3 records have been indexed and NO tests in this module
     #       adds/deletes any.
-    service = Service()
+    service = Service(ServiceConfig)
 
     def _create(metadata):
         data = {

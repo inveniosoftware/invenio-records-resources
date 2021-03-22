@@ -11,25 +11,21 @@
 
 import hashlib
 
-from flask import abort, g, request
+from flask import abort, g
 from flask_resources import CollectionResource
 from flask_resources.context import resource_requestctx
 
-from ...config import ConfigLoaderMixin
-from ...services import RecordService
 from .config import RecordResourceConfig
 from .utils import es_preference
 
 
-class RecordResource(CollectionResource, ConfigLoaderMixin):
+class RecordResource(CollectionResource):
     """Record resource."""
-
-    default_config = RecordResourceConfig
 
     def __init__(self, config=None, service=None):
         """Constructor."""
-        super(RecordResource, self).__init__(config=self.load_config(config))
-        self.service = service or RecordService()
+        super(RecordResource, self).__init__(config=config)
+        self.service = service
 
     #
     # Primary Interface

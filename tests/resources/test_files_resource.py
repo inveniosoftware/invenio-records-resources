@@ -12,22 +12,32 @@ from io import BytesIO
 
 import pytest
 from mock_module.resource import CustomFileActionResource, \
-    CustomFileResource, CustomRecordResource
-from mock_module.service import FileService
+    CustomFileActionResourceConfig, CustomFileResource, \
+    CustomFileResourceConfig, CustomRecordResource, \
+    CustomRecordResourceConfig
+from mock_module.service import FileService, FileServiceConfig
 
 
 @pytest.fixture(scope="module")
 def record_resource():
     """Record Resource."""
-    return CustomRecordResource(service=FileService())
+    return CustomRecordResource(
+        config=CustomRecordResourceConfig,
+        service=FileService(FileServiceConfig))
 
 
 @pytest.fixture(scope="module")
 def file_resources():
     """File Resources."""
     return {
-        'mock_file': CustomFileResource(service=FileService()),
-        'mock_file_action': CustomFileActionResource(service=FileService()),
+        'mock_file': CustomFileResource(
+            config=CustomFileResourceConfig,
+            service=FileService(FileServiceConfig)
+        ),
+        'mock_file_action': CustomFileActionResource(
+            config=CustomFileActionResourceConfig,
+            service=FileService(FileServiceConfig)
+        ),
     }
 
 

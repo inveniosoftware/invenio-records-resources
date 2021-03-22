@@ -15,7 +15,7 @@ from invenio_files_rest.models import Bucket
 from invenio_records.models import RecordMetadataBase
 from sqlalchemy_utils.types import UUIDType
 
-from invenio_records_resources.records.models import RecordFileMixin
+from invenio_records_resources.records.models import RecordFileModelMixin
 
 
 class RecordMetadata(db.Model, RecordMetadataBase):
@@ -32,7 +32,7 @@ class RecordMetadata(db.Model, RecordMetadataBase):
     bucket = db.relationship(Bucket)
 
 
-class RecordFile(db.Model, RecordMetadataBase, RecordFileMixin):
+class RecordFile(db.Model, RecordMetadataBase, RecordFileModelMixin):
     """Model for mock module record files."""
 
     __record_model_cls__ = RecordMetadata
