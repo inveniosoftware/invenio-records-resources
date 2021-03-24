@@ -18,7 +18,7 @@ from ...config import lt_es7
 from ..base import Service
 from ..errors import RevisionIdMismatchError
 from .config import RecordServiceConfig
-from .schema import MarshmallowServiceSchema
+from .schema import ServiceSchemaWrapper
 
 
 class RecordService(Service):
@@ -48,12 +48,12 @@ class RecordService(Service):
     @property
     def schema(self):
         """Returns the data schema instance."""
-        return MarshmallowServiceSchema(self, schema=self.config.schema)
+        return ServiceSchemaWrapper(self, schema=self.config.schema)
 
     @property
     def schema_search_links(self):
         """Returns the schema used for making search links."""
-        return MarshmallowServiceSchema(
+        return ServiceSchemaWrapper(
             self, schema=self.config.schema_search_links)
 
     @property
@@ -230,12 +230,11 @@ class RecordService(Service):
         :param bool raise_errors: raise schema ValidationError or not.
         """
         self.require_permission(identity, "create")
-        # partial = partial or tuple()
 
         # Validate data and create record with pid
         data, errors = self.schema.load(
-            identity,
             data,
+            context={"identity": identity},
             raise_errors=raise_errors  # if False, flow is continued with data
                                        # only containing valid data, but errors
                                        # are reported (as warnings)
@@ -293,7 +292,13 @@ class RecordService(Service):
         self.require_permission(identity, "update", record=record)
 
         data, _ = self.schema.load(
-            identity, data, pid=record.pid, record=record)
+            data,
+            context=dict(
+                identity=identity,
+                pid=record.pid,
+                record=record
+            )
+        )
 
         # Run components
         for component in self.components:

@@ -42,10 +42,12 @@ class FileItem(RecordItem):
         links = LinksFactory(host=_current_host, config=self._links_config)
 
         self._data = self._service.file_schema.dump(
-            self._identity,
             self._file,
-            links_namespace="file",
-            links_factory=links,
+            context=dict(
+                identity=self._identity,
+                links_namespace="file",
+                links_factory=links,
+            )
         )
 
         return self._data
@@ -92,10 +94,12 @@ class FileList(ServiceListResult):
         schema = self._service.schema_files_links
 
         data = schema.dump(
-            self._identity,
             self._record,
-            links_factory=links,
-            links_namespace="files",
+            context=dict(
+                identity=self._identity,
+                links_factory=links,
+                links_namespace="files",
+            )
         )
         self._links = data.get("links")
 
@@ -108,10 +112,12 @@ class FileList(ServiceListResult):
         for entry in self._results:
             # Project the record
             projection = self._service.file_schema.dump(
-                self._identity,
                 entry,
-                links_namespace="file",
-                links_factory=links,
+                context=dict(
+                    identity=self._identity,
+                    links_namespace="file",
+                    links_factory=links,
+                )
             )
 
             yield projection

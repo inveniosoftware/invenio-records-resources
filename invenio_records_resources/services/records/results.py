@@ -55,11 +55,13 @@ class RecordItem(ServiceItemResult):
         links = LinksFactory(host=_current_host, config=self._links_config)
 
         self._data = self._service.schema.dump(
-            self._identity,
             self._record,
-            record=self._record,
-            links_namespace="record",
-            links_factory=links,
+            context=dict(
+                identity=self._identity,
+                record=self._record,
+                links_namespace="record",
+                links_factory=links,
+            )
         )
 
         return self._data
@@ -153,12 +155,14 @@ class RecordList(ServiceListResult):
 
             # Project the record
             projection = self._service.schema.dump(
-                self._identity,
                 record,
-                pid=record.pid,
-                record=record,
-                links_namespace="record",
-                links_factory=links
+                context=dict(
+                    identity=self._identity,
+                    pid=record.pid,
+                    record=record,
+                    links_namespace="record",
+                    links_factory=links
+                )
             )
 
             yield projection
@@ -182,11 +186,12 @@ class RecordList(ServiceListResult):
         schema = self._service.schema_search_links
 
         data = schema.dump(
-            self._identity,
-            # It ain't pretty but it will do
             {**self._params, "_pagination": self.pagination},
-            links_factory=links,
-            links_namespace="search",
+            context=dict(
+                identity=self._identity,
+                links_factory=links,
+                links_namespace="search",
+            )
         )
 
         return data.get("links")
