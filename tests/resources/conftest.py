@@ -15,23 +15,29 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
-from mock_module.resource import CustomRecordResource, \
-    CustomRecordResourceConfig
-from mock_module.service import Service, ServiceConfig
+from mock_module.resource import CustomRecordResourceConfig
+from mock_module.service import ServiceConfig
+
+from invenio_records_resources.resources import RecordResource
+from invenio_records_resources.services import RecordService
 
 
 @pytest.fixture(scope="module")
-def record_resource():
+def service():
     """Record Resource."""
-    return CustomRecordResource(
-        config=CustomRecordResourceConfig, service=Service(ServiceConfig))
+    return RecordService(ServiceConfig)
+
+
+@pytest.fixture(scope="module")
+def record_resource(service):
+    """Record Resource."""
+    return RecordResource(CustomRecordResourceConfig, service)
 
 
 @pytest.fixture(scope="module")
 def base_app(base_app, record_resource):
     """Application factory fixture."""
-    base_app.register_blueprint(record_resource.as_blueprint('mock_record'))
-    # base_app.register_error_handler(HTTPException, handle_http_exception)
+    base_app.register_blueprint(record_resource.as_blueprint())
     yield base_app
 
 

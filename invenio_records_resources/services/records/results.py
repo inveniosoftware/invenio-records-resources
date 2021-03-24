@@ -9,32 +9,24 @@
 
 """Service results."""
 
-from flask import current_app
-from marshmallow_utils.links import LinksFactory
 
 from ...config import lt_es7
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
 
 
-def _current_host():
-    """Function used to provide the current hostname to the link store."""
-    if current_app:
-        return current_app.config['SITE_HOSTNAME']
-    return None
-
-
 class RecordItem(ServiceItemResult):
     """Single record result."""
 
     def __init__(self, service, identity, record, errors=None,
-                 links_config=None):
+                 links_tpl=None, schema=None):
         """Constructor."""
         self._errors = errors
         self._identity = identity
-        self._links_config = links_config
+        self._links_tpl = links_tpl
         self._record = record
         self._service = service
+        self._schema = schema or service.schema
         self._data = None
 
     @property
@@ -47,22 +39,30 @@ class RecordItem(ServiceItemResult):
         return self.data[key]
 
     @property
+    def links(self):
+        """Get links for this result item."""
+        return self._links_tpl.expand(self._record)
+
+    @property
+    def _obj(self):
+        """Return the object to dump."""
+        return self._record
+
+    @property
     def data(self):
         """Property to get the record."""
         if self._data:
             return self._data
 
-        links = LinksFactory(host=_current_host, config=self._links_config)
-
-        self._data = self._service.schema.dump(
-            self._record,
+        self._data = self._schema.dump(
+            self._obj,
             context=dict(
                 identity=self._identity,
                 record=self._record,
-                links_namespace="record",
-                links_factory=links,
             )
         )
+        if self._links_tpl:
+            self._data["links"] = self.links
 
         return self._data
 
@@ -103,21 +103,22 @@ class RecordItem(ServiceItemResult):
 class RecordList(ServiceListResult):
     """List of records result."""
 
-    def __init__(self, service, identity, results, params,
-                 links_config=None):
+    def __init__(self, service, identity, results, params, links_tpl=None,
+                 links_item_tpl=None, schema=None):
         """Constructor.
 
         :params service: a service instance
         :params identity: an identity that performed the service request
         :params results: the search results
         :params params: dictionary of the query parameters
-        :params links_config: a links store config
         """
         self._identity = identity
-        self._links_config = links_config
         self._results = results
         self._service = service
+        self._schema = schema or service.schema
         self._params = params
+        self._links_tpl = links_tpl
+        self._links_item_tpl = links_item_tpl
 
     def __len__(self):
         """Return the total numer of hits."""
@@ -147,23 +148,20 @@ class RecordList(ServiceListResult):
     @property
     def hits(self):
         """Iterator over the hits."""
-        links = LinksFactory(host=_current_host, config=self._links_config)
-
         for hit in self._results:
             # Load dump
             record = self._service.record_cls.loads(hit.to_dict())
 
             # Project the record
-            projection = self._service.schema.dump(
+            projection = self._schema.dump(
                 record,
                 context=dict(
                     identity=self._identity,
-                    pid=record.pid,
                     record=record,
-                    links_namespace="record",
-                    links_factory=links
                 )
             )
+            if self._links_item_tpl:
+                projection['links'] = self._links_item_tpl.expand(record)
 
             yield projection
 
@@ -176,26 +174,6 @@ class RecordList(ServiceListResult):
             self.total,
         )
 
-    @property
-    def links(self):
-        """Get the search result links.
-
-        TODO: Would be nicer if this were a parallel of data above.
-        """
-        links = LinksFactory(host=_current_host, config=self._links_config)
-        schema = self._service.schema_search_links
-
-        data = schema.dump(
-            {**self._params, "_pagination": self.pagination},
-            context=dict(
-                identity=self._identity,
-                links_factory=links,
-                links_namespace="search",
-            )
-        )
-
-        return data.get("links")
-
     def to_dict(self):
         """Return result as a dictionary."""
         # TODO: This part should imitate the result item above. I.e. add a
@@ -205,10 +183,9 @@ class RecordList(ServiceListResult):
                 "hits": list(self.hits),
                 "total": self.total,
             },
-            "links": self.links,
             "sortBy": self._params["sort"],
             "aggregations": self.aggregations,
         }
-        if res['links'] is None:
-            del res['links']
+        if self._links_tpl:
+            res['links'] = self._links_tpl.expand(self.pagination)
         return res

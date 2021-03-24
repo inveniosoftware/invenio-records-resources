@@ -13,8 +13,8 @@ from flask_resources.parsers import MultiDictSchema
 from marshmallow import fields, post_load, validate
 
 
-class SearchURLArgsSchema(MultiDictSchema):
-    """Schema for search URL args."""
+class SearchRequestArgsSchema(MultiDictSchema):
+    """Request URL query string arguments."""
 
     q = fields.String()
     sort = fields.String()

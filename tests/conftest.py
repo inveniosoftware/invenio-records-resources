@@ -44,19 +44,6 @@ def create_app(instance_path, entry_points):
     return _create_api
 
 
-@pytest.fixture()
-def location(db, tmp_path):
-    """File system location."""
-    loc = Location(
-        name='testloc',
-        uri=str(tmp_path),
-        default=True
-    )
-    db.session.add(loc)
-    db.session.commit()
-    return loc
-
-
 @pytest.fixture(scope='function')
 def queue(app):
     """Declare an clean the indexer queue."""

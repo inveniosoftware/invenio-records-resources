@@ -10,9 +10,11 @@
 """Files Service API."""
 
 from .config import FileServiceConfig
+from .links import FileLink
 from .service import FileService
 
 __all__ = (
+    'FileLink',
     'FileServiceConfig',
     'FileService',
 )

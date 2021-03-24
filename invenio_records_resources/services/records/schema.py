@@ -57,12 +57,6 @@ class RecordSchema(BaseRecordSchema):
     metadata = fields.Nested(MetadataSchema)
 
 
-class SearchLinks(Schema):
-    """Search links schema."""
-
-    links = Links()
-
-
 class ServiceSchemaWrapper:
     """Schema wrapper that enhances load/dump of wrapped schema.
 

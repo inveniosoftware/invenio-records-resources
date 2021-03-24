@@ -35,7 +35,7 @@ class QueryStrParam(ParamInterpreter):
             return search
 
         try:
-            parser_cls = self.config.search_query_parser_cls
+            parser_cls = self.config.query_parser_cls
             query = parser_cls(identity).parse(query_str)
             return search.query(query)
         except SyntaxError:

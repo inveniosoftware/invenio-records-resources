@@ -8,7 +8,6 @@
 
 """Records Models."""
 
-import invenio_records.models as base_models
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from sqlalchemy.dialects import mysql
@@ -16,7 +15,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy_utils.types import UUIDType
 
 
-class RecordFileModelMixin:
+class FileRecordModelMixin:
     """Base class for a record file, storing its state and metadata."""
 
     __record_model_cls__ = None

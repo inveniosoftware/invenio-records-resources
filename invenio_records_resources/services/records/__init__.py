@@ -9,10 +9,16 @@
 
 """Record Service API."""
 
-from .config import RecordServiceConfig
+from .config import RecordServiceConfig, SearchOptions
+from .links import RecordLink, pagination_links
+from .schema import ServiceSchemaWrapper
 from .service import RecordService
 
 __all__ = (
+    'pagination_links',
+    'RecordLink',
     'RecordService',
     'RecordServiceConfig',
+    'SearchOptions',
+    'ServiceSchemaWrapper',
 )

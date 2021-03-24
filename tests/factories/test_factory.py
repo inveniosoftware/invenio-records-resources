@@ -14,7 +14,8 @@ from sqlalchemy.exc import InvalidRequestError
 from uritemplate import URITemplate
 
 from invenio_records_resources.factories.factory import RecordTypeFactory
-from invenio_records_resources.services import RecordServiceConfig
+from invenio_records_resources.services import RecordServiceConfig, \
+    SearchOptions
 from invenio_records_resources.services.records.components import \
     ServiceComponent
 from invenio_records_resources.services.records.schema import RecordSchema
@@ -63,11 +64,8 @@ def test_resource_class_create():
         rec_type.resource_config_cls.__name__ == "ResourceTestResourceConfig"
     )
 
-    assert rec_type.resource_config_cls.list_route == "/resourcetests"
-    assert (
-        rec_type.resource_config_cls.item_route
-        == "/resourcetests/<pid_value>"
-    )
+    assert rec_type.resource_config_cls.url_prefix == "/resourcetests"
+    assert rec_type.resource_config_cls.blueprint_name == "resourcetest"
 
     # links_schema_class = rec_type.resource_config_cls.links_config["record"]
     # search_links_schema_class = rec_type.resource_config_cls.links_config[
@@ -112,8 +110,6 @@ def test_service_class_create():
     assert rec_type.service_config_cls.schema == RecordSchema
     assert rec_type.service_config_cls.record_cls == rec_type.record_cls
 
-    assert not rec_type.service_config_cls.search_facets_options
-
 
 def test_optional_schema_path():
     rec_type = RecordTypeFactory(
@@ -156,24 +152,21 @@ def test_optional_endpoint_route():
         "OptionalEndpoint", RecordSchema, endpoint_route="api/customroute"
     )
 
-    assert rec_type.resource_config_cls.list_route == "api/customroute"
-    assert (
-        rec_type.resource_config_cls.item_route
-        == "api/customroute/<pid_value>"
-    )
+    assert rec_type.resource_config_cls.url_prefix == "api/customroute"
 
 
 def test_optional_service_params():
-    search_facets_options = {
-        "aggs": {
-            "vocabulary_type": {
-                "terms": {"field": "vocabulary_type"},
-            }
-        },
-        "post_filters": {
-            "vocabulary_type": terms_filter("vocabulary_type"),
-        },
-    }
+    class Opts(SearchOptions):
+        facets_options = {
+            "aggs": {
+                "vocabulary_type": {
+                    "terms": {"field": "vocabulary_type"},
+                }
+            },
+            "post_filters": {
+                "vocabulary_type": terms_filter("vocabulary_type"),
+            },
+        }
 
     class CustomComponent(ServiceComponent):
         """Service component for metadata."""
@@ -185,13 +178,13 @@ def test_optional_service_params():
     rec_type = RecordTypeFactory(
         "SearchFacets",
         RecordSchema,
-        search_facets_options=search_facets_options,
+        search_options=Opts,
         service_components=[CustomComponent],
     )
 
     assert (
-        rec_type.service_config_cls.search_facets_options
-        == search_facets_options
+        rec_type.service_config_cls.search.facets_options
+        == Opts.facets_options
     )
 
     assert (

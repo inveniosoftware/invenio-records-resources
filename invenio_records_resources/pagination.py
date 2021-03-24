@@ -40,10 +40,20 @@ class Pagination:
         return page if page.valid() else None
 
     @property
+    def has_prev(self):
+        """True of pagination has a prev page."""
+        return self.prev_page is not None
+
+    @property
     def next_page(self):
         """Returns the previous Page or None if no previous Page."""
         page = Pagination(self.size, self.page + 1, self.max_results)
         return page if page.valid() else None
+
+    @property
+    def has_next(self):
+        """True of pagination has a next page."""
+        return self.next_page is not None
 
     @property
     def from_idx(self):

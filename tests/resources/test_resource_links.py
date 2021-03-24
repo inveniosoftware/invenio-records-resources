@@ -58,17 +58,3 @@ def test_update_links(app, client, input_data, headers):
 
     assert res.status_code == 200
     assert_expected_links(pid_value, res.json["links"])
-
-
-def test_config_hostname_links(app, client, input_data, headers):
-    site_hostname = "testsite.com"
-    orig_site_hostname = app.config['SITE_HOSTNAME']
-    app.config['SITE_HOSTNAME'] = site_hostname
-
-    res = client.post('/mocks', headers=headers, json=input_data)
-    pid_value = res.json["id"]
-
-    assert res.status_code == 201
-    assert_expected_links(pid_value, res.json["links"], site_hostname)
-
-    app.config['SITE_HOSTNAME'] = orig_site_hostname

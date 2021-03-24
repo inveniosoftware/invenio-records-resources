@@ -12,12 +12,11 @@
 
 from io import BytesIO
 
-from invenio_files_rest.models import Bucket, FileInstance, Location, \
-    ObjectVersion
+from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from invenio_records.systemfields import ModelField
 from mock_module import models
+from mock_module.api import FileRecord
 from mock_module.api import Record as RecordBase
-from mock_module.api import RecordFile
 
 from invenio_records_resources.records.systemfields.files import FilesField
 
@@ -25,7 +24,7 @@ from invenio_records_resources.records.systemfields.files import FilesField
 # Define a files-enabled record class
 class Record(RecordBase):
 
-    files = FilesField(store=True, file_cls=RecordFile)
+    files = FilesField(store=True, file_cls=FileRecord)
     bucket_id = ModelField()
     bucket = ModelField(dump=False)
 
@@ -82,7 +81,7 @@ def test_record_files_operations(base_app, db, location):
     assert rf['metadata'] == {'description': 'A test file.'}
     db.session.commit()
 
-    assert models.RecordFile.query.count() == 1
+    assert models.FileRecordMetadata.query.count() == 1
     assert ObjectVersion.query.count() == 0
 
     # Update the file's metadata
@@ -117,7 +116,7 @@ def test_record_files_operations(base_app, db, location):
     record.commit()
     db.session.commit()
 
-    assert models.RecordFile.query.count() == 0
+    assert models.FileRecordMetadata.query.count() == 0
     assert FileInstance.query.count() == 1
     assert ObjectVersion.query.count() == 2  # original + delete marker
     assert Bucket.query.count() == 1
@@ -143,7 +142,7 @@ def test_record_files_clear(base_app, db, location):
     record.commit()
     db.session.commit()
 
-    assert models.RecordFile.query.count() == 3
+    assert models.FileRecordMetadata.query.count() == 3
     assert FileInstance.query.count() == 2
     assert ObjectVersion.query.count() == 2
     assert Bucket.query.count() == 1
@@ -154,7 +153,7 @@ def test_record_files_clear(base_app, db, location):
     record.commit()
     db.session.commit()
 
-    assert models.RecordFile.query.count() == 0
+    assert models.FileRecordMetadata.query.count() == 0
     assert FileInstance.query.count() == 2
     assert ObjectVersion.query.count() == 4  # 2 original + 2 delete markers
     assert Bucket.query.count() == 1

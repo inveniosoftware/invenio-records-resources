@@ -10,58 +10,19 @@
 
 """Example resource."""
 
-from invenio_records_resources.resources import FileActionResource, \
-    FileActionResourceConfig, FileResource, FileResourceConfig, \
-    RecordResource, RecordResourceConfig
-
-from .schema import FileLinksSchema, FilesLinksSchema, RecordLinksSchema, \
-    SearchLinksSchema
+from invenio_records_resources.resources import FileResourceConfig, \
+    RecordResourceConfig
 
 
 class CustomRecordResourceConfig(RecordResourceConfig):
     """Custom record resource configuration."""
 
-    list_route = "/mocks"
-    item_route = f"{list_route}/<pid_value>"
-
-    links_config = {
-        "record": RecordLinksSchema,
-        "search": SearchLinksSchema,
-        "file": FileLinksSchema,
-        "files": FilesLinksSchema,
-    }
-
-
-class CustomRecordResource(RecordResource):
-    """Custom record resource"."""
+    blueprint_name = "mocks"
+    url_prefix = "/mocks"
 
 
 class CustomFileResourceConfig(FileResourceConfig):
     """Custom file resource configuration."""
 
-    item_route = "/mocks/<pid_value>/files/<key>"
-    list_route = "/mocks/<pid_value>/files"
-
-    links_config = {
-        "file": FileLinksSchema,
-        "files": FilesLinksSchema,
-    }
-
-
-class CustomFileResource(FileResource):
-    """Custom file resource."""
-
-
-class CustomFileActionResourceConfig(FileActionResourceConfig):
-    """Custom file action resource config."""
-
-    list_route = "/mocks/<pid_value>/files/<key>/<action>"
-
-    links_config = {
-        "file": FileLinksSchema,
-        "files": FilesLinksSchema,
-    }
-
-
-class CustomFileActionResource(FileActionResource):
-    """Custom file action resource."""
+    blueprint_name = "mocks_files"
+    url_prefix = "/mocks/<pid_value>"

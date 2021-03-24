@@ -11,14 +11,6 @@
 from io import BytesIO
 
 import pytest
-from invenio_files_rest.models import Bucket, FileInstance, Location, \
-    ObjectVersion
-from invenio_records.systemfields import ModelField
-from mock_module import models
-from mock_module.api import Record as RecordBase
-from mock_module.api import RecordFile
-
-from invenio_records_resources.records.systemfields.files import FilesField
 
 
 @pytest.mark.skip()

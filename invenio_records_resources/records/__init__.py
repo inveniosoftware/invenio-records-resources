@@ -9,12 +9,12 @@
 
 """Data access layer."""
 
-from .api import File, Record, RecordFile
-from .models import RecordFileModelMixin
+from .api import File, FileRecord, Record
+from .models import FileRecordModelMixin
 
 __all__ = (
     "File",
+    "FileRecord",
+    "FileRecordModelMixin",
     "Record",
-    "RecordFile",
-    "RecordFileModelMixin",
 )

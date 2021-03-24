@@ -15,14 +15,17 @@ from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import ObjectVersion
 
-from ..records import RecordService
+from ..base import LinksTemplate, Service
 from ..records.schema import ServiceSchemaWrapper
 
 
-class FileService(RecordService):
-    """Files service with files support."""
+class FileService(Service):
+    """A service for adding files support to records."""
 
-    default_config = None  # It is defined when the mixin is used.
+    @property
+    def record_cls(self):
+        """Get the record class."""
+        return self.config.record_cls
 
     @property
     def file_schema(self):
@@ -37,16 +40,22 @@ class FileService(RecordService):
         """Create a new instance of the resource list."""
         return self.config.file_result_list_cls(*args, **kwargs)
 
-    @property
-    def schema_files_links(self):
-        """Returns the schema used for making search links."""
-        return ServiceSchemaWrapper(
-            self, schema=self.config.schema_files_links)
+    def file_links_list_tpl(self, id_):
+        """Return a link template for list results."""
+        return LinksTemplate(
+            self.config.file_links_list, context={"id": id_}
+        )
+
+    def file_links_item_tpl(self, id_):
+        """Return a link template for item results."""
+        return LinksTemplate(
+            self.config.file_links_item, context={"id": id_}
+        )
 
     #
     # High-level API
     #
-    def list_files(self, id_, identity, links_config=None):
+    def list_files(self, id_, identity):
         """List the files of a record."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -57,10 +66,11 @@ class FileService(RecordService):
             identity,
             results=record.files.values(),
             record=record,
-            links_config=links_config,
+            links_tpl=self.file_links_list_tpl(id_),
+            links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def init_files(self, id_, identity, data, links_config=None):
+    def init_files(self, id_, identity, data):
         """Initialize the file upload for the record."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -80,10 +90,11 @@ class FileService(RecordService):
             identity,
             results=results,
             record=record,
-            links_config=links_config,
+            links_tpl=self.file_links_list_tpl(id_),
+            links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def update_files_options(self, id_, identity, data, links_config=None):
+    def update_files_options(self, id_, identity, data):
         """Update the files' options."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -107,11 +118,11 @@ class FileService(RecordService):
             identity,
             results=record.files.values(),
             record=record,
-            links_config=links_config,
+            links_tpl=self.file_links_list_tpl(id_),
+            links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def update_file_metadata(
-            self, id_, file_key, identity, data, links_config=None):
+    def update_file_metadata(self, id_, file_key, identity, data):
         """Update the metadata of a file."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -124,10 +135,10 @@ class FileService(RecordService):
             identity,
             rf,
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def read_file_metadata(self, id_, file_key, identity, links_config=None):
+    def read_file_metadata(self, id_, file_key, identity):
         """Read the metadata of a file."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -138,11 +149,11 @@ class FileService(RecordService):
             identity,
             record.files[file_key],
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )
 
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
-    def commit_file(self, id_, file_key, identity, links_config=None):
+    def commit_file(self, id_, file_key, identity):
         """Commit a file upload."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -159,10 +170,10 @@ class FileService(RecordService):
             identity,
             record.files[file_key],
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def delete_file(self, id_, file_key, identity, links_config=None):
+    def delete_file(self, id_, file_key, identity):
         """Delete a single file."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -177,10 +188,10 @@ class FileService(RecordService):
             identity,
             deleted_file,
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def delete_all_files(self, id_, identity, links_config=None):
+    def delete_all_files(self, id_, identity):
         """Delete all the files of the record."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -196,12 +207,13 @@ class FileService(RecordService):
             identity,
             results,
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_list_tpl(id_),
+            links_item_tpl=self.file_links_item_tpl(id_),
         )
 
     def set_file_content(
             self, id_, file_key, identity, stream,
-            content_length=None, links_config=None):
+            content_length=None):
         """Save file content."""
         # TODO stream not exhausted
         # FIXME: Remove "registered_only=False" since it breaks access to an
@@ -239,10 +251,10 @@ class FileService(RecordService):
             identity,
             record.files[file_key],
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def get_file_content(self, id_, file_key, identity, links_config=None):
+    def get_file_content(self, id_, file_key, identity):
         """Retrieve file content."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -255,5 +267,5 @@ class FileService(RecordService):
             identity,
             record.files[file_key],
             record,
-            links_config=links_config,
+            links_tpl=self.file_links_item_tpl(id_),
         )

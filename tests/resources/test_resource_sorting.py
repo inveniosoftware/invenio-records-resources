@@ -14,7 +14,9 @@ from copy import deepcopy
 
 import pytest
 from mock_module.api import Record
-from mock_module.service import Service, ServiceConfig
+from mock_module.service import ServiceConfig
+
+from invenio_records_resources.services import RecordService
 
 # 3 things to test
 # 0- search options are configurable (see mock_module)
@@ -32,7 +34,7 @@ def three_indexed_records(app, identity_simple, es):
             'title': 'Test'
         },
     }
-    service = Service(ServiceConfig)
+    service = RecordService(ServiceConfig)
     title_parts = [
         "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
     ]

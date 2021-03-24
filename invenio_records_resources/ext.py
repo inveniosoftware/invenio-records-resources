@@ -26,8 +26,6 @@ class InvenioRecordsResources(object):
 
     def init_config(self, app):
         """Initialize configuration."""
-        # TODO: This one will actually not load the config specified in
-        # config.py because the vars doesn't start with RECORDS_RESOURCES_
         for k in dir(config):
-            if k.startswith("RECORDS_RESOURCES_") or k in ['SITE_HOSTNAME']:
+            if k.startswith("RECORDS_RESOURCES_") or k.startswith('SITE_'):
                 app.config.setdefault(k, getattr(config, k))

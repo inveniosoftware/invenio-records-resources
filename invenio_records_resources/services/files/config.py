@@ -9,22 +9,32 @@
 
 """Record Service API."""
 
-from invenio_records_permissions.policies.records import RecordPermissionPolicy
-
-from ..records import RecordServiceConfig
+from ..base import ServiceConfig
+from ..records.links import RecordLink
+from .links import FileLink
 from .results import FileItem, FileList
-from .schema import FileSchema, FilesLinks
+from .schema import FileSchema
 
 
 #
 # Configurations
 #
-class FileServiceConfig(RecordServiceConfig):
+class FileServiceConfig(ServiceConfig):
     """File Service configuration."""
 
-    permission_policy_cls = RecordPermissionPolicy
+    record_cls = None
+
     file_result_item_cls = FileItem
     file_result_list_cls = FileList
 
     file_schema = FileSchema
-    schema_files_links = FilesLinks
+
+    file_links_list = {
+        "self": RecordLink("{+api}/records/{id}/files"),
+    }
+
+    file_links_item = {
+        "self": FileLink("{+api}/records/{id}/files/{key}"),
+        "content": FileLink("{+api}/records/{id}/files/{key}/content"),
+        "commit": FileLink("{+api}/records/{id}/files/{key}/commit"),
+    }

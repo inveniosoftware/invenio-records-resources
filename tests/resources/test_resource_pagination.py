@@ -11,7 +11,9 @@
 
 import pytest
 from mock_module.api import Record
-from mock_module.service import Service, ServiceConfig
+from mock_module.service import ServiceConfig
+
+from invenio_records_resources.services import RecordService
 
 # 2 things to test
 # 1- results are paginated
@@ -23,7 +25,7 @@ def three_indexed_records(app, identity_simple, es):
     # NOTE: We make use of es fixture (and not es_clear) here because all tests
     #       assume 3 records have been indexed and NO tests in this module
     #       adds/deletes any.
-    service = Service(ServiceConfig)
+    service = RecordService(ServiceConfig)
 
     for i in range(3):
         data = {
@@ -37,10 +39,8 @@ def three_indexed_records(app, identity_simple, es):
 
 
 @pytest.fixture(scope="module")
-def search_options(app):
-    service = Service(ServiceConfig)
-    options = service.config.search_pagination_options
-    return options
+def search_options(app, service):
+    return service.config.search.pagination_options
 
 
 #

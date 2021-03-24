@@ -20,7 +20,7 @@ class FacetsParam(ParamInterpreter):
 
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
-        options = self.config.search_facets_options
+        options = self.config.facets_options
 
         # Apply aggregations
         for name, agg in self.iter_aggs_options(options):

@@ -179,7 +179,7 @@ class FilesField(SystemField):
             data['entries'] = {}
             # TODO: Does it make sense now to store separately? We can still
             # include `meta` in each entries object (since storage is now in
-            # the RecordFile model)
+            # the FileRecord model)
             data['meta'] = {}
 
             for key, rf in files.items():

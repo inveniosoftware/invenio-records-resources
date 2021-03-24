@@ -9,7 +9,12 @@
 
 """Example service."""
 
-from invenio_records_resources.services import FileService, FileServiceConfig
+from invenio_records_resources.services import FileServiceConfig, \
+    RecordServiceConfig, SearchOptions
+from invenio_records_resources.services.files.links import FileLink
+from invenio_records_resources.services.records.config import SearchOptions
+from invenio_records_resources.services.records.links import RecordLink, \
+    pagination_links
 from invenio_records_resources.services.records.schema import RecordSchema
 from invenio_records_resources.services.records.search import terms_filter
 
@@ -17,16 +22,10 @@ from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
 
 
-class ServiceConfig(FileServiceConfig):
-    """Mock service configuration.
+class MockSearchOptions(SearchOptions):
+    """Mock module search options."""
 
-    Needs both configs, with File overwritting the record ones.
-    """
-
-    permission_policy_cls = PermissionPolicy
-    record_cls = Record
-    schema = RecordSchema
-    search_facets_options = {
+    facets_options = {
         'aggs': {
             'type': {
                 'terms': {'field': 'metadata.type.type'},
@@ -44,16 +43,43 @@ class ServiceConfig(FileServiceConfig):
     }
 
 
-class Service(FileService):
-    """Mock service."""
+class ServiceConfig(RecordServiceConfig):
+    """Mock service configuration.
 
-
-class FileServiceConfig(FileServiceConfig):
-    """Mock service configuration."""
+    Needs both configs, with File overwritting the record ones.
+    """
 
     permission_policy_cls = PermissionPolicy
+    record_cls = Record
+    schema = RecordSchema
+    search = MockSearchOptions
+
+    links_item = {
+        "self": RecordLink("{+api}/mocks/{id}"),
+        "files": RecordLink("{+api}/mocks/{id}/files"),
+    }
+
+    links_search = pagination_links("{+api}/mocks{?args*}")
+
+
+class ServiceWithFilesConfig(ServiceConfig):
+    """Config for service with files support."""
+
     record_cls = RecordWithFile
 
 
-class FileService(FileService):
-    """Mock service."""
+class MockFileServiceConfig(FileServiceConfig):
+    """File service configuration."""
+
+    record_cls = RecordWithFile
+    permission_policy_cls = PermissionPolicy
+
+    file_links_list = {
+        "self": RecordLink("{+api}/mocks/{id}/files"),
+    }
+
+    file_links_item = {
+        "self": FileLink("{+api}/mocks/{id}/files/{key}"),
+        "content": FileLink("{+api}/mocks/{id}/files/{key}/content"),
+        "commit": FileLink("{+api}/mocks/{id}/files/{key}/commit"),
+    }

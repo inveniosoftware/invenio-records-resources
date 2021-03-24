@@ -46,8 +46,8 @@ class Record(RecordBase, SystemFieldsMixin):
     # files = FilesField(...)
 
 
-class RecordFile(RecordBase, SystemFieldsMixin):
-    """Base class for record file APIs."""
+class FileRecord(RecordBase, SystemFieldsMixin):
+    """Base class for a record describing a file."""
 
     @classmethod
     def get_by_key(cls, record_id, key):

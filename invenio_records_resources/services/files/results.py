@@ -9,23 +9,24 @@
 
 """File service results."""
 
-from marshmallow_utils.links import LinksFactory
-
 from ..base import ServiceListResult
-from ..records.results import RecordItem, _current_host
+from ..records.results import RecordItem
 
 
-# FIXME: This two classes (FileItem and FileList) can simply inherit more
-# if the schema is customizable in the function? See e.g. `data()` only changes
-# `self._service.{schema|file_schema}.dump()` compared to RecordItem.
 class FileItem(RecordItem):
     """List of file items result."""
 
     def __init__(self, service, identity, file_, record, errors=None,
-                 links_config=None):
+                 links_tpl=None):
         """Constructor."""
         super(FileItem, self).__init__(
-            service, identity, record, errors, links_config)
+            service,
+            identity,
+            record,
+            errors=errors,
+            links_tpl=links_tpl,
+            schema=service.file_schema,
+        )
         self._file = file_
 
     @property
@@ -34,23 +35,14 @@ class FileItem(RecordItem):
         return self._file.key
 
     @property
-    def data(self):
-        """Property to get the record."""
-        if self._data:
-            return self._data
+    def _obj(self):
+        """Return the object to dump."""
+        return self._file
 
-        links = LinksFactory(host=_current_host, config=self._links_config)
-
-        self._data = self._service.file_schema.dump(
-            self._file,
-            context=dict(
-                identity=self._identity,
-                links_namespace="file",
-                links_factory=links,
-            )
-        )
-
-        return self._data
+    @property
+    def links(self):
+        """Get links for this result item."""
+        return self._links_tpl.expand(self._file)
 
     def send_file(self, restricted=True, as_attachment=False):
         """Return file stream."""
@@ -61,7 +53,8 @@ class FileItem(RecordItem):
 class FileList(ServiceListResult):
     """List of file items result."""
 
-    def __init__(self, service, identity, results, record, links_config=None):
+    def __init__(self, service, identity, results, record, links_tpl=None,
+                 links_item_tpl=None):
         """Constructor.
 
         :params service: a service instance
@@ -70,55 +63,25 @@ class FileList(ServiceListResult):
         :params links_config: a links store config
         """
         self._identity = identity
-        self._links_config = links_config
         self._record = record
         self._results = results
         self._service = service
-        self._links = None
-
-    def __len__(self):
-        """Return the total numer of hits."""
-        return self.total
-
-    def __iter__(self):
-        """Iterator over the hits."""
-        return self.results
-
-    @property
-    def links(self):
-        """Get the list result links."""
-        if self._links:
-            return self._links
-
-        links = LinksFactory(host=_current_host, config=self._links_config)
-        schema = self._service.schema_files_links
-
-        data = schema.dump(
-            self._record,
-            context=dict(
-                identity=self._identity,
-                links_factory=links,
-                links_namespace="files",
-            )
-        )
-        self._links = data.get("links")
-
-        return self._links
+        self._links_tpl = links_tpl
+        self._links_item_tpl = links_item_tpl
 
     @property
     def entries(self):
         """Iterator over the hits."""
-        links = LinksFactory(host=_current_host, config=self._links_config)
         for entry in self._results:
             # Project the record
             projection = self._service.file_schema.dump(
                 entry,
                 context=dict(
                     identity=self._identity,
-                    links_namespace="file",
-                    links_factory=links,
                 )
             )
+            if self._links_item_tpl:
+                projection['links'] = self._links_item_tpl.expand(entry)
 
             yield projection
 
@@ -128,8 +91,9 @@ class FileList(ServiceListResult):
         record_files = self._record.files
         result = {
             "enabled": record_files.enabled,
-            "links": self.links,
         }
+        if self._links_tpl:
+            result['links'] = self._links_tpl.expand(self._record)
 
         if result['enabled']:
             result.update({

@@ -15,7 +15,7 @@ from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 
 from ...config import lt_es7
-from ..base import Service
+from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
 from .schema import ServiceSchemaWrapper
 
@@ -47,13 +47,6 @@ class RecordService(Service):
         """Returns the data schema instance."""
         return ServiceSchemaWrapper(self, schema=self.config.schema)
 
-    # TODO: review this one?
-    @property
-    def schema_search_links(self):
-        """Returns the schema used for making search links."""
-        return ServiceSchemaWrapper(
-            self, schema=self.config.schema_search_links)
-
     @property
     def components(self):
         """Return initialized service components."""
@@ -63,6 +56,13 @@ class RecordService(Service):
     def record_cls(self):
         """Factory for creating a record class."""
         return self.config.record_cls
+
+    @property
+    def links_item_tpl(self):
+        """Item links template."""
+        return LinksTemplate(
+            self.config.links_item,
+        )
 
     def check_revision_id(self, record, expected_revision_id):
         """Validate the given revision_id with current record's one.
@@ -79,8 +79,9 @@ class RecordService(Service):
                 record.revision_id, expected_revision_id
             )
 
-    def create_search(self, identity, record_cls, permission_action='read',
-                      preference=None, extra_filter=None):
+    def create_search(self, identity, record_cls, search_opts,
+                      permission_action='read', preference=None,
+                      extra_filter=None):
         """Instantiate a search class."""
         permission = self.permission_policy(
             action_name=permission_action, identity=identity)
@@ -89,7 +90,7 @@ class RecordService(Service):
         if extra_filter is not None:
             default_filter = default_filter & extra_filter
 
-        search = self.config.search_cls(
+        search = search_opts.search_cls(
             using=current_search_client,
             default_filter=default_filter,
             index=record_cls.index.search_alias,
@@ -111,27 +112,30 @@ class RecordService(Service):
 
         return search
 
-    def search_request(self, identity, params, record_cls, preference=None,
-                       extra_filter=None, permission_action='read'):
+    def search_request(self, identity, params, record_cls, search_opts,
+                       preference=None, extra_filter=None,
+                       permission_action='read'):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
             record_cls,
+            search_opts,
             permission_action=permission_action,
             preference=preference,
             extra_filter=extra_filter,
         )
 
         # Run search args evaluator
-        for interpreter_cls in self.config.search_params_interpreters_cls:
-            search = interpreter_cls(self.config).apply(
+        for interpreter_cls in search_opts.params_interpreters_cls:
+            search = interpreter_cls(search_opts).apply(
                 identity, search, params
             )
 
         return search
 
     def _search(self, action, identity, params, es_preference, record_cls=None,
-                extra_filter=None, permission_action='read', **kwargs):
+                search_opts=None, extra_filter=None, permission_action='read',
+                **kwargs):
         """Create the Elasticsearch DSL."""
         # Merge params
         # NOTE: We allow using both the params variable, as well as kwargs. The
@@ -145,6 +149,7 @@ class RecordService(Service):
             identity,
             params,
             record_cls or self.record_cls,
+            search_opts or self.config.search,
             preference=es_preference,
             extra_filter=extra_filter,
             permission_action=permission_action,
@@ -159,8 +164,7 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, params=None, links_config=None,
-               es_preference=None, **kwargs):
+    def search(self, identity, params=None, es_preference=None, **kwargs):
         """Search for records matching the querystring."""
         self.require_permission(identity, 'search')
 
@@ -174,11 +178,13 @@ class RecordService(Service):
             identity,
             search_result,
             params,
-            links_config=links_config
+            links_tpl=LinksTemplate(self.config.links_search, context={
+                "args": params
+            }),
+            links_item_tpl=self.links_item_tpl,
         )
 
-    def scan(self, identity, params=None, links_config=None,
-             es_preference=None, **kwargs):
+    def scan(self, identity, params=None, es_preference=None, **kwargs):
         """Scan for records matching the querystring."""
         self.require_permission(identity, 'search')
 
@@ -192,7 +198,8 @@ class RecordService(Service):
             identity,
             search_result,
             params,
-            links_config=links_config
+            links_tpl=None,
+            links_item_tpl=self.links_item_tpl,
         )
 
     def reindex(self, identity, params=None, es_preference=None, **kwargs):
@@ -209,22 +216,19 @@ class RecordService(Service):
         self.indexer.bulk_index(iterable_ids)
         return True
 
-    def create(self, identity, data, links_config=None):
+    def create(self, identity, data):
         """Create a record.
 
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
-        return self._create(
-            self.record_cls, identity, data, links_config=links_config)
+        return self._create(self.record_cls, identity, data)
 
-    def _create(self, record_cls, identity, data, links_config=None,
-                raise_errors=True):
+    def _create(self, record_cls, identity, data, raise_errors=True):
         """Create a record.
 
         :param identity: Identity of user creating the record.
         :param dict data: Input data according to the data schema.
-        :param links_config: Links configuration.
         :param bool raise_errors: raise schema ValidationError or not.
         """
         self.require_permission(identity, "create")
@@ -256,11 +260,11 @@ class RecordService(Service):
             self,
             identity,
             record,
-            links_config=links_config,
+            links_tpl=self.links_item_tpl,
             errors=errors
         )
 
-    def read(self, id_, identity, links_config=None):
+    def read(self, id_, identity):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
@@ -275,11 +279,10 @@ class RecordService(Service):
             self,
             identity,
             record,
-            links_config=links_config
+            links_tpl=self.links_item_tpl,
         )
 
-    def update(self, id_, identity, data, links_config=None,
-               revision_id=None):
+    def update(self, id_, identity, data, revision_id=None):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -312,7 +315,7 @@ class RecordService(Service):
             self,
             identity,
             record,
-            links_config=links_config
+            links_tpl=self.links_item_tpl,
         )
 
     def delete(self, id_, identity, revision_id=None):

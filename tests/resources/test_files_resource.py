@@ -6,50 +6,49 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Resources module to create REST APIs"""
+"""Invenio Resources module to create REST APIs."""
 
 from io import BytesIO
 
 import pytest
-from mock_module.resource import CustomFileActionResource, \
-    CustomFileActionResourceConfig, CustomFileResource, \
-    CustomFileResourceConfig, CustomRecordResource, \
+from mock_module.resource import CustomFileResourceConfig, \
     CustomRecordResourceConfig
-from mock_module.service import FileService, FileServiceConfig
+from mock_module.service import MockFileServiceConfig, ServiceWithFilesConfig
+
+from invenio_records_resources.resources import FileResource, RecordResource
+from invenio_records_resources.services import FileService, RecordService
 
 
 @pytest.fixture(scope="module")
-def record_resource():
+def service():
+    return RecordService(ServiceWithFilesConfig)
+
+
+@pytest.fixture(scope="module")
+def file_service():
+    return FileService(MockFileServiceConfig)
+
+
+@pytest.fixture(scope="module")
+def record_resource(service):
     """Record Resource."""
-    return CustomRecordResource(
-        config=CustomRecordResourceConfig,
-        service=FileService(FileServiceConfig))
+    return RecordResource(CustomRecordResourceConfig, service)
 
 
 @pytest.fixture(scope="module")
-def file_resources():
+def file_resource(file_service):
     """File Resources."""
-    return {
-        'mock_file': CustomFileResource(
-            config=CustomFileResourceConfig,
-            service=FileService(FileServiceConfig)
-        ),
-        'mock_file_action': CustomFileActionResource(
-            config=CustomFileActionResourceConfig,
-            service=FileService(FileServiceConfig)
-        ),
-    }
+    return FileResource(CustomFileResourceConfig, file_service)
 
 
 @pytest.fixture(scope="module")
-def base_app(base_app, file_resources):
+def base_app(base_app, record_resource, file_resource):
     """Application factory fixture."""
-    for name, resource in file_resources.items():
-        base_app.register_blueprint(resource.as_blueprint(name))
+    base_app.register_blueprint(file_resource.as_blueprint())
     yield base_app
 
 
-def test_files_api_flow(app, client, es_clear, headers, location):
+def test_files_api_flow(client, es_clear, headers, location):
     """Test record creation."""
     # Initialize a draft
     res = client.post('/mocks', headers=headers)

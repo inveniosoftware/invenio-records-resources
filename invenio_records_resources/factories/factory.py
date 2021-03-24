@@ -16,16 +16,15 @@ from invenio_records.models import RecordMetadataBase
 from invenio_records.systemfields import ConstantField
 from invenio_records_permissions import RecordPermissionPolicy
 
-from invenio_records_resources.factories.record_links_schema import \
-    RecordLinksSchemaMeta
-from invenio_records_resources.factories.record_search_link_schema import \
-    RecordSearchLinksSchemaMeta
 from invenio_records_resources.records.api import Record
 from invenio_records_resources.records.systemfields import IndexField, PIDField
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
+from invenio_records_resources.services.records.config import SearchOptions
+from invenio_records_resources.services.records.links import RecordLink, \
+    pagination_links
 
 
 class RecordTypeFactory(object):
@@ -52,7 +51,7 @@ class RecordTypeFactory(object):
         record_dumper=None,
         schema_path=None,
         index_name=None,
-        search_facets_options=None,
+        search_options=None,
         service_components=None,
         permission_policy_cls=None,
     ):
@@ -72,8 +71,7 @@ class RecordTypeFactory(object):
 
         # service attributes
         self.record_type_service_schema = record_type_service_schema
-        self.search_facets_options = search_facets_options \
-            if search_facets_options else {}
+        self.search_options = search_options or SearchOptions
         self.service_components = service_components
         self.permission_policy_cls = permission_policy_cls
 
@@ -137,38 +135,14 @@ class RecordTypeFactory(object):
             self.record_type_name, (Record,), record_class_attributes
         )
 
-    def _create_links_schemas_class(self, list_route):
-        """Create schema link classes."""
-        record_link_schema_cls = RecordLinksSchemaMeta(
-            {}, self.record_type_name, list_route
-        )
-        record_search_link_schema_cls = RecordSearchLinksSchemaMeta(
-            {}, self.record_type_name, list_route
-        )
-
-        return record_link_schema_cls, record_search_link_schema_cls
-
     def create_resource_class(self):
         """Create resource class."""
         resource_config_cls_name = f"{self.record_type_name}ResourceConfig"
         resource_cls_name = f"{self.record_type_name}Resource"
 
-        list_route = self.endpoint_route or f"/{self.record_name_lower}s"
-        item_route = f"{list_route}/<pid_value>"
-
-        (
-            record_link_schema_cls,
-            record_search_link_schema_cls,
-        ) = self._create_links_schemas_class(list_route)
-
         config_cls_attributes = {
-            "list_route": list_route,
-            "item_route": item_route,
-            # TODO fix links factory
-            # "links_config": {
-            #     "record": record_link_schema_cls,
-            #     "search": record_search_link_schema_cls,
-            # },
+            "blueprint_name": self.record_name_lower,
+            "url_prefix": self.endpoint_route or f"/{self.record_name_lower}s"
         }
 
         self.resource_config_cls = type(
@@ -176,10 +150,9 @@ class RecordTypeFactory(object):
             (RecordResourceConfig,),
             config_cls_attributes,
         )
-        resource_cls_attributes = {"default_config": self.resource_config_cls}
 
         self.resource_cls = type(
-            resource_cls_name, (RecordResource,), resource_cls_attributes
+            resource_cls_name, (RecordResource,), {}
         )
 
     def create_service_class(self):
@@ -194,11 +167,17 @@ class RecordTypeFactory(object):
                 permission_policy_cls_name, (RecordPermissionPolicy,), {}
             )
 
+        route = self.endpoint_route or f"/{self.record_name_lower}s"
+
         config_cls_attributes = {
             "permission_policy_cls": self.permission_policy_cls,
             "record_cls": self.record_cls,
-            "search_facets_options": self.search_facets_options,
+            "search": self.search_options,
             "schema": self.record_type_service_schema,
+            "links_item": {
+                "self": RecordLink("{+api}" + route + "/{id}"),
+            },
+            "links_search": pagination_links("{+api}" + route + "{?args*}"),
         }
         if self.service_components:
             config_cls_attributes.update(
@@ -212,7 +191,6 @@ class RecordTypeFactory(object):
             config_cls_name, (RecordServiceConfig,), config_cls_attributes
         )
 
-        service_cls_attributes = {"default_config": self.service_config_cls}
         self.service_cls = type(
-            service_cls_name, (RecordService,), service_cls_attributes
+            service_cls_name, (RecordService,), {}
         )

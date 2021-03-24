@@ -8,18 +8,13 @@
 
 """File schema."""
 
-from marshmallow import EXCLUDE, Schema
+from marshmallow import Schema
 from marshmallow.fields import UUID, Dict, Number, Str
 from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode
 
 
 class FileSchema(Schema):
     """Service schema for files."""
-
-    # class Meta:
-    #     """Meta class to reject unknown fields."""
-
-    #     unknown = EXCLUDE
 
     key = SanitizedUnicode(dump_only=True)
     created = Str(dump_only=True)
@@ -42,9 +37,3 @@ class FileSchema(Schema):
     def dump_status(self, obj):
         """Dump file status."""
         return 'completed' if obj.file else 'pending'
-
-
-class FilesLinks(Schema):
-    """Search links schema."""
-
-    links = Links()

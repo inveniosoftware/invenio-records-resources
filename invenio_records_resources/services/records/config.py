@@ -11,17 +11,54 @@
 
 from flask_babelex import gettext as _
 from invenio_indexer.api import RecordIndexer
-from invenio_pidstore.resolver import Resolver
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_search import RecordsSearchV2
 
 from ...records import Record
 from ..base import ServiceConfig
 from .components import MetadataComponent
+from .links import RecordLink, pagination_links
 from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
     SortParam
 from .results import RecordItem, RecordList
-from .schema import RecordSchema, SearchLinks
+from .schema import RecordSchema
+
+
+class SearchOptions:
+    """Search options."""
+
+    search_cls = RecordsSearchV2
+    query_parser_cls = QueryParser
+    sort_default = 'bestmatch'
+    sort_default_no_query = 'newest'
+    sort_options = {
+        "bestmatch": dict(
+            title=_('Best match'),
+            fields=['_score'],  # ES defaults to desc on `_score` field
+        ),
+        "newest": dict(
+            title=_('Newest'),
+            fields=['-created'],
+        ),
+        "oldest": dict(
+            title=_('Oldest'),
+            fields=['created'],
+        ),
+    }
+    facets_options = dict(
+        aggs={},
+        post_filters={}
+    )
+    pagination_options = {
+        "default_results_per_page": 25,
+        "default_max_results": 10000
+    }
+    params_interpreters_cls = [
+        QueryStrParam,
+        PaginationParam,
+        SortParam,
+        FacetsParam
+    ]
 
 
 class RecordServiceConfig(ServiceConfig):
@@ -37,46 +74,17 @@ class RecordServiceConfig(ServiceConfig):
     indexer_cls = RecordIndexer
     index_dumper = None  # use default dumper defined on record class
 
-    # # Search configuration
-    search_cls = RecordsSearchV2
-    search_query_parser_cls = QueryParser
-    search_sort_default = 'bestmatch'
-    search_sort_default_no_query = 'newest'
-    search_sort_options = {
-        "bestmatch": dict(
-            title=_('Best match'),
-            fields=['_score'],  # ES defaults to desc on `_score` field
-        ),
-        "newest": dict(
-            title=_('Newest'),
-            fields=['-created'],
-        ),
-        "oldest": dict(
-            title=_('Oldest'),
-            fields=['created'],
-        ),
-    }
-    search_facets_options = dict(
-        aggs={},
-        post_filters={}
-    )
-    search_pagination_options = {
-        "default_results_per_page": 25,
-        "default_max_results": 10000
-    }
-    search_params_interpreters_cls = [
-        QueryStrParam,
-        PaginationParam,
-        SortParam,
-        FacetsParam
-    ]
+    # Search configuration
+    search = SearchOptions
 
     # Service schema
     schema = RecordSchema
-    # TODO: schema_search_links should probably rather be a schema_search which
-    # defines the entire schema for search results. This could also be used for
-    # e.g. bulk deletion and similar.
-    schema_search_links = SearchLinks
+
+    links_item = {
+        "self": RecordLink("{+api}/records/{id}"),
+    }
+
+    links_search = pagination_links("{+api}/records{?args*}")
 
     # Service components
     components = [

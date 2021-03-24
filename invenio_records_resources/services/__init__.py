@@ -8,15 +8,25 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
-from .base import Service, ServiceConfig
-from .files import FileService, FileServiceConfig
-from .records import RecordService, RecordServiceConfig
+
+from .base import ConditionalLink, Link, LinksTemplate, Service, ServiceConfig
+from .files import FileLink, FileService, FileServiceConfig
+from .records import RecordLink, RecordService, RecordServiceConfig, \
+    SearchOptions, ServiceSchemaWrapper, pagination_links
 
 __all__ = (
+    "ConditionalLink",
+    "FileLink",
     "FileService",
     "FileServiceConfig",
+    "Link",
+    "LinksTemplate",
+    "pagination_links",
+    "RecordLink",
     "RecordService",
     "RecordServiceConfig",
+    "SearchOptions",
     "Service",
     "ServiceConfig",
+    "ServiceSchemaWrapper",
 )

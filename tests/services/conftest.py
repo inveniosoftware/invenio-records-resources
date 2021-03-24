@@ -17,8 +17,9 @@ from uuid import uuid4
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from mock_module.api import Record, RecordWithFile
-from mock_module.service import FileService, FileServiceConfig, Service, \
-    ServiceConfig
+from mock_module.service import ServiceConfig
+
+from invenio_records_resources.services import RecordService
 
 
 @pytest.fixture(scope='module')
@@ -33,13 +34,7 @@ def identity_simple():
 @pytest.fixture(scope='module')
 def service(appctx):
     """Service instance."""
-    return Service(ServiceConfig)
-
-
-@pytest.fixture(scope='module')
-def file_service(appctx):
-    """File service instance."""
-    return FileService(FileServiceConfig)
+    return RecordService(ServiceConfig)
 
 
 @pytest.fixture(scope="function")
