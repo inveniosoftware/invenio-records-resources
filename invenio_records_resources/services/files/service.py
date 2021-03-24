@@ -16,7 +16,7 @@ from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import ObjectVersion
 
 from ..records import RecordService
-from ..records.schema import MarshmallowServiceSchema
+from ..records.schema import ServiceSchemaWrapper
 from .config import RecordFileServiceConfig
 
 
@@ -34,7 +34,7 @@ class FileServiceMixin:
     @property
     def file_schema(self):
         """Returns the data schema instance."""
-        return MarshmallowServiceSchema(self, schema=self.config.file_schema)
+        return ServiceSchemaWrapper(self, schema=self.config.file_schema)
 
     def file_result_item(self, *args, **kwargs):
         """Create a new instance of the resource unit."""
@@ -47,7 +47,7 @@ class FileServiceMixin:
     @property
     def schema_files_links(self):
         """Returns the schema used for making search links."""
-        return MarshmallowServiceSchema(
+        return ServiceSchemaWrapper(
             self, schema=self.config.schema_files_links)
 
     #

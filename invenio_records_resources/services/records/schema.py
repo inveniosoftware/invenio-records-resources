@@ -63,59 +63,55 @@ class SearchLinks(Schema):
     links = Links()
 
 
-#
-# Service schema implementation (adds e.g. permission filtering)
-#
-class ServiceSchema:
-    """Data validator interface."""
+class ServiceSchemaWrapper:
+    """Schema wrapper that enhances load/dump of wrapped schema.
 
-    def __init__(self, service, *args, **kwargs):
-        """Constructor."""
-        self.service = service
+    It:
+        - allows strict (raises errors) / lax (reports them) loading by schema
+        - constructs the context for the schema
+            * injects the field permission check in the context
+    """
 
-    def load(self, identity, data, *args, **kwargs):
-        """Load data."""
-        raise NotImplementedError()
-
-    def dump(self, identity, data, *args, **kwargs):
-        """Dump data."""
-        raise NotImplementedError()
-
-
-class MarshmallowServiceSchema(ServiceSchema):
-    """Data schema based on Marshmallow."""
-
-    def __init__(self, service, *args, schema=RecordSchema, **kwargs):
+    def __init__(self, service, schema=RecordSchema):
         """Constructor."""
         self.schema = schema
-        self._service = service
-        super().__init__(self, *args, **kwargs)
+        # TODO: Change constructor to accept a permission_policy_cls directly
+        self._permission_policy_cls = service.config.permission_policy_cls
 
-    def _build_context(self, identity, **context):
-        def _permission_check(action, identity=identity, **kwargs):
-            return self._service.config.permission_policy_cls(
-                action, **context, **kwargs).allows(identity)
+    def _build_context(self, base_context):
+        context = {**base_context}
+        default_identity = context["identity"]  # identity required in context
+
+        def _permission_check(action, identity=default_identity, **kwargs):
+            return (
+                # TODO: See if context is necessary here
+                self._permission_policy_cls(action, **context, **kwargs)
+                .allows(identity)
+            )
         context.setdefault('field_permission_check', _permission_check)
-        context.setdefault('identity', identity)
+
         return context
 
-    def load(self, identity, data, raise_errors=True, schema_args=None,
-             **kwargs):
-        """Load data using the marshmallow schema."""
+    def load(self, data, schema_args=None, context=None, raise_errors=True):
+        """Load data with dynamic schema_args + context + raise or not."""
         schema_args = schema_args or {}
-        context = self._build_context(identity, **kwargs)
+        base_context = context or {}
+        context = self._build_context(base_context)
+
         try:
             valid_data = self.schema(context=context, **schema_args).load(data)
-            errors = None
+            errors = []
         except ValidationError as e:
             if raise_errors:
                 raise
             valid_data = e.valid_data
             errors = validation_error_to_list_errors(e)
+
         return valid_data, errors
 
-    def dump(self, identity, data, schema_args=None, **kwargs):
-        """Dump data using the marshmallow schema."""
+    def dump(self, data, schema_args=None, context=None):
+        """Dump data using wrapped schema and dynamic schema_args + context."""
         schema_args = schema_args or {}
-        context = self._build_context(identity, **kwargs)
+        base_context = context or {}
+        context = self._build_context(base_context)
         return self.schema(context=context, **schema_args).dump(data)
