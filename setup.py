@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern Universtiy.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
-# Invenio-Records-Resources is free software; you can redistribute it and/or modify
-# it under the terms of the MIT License; see LICENSE file for more details.
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
 
 """Invenio Resources module to create REST APIs."""
 
@@ -58,7 +59,7 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask-resources>=0.7.0,<0.8.0",
+    "flask-resources>=0.7.1,<0.8.0",
     "invenio-accounts>=1.4.3",
     "invenio-base>=1.2.3",
     "invenio-files-rest>=1.2.0",
