@@ -60,19 +60,6 @@ def test_default_no_query(service, identity_simple, records):
     assert ids(reversed(records)) == ids(res['hits']['hits'])
 
 
-def test_default_with_query(service, identity_simple, records):
-    """Default sorting without a query."""
-    res = service.search(
-        identity_simple,
-        q='over+the+lazy+dog',
-        page=1,
-        size=10,
-        _max_results=100
-    ).to_dict()
-    # default with query is to order by bestmatch
-    assert ids(records) == ids(res['hits']['hits'])
-
-
 def test_user_selected_sort(service, identity_simple, records):
     """Chosen sort method."""
     res = service.search(
