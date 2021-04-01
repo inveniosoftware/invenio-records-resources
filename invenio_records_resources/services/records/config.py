@@ -54,7 +54,7 @@ class SearchOptions:
         "default_max_results": 10000
     }
     params_interpreters_cls = [
-        QueryStrParam,
+        QueryStrParam.factory(),
         PaginationParam,
         SortParam,
         FacetsParam
