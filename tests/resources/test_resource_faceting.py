@@ -146,13 +146,13 @@ def test_post_filtering(client, headers, three_indexed_records):
 # 2- links are generated
 #
 def test_links_keep_facets(client, headers, three_indexed_records):
-    response = client.get("/mocks?type=A&subtype=B", headers=headers)
+    response = client.get("/mocks?type=A**B", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {
         "self": (
             "https://127.0.0.1:5000/api/mocks?"
-            "page=1&size=25&sort=newest&subtype=B&type=A"
+            "page=1&size=25&sort=newest&type=A%2A%2AB"
         ),
     }
     for key, url in expected_links.items():
