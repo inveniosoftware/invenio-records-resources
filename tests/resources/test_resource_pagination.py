@@ -112,11 +112,11 @@ def test_middle_search_result_has_next_and_prev_links(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://localhost:5000/api/mocks?page=2&size=1"
+        "self": "https://127.0.0.1:5000/api/mocks?page=2&size=1"
                 "&sort=newest",
-        "prev": "https://localhost:5000/api/mocks?page=1&size=1"
+        "prev": "https://127.0.0.1:5000/api/mocks?page=1&size=1"
                 "&sort=newest",
-        "next": "https://localhost:5000/api/mocks?page=3&size=1"
+        "next": "https://127.0.0.1:5000/api/mocks?page=3&size=1"
                 "&sort=newest",
     }
 
@@ -132,9 +132,9 @@ def test_first_search_result_has_next_and_no_prev_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://localhost:5000/api/mocks?page=1&size=1"
+        "self": "https://127.0.0.1:5000/api/mocks?page=1&size=1"
                 "&sort=newest",
-        "next": "https://localhost:5000/api/mocks?page=2&size=1"
+        "next": "https://127.0.0.1:5000/api/mocks?page=2&size=1"
                 "&sort=newest",
     }
     print("response_links", response_links)
@@ -150,8 +150,8 @@ def test_last_search_result_has_prev_link_and_no_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://localhost:5000/api/mocks?page=3&size=1&sort=newest",
-        "prev": "https://localhost:5000/api/mocks?page=2&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?page=3&size=1&sort=newest",
+        "prev": "https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -165,8 +165,8 @@ def test_beyond_last_search_has_prev_link_and_no_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://localhost:5000/api/mocks?page=4&size=1&sort=newest",
-        "prev": "https://localhost:5000/api/mocks?page=3&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?page=4&size=1&sort=newest",
+        "prev": "https://127.0.0.1:5000/api/mocks?page=3&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -180,7 +180,7 @@ def test_beyond_beyond_last_search_has_no_prev_or_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://localhost:5000/api/mocks?page=5&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?page=5&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -198,15 +198,15 @@ def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://localhost:5000/api/mocks?page=2&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=2&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
         "prev": (
-            "https://localhost:5000/api/mocks?page=1&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=1&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
         "next": (
-            "https://localhost:5000/api/mocks?page=3&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=3&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
     }

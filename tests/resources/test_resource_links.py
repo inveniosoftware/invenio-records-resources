@@ -22,7 +22,7 @@ def input_data():
     }
 
 
-def assert_expected_links(pid_value, links, site_hostname="localhost:5000"):
+def assert_expected_links(pid_value, links, site_hostname="127.0.0.1:5000"):
     """Compare generated links to expected links."""
     expected_links = {
         "self": f"https://{site_hostname}/api/mocks/{pid_value}",
