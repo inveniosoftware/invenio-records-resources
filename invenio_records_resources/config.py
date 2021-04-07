@@ -13,6 +13,6 @@ from elasticsearch import VERSION as ES_VERSION
 
 lt_es7 = ES_VERSION[0] < 7
 
-SITE_UI_URL = "https://localhost:5000"
+SITE_UI_URL = "https://127.0.0.1:5000"
 
-SITE_API_URL = "https://localhost:5000/api"
+SITE_API_URL = "https://127.0.0.1:5000/api"
