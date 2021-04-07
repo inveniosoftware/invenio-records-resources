@@ -21,7 +21,8 @@ from invenio_records_resources.services.records.params.querystr import \
     SuggestQueryParser
 from invenio_records_resources.services.records.schema import RecordSchema, \
     RecordWithFilesSchema
-from invenio_records_resources.services.records.search import terms_filter
+from invenio_records_resources.services.records.search import \
+    nested_terms_filter, terms_filter
 
 from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
@@ -42,8 +43,11 @@ class MockSearchOptions(SearchOptions):
             }
         },
         'post_filters': {
-            'subtype': terms_filter('metadata.type.subtype'),
-            'type': terms_filter('metadata.type.type'),
+            "type": nested_terms_filter(
+                "metadata.type.type",
+                "metadata.type.subtype",
+                splitchar="**",
+            )
         }
     }
     suggest_parser_cls = SuggestQueryParser.factory(fields=[
