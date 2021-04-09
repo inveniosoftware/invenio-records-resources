@@ -8,8 +8,10 @@
 # details.
 
 """Common Errors handling for Resources."""
+from json import JSONDecodeError
 
 import marshmallow as ma
+from elasticsearch.exceptions import RequestError
 from flask import g, jsonify, make_response, request, url_for
 from flask_resources import HTTPJSONException, Resource, create_error_handler
 from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
@@ -117,6 +119,18 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=404,
                 description="Not found.",
+            )
+        ),
+        JSONDecodeError: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Unable to decode JSON data in request body.",
+            )
+        ),
+        RequestError: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Invalid query string syntax.",
             )
         ),
     }
