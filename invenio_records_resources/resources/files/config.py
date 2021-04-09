@@ -16,6 +16,7 @@ class FileResourceConfig(ResourceConfig):
     """File resource config."""
 
     # Blueprint configuration
+    allow_upload = True
     blueprint_name = None
     url_prefix = "/records/<pid_value>"
     routes = {

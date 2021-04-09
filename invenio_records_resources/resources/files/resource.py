@@ -51,18 +51,22 @@ class FileResource(ErrorHandlersMixin, Resource):
     def create_url_rules(self):
         """Routing for the views."""
         routes = self.config.routes
-        return [
+        url_rules = [
             route("GET", routes["list"], self.search),
-            route("POST", routes["list"], self.create),
-            route("PUT", routes["list"], self.update_all),
-            route("DELETE", routes["list"], self.delete_all),
             route("GET", routes["item"], self.read),
-            route("PUT", routes["item"], self.update),
-            route("DELETE", routes["item"], self.delete),
-            route("POST", routes["item-commit"], self.create_commit),
             route("GET", routes["item-content"], self.read_content),
-            route("PUT", routes["item-content"], self.update_content),
         ]
+        if self.config.allow_upload:
+            url_rules += [
+                route("POST", routes["list"], self.create),
+                route("PUT", routes["list"], self.update_all),
+                route("DELETE", routes["list"], self.delete_all),
+                route("PUT", routes["item"], self.update),
+                route("DELETE", routes["item"], self.delete),
+                route("POST", routes["item-commit"], self.create_commit),
+                route("PUT", routes["item-content"], self.update_content),
+            ]
+        return url_rules
 
     @request_view_args
     @response_handler(many=True)

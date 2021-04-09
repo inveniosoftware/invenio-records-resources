@@ -11,8 +11,8 @@
 from io import BytesIO
 
 import pytest
-from mock_module.resource import CustomFileResourceConfig, \
-    CustomRecordResourceConfig
+from mock_module.resource import CustomDisabledUploadFileResourceConfig, \
+    CustomFileResourceConfig, CustomRecordResourceConfig
 from mock_module.service import MockFileServiceConfig, ServiceWithFilesConfig
 
 from invenio_records_resources.resources import FileResource, RecordResource
@@ -42,9 +42,16 @@ def file_resource(file_service):
 
 
 @pytest.fixture(scope="module")
-def base_app(base_app, record_resource, file_resource):
+def disabled_file_upload_resource(file_service):
+    """Disabled Upload File Resource."""
+    return FileResource(CustomDisabledUploadFileResourceConfig, file_service)
+
+
+@pytest.fixture(scope="module")
+def base_app(base_app, file_resource, disabled_file_upload_resource):
     """Application factory fixture."""
     base_app.register_blueprint(file_resource.as_blueprint())
+    base_app.register_blueprint(disabled_file_upload_resource.as_blueprint())
     yield base_app
 
 
@@ -309,3 +316,72 @@ def test_enabled_files(app, client, es_clear, headers, location):
     assert len(res.json['entries']) == 0
     assert res.json['default_preview'] is None
     assert res.json['order'] == []
+
+
+def test_file_api_errors(client, es_clear, headers, location):
+    """Test REST API errors for file management."""
+    h = headers
+
+    # Initialize a draft
+    res = client.post('/mocks', headers=headers)
+    assert res.status_code == 201
+    id_ = res.json['id']
+    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+
+    # Initialize files upload
+    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
+        {'key': 'test.pdf', 'title': 'Test file'},
+    ])
+    assert res.status_code == 201
+    res_file = res.json['entries'][0]
+
+    # Upload a file
+    res = client.put(
+        f"/mocks/{id_}/files/test.pdf/content", headers={
+            'content-type': 'application/octet-stream',
+            'accept': 'application/json',
+        },
+        data=BytesIO(b'testfile'),
+    )
+    assert res.status_code == 200
+    assert res.json['status'] == 'pending'
+
+    # Commit the uploaded file
+    res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json['status'] == 'completed'
+
+    # Initialize same file upload again
+    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
+        {'key': 'test.pdf', 'title': 'Test file'},
+    ])
+    assert res.status_code == 400
+
+
+def test_disabled_upload_file_resource(client, es_clear, headers, location):
+    """Test file resources with disabled file upload"""
+
+    # Initialize a draft
+    res = client.post("/mocks", headers=headers)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+
+    # File manipulation api should not be exposed if allow_upload is disabled
+    res = client.post(
+        f"/mocks_disabled_files_upload/{id_}/files",
+        headers=headers,
+        json=[{"key": "test.pdf", "title": "Test file"}],
+    )
+    assert res.status_code == 405
+
+    res = client.put(
+        f"/mocks_disabled_files_upload/{id_}/files",
+        headers=headers,
+        json=[{"default_preview": "test.pdf"}],
+    )
+    assert res.status_code == 405
+
+    res = client.delete(
+        f"/mocks_disabled_files_upload/{id_}/files/test.pdf", headers=headers
+    )
+    assert res.status_code == 405
