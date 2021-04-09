@@ -8,17 +8,20 @@
 
 """File schema."""
 
+from datetime import timezone
+
 from marshmallow import Schema
 from marshmallow.fields import UUID, Dict, Number, Str
-from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode
+from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, \
+    TZDateTime
 
 
 class FileSchema(Schema):
     """Service schema for files."""
 
     key = SanitizedUnicode(dump_only=True)
-    created = Str(dump_only=True)
-    updated = Str(dump_only=True)
+    created = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
+    updated = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
 
     status = GenMethod('dump_status')
 

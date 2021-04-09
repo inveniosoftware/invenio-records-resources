@@ -8,9 +8,11 @@
 
 """Record schema."""
 
+from datetime import timezone
+
 from marshmallow import INCLUDE, Schema, ValidationError, fields, pre_load, \
     validate
-from marshmallow_utils.fields import Links
+from marshmallow_utils.fields import Links, TZDateTime
 
 from invenio_records_resources.errors import validation_error_to_list_errors
 
@@ -33,8 +35,8 @@ class BaseRecordSchema(Schema):
     """Schema for records v1 in JSON."""
 
     id = fields.Str()
-    created = fields.Str(dump_only=True)
-    updated = fields.Str(dump_only=True)
+    created = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
+    updated = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
     links = Links(dump_only=True)
     revision_id = fields.Integer(dump_only=True)
 
