@@ -75,7 +75,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "create_files", record=record)
+        action = self.config.permission_action_prefix + "create_files"
+        self.require_permission(identity, action, record=record)
         # TODO: Load via marshmallow schema?
         results = []
         for file_metadata in data:
@@ -99,7 +100,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "update_files", record=record)
+        action = self.config.permission_action_prefix + "update_files"
+        self.require_permission(identity, action, record=record)
 
         # TODO: Maybe there's a better programmatic API to apply these?
         # e.g. record.files.update(...)
@@ -158,7 +160,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "create_files", record=record)
+        action = self.config.permission_action_prefix + "create_files"
+        self.require_permission(identity, action, record=record)
         file_obj = ObjectVersion.get(record.bucket.id, file_key)
         if not file_obj:
             raise Exception(f'File with key {file_key} not uploaded yet.')
@@ -178,7 +181,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "delete_files", record=record)
+        action = self.config.permission_action_prefix + "delete_files"
+        self.require_permission(identity, action, record=record)
         deleted_file = record.files.delete(file_key)
         # We also commit the record in case the file was the `default_preview`
         record.commit()
@@ -196,7 +200,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "delete_files", record=record)
+        action = self.config.permission_action_prefix + "delete_files"
+        self.require_permission(identity, action, record=record)
         # NOTE: We have to separate the gathering of the keys from their
         #       deletion because of how record.files is implemented.
         file_keys = [fk for fk in record.files]
@@ -219,7 +224,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "create_files", record=record)
+        action = self.config.permission_action_prefix + "create_files"
+        self.require_permission(identity, action, record=record)
         rf = record.files.get(file_key)
 
         # TODO: raise an appropriate exception

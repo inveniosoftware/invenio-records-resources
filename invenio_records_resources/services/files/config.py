@@ -24,6 +24,8 @@ class FileServiceConfig(ServiceConfig):
 
     record_cls = None
 
+    permission_action_prefix = ""
+
     file_result_item_cls = FileItem
     file_result_list_cls = FileList
 
@@ -36,5 +38,4 @@ class FileServiceConfig(ServiceConfig):
     file_links_item = {
         "self": FileLink("{+api}/records/{id}/files/{key}"),
         "content": FileLink("{+api}/records/{id}/files/{key}/content"),
-        "commit": FileLink("{+api}/records/{id}/files/{key}/commit"),
     }
