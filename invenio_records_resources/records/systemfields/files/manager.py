@@ -59,6 +59,7 @@ necessarily persisted in the metadata.
 from collections.abc import MutableMapping
 from functools import wraps
 
+from invenio_files_rest.errors import InvalidKeyError, InvalidOperationError
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_records.systemfields import SystemField
 
@@ -68,7 +69,7 @@ def ensure_enabled(func):
     @wraps(func)
     def inner(self, *args, **kwargs):
         if not self.enabled:
-            raise Exception('Files are not enabled.')
+            raise InvalidOperationError(description='Files are not enabled.')
         return func(self, *args, **kwargs)
     return inner
 
@@ -95,7 +96,9 @@ class FilesManager(MutableMapping):
         assert not (obj and stream)
 
         if key in self:
-            raise Exception(f'File with key {key} already exists.')
+            raise InvalidKeyError(
+                description=f'File with key {key} already exists.'
+            )
 
         rf = self.file_cls.create({}, key=key, record_id=self.record.id)
         if stream:
@@ -115,7 +118,9 @@ class FilesManager(MutableMapping):
         assert not (obj and stream)
         rf = self.get(key)
         if rf is None:
-            raise Exception(f'File with {key} does not exist.')
+            raise InvalidKeyError(
+                description=f'File with {key} does not exist.'
+            )
 
         if stream:
             obj = ObjectVersion.create(self.bucket, key, stream=stream)
@@ -188,7 +193,7 @@ class FilesManager(MutableMapping):
     def default_preview(self, key):
         """Set default preview file."""
         if key and key not in self:
-            raise Exception(f'No file with key "{key}"')
+            raise InvalidKeyError(description=f'No file with key "{key}"')
         self._default_preview = key
 
     @property
@@ -201,7 +206,9 @@ class FilesManager(MutableMapping):
         """Set the order of the files."""
         for k in new_order:
             if k not in self:
-                raise Exception(f'File with key "{k}" does not exist')
+                raise InvalidKeyError(
+                    description=f'File with key "{k}" does not exist'
+                )
         self._order = new_order
 
     @ensure_enabled
@@ -243,8 +250,10 @@ class FilesManager(MutableMapping):
             elif hasattr(obj_or_stream, 'read'):
                 stream = obj_or_stream
             else:
-                raise Exception(
-                    f"Item has to be ObjectVersion or file-like object")
+                raise InvalidOperationError(
+                    description=f"Item has to be ObjectVersion or "
+                    "file-like object"
+                )
 
         return obj, stream, data
 
