@@ -17,7 +17,7 @@ from uuid import uuid4
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from mock_module.api import Record, RecordWithFile
-from mock_module.service import ServiceConfig
+from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
 

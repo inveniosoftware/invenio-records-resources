@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,19 +11,7 @@
 
 import json
 
-import pytest
-from invenio_search import current_search, current_search_client
 from mock_module.api import Record
-
-
-@pytest.fixture()
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test'
-        },
-    }
 
 
 def test_simple_flow(app, client, input_data, headers):

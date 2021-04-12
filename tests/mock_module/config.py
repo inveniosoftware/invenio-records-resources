@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,10 +12,13 @@
 from invenio_records_resources.services import FileServiceConfig, \
     RecordServiceConfig, SearchOptions
 from invenio_records_resources.services.files.links import FileLink
+from invenio_records_resources.services.records.components import \
+    FilesOptionsComponent
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
-from invenio_records_resources.services.records.schema import RecordSchema
+from invenio_records_resources.services.records.schema import RecordSchema, \
+    RecordWithFilesSchema
 from invenio_records_resources.services.records.search import terms_filter
 
 from .api import Record, RecordWithFile
@@ -66,6 +69,8 @@ class ServiceWithFilesConfig(ServiceConfig):
     """Config for service with files support."""
 
     record_cls = RecordWithFile
+    components = RecordServiceConfig.components + [FilesOptionsComponent]
+    schema = RecordWithFilesSchema
 
 
 class MockFileServiceConfig(FileServiceConfig):

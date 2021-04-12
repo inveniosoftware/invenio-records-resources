@@ -14,7 +14,7 @@ from copy import deepcopy
 
 import pytest
 from mock_module.api import Record
-from mock_module.service import ServiceConfig
+from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
 
