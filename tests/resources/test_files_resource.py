@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,22 +12,17 @@
 from io import BytesIO
 
 import pytest
+from mock_module.config import ServiceWithFilesConfig
 from mock_module.resource import CustomDisabledUploadFileResourceConfig, \
     CustomFileResourceConfig, CustomRecordResourceConfig
-from mock_module.service import MockFileServiceConfig, ServiceWithFilesConfig
 
 from invenio_records_resources.resources import FileResource, RecordResource
-from invenio_records_resources.services import FileService, RecordService
+from invenio_records_resources.services import RecordService
 
 
 @pytest.fixture(scope="module")
 def service():
     return RecordService(ServiceWithFilesConfig)
-
-
-@pytest.fixture(scope="module")
-def file_service():
-    return FileService(MockFileServiceConfig)
 
 
 @pytest.fixture(scope="module")
@@ -55,10 +51,18 @@ def base_app(base_app, file_resource, disabled_file_upload_resource):
     yield base_app
 
 
-def test_files_api_flow(client, es_clear, headers, location):
+@pytest.fixture()
+def input_data(input_data):
+    input_data["files"] = {
+        'enabled': True
+    }
+    return input_data
+
+
+def test_files_api_flow(client, es_clear, headers, input_data, location):
     """Test record creation."""
     # Initialize a draft
-    res = client.post('/mocks', headers=headers)
+    res = client.post('/mocks', headers=headers, json=input_data)
     assert res.status_code == 201
     id_ = res.json['id']
     assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
@@ -141,9 +145,10 @@ def test_files_api_flow(client, es_clear, headers, location):
     assert len(res.json['entries']) == 0
 
 
-def test_default_preview_file(app, client, es_clear, headers, location):
+def test_default_preview_file(
+        app, client, es_clear, headers, input_data, location):
     # Initialize a draft
-    res = client.post('/mocks', headers=headers)
+    res = client.post('/mocks', headers=headers, json=input_data)
     assert res.status_code == 201
     id_ = res.json['id']
     assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
@@ -222,108 +227,12 @@ def test_default_preview_file(app, client, es_clear, headers, location):
     assert res.json['default_preview'] is None
 
 
-def test_enabled_files(app, client, es_clear, headers, location):
-    # Initialize a draft
-    res = client.post('/mocks', headers=headers)
-    assert res.status_code == 201
-    id_ = res.json['id']
-    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
-
-    # Get all files and check "enabled"
-    res = client.get(f"/mocks/{id_}/files", headers=headers)
-    assert res.status_code == 200
-    assert len(res.json['entries']) == 0
-    assert res.json['enabled'] is True
-
-    # Disable files
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'enabled': False
-    })
-    assert res.status_code == 200
-    assert res.json['enabled'] is False
-    assert 'self' in res.json['links']
-    assert 'entries' not in res.json
-    assert 'default_preview' not in res.json
-    assert 'order' not in res.json
-
-    # Enable again
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'enabled': True
-    })
-    assert res.status_code == 200
-    assert res.json['enabled'] is True
-    assert 'self' in res.json['links']
-    assert len(res.json['entries']) == 0
-    assert res.json['default_preview'] is None
-    assert res.json['order'] == []
-
-    # Initialize 3 files
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
-        {'key': 'f1.pdf'},
-        {'key': 'f2.pdf'},
-        {'key': 'f3.pdf'},
-    ])
-    assert res.status_code == 201
-    file_entries = res.json['entries']
-    assert len(file_entries) == 3
-    assert {(f['key'], f['status']) for f in file_entries} == {
-        ('f1.pdf', 'pending'),
-        ('f2.pdf', 'pending'),
-        ('f3.pdf', 'pending'),
-    }
-
-    # Upload and commit the 3 files
-    for f in file_entries:
-        res = client.put(
-            f"/mocks/{id_}/files/{f['key']}/content", headers={
-                'content-type': 'application/octet-stream',
-                'accept': 'application/json',
-            },
-            data=BytesIO(b'testfile'),
-        )
-        assert res.status_code == 200
-        assert res.json['status'] == 'pending'
-
-        res = client.post(
-            f"/mocks/{id_}/files/{f['key']}/commit", headers=headers)
-        assert res.status_code == 200
-        assert res.json['status'] == 'completed'
-
-    # Get all files
-    res = client.get(f"/mocks/{id_}/files", headers=headers)
-    assert res.status_code == 200
-    assert len(res.json['entries']) == 3
-    assert res.json['enabled'] is True
-
-    # Disable files
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'enabled': False
-    })
-    assert res.status_code == 200
-    assert res.json['enabled'] is False
-    assert 'self' in res.json['links']
-    assert 'entries' not in res.json
-    assert 'default_preview' not in res.json
-    assert 'order' not in res.json
-
-    # Enable files again
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'enabled': True
-    })
-    assert res.status_code == 200
-    assert res.json['enabled'] is True
-    assert 'self' in res.json['links']
-    assert len(res.json['entries']) == 0
-    assert res.json['default_preview'] is None
-    assert res.json['order'] == []
-
-
-def test_file_api_errors(client, es_clear, headers, location):
+def test_file_api_errors(client, es_clear, headers, input_data, location):
     """Test REST API errors for file management."""
     h = headers
 
     # Initialize a draft
-    res = client.post('/mocks', headers=headers)
+    res = client.post('/mocks', headers=headers, json=input_data)
     assert res.status_code == 201
     id_ = res.json['id']
     assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
@@ -358,11 +267,12 @@ def test_file_api_errors(client, es_clear, headers, location):
     assert res.status_code == 400
 
 
-def test_disabled_upload_file_resource(client, es_clear, headers, location):
+def test_disabled_upload_file_resource(
+        client, es_clear, headers, input_data, location):
     """Test file resources with disabled file upload"""
 
     # Initialize a draft
-    res = client.post("/mocks", headers=headers)
+    res = client.post("/mocks", headers=headers, json=input_data)
     assert res.status_code == 201
     id_ = res.json["id"]
 
@@ -385,3 +295,43 @@ def test_disabled_upload_file_resource(client, es_clear, headers, location):
         f"/mocks_disabled_files_upload/{id_}/files/test.pdf", headers=headers
     )
     assert res.status_code == 405
+
+
+def test_disable_files_when_files_already_present_should_error(
+        app, client, es_clear, headers, input_data, location):
+    # Initialize a record
+    response = client.post('/mocks', headers=headers, json=input_data)
+    id_ = response.json["id"]
+    # Add file
+    file_id = 'f1.pdf'
+    client.post(
+        f'/mocks/{id_}/files',
+        headers=headers,
+        json=[{'key': file_id}]
+    )
+    client.put(
+        f"/mocks/{id_}/files/{file_id}/content",
+        headers={
+            'content-type': 'application/octet-stream',
+            'accept': 'application/json',
+        },
+        data=BytesIO(b'testfile'),
+    )
+    client.post(f"/mocks/{id_}/files/{file_id}/commit", headers=headers)
+    # Disable files
+    input_data["files"] = {
+        'enabled': False
+    }
+
+    response = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
+
+    assert response.status_code == 400
+    assert response.json["errors"] == [
+        {
+            'field': 'files.enabled',
+            'messages': [
+                "You must first delete all files to set the record to be "
+                "metadata-only."
+            ]
+        }
+    ]

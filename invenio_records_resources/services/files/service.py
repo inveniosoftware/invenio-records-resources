@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -103,10 +103,6 @@ class FileService(Service):
         action = self.config.permission_action_prefix + "update_files"
         self.require_permission(identity, action, record=record)
 
-        # TODO: Maybe there's a better programmatic API to apply these?
-        # e.g. record.files.update(...)
-        if data.get('enabled') is not None:
-            record.files.enabled = data['enabled']
         if record.files.enabled:
             if 'default_preview' in data:
                 record.files.default_preview = data['default_preview']

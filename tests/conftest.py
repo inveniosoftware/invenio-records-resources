@@ -18,6 +18,9 @@ from celery.messaging import establish_connection
 from invenio_app.factory import create_api as _create_api
 from invenio_files_rest.models import Location
 from kombu.compat import Consumer
+from mock_module.config import MockFileServiceConfig
+
+from invenio_records_resources.services import FileService
 
 pytest_plugins = ("celery.contrib.pytest", )
 
@@ -69,3 +72,9 @@ def consumer(app, queue):
             exchange=app.config['INDEXER_MQ_EXCHANGE'].name,
             routing_key=app.config['INDEXER_MQ_ROUTING_KEY'],
         )
+
+
+@pytest.fixture(scope="module")
+def file_service():
+    """File service shared fixture."""
+    return FileService(MockFileServiceConfig)

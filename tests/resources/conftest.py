@@ -15,8 +15,8 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from mock_module.config import ServiceConfig
 from mock_module.resource import CustomRecordResourceConfig
-from mock_module.service import ServiceConfig
 
 from invenio_records_resources.resources import RecordResource
 from invenio_records_resources.services import RecordService
@@ -56,4 +56,14 @@ def headers():
     return {
         'content-type': 'application/json',
         'accept': 'application/json',
+    }
+
+
+@pytest.fixture()
+def input_data():
+    """Input data (as coming from the view layer)."""
+    return {
+        'metadata': {
+            'title': 'Test'
+        },
     }

@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Records service component base classes."""
+
+from flask_babelex import gettext as _
+from marshmallow import ValidationError
 
 
 class ServiceComponent:
@@ -72,3 +76,41 @@ class MetadataComponent(ServiceComponent):
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
         record.metadata = data.get('metadata', {})
+
+
+class FilesOptionsComponent(ServiceComponent):
+    """Service component for files' options.
+
+    It only deals with enabled / disabled (metadata-only) files for now.
+    """
+
+    def _validate_files_enabled(self, record, enabled):
+        """Validate files enabled."""
+        if not enabled:
+            if record.files.values():
+                raise ValidationError(
+                    _("You must first delete all files to set the record to "
+                      "be metadata-only."),
+                    field_name="files.enabled"
+                )
+
+    def assign_files_enabled(self, identity, enabled, record=None, **kwargs):
+        """Assign files enabled.
+
+        This is a public interface so that it can be reused elsewhere
+        (e.g. drafts-resources).
+        """
+        self._validate_files_enabled(record, enabled)
+        record.files.enabled = enabled
+
+    def create(self, identity, data=None, record=None, **kwargs):
+        """Inject parsed files options in the record."""
+        # presence is guaranteed by schema
+        enabled = data["files"]["enabled"]
+        self.assign_files_enabled(identity, enabled, record, **kwargs)
+
+    def update(self, identity, data=None, record=None, **kwargs):
+        """Inject parsed files options in the record."""
+        # presence is guaranteed by schema
+        enabled = data["files"]["enabled"]
+        self.assign_files_enabled(identity, enabled, record, **kwargs)
