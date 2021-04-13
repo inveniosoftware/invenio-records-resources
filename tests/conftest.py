@@ -16,7 +16,6 @@ fixtures are available.
 import pytest
 from celery.messaging import establish_connection
 from invenio_app.factory import create_api as _create_api
-from invenio_files_rest.models import Location
 from kombu.compat import Consumer
 from mock_module.config import MockFileServiceConfig
 
