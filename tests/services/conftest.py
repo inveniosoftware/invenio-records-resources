@@ -12,7 +12,6 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
-from uuid import uuid4
 
 import pytest
 from flask_principal import Identity, Need, UserNeed

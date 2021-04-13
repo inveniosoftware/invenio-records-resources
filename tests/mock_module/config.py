@@ -19,13 +19,12 @@ from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
 from invenio_records_resources.services.records.params.querystr import \
     SuggestQueryParser
-from invenio_records_resources.services.records.schema import RecordSchema, \
-    RecordWithFilesSchema
 from invenio_records_resources.services.records.search import \
-    nested_terms_filter, terms_filter
+    nested_terms_filter
 
 from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
+from .schemas import RecordSchema, RecordWithFilesSchema
 
 
 class MockSearchOptions(SearchOptions):
