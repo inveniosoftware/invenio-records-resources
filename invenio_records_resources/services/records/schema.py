@@ -10,7 +10,7 @@
 
 from datetime import timezone
 
-from marshmallow import Schema, ValidationError, fields, pre_load, validate
+from marshmallow import Schema, ValidationError, fields, pre_load
 from marshmallow_utils.fields import Links, TZDateTime
 
 from invenio_records_resources.errors import validation_error_to_list_errors
@@ -41,42 +41,6 @@ class BaseRecordSchema(Schema):
         return data
 
 
-class TypeSchema(Schema):
-    """Nested type schema used for faceting tests."""
-
-    type = fields.Str()
-    subtype = fields.Str()
-
-
-class MetadataSchema(Schema):
-    """Basic metadata schema class."""
-
-    title = fields.Str(required=True, validate=validate.Length(min=3))
-    type = fields.Nested(TypeSchema)
-
-
-class RecordSchema(BaseRecordSchema):
-    """Schema for records v1 in JSON.
-
-    NOTE: In practice, this schema would not be used. BaseRecordSchema is
-          recommended.
-    """
-
-    metadata = fields.Nested(MetadataSchema)
-
-
-class FilesOptionsSchema(Schema):
-    """Basic files options schema class."""
-
-    enabled = fields.Bool(missing=True)
-
-
-class RecordWithFilesSchema(RecordSchema):
-    """Schema for records with files."""
-
-    files = fields.Nested(FilesOptionsSchema, required=True)
-
-
 class ServiceSchemaWrapper:
     """Schema wrapper that enhances load/dump of wrapped schema.
 
@@ -86,7 +50,7 @@ class ServiceSchemaWrapper:
             * injects the field permission check in the context
     """
 
-    def __init__(self, service, schema=RecordSchema):
+    def __init__(self, service, schema):
         """Constructor."""
         self.schema = schema
         # TODO: Change constructor to accept a permission_policy_cls directly
