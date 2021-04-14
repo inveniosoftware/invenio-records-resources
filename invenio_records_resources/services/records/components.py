@@ -86,14 +86,15 @@ class FilesOptionsComponent(ServiceComponent):
 
     def _validate_files_enabled(self, record, enabled):
         """Validate files enabled."""
-        if not enabled and record.files.values():
-            raise ValidationError(
-                _("You must first delete all files to set the record to "
-                  "be metadata-only."),
-                field_name="files.enabled"
-            )
+        if not enabled:
+            if record.files.values():
+                raise ValidationError(
+                    _("You must first delete all files to set the record to "
+                      "be metadata-only."),
+                    field_name="files.enabled"
+                )
 
-    def assign_files_enabled(self, enabled, record=None, **kwargs):
+    def assign_files_enabled(self, identity, enabled, record=None, **kwargs):
         """Assign files enabled.
 
         This is a public interface so that it can be reused elsewhere
@@ -106,10 +107,10 @@ class FilesOptionsComponent(ServiceComponent):
         """Inject parsed files options in the record."""
         # presence is guaranteed by schema
         enabled = data["files"]["enabled"]
-        record.files.enabled = enabled
+        self.assign_files_enabled(identity, enabled, record, **kwargs)
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed files options in the record."""
         # presence is guaranteed by schema
         enabled = data["files"]["enabled"]
-        self.assign_files_enabled(enabled, record, **kwargs)
+        self.assign_files_enabled(identity, enabled, record, **kwargs)

@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2020-2021 CERN.
-# Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Factory tests."""
-
 import pytest
-from mock_module.schemas import RecordSchema
 from sqlalchemy.exc import InvalidRequestError
+from uritemplate import URITemplate
 
 from invenio_records_resources.factories.factory import RecordTypeFactory
 from invenio_records_resources.services import RecordServiceConfig, \
     SearchOptions
 from invenio_records_resources.services.records.components import \
     ServiceComponent
+from invenio_records_resources.services.records.schema import RecordSchema
 from invenio_records_resources.services.records.search import terms_filter
 
 

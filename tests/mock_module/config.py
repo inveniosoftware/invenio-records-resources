@@ -17,11 +17,12 @@ from invenio_records_resources.services.records.components import \
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
+from invenio_records_resources.services.records.schema import RecordSchema, \
+    RecordWithFilesSchema
 from invenio_records_resources.services.records.search import terms_filter
 
 from .api import Record, RecordWithFile
 from .permissions import PermissionPolicy
-from .schemas import RecordSchema, RecordWithFilesSchema
 
 
 class MockSearchOptions(SearchOptions):

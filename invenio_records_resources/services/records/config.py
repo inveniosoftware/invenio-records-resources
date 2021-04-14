@@ -21,6 +21,7 @@ from .links import RecordLink, pagination_links
 from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
     SortParam
 from .results import RecordItem, RecordList
+from .schema import RecordSchema
 
 
 class SearchOptions:
@@ -77,7 +78,7 @@ class RecordServiceConfig(ServiceConfig):
     search = SearchOptions
 
     # Service schema
-    schema = None  # Needs to be defined on concrete record service config
+    schema = RecordSchema
 
     links_item = {
         "self": RecordLink("{+api}/records/{id}"),
