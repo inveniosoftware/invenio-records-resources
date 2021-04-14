@@ -29,6 +29,7 @@ class SearchOptions:
 
     search_cls = RecordsSearchV2
     query_parser_cls = QueryParser
+    suggest_parser_cls = None
     sort_default = 'bestmatch'
     sort_default_no_query = 'newest'
     sort_options = {
@@ -54,7 +55,7 @@ class SearchOptions:
         "default_max_results": 10000
     }
     params_interpreters_cls = [
-        QueryStrParam.factory(),
+        QueryStrParam,
         PaginationParam,
         SortParam,
         FacetsParam

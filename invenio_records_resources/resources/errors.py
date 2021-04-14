@@ -12,8 +12,9 @@ from json import JSONDecodeError
 
 import marshmallow as ma
 from elasticsearch.exceptions import RequestError
-from flask import g, jsonify, make_response, request, url_for
-from flask_resources import HTTPJSONException, Resource, create_error_handler
+from flask import jsonify, make_response, request, url_for
+from flask_babelex import lazy_gettext as _
+from flask_resources import HTTPJSONException, create_error_handler
 from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
     PIDDoesNotExistError, PIDRedirectedError, PIDUnregistered
 from sqlalchemy.orm.exc import NoResultFound
@@ -35,6 +36,26 @@ class HTTPJSONValidationException(HTTPJSONException):
             code=400,
             errors=validation_error_to_list_errors(exception)
         )
+
+
+class HTTPJSONElasticsearchRequestError(HTTPJSONException):
+    """HTTP exception responsible for mapping Elasticsearch errors."""
+
+    causes_responses = {
+        'query_shard_exception': (400, _("Invalid query string syntax.")),
+        'query_parsing_exception': (400, _("Invalid query string syntax.")),
+        'illegal_argument_exception': (500, _("Misconfigured search."))
+    }
+
+    def __init__(self, error):
+        """Parse RequestError."""
+        cause_types = {c['type'] for c in error.info['error']['root_cause']}
+        for t in cause_types:
+            if t in self.causes_responses:
+                code, msg = self.causes_responses[t]
+                super().__init__(code=code, description=msg)
+                return
+        super().__init__(code=500, description=_("Internal server error"))
 
 
 def create_pid_redirected_error_handler():
@@ -128,9 +149,6 @@ class ErrorHandlersMixin:
             )
         ),
         RequestError: create_error_handler(
-            HTTPJSONException(
-                code=400,
-                description="Invalid query string syntax.",
-            )
+            lambda e: HTTPJSONElasticsearchRequestError(e)
         ),
     }

@@ -17,6 +17,7 @@ class SearchRequestArgsSchema(MultiDictSchema):
     """Request URL query string arguments."""
 
     q = fields.String()
+    suggest = fields.String()
     sort = fields.String()
     page = fields.Int(validate=validate.Range(min=1))
     size = fields.Int(validate=validate.Range(min=1))
