@@ -17,6 +17,8 @@ from invenio_records_resources.services.records.components import \
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
+from invenio_records_resources.services.records.params.querystr import \
+    SuggestQueryParser
 from invenio_records_resources.services.records.schema import RecordSchema, \
     RecordWithFilesSchema
 from invenio_records_resources.services.records.search import terms_filter
@@ -44,6 +46,9 @@ class MockSearchOptions(SearchOptions):
             'type': terms_filter('metadata.type.type'),
         }
     }
+    suggest_parser_cls = SuggestQueryParser.factory(fields=[
+        "metadata.title", "metadata.title._2gram", "metadata.title._3gram"
+    ])
 
 
 class ServiceConfig(RecordServiceConfig):

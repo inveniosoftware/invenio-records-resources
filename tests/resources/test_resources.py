@@ -63,58 +63,43 @@ def test_simple_flow(app, client, input_data, headers):
     assert res.json['hits']['total'] == 0
 
 
-def test_search_empty_query_string(client, input_data, headers):
-    idx = 'records-record-v1.0.0'
-
+def test_search_suggest(client, input_data, headers, service, monkeypatch):
     # Create a record
     res = client.post('/mocks', headers=headers, data=json.dumps(input_data))
     assert res.status_code == 201
-
-    # TODO: Should this be part of the service? we don't know the index easily
     Record.index.refresh()
 
-    # Search it
-    res = client.get('/mocks', headers=headers)
+    # Suggest it
+    res = client.get('/mocks', query_string={'suggest': 'te'}, headers=headers)
     assert res.status_code == 200
     assert res.json['hits']['total'] == 1
-    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
-    assert res.json['sortBy'] == 'newest'
 
-    # Search it
-    res = client.get('/mocks', query_string={'q': ''}, headers=headers)
-    assert res.status_code == 200
-    assert res.json['hits']['total'] == 1
-    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
-    assert res.json['sortBy'] == 'newest'
-
-    # Search it
-    res = client.get('/mocks', query_string={'q': ''}, headers=headers)
-    assert res.status_code == 200
-    assert res.json['hits']['total'] == 1
-    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
-    assert res.json['sortBy'] == 'newest'
-
-    # Search it
+    # It's an error to provide both "suggest" and "q"
     res = client.get(
-        '/mocks',
-        query_string={'q': 'test', 'sort': 'bestmatch'},
-        headers=headers
-    )
-    assert res.status_code == 200
-    assert res.json['hits']['total'] == 1
-    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
-    assert res.json['sortBy'] == 'bestmatch'
+        '/mocks', query_string={'suggest': 'te', 'q': 'te'}, headers=headers)
+    assert res.status_code == 400
 
-    # Search it
-    res = client.get(
-        '/mocks',
-        query_string={'q': 'test'},
-        headers=headers
-    )
+    # It's an error to use suggest if the suggest parser is not configured
+    monkeypatch.setattr(
+        service.config.search, 'suggest_parser_cls', None)
+    res = client.get('/mocks', query_string={'suggest': 'te'}, headers=headers)
+    assert res.status_code == 400
+
+
+def test_query_errors(app, client, input_data, headers):
+    """Test query syntax related errors."""
+    h = headers
+    res = client.post('/mocks', headers=h, data=json.dumps(input_data))
+    assert res.status_code == 201
+
+    # Test invalid Lucene syntax is properly handled
+    res = client.get('/mocks', query_string={'q': 'id~:'}, headers=h)
     assert res.status_code == 200
-    assert res.json['hits']['total'] == 1
-    assert res.json['hits']['hits'][0]['metadata'] == input_data['metadata']
-    assert res.json['sortBy'] == 'bestmatch'
+
+    # Valid Lucene syntax, but invalid in Elasticsearch
+    res = client.get('/mocks', query_string={'q': 'id:test!'}, headers=h)
+    assert res.status_code == 400
+    assert res.json["message"] == "Invalid query string syntax."
 
 
 def test_api_errors(app, client, input_data, headers):
@@ -154,8 +139,3 @@ def test_api_errors(app, client, input_data, headers):
     res = client.post('/mocks', headers=h, data=wrong_data)
     assert res.status_code == 400
     assert res.json["message"] == "Unable to decode JSON data in request body."
-
-    # Test RequestError
-    res = client.get('/mocks', query_string={'q': 'id:test!'}, headers=h)
-    assert res.status_code == 400
-    assert res.json["message"] == "Invalid query string syntax."
