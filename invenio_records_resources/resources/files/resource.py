@@ -61,6 +61,7 @@ class FileResource(ErrorHandlersMixin, Resource):
                 route("POST", routes["list"], self.create),
                 route("PUT", routes["list"], self.update_all),
                 route("DELETE", routes["list"], self.delete_all),
+                route("GET", routes["import-items"], self.import_files), #TODO: make post request
                 route("PUT", routes["item"], self.update),
                 route("DELETE", routes["item"], self.delete),
                 route("POST", routes["item-commit"], self.create_commit),
@@ -99,6 +100,17 @@ class FileResource(ErrorHandlersMixin, Resource):
         )
 
         return "", 204
+
+    @request_view_args
+    @request_data
+    @response_handler(many=True)
+    def import_files(self):
+        """Import files from previous record version."""
+        files = self.service.import_files(
+            resource_requestctx.view_args["pid_value"],
+            g.identity,
+        )
+        return files.to_dict(), 201
 
     @request_view_args
     @request_data

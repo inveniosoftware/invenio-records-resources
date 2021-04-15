@@ -21,6 +21,7 @@ class FileResourceConfig(ResourceConfig):
     url_prefix = "/records/<pid_value>"
     routes = {
         "list": "/files",
+        "import-items": "/files_import",
         "item": "/files/<key>",
         "item-content": "/files/<key>/content",
         "item-commit": "/files/<key>/commit",

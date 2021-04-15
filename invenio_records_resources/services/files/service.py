@@ -216,6 +216,26 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
+    def import_files(self, id_, identity):
+        """Import files from previous record version."""
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        action = self.config.permission_action_prefix + "create_files"
+        self.require_permission(identity, action, record=record)
+
+        #TODO: check if there are no files and files are enabled
+        #TODO: copy parent record bucket
+
+        return self.file_result_list(
+            self,
+            identity,
+            results=record.files.values(),
+            record=record,
+            links_tpl=self.file_links_list_tpl(id_),
+            links_item_tpl=self.file_links_item_tpl(id_),
+        )
+
     def set_file_content(
             self, id_, file_key, identity, stream,
             content_length=None):
