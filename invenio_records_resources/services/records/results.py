@@ -61,6 +61,14 @@ class RecordItem(ServiceItemResult):
                 record=self._record,
             )
         )
+
+        if (
+            self._data.get('access')
+            and isinstance(self._data.get('access'), dict)
+            and not self._data.get('access').get('status')
+        ):
+            self._data['access']['status'] = self._record.access.status.value
+
         if self._links_tpl:
             self._data["links"] = self.links
 
@@ -160,6 +168,14 @@ class RecordList(ServiceListResult):
                     record=record,
                 )
             )
+
+            if (
+                projection.get('access')
+                and isinstance(projection.get('access'), dict)
+                and not projection.get('access').get('status')
+            ):
+                projection['access']['status'] = record.access.status.value
+
             if self._links_item_tpl:
                 projection['links'] = self._links_item_tpl.expand(record)
 
