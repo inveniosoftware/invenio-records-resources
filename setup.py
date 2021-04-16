@@ -70,7 +70,7 @@ install_requires = [
     "invenio-records-permissions>=0.11.0,<0.12.0",
     "invenio-records>=1.5.0a3",
     "luqum>=0.11.0",
-    "marshmallow-utils>=0.3.9,<0.4.0",
+    "marshmallow-utils>=0.4.0,<0.5.0",
     "uritemplate>=3.0.1",
     "xmltodict~=0.12.0",
 ]
