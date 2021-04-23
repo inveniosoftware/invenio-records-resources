@@ -118,7 +118,7 @@ def test_record_files_operations(base_app, db, location):
 
     assert models.FileRecordMetadata.query.count() == 0
     assert FileInstance.query.count() == 1
-    assert ObjectVersion.query.count() == 2  # original + delete marker
+    assert ObjectVersion.query.count() == 0
     assert Bucket.query.count() == 1
     assert len(record.files) == 0
     assert 'test.pdf' not in record.files
@@ -155,7 +155,7 @@ def test_record_files_clear(base_app, db, location):
 
     assert models.FileRecordMetadata.query.count() == 0
     assert FileInstance.query.count() == 2
-    assert ObjectVersion.query.count() == 4  # 2 original + 2 delete markers
+    assert ObjectVersion.query.count() == 0
     assert Bucket.query.count() == 1
     assert len(record.files) == 0
     assert 'f1.pdf' not in record.files
