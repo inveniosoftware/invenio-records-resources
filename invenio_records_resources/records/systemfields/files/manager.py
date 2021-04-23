@@ -140,8 +140,7 @@ class FilesManager(MutableMapping):
         # Delete the entire row
         rf.delete(force=True)
         if ov:
-            # TODO: Should we also remove the FileInstance? Configurable?
-            ObjectVersion.delete(ov.bucket, key)
+            rf.object_version.remove()
         del self._entries[key]
 
         # Unset the default preview if the file is removed
