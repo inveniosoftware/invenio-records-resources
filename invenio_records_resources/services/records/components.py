@@ -85,9 +85,6 @@ class FilesOptionsComponent(ServiceComponent):
     It only deals with:
     - enabled / disabled (metadata-only) files
     - default_preview
-
-    TODO: We might want to move default_preview to
-          init_files(self, id_, identity, data)
     """
 
     def _validate_files_enabled(self, record, enabled):
@@ -99,7 +96,7 @@ class FilesOptionsComponent(ServiceComponent):
                 field_name="files.enabled"
             )
 
-    def assign_files_enabled(self, enabled, record=None, **kwargs):
+    def assign_files_enabled(self, record, enabled):
         """Assign files enabled.
 
         This is a public interface so that it can be reused elsewhere
@@ -108,6 +105,16 @@ class FilesOptionsComponent(ServiceComponent):
         self._validate_files_enabled(record, enabled)
         record.files.enabled = enabled
 
+    def assign_files_default_preview(self, record, default_preview):
+        """Assign files default_preview."""
+        try:
+            record.files.default_preview = default_preview
+        except InvalidKeyError as e:
+            raise ValidationError(
+                e.get_description(),
+                field_name="files.default_preview"
+            )
+
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed files options in the record."""
         # "enabled" presence is guaranteed by schema
@@ -115,13 +122,8 @@ class FilesOptionsComponent(ServiceComponent):
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed files options in the record."""
-        # presence is guaranteed by schema
+        # "enabled" presence is guaranteed by schema
         enabled = data["files"]["enabled"]
-        self.assign_files_enabled(enabled, record, **kwargs)
-        try:
-            record.files.default_preview = data["files"].get("default_preview")
-        except InvalidKeyError as e:
-            raise ValidationError(
-                e.get_description(),
-                field_name="files.default_preview"
-            )
+        self.assign_files_enabled(record, enabled)
+        default_preview = data["files"].get("default_preview")
+        self.assign_files_default_preview(record, default_preview)

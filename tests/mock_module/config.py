@@ -22,7 +22,7 @@ from invenio_records_resources.services.records.params.querystr import \
 from invenio_records_resources.services.records.search import \
     nested_terms_filter
 
-from .api import Record, RecordWithFile
+from .api import Record, RecordWithFiles
 from .permissions import PermissionPolicy
 from .schemas import RecordSchema, RecordWithFilesSchema
 
@@ -76,7 +76,7 @@ class ServiceConfig(RecordServiceConfig):
 class ServiceWithFilesConfig(ServiceConfig):
     """Config for service with files support."""
 
-    record_cls = RecordWithFile
+    record_cls = RecordWithFiles
     components = RecordServiceConfig.components + [FilesOptionsComponent]
     schema = RecordWithFilesSchema
 
@@ -84,7 +84,7 @@ class ServiceWithFilesConfig(ServiceConfig):
 class MockFileServiceConfig(FileServiceConfig):
     """File service configuration."""
 
-    record_cls = RecordWithFile
+    record_cls = RecordWithFiles
     permission_policy_cls = PermissionPolicy
 
     file_links_list = {

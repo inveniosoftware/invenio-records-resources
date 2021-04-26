@@ -95,31 +95,6 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def update_files_options(self, id_, identity, data):
-        """Update the files' options."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "update_files"
-        self.require_permission(identity, action, record=record)
-
-        if record.files.enabled:
-            if 'default_preview' in data:
-                record.files.default_preview = data['default_preview']
-            if 'order' in data:
-                record.files.order = data['order']
-
-        record.commit()
-        db.session.commit()
-        return self.file_result_list(
-            self,
-            identity,
-            results=record.files.values(),
-            record=record,
-            links_tpl=self.file_links_list_tpl(id_),
-            links_item_tpl=self.file_links_item_tpl(id_),
-        )
-
     def update_file_metadata(self, id_, file_key, identity, data):
         """Update the metadata of a file."""
         # FIXME: Remove "registered_only=False" since it breaks access to an

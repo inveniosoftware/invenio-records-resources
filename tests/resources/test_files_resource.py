@@ -187,37 +187,37 @@ def test_default_preview_file(
         assert res.json['status'] == 'completed'
 
     # Set the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f1.pdf'
-    })
+    input_data["files"]["default_preview"] = 'f1.pdf'
+    res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json['default_preview'] == 'f1.pdf'
+    assert res.json["files"]['default_preview'] == 'f1.pdf'
 
     # Change the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f2.pdf'
-    })
+    input_data["files"]["default_preview"] = 'f2.pdf'
+    res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json['default_preview'] == 'f2.pdf'
+    assert res.json["files"]['default_preview'] == 'f2.pdf'
 
     # Unset the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': None
-    })
+    input_data["files"]["default_preview"] = None
+    res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json['default_preview'] is None
+    assert res.json["files"].get('default_preview') is None
+
+    # Empty string the default preview file
+    input_data["files"]["default_preview"] = ''
+    res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
+    assert res.status_code == 200
+    assert res.json["files"].get('default_preview') is None
 
     # Set the default preview file
-    res = client.put(f"/mocks/{id_}/files", headers=headers, json={
-        'default_preview': 'f3.pdf'
-    })
+    input_data["files"]["default_preview"] = 'f3.pdf'
+    res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json['default_preview'] == 'f3.pdf'
+    assert res.json["files"]['default_preview'] == 'f3.pdf'
 
     # Delete the default preview file
-    res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers, json={
-        'default_preview': 'f3.pdf'
-    })
+    res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers)
     assert res.status_code == 204
 
     # Get all files and check default preview

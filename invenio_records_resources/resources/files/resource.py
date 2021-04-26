@@ -59,7 +59,6 @@ class FileResource(ErrorHandlersMixin, Resource):
         if self.config.allow_upload:
             url_rules += [
                 route("POST", routes["list"], self.create),
-                route("PUT", routes["list"], self.update_all),
                 route("DELETE", routes["list"], self.delete_all),
                 route("PUT", routes["item"], self.update),
                 route("DELETE", routes["item"], self.delete),
@@ -75,18 +74,6 @@ class FileResource(ErrorHandlersMixin, Resource):
         files = self.service.list_files(
             resource_requestctx.view_args["pid_value"],
             g.identity,
-        )
-        return files.to_dict(), 200
-
-    @request_view_args
-    @request_data
-    @response_handler(many=True)
-    def update_all(self):
-        """Update top-level files metadata."""
-        files = self.service.update_files_options(
-            resource_requestctx.view_args["pid_value"],
-            g.identity,
-            resource_requestctx.data or [],
         )
         return files.to_dict(), 200
 

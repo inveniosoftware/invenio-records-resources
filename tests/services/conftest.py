@@ -15,7 +15,7 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
-from mock_module.api import Record, RecordWithFile
+from mock_module.api import Record, RecordWithFiles
 from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
@@ -57,7 +57,7 @@ def example_record(app, db, input_data):
 @pytest.fixture()
 def example_file_record(db, input_data):
     """Example record."""
-    record = RecordWithFile.create({}, **input_data)
+    record = RecordWithFiles.create({}, **input_data)
     record.commit()
     db.session.commit()
     return record

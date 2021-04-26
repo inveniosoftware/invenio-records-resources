@@ -27,7 +27,7 @@ class FileRecord(FileRecordBase):
     """Example record file API."""
 
     model_cls = models.FileRecordMetadata
-    record_cls = LocalProxy(lambda: RecordWithFile)
+    record_cls = LocalProxy(lambda: RecordWithFiles)
 
 
 class Record(RecordBase):
@@ -52,7 +52,7 @@ class Record(RecordBase):
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
 
 
-class RecordWithFile(Record):
+class RecordWithFiles(Record):
     """Example record with file API."""
 
     files = FilesField(store=False, file_cls=FileRecord)
