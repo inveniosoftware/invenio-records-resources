@@ -108,40 +108,33 @@ class FilesField(SystemField):
 
     def post_create(self, record):
         """Called after a record is created."""
-        if self._create and self._enabled:
-            # This uses the data descriptor method __get__() below:
-            if getattr(record, self.attr_name) is None:
-                # Create a bucket if the object doesn't already have one.
-                if callable(self._bucket_args):
-                    # TODO: Document callable params
-                    bucket_args = self._bucket_args(field=self, record=record)
-                else:
-                    bucket_args = self._bucket_args
-                bucket = Bucket.create(**bucket_args)
-                if not (getattr(record, self._bucket_id_attr, None) and
-                        getattr(record, self._bucket_attr, None)):
-                    # TODO: Setting these bumps the row's `revision_id`
-                    setattr(record, self._bucket_id_attr, bucket.id)
-                    setattr(record, self._bucket_attr, bucket)
-        self.store(record, FilesManager(
+        files = FilesManager(
             record,
             file_cls=self.file_cls,
             enabled=self._enabled,
-        ))
+            options=self._manager_options,
+        )
+
+        if self._create and self._enabled:
+            files.create_bucket()
+
+        self.store(record, files)
 
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""
         if self._delete:
             files = getattr(record, self.attr_name)
             if files is not None:
-                if record.bucket:
-                    bucket = record.bucket
-                    if force:
-                        record.bucket = None
-                        record.bucket_id = None
-                        bucket.remove()
-                    else:
-                        Bucket.delete(bucket.id)
+                files.remove_bucket(force=force)
+
+    @property
+    def _manager_options(self):
+        """Return options for the manager."""
+        return {
+            'bucket_id_attr': self._bucket_id_attr,
+            'bucket_attr': self._bucket_attr,
+            'bucket_args': self._bucket_args,
+        }
 
     #
     # Helpers
@@ -160,6 +153,7 @@ class FilesField(SystemField):
                 order=data.get('order', []),
                 default_preview=data.get('default_preview'),
                 entries=data.get('entries', {}) if self._store else None,
+                options=self._manager_options,
             )
             self._set_cache(record, obj)
             return obj

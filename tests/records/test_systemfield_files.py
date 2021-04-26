@@ -200,3 +200,51 @@ def test_record_files_store(base_app, db, location):
             'version_id': str(rf.object_version_id),
         } for rf in (rf1, rf2)
     }
+
+
+def test_record_files_copy(base_app, db, location):
+    """Test record files bucket creation."""
+    # Create source record
+    src = Record.create({})
+    src.files['f1.pdf'] = (
+        BytesIO(b'testfile'),
+        {'description': 'Test file'}
+    )
+    src.files.default_preview = 'f1.pdf'
+    src.files.order = ['f1.pdf']
+    src.commit()
+    db.session.commit()
+
+    assert ObjectVersion.query.count() == 1
+    assert Bucket.query.count() == 1
+
+    # Create destination record
+    dst = Record.create({})
+    dst.files.copy(src.files)
+    dst.commit()
+    db.session.commit()
+
+    assert ObjectVersion.query.count() == 2
+    assert Bucket.query.count() == 2
+
+    assert dst.files.enabled == src.files.enabled
+    assert dst.files.default_preview == src.files.default_preview
+    assert dst.files.order == src.files.order
+    assert list(dst.files.keys()) == list(src.files.keys())
+    assert dst.files['f1.pdf'].object_version.version_id != \
+        src.files['f1.pdf'].object_version.version_id
+
+
+def test_record_files_copy_disabled(base_app, db, location):
+    src = Record.create({})
+    assert src.files.enabled is True
+    src.files.enabled = False
+    src.commit()
+    db.session.commit()
+    assert src.files.enabled is False
+
+    # Create destination record
+    dst = Record.create({})
+    assert dst.files.enabled is True
+    dst.files.copy(src.files)
+    assert dst.files.enabled is False

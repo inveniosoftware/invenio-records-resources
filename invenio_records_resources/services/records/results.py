@@ -66,6 +66,11 @@ class RecordItem(ServiceItemResult):
 
         return self._data
 
+    @property
+    def errors(self):
+        """Get the errors."""
+        return self._errors
+
     def to_dict(self):
         """Get a dictionary for the record."""
         res = self.data

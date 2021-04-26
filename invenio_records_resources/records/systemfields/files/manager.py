@@ -78,16 +78,60 @@ class FilesManager(MutableMapping):
     """Files management dict-like wrapper."""
 
     def __init__(self, record, file_cls=None, bucket=None, enabled=True,
-                 order=None, default_preview=None, entries=None):
+                 order=None, default_preview=None, entries=None, options=None):
         """Initialize the files collection."""
+        self._options = options or {}
         self.record = record
         self.file_cls = file_cls
-        self._bucket = bucket or record.bucket
+        self._bucket = bucket or getattr(
+            record, self._options['bucket_attr'], 'bucket')
 
         self._enabled = enabled
         self._order = order or []
         self._default_preview = default_preview
         self._entries = entries
+
+    def create_bucket(self):
+        """Create a bucket."""
+        # Create a bucket if the object doesn't already have one.
+        bucket_args = self._options['bucket_args']
+        if callable(bucket_args):
+            # TODO: Document callable params
+            bucket_args = bucket_args(record=self.record)
+
+        self.set_bucket(Bucket.create(**bucket_args))
+
+    def remove_bucket(self, force=False):
+        """Remove the bucket."""
+        if self.bucket:
+            bucket = self.bucket
+            self.unset_bucket()
+            # TODO: not sure this makes sense???
+            if force:
+                bucket.remove()
+            else:
+                Bucket.delete(bucket.id)
+
+    def unset_bucket(self):
+        """Unassign the bucket from the record."""
+        setattr(self.record, self._options['bucket_attr'], None)
+        setattr(self.record, self._options['bucket_id_attr'], None)
+        self._bucket = None
+
+    def set_bucket(self, bucket, overwrite=False):
+        """Set the bucket on the record."""
+        # TODO: Setting these bumps the row's `revision_id`
+        setattr(self.record, self._options['bucket_attr'], bucket)
+        setattr(self.record, self._options['bucket_id_attr'], bucket.id)
+        self._bucket = bucket
+
+    def lock(self):
+        """Lock the bucket."""
+        self.bucket.locked = True
+
+    def unlock(self):
+        """Unlock the bucket."""
+        self.bucket.locked = False
 
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
@@ -133,14 +177,18 @@ class FilesManager(MutableMapping):
         return rf
 
     @ensure_enabled
-    def delete(self, key):
+    def delete(self, key, remove_obj=True, softdelete_obj=False):
         """Delete a file."""
         rf = self[key]
         ov = rf.object_version
         # Delete the entire row
         rf.delete(force=True)
-        if ov:
-            rf.object_version.remove()
+        if ov and remove_obj:
+            if remove_obj:
+                rf.object_version.remove()
+            elif softdelete_obj:
+                ObjectVersion.delete(
+                    rf.object_version.bucket, rf.object_version.key)
         del self._entries[key]
 
         # Unset the default preview if the file is removed
@@ -149,6 +197,35 @@ class FilesManager(MutableMapping):
         if key in self._order:
             self._order.remove(key)
         return rf
+
+    @ensure_enabled
+    def delete_all(self, remove_obj=True):
+        """Delete all file records."""
+        for key in list(self.keys()):
+            self.delete(key, remove_obj=remove_obj)
+
+    def copy(self, src_files, copy_obj=True):
+        """Copy from another file manager."""
+        self.enabled = src_files.enabled
+
+        if not self.enabled:
+            return
+
+        for key, rf in src_files.items():
+            # Copy object version of link existing?
+            if copy_obj:
+                dst_obj = rf.object_version.copy(bucket=self.bucket)
+            else:
+                dst_obj = rf.object_version
+
+            # Copy file record
+            if rf.metadata is not None:
+                self[key] = dst_obj, rf.metadata
+            else:
+                self[key] = dst_obj
+
+        self.default_preview = src_files.default_preview
+        self.order = src_files.order
 
     @property
     def entries(self):
