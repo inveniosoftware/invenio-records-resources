@@ -64,3 +64,43 @@ def test_disable_files_when_files_already_present_should_error(
 
     with pytest.raises(ValidationError):
         item = service.update(item.id, identity_simple, input_data)
+
+
+def test_set_default_file_preview(
+        app, location, service, file_service, identity_simple, input_data):
+    input_data["files"] = {
+        "enabled": True,
+    }
+    item = service.create(identity_simple, input_data)
+    default_file = 'file.txt'
+    add_file_to_record(file_service, item.id, default_file, identity_simple)
+    input_data["files"] = {
+        "enabled": True,
+        "default_preview": default_file
+    }
+
+    item = service.update(item.id, identity_simple, input_data)
+
+    item_dict = item.to_dict()
+    assert (
+        {"enabled": True, "default_preview": default_file} ==
+        item_dict["files"]
+    )
+    assert item._record.files.default_preview == default_file
+
+
+def test_set_default_file_preview_when_unknown_should_raise(
+        app, location, service, file_service, identity_simple, input_data):
+    input_data["files"] = {
+        "enabled": True,
+    }
+    item = service.create(identity_simple, input_data)
+    default_file = 'file.txt'
+    add_file_to_record(file_service, item.id, default_file, identity_simple)
+    input_data["files"] = {
+        "enabled": True,
+        "default_preview": "inexisting_file.txt"
+    }
+
+    with pytest.raises(ValidationError):
+        item = service.update(item.id, identity_simple, input_data)

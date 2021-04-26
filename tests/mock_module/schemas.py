@@ -11,6 +11,7 @@
 """Mock module schemas."""
 
 from marshmallow import Schema, fields, validate
+from marshmallow_utils.fields import SanitizedUnicode
 
 from invenio_records_resources.services.records.schema import BaseRecordSchema
 
@@ -39,6 +40,7 @@ class FilesOptionsSchema(Schema):
     """Basic files options schema class."""
 
     enabled = fields.Bool(missing=True)
+    default_preview = SanitizedUnicode()
 
 
 class RecordWithFilesSchema(RecordSchema):

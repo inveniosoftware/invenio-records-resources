@@ -10,6 +10,7 @@
 """Records service component base classes."""
 
 from flask_babelex import gettext as _
+from invenio_files_rest.errors import InvalidKeyError
 from marshmallow import ValidationError
 
 
@@ -81,7 +82,12 @@ class MetadataComponent(ServiceComponent):
 class FilesOptionsComponent(ServiceComponent):
     """Service component for files' options.
 
-    It only deals with enabled / disabled (metadata-only) files for now.
+    It only deals with:
+    - enabled / disabled (metadata-only) files
+    - default_preview
+
+    TODO: We might want to move default_preview to
+          init_files(self, id_, identity, data)
     """
 
     def _validate_files_enabled(self, record, enabled):
@@ -104,12 +110,18 @@ class FilesOptionsComponent(ServiceComponent):
 
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed files options in the record."""
-        # presence is guaranteed by schema
-        enabled = data["files"]["enabled"]
-        record.files.enabled = enabled
+        # "enabled" presence is guaranteed by schema
+        record.files.enabled = data["files"]["enabled"]
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed files options in the record."""
         # presence is guaranteed by schema
         enabled = data["files"]["enabled"]
         self.assign_files_enabled(enabled, record, **kwargs)
+        try:
+            record.files.default_preview = data["files"].get("default_preview")
+        except InvalidKeyError as e:
+            raise ValidationError(
+                e.get_description(),
+                field_name="files.default_preview"
+            )
