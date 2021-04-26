@@ -44,7 +44,7 @@ class ServiceComponent:
 class DataComponent(ServiceComponent):
     """Service component which sets all data in the record."""
 
-    def create(self, identity, data=None, record=None, **kwargs):
+    def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Create a new record."""
         record.update(data)
 
@@ -69,7 +69,7 @@ class DataComponent(ServiceComponent):
 class MetadataComponent(ServiceComponent):
     """Service component for metadata."""
 
-    def create(self, identity, data=None, record=None, **kwargs):
+    def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed metadata to the record."""
         record.metadata = data.get('metadata', {})
 
@@ -102,7 +102,7 @@ class FilesOptionsComponent(ServiceComponent):
         self._validate_files_enabled(record, enabled)
         record.files.enabled = enabled
 
-    def create(self, identity, data=None, record=None, **kwargs):
+    def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed files options in the record."""
         # presence is guaranteed by schema
         enabled = data["files"]["enabled"]

@@ -227,6 +227,15 @@ class FilesManager(MutableMapping):
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
+    def sync(self, src_files):
+        """Sync changes from source files to this manager."""
+        self.default_preview = src_files.default_preview
+        self.order = src_files.order
+
+        # TODO: We don't yet sync file additions/removals/changes from
+        # "src_files". This should take into account if the current bucket
+        # is locked or not.
+
     @property
     def entries(self):
         """Return file entries dictionary."""

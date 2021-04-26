@@ -233,6 +233,15 @@ def test_record_files_copy(base_app, db, location):
     assert list(dst.files.keys()) == list(src.files.keys())
     assert dst.files['f1.pdf'].object_version.version_id != \
         src.files['f1.pdf'].object_version.version_id
+    db.session.commit()
+
+    # Unset preview and test sync()
+    src.files.default_preview = None
+    src.files.order = []
+    db.session.commit()
+    dst.files.sync(src.files)
+    assert dst.files.default_preview is None
+    assert dst.files.order == []
 
 
 def test_record_files_copy_disabled(base_app, db, location):
