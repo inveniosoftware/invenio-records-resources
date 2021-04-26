@@ -248,7 +248,12 @@ class RecordService(Service):
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
-                component.create(identity, data=data, record=record)
+                component.create(
+                    identity,
+                    data=data,
+                    record=record,
+                    errors=errors
+                )
 
         # Persist record (DB and index)
         record.commit()
