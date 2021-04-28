@@ -60,7 +60,8 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "read_files", record=record)
+        action = self.config.permission_action_prefix + "read_files"
+        self.require_permission(identity, action, record=record)
         return self.file_result_list(
             self,
             identity,
