@@ -13,4 +13,4 @@ This file is imported by ``invenio_records_resources.__init__``,
 and parsed by ``setup.py``.
 """
 
-__version__ = "0.14.11"
+__version__ = "0.15.0"
