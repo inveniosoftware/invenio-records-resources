@@ -20,7 +20,7 @@ For instance:
 
 """
 
-from invenio_records.dictutils import dict_set
+from invenio_records.dictutils import dict_lookup, dict_set, parse_lookup_key
 from invenio_records.systemfields import SystemField
 
 
@@ -59,3 +59,10 @@ class PIDStatusCheckField(SystemField):
                 self.attr_name,
                 getattr(record, self.attr_name)
             )
+
+    def pre_load(self, data, **kwargs):
+        """Called before a record is dumped in a secondary storage system."""
+        if self._dump:
+            keys = parse_lookup_key(self.attr_name)
+            parent = dict_lookup(data, keys, parent=True)
+            parent.pop(keys[-1], None)
