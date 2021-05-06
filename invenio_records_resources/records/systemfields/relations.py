@@ -9,6 +9,7 @@
 
 """Relations system field."""
 
+from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.systemfields.relations import InvalidRelationValue, \
     ListRelation, RelationBase
@@ -24,9 +25,19 @@ class PIDRelation(RelationBase):
 
     def resolve(self, id_):
         """Resolve the value using the record class."""
+        if id_ in self.cache:
+            obj = self.cache[id_]
+            return obj
+
         try:
-            return self.pid_field.resolve(id_)
-        # TODO: there's many ways PID resolution can fail...
+            obj = self.pid_field.resolve(id_)
+            # We detach the related record model from the database session when
+            # we add it in the cache. Otherwise, accessing the cached record
+            # model, will execute a new select query after a db.session.commit.
+            db.session.expunge(obj.model)
+            self.cache[id_] = obj
+            return obj
+            # TODO: there's many ways PID resolution can fail...
         except Exception:
             return None
 
