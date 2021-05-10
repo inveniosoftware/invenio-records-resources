@@ -170,8 +170,9 @@ class RecordService(Service):
 
         # Prepare and execute the search
         params = params or {}
-        search_result = self._search(
-            'search', identity, params, es_preference, **kwargs).execute()
+        search = self._search(
+            'search', identity, params, es_preference, **kwargs)
+        search_result = search.execute()
 
         return self.result_list(
             self,

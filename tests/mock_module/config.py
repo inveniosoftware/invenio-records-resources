@@ -15,12 +15,11 @@ from invenio_records_resources.services.files.links import FileLink
 from invenio_records_resources.services.records.components import \
     FilesOptionsComponent
 from invenio_records_resources.services.records.config import SearchOptions
+from invenio_records_resources.services.records.facets import NestedTermsFacet
 from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
 from invenio_records_resources.services.records.params.querystr import \
     SuggestQueryParser
-from invenio_records_resources.services.records.search import \
-    nested_terms_filter
 
 from .api import Record, RecordWithFiles
 from .permissions import PermissionPolicy
@@ -30,25 +29,15 @@ from .schemas import RecordSchema, RecordWithFilesSchema
 class MockSearchOptions(SearchOptions):
     """Mock module search options."""
 
-    facets_options = {
-        'aggs': {
-            'type': {
-                'terms': {'field': 'metadata.type.type'},
-                'aggs': {
-                    'subtype': {
-                        'terms': {'field': 'metadata.type.subtype'},
-                    }
-                }
-            }
-        },
-        'post_filters': {
-            "type": nested_terms_filter(
-                "metadata.type.type",
-                "metadata.type.subtype",
-                splitchar="**",
-            )
-        }
+    facets = {
+        'type': NestedTermsFacet(
+            field='metadata.type.type',
+            subfield='metadata.type.subtype',
+            splitchar="**",
+            label='Type'
+        )
     }
+
     suggest_parser_cls = SuggestQueryParser.factory(fields=[
         "metadata.title", "metadata.title._2gram", "metadata.title._3gram"
     ])

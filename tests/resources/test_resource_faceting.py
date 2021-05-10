@@ -54,37 +54,40 @@ def test_aggregating(client, headers, three_indexed_records):
 
     expected_aggs = {
         "type": {
+            "label": "Type",
             "buckets": [
                 {
                     "doc_count": 2,
                     "key": "A",
-                    "subtype": {
+                    "label": "A",
+                    "is_selected": False,
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "AA"
+                                "key": "AA",
+                                "label": "AA",
+                                "is_selected": False,
                             },
                             {
                                 "doc_count": 1,
-                                "key": "AB"
+                                "key": "AB",
+                                "label": "AB",
+                                "is_selected": False,
                             }
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
-                    }
+                    },
                 },
                 {
                     "doc_count": 1,
                     "key": "B",
-                    "subtype": {
-                        "buckets": [],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
+                    "label": "B",
+                    "is_selected": False,
+                    "inner": {
+                        "buckets": []
                     }
                 }
             ],
-            'doc_count_error_upper_bound': 0,
-            'sum_other_doc_count': 0,
         }
     }
     assert expected_aggs == response_aggs
@@ -99,37 +102,40 @@ def test_post_filtering(client, headers, three_indexed_records):
     response_aggs = response.json["aggregations"]
     expected_aggs = {
         "type": {
+            "label": "Type",
             "buckets": [
                 {
                     "doc_count": 2,
                     "key": "A",
-                    "subtype": {
+                    "label": "A",
+                    "is_selected": True,
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "AA"
+                                "key": "AA",
+                                "label": "AA",
+                                "is_selected": False,
                             },
                             {
                                 "doc_count": 1,
-                                "key": "AB"
+                                "key": "AB",
+                                "label": "AB",
+                                "is_selected": False,
                             }
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
                     }
                 },
                 {
                     "doc_count": 1,
                     "key": "B",
-                    "subtype": {
-                        "buckets": [],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
+                    "label": "B",
+                    "is_selected": False,
+                    "inner": {
+                        "buckets": []
                     }
                 }
             ],
-            'doc_count_error_upper_bound': 0,
-            'sum_other_doc_count': 0,
         }
     }
     assert expected_aggs == response_aggs

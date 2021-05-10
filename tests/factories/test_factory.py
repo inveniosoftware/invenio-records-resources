@@ -19,7 +19,7 @@ from invenio_records_resources.services import RecordServiceConfig, \
     SearchOptions
 from invenio_records_resources.services.records.components import \
     ServiceComponent
-from invenio_records_resources.services.records.search import terms_filter
+from invenio_records_resources.services.records.facets import TermsFacet
 
 
 def test_model_class_create():
@@ -157,15 +157,8 @@ def test_optional_endpoint_route():
 
 def test_optional_service_params():
     class Opts(SearchOptions):
-        facets_options = {
-            "aggs": {
-                "vocabulary_type": {
-                    "terms": {"field": "vocabulary_type"},
-                }
-            },
-            "post_filters": {
-                "vocabulary_type": terms_filter("vocabulary_type"),
-            },
+        facets = {
+            'vocabulary_type': TermsFacet(field='vocabulary_type')
         }
 
     class CustomComponent(ServiceComponent):
@@ -183,8 +176,8 @@ def test_optional_service_params():
     )
 
     assert (
-        rec_type.service_config_cls.search.facets_options
-        == Opts.facets_options
+        rec_type.service_config_cls.search.facets
+        == Opts.facets
     )
 
     assert (

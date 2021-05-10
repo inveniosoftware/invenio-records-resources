@@ -46,38 +46,41 @@ def test_facets(app, service, identity_simple, records):
 
     expected_aggs = {
         "type": {
+            "label": "Type",
             "buckets": [
                 {
                     "doc_count": 1,
                     "key": "Foo0",
-                    "subtype": {
+                    "is_selected": False,
+                    "label": "Foo0",
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "Bar0"
+                                "key": "Bar0",
+                                "label": "Bar0",
+                                "is_selected": False,
                             },
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
                     }
                 },
                 {
                     "doc_count": 1,
                     "key": "Foo1",
-                    "subtype": {
+                    "is_selected": False,
+                    "label": "Foo1",
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "Bar1"
+                                "key": "Bar1",
+                                "label": "Bar1",
+                                "is_selected": False,
                             },
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
                     }
                 },
             ],
-            'doc_count_error_upper_bound': 0,
-            'sum_other_doc_count': 0,
         }
     }
     assert expected_aggs == service_aggs
@@ -90,38 +93,41 @@ def test_facets_post_filtering(app, service, identity_simple, records):
     service_aggs = res.aggregations
     expected_aggs = {
         "type": {
+            "label": "Type",
             "buckets": [
                 {
                     "doc_count": 1,
                     "key": "Foo0",
-                    "subtype": {
+                    "label": "Foo0",
+                    "is_selected": False,
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "Bar0"
+                                "key": "Bar0",
+                                "label": "Bar0",
+                                "is_selected": False,
                             },
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
                     }
                 },
                 {
                     "doc_count": 1,
                     "key": "Foo1",
-                    "subtype": {
+                    "label": "Foo1",
+                    "is_selected": True,
+                    "inner": {
                         "buckets": [
                             {
                                 "doc_count": 1,
-                                "key": "Bar1"
+                                "key": "Bar1",
+                                "label": "Bar1",
+                                "is_selected": False,
                             },
                         ],
-                        'doc_count_error_upper_bound': 0,
-                        'sum_other_doc_count': 0
                     }
                 },
             ],
-            'doc_count_error_upper_bound': 0,
-            'sum_other_doc_count': 0,
         }
     }
     assert expected_aggs == service_aggs
