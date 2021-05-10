@@ -148,7 +148,8 @@ class RecordList(ServiceListResult):
     @property
     def aggregations(self):
         """Get the search result aggregations."""
-        return self._results.aggregations.to_dict()
+        # TODO: have a way to label or not label
+        return self._results.labelled_facets.to_dict()
 
     @property
     def hits(self):

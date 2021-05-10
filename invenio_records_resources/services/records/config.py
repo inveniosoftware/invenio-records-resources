@@ -45,10 +45,7 @@ class SearchOptions:
             fields=['created'],
         ),
     }
-    facets_options = dict(
-        aggs={},
-        post_filters={}
-    )
+    facets = {}
     pagination_options = {
         "default_results_per_page": 25,
         "default_max_results": 10000
