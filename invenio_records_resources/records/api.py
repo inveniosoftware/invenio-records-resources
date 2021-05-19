@@ -9,6 +9,8 @@
 
 """Records API."""
 
+from contextlib import contextmanager
+
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
@@ -70,6 +72,15 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         """File wrapper object."""
         if self.object_version:
             return File(object_model=self.object_version)
+
+    @contextmanager
+    def open_stream(self, mode):
+        """Get a file stream for a given file record."""
+        fp = self.object_version.file.storage().open(mode)
+        try:
+            yield fp
+        finally:
+            fp.close()
 
     @property
     def record(self):

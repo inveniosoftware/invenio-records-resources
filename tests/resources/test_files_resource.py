@@ -44,10 +44,14 @@ def disabled_file_upload_resource(file_service):
 
 
 @pytest.fixture(scope="module")
-def base_app(base_app, file_resource, disabled_file_upload_resource):
+def base_app(base_app, file_resource, disabled_file_upload_resource, service,
+             file_service):
     """Application factory fixture."""
     base_app.register_blueprint(file_resource.as_blueprint())
     base_app.register_blueprint(disabled_file_upload_resource.as_blueprint())
+    registry = base_app.extensions['invenio-records-resources'].registry
+    registry.register(service, service_id='mock-records-service')
+    registry.register(file_service, service_id='mock-files-service')
     yield base_app
 
 

@@ -72,6 +72,7 @@ install_requires = [
     "luqum>=0.11.0",
     "marshmallow-utils>=0.4.0,<0.5.0",
     "uritemplate>=3.0.1",
+    "wand>=0.6.6,<0.7.0",
     "xmltodict~=0.12.0",
 ]
 
@@ -106,6 +107,9 @@ setup(
         "invenio_base.api_apps": [
             "invenio_records_resources = "
             "invenio_records_resources:InvenioRecordsResources",
+        ],
+        "invenio_celery.tasks": [
+            "invenio_records_resources = invenio_records_resources.tasks",
         ],
         "invenio_i18n.translations": [
             "messages = invenio_records_resources",
