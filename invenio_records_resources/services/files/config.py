@@ -11,7 +11,10 @@
 
 from ..base import ServiceConfig
 from ..records.links import RecordLink
+from .components import FileContentComponent, FileMetadataComponent, \
+    FileProcessorComponent
 from .links import FileLink
+from .processors import ImageMetadataExtractor
 from .results import FileItem, FileList
 from .schema import FileSchema
 
@@ -39,3 +42,13 @@ class FileServiceConfig(ServiceConfig):
         "self": FileLink("{+api}/records/{id}/files/{key}"),
         "content": FileLink("{+api}/records/{id}/files/{key}/content"),
     }
+
+    components = [
+        FileMetadataComponent,
+        FileContentComponent,
+        FileProcessorComponent,
+    ]
+
+    file_processors = [
+        ImageMetadataExtractor,
+    ]

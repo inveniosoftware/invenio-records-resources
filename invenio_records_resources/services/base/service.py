@@ -51,6 +51,21 @@ class Service:
             raise PermissionDeniedError(action_name)
 
     #
+    # Pluggable components
+    #
+    @property
+    def components(self):
+        """Return initialized service components."""
+        return (c(self) for c in self.config.components)
+
+    def run_components(self, action, *args, **kwargs):
+        """Run components for a given action."""
+        # Run post commit components
+        for component in self.components:
+            if hasattr(component, action):
+                getattr(component, action)(*args, **kwargs)
+
+    #
     # Units of transaction methods (creation...)
     #
     def result_item(self, *args, **kwargs):

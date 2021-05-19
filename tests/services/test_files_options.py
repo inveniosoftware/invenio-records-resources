@@ -24,6 +24,15 @@ def service(appctx):
     return RecordService(ServiceWithFilesConfig)
 
 
+@pytest.fixture(scope="module")
+def base_app(base_app, service, file_service):
+    """Application factory fixture."""
+    registry = base_app.extensions['invenio-records-resources'].registry
+    registry.register(service, service_id='mock-records-service')
+    registry.register(file_service, service_id='mock-files-service')
+    yield base_app
+
+
 def test_enable_files(app, location, service, identity_simple, input_data):
     input_data["files"] = {
         "enabled": True

@@ -9,11 +9,7 @@
 
 """File Service API."""
 
-from copy import deepcopy
-
 from invenio_db import db
-from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.models import ObjectVersion
 
 from ..base import LinksTemplate, Service
 from ..records.schema import ServiceSchemaWrapper
@@ -52,16 +48,28 @@ class FileService(Service):
             self.config.file_links_item, context={"id": id_}
         )
 
+    def check_permission(self, identity, action_name, **kwargs):
+        """Check a permission against the identity."""
+        action_name = self.config.permission_action_prefix + action_name
+        return super().check_permission(identity, action_name, **kwargs)
+
+    def get_record(self, id_, identity, action):
+        """Get the associated record."""
+        # FIXME: Remove "registered_only=False" since it breaks access to an
+        # unpublished record.
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, action, record=record)
+        return record
+
     #
     # High-level API
     #
     def list_files(self, id_, identity):
         """List the files of a record."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "read_files"
-        self.require_permission(identity, action, record=record)
+        record = self.get_record(id_, identity, "read_files")
+
+        self.run_components("list_files", id_, identity, record)
+
         return self.file_result_list(
             self,
             identity,
@@ -73,24 +81,18 @@ class FileService(Service):
 
     def init_files(self, id_, identity, data):
         """Initialize the file upload for the record."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "create_files"
-        self.require_permission(identity, action, record=record)
-        # TODO: Load via marshmallow schema?
-        results = []
-        for file_metadata in data:
-            temporary_obj = deepcopy(file_metadata)
-            results.append(
-                record.files.create(
-                    temporary_obj.pop('key'), data=temporary_obj))
-        # TODO: maybe do this automatically in the files field
+        record = self.get_record(id_, identity, "create_files")
+
+        self.run_components("init_files", id_, identity, record, data)
+
         db.session.commit()
+
+        self.run_components("post_init_files", id_, identity, record, data)
+
         return self.file_result_list(
             self,
             identity,
-            results=results,
+            results=record.files.values(),
             record=record,
             links_tpl=self.file_links_list_tpl(id_),
             links_item_tpl=self.file_links_item_tpl(id_),
@@ -98,26 +100,16 @@ class FileService(Service):
 
     def update_file_metadata(self, id_, file_key, identity, data):
         """Update the metadata of a file."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "create", record=record)
-        rf = record.files.update(file_key, data=data)
-        db.session.commit()
-        return self.file_result_item(
-            self,
-            identity,
-            rf,
-            record,
-            links_tpl=self.file_links_item_tpl(id_),
-        )
+        record = self.get_record(id_, identity, "create_files")
 
-    def read_file_metadata(self, id_, file_key, identity):
-        """Read the metadata of a file."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "read_files", record=record)
+        self.run_components(
+            "update_file_metadata", id_, file_key, identity, record, data)
+
+        db.session.commit()
+
+        self.run_components(
+            "post_update_file_metadata", id_, file_key, identity, record, data)
+
         return self.file_result_item(
             self,
             identity,
@@ -126,20 +118,51 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
+    def read_file_metadata(self, id_, file_key, identity):
+        """Read the metadata of a file."""
+        record = self.get_record(id_, identity, "read_files")
+
+        self.run_components(
+            "read_file_metadata", id_, file_key, identity, record)
+
+        return self.file_result_item(
+            self,
+            identity,
+            record.files[file_key],
+            record,
+            links_tpl=self.file_links_item_tpl(id_),
+        )
+
+    def extract_file_metadata(self, id_, file_key, identity):
+        """Extract metadata from a file and update the file metadata file."""
+        record = self.get_record(id_, identity, "create_files")
+        file_record = record.files[file_key]
+
+        self.run_components(
+            "extract_file_metadata", id_, file_key, identity, record,
+            file_record)
+
+        db.session.commit()
+
+        return self.file_result_item(
+            self,
+            identity,
+            record.files[file_key],
+            record,
+            links_tpl=self.file_links_item_tpl(id_),
+        )
+
     def commit_file(self, id_, file_key, identity):
         """Commit a file upload."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "create_files"
-        self.require_permission(identity, action, record=record)
-        file_obj = ObjectVersion.get(record.bucket.id, file_key)
-        if not file_obj:
-            raise Exception(f'File with key {file_key} not uploaded yet.')
-        # TODO: Add other checks here (e.g. verify checksum, S3 upload)
-        record.files[file_key] = file_obj
+        record = self.get_record(id_, identity, "create_files")
+
+        self.run_components("commit_file", id_, file_key, identity, record)
+
         db.session.commit()
+
+        self.run_components(
+            "post_commit_file", id_, file_key, identity, record)
+
         return self.file_result_item(
             self,
             identity,
@@ -150,15 +173,19 @@ class FileService(Service):
 
     def delete_file(self, id_, file_key, identity):
         """Delete a single file."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "delete_files"
-        self.require_permission(identity, action, record=record)
+        record = self.get_record(id_, identity, "delete_files")
         deleted_file = record.files.delete(file_key)
+
+        self.run_components(
+            "delete_file", id_, file_key, identity, record, deleted_file)
+
         # We also commit the record in case the file was the `default_preview`
         record.commit()
         db.session.commit()
+
+        self.run_components(
+            "post_delete_file", id_, file_key, identity, record, deleted_file)
+
         return self.file_result_item(
             self,
             identity,
@@ -169,16 +196,21 @@ class FileService(Service):
 
     def delete_all_files(self, id_, identity):
         """Delete all the files of the record."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "delete_files"
-        self.require_permission(identity, action, record=record)
-        # NOTE: We have to separate the gathering of the keys from their
-        #       deletion because of how record.files is implemented.
+        record = self.get_record(id_, identity, "delete_files")
+
+        # We have to separate the gathering of the keys from their deletion
+        # because of how record.files is implemented.
         file_keys = [fk for fk in record.files]
         results = [record.files.delete(file_key) for file_key in file_keys]
+
+        self.run_components("delete_all_files", id_, identity, record, results)
+
         record.commit()
+        db.session.commit()
+
+        self.run_components(
+            "post_delete_all_files", id_, identity, record, results)
+
         return self.file_result_list(
             self,
             identity,
@@ -189,41 +221,21 @@ class FileService(Service):
         )
 
     def set_file_content(
-            self, id_, file_key, identity, stream,
-            content_length=None):
+            self, id_, file_key, identity, stream, content_length=None):
         """Save file content."""
-        # TODO stream not exhausted
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        action = self.config.permission_action_prefix + "create_files"
-        self.require_permission(identity, action, record=record)
-        rf = record.files.get(file_key)
+        record = self.get_record(id_, identity, "create_files")
 
-        # TODO: raise an appropriate exception
-        if rf is None:
-            raise Exception(
-                f'File with key "{file_key}" has not been initialized yet.')
-        if rf.file:
-            raise Exception(f'File with key "{file_key}" is commited.')
+        self.run_components(
+            "set_file_content", id_, file_key, identity, stream,
+            content_length, record)
 
-        bucket = record.bucket
-        size_limit = bucket.size_limit
-        if content_length and size_limit and content_length > size_limit:
-            desc = 'File size limit exceeded.' \
-                if isinstance(size_limit, int) else size_limit.reason
-            raise FileSizeError(description=desc)
-        # DB connection?
-        # re uploading failed upload?
-
-        with db.session.begin_nested():
-            # TODO: in case we want to update a file, this keeps the old
-            # FileInstance. It might be better to call ObjectVersion.remove()
-            # before or after the "set_content"
-            obj = ObjectVersion.create(bucket, file_key)
-            obj.set_contents(
-                stream, size=content_length, size_limit=size_limit)
         db.session.commit()
+
+        self.run_components(
+            "post_set_file_content", id_, file_key, identity, stream,
+            content_length, record
+        )
+
         return self.file_result_item(
             self,
             identity,
@@ -234,12 +246,11 @@ class FileService(Service):
 
     def get_file_content(self, id_, file_key, identity):
         """Retrieve file content."""
-        # FIXME: Remove "registered_only=False" since it breaks access to an
-        # unpublished record.
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "read_files", record=record)
-        # TODO Signal here or in resource?
-        # file_downloaded.send(file_obj)
+        record = self.get_record(id_, identity, "read_files")
+
+        self.run_components(
+            "get_file_content", id_, file_key, identity, record)
+
         return self.file_result_item(
             self,
             identity,

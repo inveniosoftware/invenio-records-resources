@@ -9,12 +9,14 @@
 
 """Files Service API."""
 
+from .components import FileServiceComponent
 from .config import FileServiceConfig
 from .links import FileLink
 from .service import FileService
 
 __all__ = (
     'FileLink',
-    'FileServiceConfig',
     'FileService',
+    'FileServiceComponent',
+    'FileServiceConfig',
 )

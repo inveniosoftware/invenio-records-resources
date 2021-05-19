@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,6 +9,7 @@
 """Invenio Records Resources module to create REST APIs."""
 
 from . import config
+from .registry import ServiceRegistry
 
 
 class InvenioRecordsResources(object):
@@ -22,6 +23,7 @@ class InvenioRecordsResources(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
+        self.registry = ServiceRegistry()
         app.extensions["invenio-records-resources"] = self
 
     def init_config(self, app):
