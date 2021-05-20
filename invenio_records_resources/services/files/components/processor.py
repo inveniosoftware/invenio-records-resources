@@ -30,5 +30,5 @@ class FileProcessorComponent(FileServiceComponent):
             file_record.metadata = {}
 
         ProcessorRunner(
-            self.service.config.filemetadata_processors
+            self.service.config.file_processors
         ).run(file_record)

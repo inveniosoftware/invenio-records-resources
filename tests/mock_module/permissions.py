@@ -11,18 +11,18 @@
 """Example of a permission policy."""
 
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import AnyUser
+from invenio_records_permissions.generators import AnyUser, SystemProcess
 
 
 class PermissionPolicy(RecordPermissionPolicy):
     """Mock permission policy. All actions allowed."""
 
-    can_search = [AnyUser()]
-    can_create = [AnyUser()]
-    can_read = [AnyUser()]
-    can_update = [AnyUser()]
-    can_delete = [AnyUser()]
-    can_create_files = [AnyUser()]
-    can_read_files = [AnyUser()]
-    can_update_files = [AnyUser()]
-    can_delete_files = [AnyUser()]
+    can_search = [AnyUser(), SystemProcess()]
+    can_create = [AnyUser(), SystemProcess()]
+    can_read = [AnyUser(), SystemProcess()]
+    can_update = [AnyUser(), SystemProcess()]
+    can_delete = [AnyUser(), SystemProcess()]
+    can_create_files = [AnyUser(), SystemProcess()]
+    can_read_files = [AnyUser(), SystemProcess()]
+    can_update_files = [AnyUser(), SystemProcess()]
+    can_delete_files = [AnyUser(), SystemProcess()]

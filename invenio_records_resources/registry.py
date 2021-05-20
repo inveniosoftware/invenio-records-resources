@@ -29,7 +29,7 @@ class ServiceRegistry:
 
     def get(self, service_id):
         """Get a service for a given service_id."""
-        self._services[service_id]
+        return self._services[service_id]
 
     def get_service_id(self, instance):
         """Get the service id for a specific instance."""

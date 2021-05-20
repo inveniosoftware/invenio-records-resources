@@ -32,8 +32,8 @@ class ImageMetadataExtractor(FileProcessor):
     def can_process(self, file_record):
         """Images can be processed."""
         if HAS_IMAGEMAGICK:
-            ext = self.file_extension(file_record)
-            return ext in ['jpg', 'jpeg', 'png', 'tif', 'tiff']
+            ext = self.file_extension(file_record).lower()
+            return ext in ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
         return False
 
     def process(self, file_record):
@@ -48,7 +48,7 @@ class ImageMetadataExtractor(FileProcessor):
         width = -1
         height = -1
 
-        ext = self.file_extension(file_record)
+        ext = self.file_extension(file_record)[1:]
 
         with file_record.open_stream('rb') as fp:
             with Image.ping(file=fp, format=ext) as img:
