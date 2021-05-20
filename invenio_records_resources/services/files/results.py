@@ -49,6 +49,10 @@ class FileItem(RecordItem):
         return self._file.object_version.send_file(
             restricted=restricted, as_attachment=as_attachment)
 
+    def open_stream(self, mode):
+        """Return a file stream."""
+        return self._file.open_stream(mode)
+
 
 class FileList(ServiceListResult):
     """List of file items result."""
