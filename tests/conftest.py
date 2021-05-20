@@ -77,3 +77,12 @@ def consumer(app, queue):
 def file_service():
     """File service shared fixture."""
     return FileService(MockFileServiceConfig)
+
+
+@pytest.fixture(scope='module')
+def identity_simple():
+    """Simple identity fixture."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(Need(method='system_role', value='any_user'))
+    return i

@@ -14,7 +14,6 @@ NOTE: See tests/resources/test_pagination for more comprehensive tests.
 """
 
 import pytest
-from invenio_search import current_search
 
 
 #

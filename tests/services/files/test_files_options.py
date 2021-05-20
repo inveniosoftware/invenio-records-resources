@@ -11,26 +11,8 @@
 
 import pytest
 from marshmallow import ValidationError
-from mock_module.config import ServiceWithFilesConfig
-
-from invenio_records_resources.services import RecordService
 
 from .files_utils import add_file_to_record
-
-
-@pytest.fixture(scope='module')
-def service(appctx):
-    """Service with files instance."""
-    return RecordService(ServiceWithFilesConfig)
-
-
-@pytest.fixture(scope="module")
-def base_app(base_app, service, file_service):
-    """Application factory fixture."""
-    registry = base_app.extensions['invenio-records-resources'].registry
-    registry.register(service, service_id='mock-records-service')
-    registry.register(file_service, service_id='mock-files-service')
-    yield base_app
 
 
 def test_enable_files(app, location, service, identity_simple, input_data):
