@@ -52,6 +52,7 @@ def input_data():
 @pytest.fixture()
 def example_record(app, db, service, input_data, identity_simple, location):
     """Example data layer record."""
+    input_data["files"] = {"enabled": True}
     return service.create(identity_simple, input_data)
 
 
@@ -72,4 +73,3 @@ def cache():
         yield current_cache
     finally:
         current_cache.clear()
-

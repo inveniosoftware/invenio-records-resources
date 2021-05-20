@@ -25,6 +25,7 @@ recursive-include docs Makefile
 recursive-include invenio_records_resources *.html
 recursive-include invenio_records_resources *.py
 recursive-include invenio_records_resources/translations *.po *.pot *.mo
+recursive-include tests *.png
 recursive-include tests *.py
 recursive-include tests/mock_module *.json
 recursive-include tests/mock_module_factory *.json

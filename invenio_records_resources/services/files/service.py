@@ -142,6 +142,7 @@ class FileService(Service):
             "extract_file_metadata", id_, file_key, identity, record,
             file_record)
 
+        file_record.commit()
         db.session.commit()
 
         return self.file_result_item(

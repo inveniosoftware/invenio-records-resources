@@ -10,9 +10,8 @@
 """Test setting files options on the record."""
 
 import pytest
+from files_utils import add_file_to_record
 from marshmallow import ValidationError
-
-from .files_utils import add_file_to_record
 
 
 def test_enable_files(app, location, service, identity_simple, input_data):
