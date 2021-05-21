@@ -50,8 +50,15 @@ class FileItem(RecordItem):
             restricted=restricted, as_attachment=as_attachment)
 
     def open_stream(self, mode):
-        """Return a file stream."""
+        """Return a file stream context manager."""
         return self._file.open_stream(mode)
+
+    def get_stream(self, mode):
+        """Return a file stream.
+
+        It is up to the caller to close the steam.
+        """
+        return self._file.get_stream(mode)
 
 
 class FileList(ServiceListResult):
