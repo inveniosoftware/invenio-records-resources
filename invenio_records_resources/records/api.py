@@ -82,6 +82,13 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         finally:
             fp.close()
 
+    def get_stream(self, mode):
+        """Get a file stream for a given file record.
+
+        It is up to the caller to close the steam.
+        """
+        return self.object_version.file.storage().open(mode)
+
     @property
     def record(self):
         """Get the file's record."""
