@@ -292,7 +292,8 @@ class RecordService(Service):
         )
 
     def _read_many(self, identity, es_query, fields=None, record_cls=None,
-                   search_opts=None, **kwargs):
+                   search_opts=None, extra_filter=None, preference=None,
+                   **kwargs):
         """Search for records matching the ids."""
         # We use create_search() to avoid the overhead of aggregations etc
         # being added to the query with using search_request().
@@ -301,6 +302,8 @@ class RecordService(Service):
             record_cls=record_cls or self.record_cls,
             search_opts=search_opts or self.config.search,
             permission_action='search',
+            preference=preference,
+            extra_filter=extra_filter,
         )
 
         # Fetch only certain fields - explicitly add internal system fields
