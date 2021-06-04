@@ -220,7 +220,7 @@ class NestedTermsFacet(TermsFacet):
                 "is_selected": self.is_filtered(full_key, filter_values)
             }
             if 'inner' in bucket:
-                bucket_out['inner'] = self.get_labelled_values(
+                bucket_out['inner'] = self.get_values(
                     bucket.inner,
                     filter_values,
                     key_prefix=full_key
