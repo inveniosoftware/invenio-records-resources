@@ -291,9 +291,9 @@ class RecordService(Service):
             links_tpl=self.links_item_tpl,
         )
 
-    def _read_many(self, identity, es_query, fields=None, record_cls=None,
-                   search_opts=None, extra_filter=None, preference=None,
-                   **kwargs):
+    def _read_many(self, identity, es_query, fields=None, max_records=100,
+                   record_cls=None, search_opts=None, extra_filter=None,
+                   preference=None, **kwargs):
         """Search for records matching the ids."""
         # We use create_search() to avoid the overhead of aggregations etc
         # being added to the query with using search_request().
@@ -318,6 +318,7 @@ class RecordService(Service):
             # method instead for now.
             search = search.source(fields)
 
+        search = search[0:max_records]
         search_result = search.query(es_query).execute()
 
         return search_result
@@ -329,19 +330,26 @@ class RecordService(Service):
             clauses.append(Q('term', **{"id": id_}))
         query = Q('bool', minimum_should_match=1, should=clauses)
 
-        results = self._read_many(identity, query, fields, **kwargs)
+        results = self._read_many(
+            identity, query, fields, len(ids), **kwargs)
 
         return self.result_list(self, identity, results)
 
-    def read_all(self, identity, fields, cache=True, **kwargs):
-        """Search for records matching the querystring."""
+    def read_all(
+        self, identity, fields, cache=True, max_records=100, **kwargs
+    ):
+        """Search for records matching the querystring.
+
+        Note that enabling the cache will by pass the identity check for
+        cached results.
+        """
         cache_key = "-".join(fields)
         results = current_cache.get(cache_key)
         es_query = Q("match_all")
 
         if not results:
             results = self._read_many(
-                identity, es_query, fields, **kwargs)
+                identity, es_query, fields, max_records, **kwargs)
             if cache:
                 # ES DSL Response is not pickable.
                 # If saved in cache serialization wont work with to_dict()
@@ -353,7 +361,7 @@ class RecordService(Service):
                 record_cls=self.record_cls,
                 search_opts=self.config.search,
                 permission_action='search',
-            ).query(es_query)
+            )[0:len(results)].query(es_query)
 
             results = Response(search, results)
 
