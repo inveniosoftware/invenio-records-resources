@@ -84,8 +84,8 @@ def _assert_read_all(service, identity_simple, cache=True):
         assert record["metadata"]["title"] == "Test"
 
 
-def test_read_all_cache(
-    app, es_clear, service, cache, identity_simple, input_data
+def test_read_all(
+    app, es_clear, service, identity_simple, input_data
 ):
     # Create an items
     item_one = service.create(identity_simple, input_data)
@@ -93,25 +93,6 @@ def test_read_all_cache(
     Record.index.refresh()
 
     _assert_read_all(service, identity_simple)
-
-    cached = current_cache.get("metadata.title")
-    assert cached is not None
-
-    _assert_read_all(service, identity_simple)
-
-
-def test_read_all_no_cache(
-    app, es_clear, service, cache, identity_simple, input_data
-):
-    # Create an items
-    item_one = service.create(identity_simple, input_data)
-    item_two = service.create(identity_simple, input_data)
-    Record.index.refresh()
-
-    _assert_read_all(service, identity_simple, cache=False)
-
-    cached = current_cache.get("metadata.title")
-    assert not cached
 
 
 def test_read_many_pid_values(

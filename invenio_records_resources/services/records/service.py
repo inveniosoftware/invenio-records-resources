@@ -11,8 +11,6 @@
 """Record Service API."""
 
 from elasticsearch_dsl import Q
-from elasticsearch_dsl.response import Response
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
@@ -336,34 +334,12 @@ class RecordService(Service):
         return self.result_list(self, identity, results)
 
     def read_all(
-        self, identity, fields, cache=True, max_records=100, **kwargs
+        self, identity, fields, max_records=100, **kwargs
     ):
-        """Search for records matching the querystring.
-
-        Note that enabling the cache will by pass the identity check for
-        cached results.
-        """
-        cache_key = "-".join(fields)
-        results = current_cache.get(cache_key)
+        """Search for records matching the querystring."""
         es_query = Q("match_all")
-
-        if not results:
-            results = self._read_many(
-                identity, es_query, fields, max_records, **kwargs)
-            if cache:
-                # ES DSL Response is not pickable.
-                # If saved in cache serialization wont work with to_dict()
-                current_cache.set(cache_key, results.to_dict())
-
-        else:
-            search = self.create_search(
-                identity=identity,
-                record_cls=self.record_cls,
-                search_opts=self.config.search,
-                permission_action='search',
-            )[0:len(results)].query(es_query)
-
-            results = Response(search, results)
+        results = self._read_many(
+            identity, es_query, fields, max_records, **kwargs)
 
         return self.result_list(self, identity, results)
 
