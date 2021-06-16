@@ -114,6 +114,9 @@ setup(
         "invenio_i18n.translations": [
             "messages = invenio_records_resources",
         ],
+        "invenio_jsonschemas.schemas": [
+            "jsonschemas = invenio_records_resources.records.jsonschemas",
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

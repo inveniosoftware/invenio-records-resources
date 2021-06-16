@@ -23,6 +23,7 @@ recursive-include docs *.rst
 recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include invenio_records_resources *.html
+recursive-include invenio_records_resources *.json
 recursive-include invenio_records_resources *.py
 recursive-include invenio_records_resources/translations *.po *.pot *.mo
 recursive-include tests *.png
