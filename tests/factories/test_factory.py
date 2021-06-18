@@ -175,12 +175,6 @@ def test_optional_service_params():
         service_components=[CustomComponent],
     )
 
-    assert (
-        rec_type.service_config_cls.search.facets
-        == Opts.facets
-    )
+    assert rec_type.service_config_cls.search.facets == Opts.facets
 
-    assert (
-        rec_type.service_config_cls.components
-        == RecordServiceConfig.components + [CustomComponent]
-    )
+    assert rec_type.service_config_cls.components == [CustomComponent]
