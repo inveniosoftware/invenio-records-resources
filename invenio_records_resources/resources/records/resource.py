@@ -25,6 +25,10 @@ request_data = request_body_parser(
     default_content_type=from_conf('default_content_type')
 )
 
+request_read_args = request_parser(
+    from_conf('request_read_args'), location='args'
+)
+
 request_view_args = request_parser(
     from_conf('request_view_args'), location='view_args'
 )
@@ -34,7 +38,7 @@ request_headers = request_parser(
 )
 
 request_search_args = request_parser(
-    from_conf('request_args'), location='args'
+    from_conf('request_search_args'), location='args'
 )
 
 
@@ -85,6 +89,7 @@ class RecordResource(ErrorHandlersMixin, Resource):
         )
         return item.to_dict(), 201
 
+    @request_read_args
     @request_view_args
     @response_handler()
     def read(self):

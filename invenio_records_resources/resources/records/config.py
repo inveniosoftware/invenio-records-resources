@@ -10,6 +10,7 @@
 """Record Resource Configuration."""
 
 import marshmallow as ma
+from flask.globals import request
 from flask_resources import JSONDeserializer, JSONSerializer, \
     RequestBodyParser, ResourceConfig, ResponseHandler
 
@@ -29,8 +30,9 @@ class RecordResourceConfig(ResourceConfig):
     }
 
     # Request parsing
-    request_args = SearchRequestArgsSchema
+    request_read_args = {}
     request_view_args = {"pid_value": ma.fields.Str()}
+    request_search_args = SearchRequestArgsSchema
     request_headers = {"if_match": ma.fields.Int()}
     request_body_parsers = {
         "application/json": RequestBodyParser(JSONDeserializer())
