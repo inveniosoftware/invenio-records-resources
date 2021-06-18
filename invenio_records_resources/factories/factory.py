@@ -18,6 +18,7 @@ from invenio_records_permissions import RecordPermissionPolicy
 
 from invenio_records_resources.records.api import Record
 from invenio_records_resources.records.systemfields import IndexField, PIDField
+from invenio_records_resources.records.systemfields.pid import PIDFieldContext
 from invenio_records_resources.resources import RecordResource, \
     RecordResourceConfig
 from invenio_records_resources.services import RecordService, \
@@ -45,7 +46,7 @@ class RecordTypeFactory(object):
     def __init__(
         self,
         record_type_name,
-        record_type_service_schema,
+        service_schema,
         schema_version="1.0.0",
         endpoint_route=None,
         record_dumper=None,
@@ -54,11 +55,21 @@ class RecordTypeFactory(object):
         search_options=None,
         service_components=None,
         permission_policy_cls=None,
+        pid_field_cls=PIDField,
+        pid_field_kwargs=None,
     ):
         """Constructor."""
         self.record_type_name = record_type_name
         self.record_name_lower = record_type_name.lower()
         self.name_plural = f"{self.record_name_lower}s"
+
+        # pid field attributes
+        self.pid_field_cls = pid_field_cls
+        self.pid_field_kwargs = pid_field_kwargs or {
+            "create": True,
+            "provider": RecordIdProviderV2,
+            "context_cls": PIDFieldContext,
+        }
 
         # record class attributes
         self.schema_version = schema_version
@@ -70,7 +81,7 @@ class RecordTypeFactory(object):
         self.endpoint_route = endpoint_route
 
         # service attributes
-        self.record_type_service_schema = record_type_service_schema
+        self.service_schema = service_schema
         self.search_options = search_options or SearchOptions
         self.service_components = service_components
         self.permission_policy_cls = permission_policy_cls
@@ -124,11 +135,14 @@ class RecordTypeFactory(object):
 
     def create_record_class(self):
         """Create record class."""
+        pid_field = self.pid_field_cls(
+            "id", **self.pid_field_kwargs)
+
         record_class_attributes = {
             "model_cls": self.model_cls,
             "schema": ConstantField("$schema", self.schema_path),
             "index": IndexField(self.index_name),
-            "pid": PIDField("id", provider=RecordIdProviderV2),
+            "pid": pid_field,
             "dumper": self.record_dumper or ElasticsearchDumper(),
         }
         self.record_cls = type(
@@ -173,7 +187,7 @@ class RecordTypeFactory(object):
             "permission_policy_cls": self.permission_policy_cls,
             "record_cls": self.record_cls,
             "search": self.search_options,
-            "schema": self.record_type_service_schema,
+            "schema": self.service_schema,
             "links_item": {
                 "self": RecordLink("{+api}" + route + "/{id}"),
             },
@@ -182,8 +196,7 @@ class RecordTypeFactory(object):
         if self.service_components:
             config_cls_attributes.update(
                 {
-                    "components": RecordServiceConfig.components
-                    + self.service_components
+                    "components": self.service_components
                 }
             )
 
