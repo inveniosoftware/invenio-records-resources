@@ -57,6 +57,7 @@ class RecordTypeFactory(object):
         permission_policy_cls=None,
         pid_field_cls=PIDField,
         pid_field_kwargs=None,
+        response_handlers=None,
     ):
         """Constructor."""
         self.record_type_name = record_type_name
@@ -79,6 +80,7 @@ class RecordTypeFactory(object):
 
         # resource class attributes
         self.endpoint_route = endpoint_route
+        self.response_handlers = response_handlers
 
         # service attributes
         self.service_schema = service_schema
@@ -158,6 +160,9 @@ class RecordTypeFactory(object):
             "blueprint_name": self.record_name_lower,
             "url_prefix": self.endpoint_route or f"/{self.record_name_lower}s"
         }
+
+        if self.response_handlers:
+            config_cls_attributes["response_handlers"] = self.response_handlers
 
         self.resource_config_cls = type(
             resource_config_cls_name,
