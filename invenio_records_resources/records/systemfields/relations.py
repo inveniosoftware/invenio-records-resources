@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -12,7 +12,7 @@
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.systemfields.relations import InvalidRelationValue, \
-    ListRelation, RelationBase
+    ListRelation, NestedListRelation, RelationBase
 
 
 class PIDRelation(RelationBase):
@@ -68,3 +68,7 @@ class PIDRelation(RelationBase):
 
 class PIDListRelation(ListRelation, PIDRelation):
     """PID list relation type."""
+
+
+class PIDNestedListRelation(NestedListRelation, PIDRelation):
+    """PID nested list relation type."""
