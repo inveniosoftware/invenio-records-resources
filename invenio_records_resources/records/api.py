@@ -169,9 +169,9 @@ class File:
     def __getattr__(self, name):
         """Override to get attributes from ObjectVersion and FileInstance."""
         ret = getattr(self.object_model, name, None)
-        if not ret:
+        if ret is None:
             ret = getattr(self.file_model, name, None)
-        if not ret:
+        if ret is None:
             raise AttributeError
         return ret
 
