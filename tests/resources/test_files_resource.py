@@ -242,11 +242,16 @@ def test_file_api_errors(client, es_clear, headers, input_data, location):
     assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
 
     # Initialize files upload
+    # Pass an object instead of an array
+    res = client.post(f'/mocks/{id_}/files', headers=headers, json={
+        'key': 'test.pdf'
+    })
+    assert res.status_code == 400
+
     res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
         {'key': 'test.pdf', 'title': 'Test file'},
     ])
     assert res.status_code == 201
-    res_file = res.json['entries'][0]
 
     # Upload a file
     res = client.put(

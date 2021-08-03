@@ -12,6 +12,7 @@ from copy import deepcopy
 
 from invenio_files_rest.models import ObjectVersion
 
+from ..schema import InitFileSchema
 from .base import FileServiceComponent
 
 
@@ -20,8 +21,9 @@ class FileMetadataComponent(FileServiceComponent):
 
     def init_files(self, id, identity, record, data):
         """Init files handler."""
-        # TODO: Load via marshmallow schema?
-        for file_metadata in data:
+        schema = InitFileSchema(many=True)
+        validated_data = schema.load(data)
+        for file_metadata in validated_data:
             temporary_obj = deepcopy(file_metadata)
             record.files.create(temporary_obj.pop('key'), data=temporary_obj)
 
