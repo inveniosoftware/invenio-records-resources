@@ -17,6 +17,8 @@ from flask_babelex import lazy_gettext as _
 from flask_resources import HTTPJSONException, create_error_handler
 from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
     PIDDoesNotExistError, PIDRedirectedError, PIDUnregistered
+from invenio_records.systemfields.relations import InvalidCheckValue, \
+    InvalidRelationValue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.routing import BuildError
 
@@ -146,6 +148,18 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=400,
                 description="Unable to decode JSON data in request body.",
+            )
+        ),
+        InvalidRelationValue: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Not a valid value.",
+            )
+        ),
+        InvalidCheckValue: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Not a valid value.",
             )
         ),
         RequestError: create_error_handler(
