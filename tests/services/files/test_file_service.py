@@ -10,6 +10,9 @@
 
 from io import BytesIO
 
+import pytest
+from marshmallow import ValidationError
+
 
 def test_file_flow(
         file_service, location, example_file_record, identity_simple):
@@ -85,3 +88,34 @@ def test_file_flow(
     # Delete all remaining files
     result = file_service.delete_all_files(recid, identity_simple)
     assert list(result.entries) == []
+
+
+def test_init_files(
+        file_service, location, example_file_record, identity_simple):
+
+    recid = example_file_record['id']
+
+    # Pass an object with missing required field
+    file_to_initialise = [{}]
+
+    with pytest.raises(ValidationError) as e:
+        file_service.init_files(recid, identity_simple, file_to_initialise)
+
+    error = e.value
+    assert (
+        {0: {'key': ['Missing data for required field.']}} ==
+        error.normalized_messages()
+    )
+
+    # Pass an object with added field
+    file_to_initialise = [{
+        'key': 'article.txt',
+        'foo': 'bar',
+    }]
+
+    result = file_service.init_files(
+        recid, identity_simple, file_to_initialise)
+
+    entry = result.to_dict()['entries'][0]
+    assert file_to_initialise[0]['key'] == entry['key']
+    assert file_to_initialise[0]['foo'] == entry['metadata']['foo']

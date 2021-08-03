@@ -10,10 +10,38 @@
 
 from datetime import timezone
 
-from marshmallow import Schema
+from marshmallow import INCLUDE, Schema
 from marshmallow.fields import UUID, Dict, Number, Str
 from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, \
     TZDateTime
+
+
+class InitFileSchema(Schema):
+    """Service (component) schema for file initialization.
+
+    The UI only sends a key and the documentation only refers to a key.
+    The tests though pass other fields.
+
+    Option 1: Only key
+    Pros: We limit what we support, we prevent instances from saving data
+          that we will need to support.
+    Cons: Change a few tests, disable PUT endpoint really
+
+    Option 2: Allow extra fields
+    Pros: Everything stays the same.
+    Cons: The same is loose / not quite consistent.
+
+    Given LTS, going for option 2 so that many changes are not introduced.
+    But ideally option 1 seems better: we can add other fields when we do
+    support third-party data hosting (and perhaps become FileSchema).
+    """
+
+    class Meta:
+        """Meta."""
+
+        unknown = INCLUDE
+
+    key = SanitizedUnicode(required=True)
 
 
 class FileSchema(Schema):
