@@ -334,7 +334,7 @@ class RecordService(Service):
         return self.result_list(self, identity, results)
 
     def read_all(
-        self, identity, fields, max_records=100, **kwargs
+        self, identity, fields, max_records=150, **kwargs
     ):
         """Search for records matching the querystring."""
         es_query = Q("match_all")
