@@ -289,7 +289,7 @@ class RecordService(Service):
             links_tpl=self.links_item_tpl,
         )
 
-    def _read_many(self, identity, es_query, fields=None, max_records=100,
+    def _read_many(self, identity, es_query, fields=None, max_records=150,
                    record_cls=None, search_opts=None, extra_filter=None,
                    preference=None, **kwargs):
         """Search for records matching the ids."""
