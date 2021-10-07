@@ -59,15 +59,15 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask-resources>=0.7.3,<0.8.0",
-    "invenio-accounts>=1.4.5",
+    "flask-resources>=0.8.0,<0.9.0",
+    "invenio-accounts>=1.4.7",
     "invenio-base>=1.2.4",
     "invenio-files-rest>=1.2.0",
     "invenio-i18n>=1.3.0",
     "invenio-indexer>=1.2.1",
     "invenio-jsonschemas>=1.1.3",
     "invenio-pidstore>=1.2.2",
-    "invenio-records-permissions>=0.12.1,<0.13.0",
+    "invenio-records-permissions>=0.13.0,<0.14.0",
     "invenio-records>=1.5.0b1",
     "luqum>=0.11.0",
     "marshmallow-utils>=0.5.2,<0.6.0",
