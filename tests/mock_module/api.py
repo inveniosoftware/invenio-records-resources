@@ -13,7 +13,6 @@
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ConstantField, ModelField
-from werkzeug.local import LocalProxy
 
 from invenio_records_resources.records.api import FileRecord as FileRecordBase
 from invenio_records_resources.records.api import Record as RecordBase
@@ -27,7 +26,7 @@ class FileRecord(FileRecordBase):
     """Example record file API."""
 
     model_cls = models.FileRecordMetadata
-    record_cls = LocalProxy(lambda: RecordWithFiles)
+    record_cls = None  # is defined below
 
 
 class Record(RecordBase):
@@ -58,3 +57,6 @@ class RecordWithFiles(Record):
     files = FilesField(store=False, file_cls=FileRecord)
     bucket_id = ModelField()
     bucket = ModelField(dump=False)
+
+
+FileRecord.record_cls = RecordWithFiles
