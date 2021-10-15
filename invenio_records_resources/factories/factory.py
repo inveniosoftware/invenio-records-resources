@@ -50,6 +50,7 @@ class RecordTypeFactory(object):
         schema_version="1.0.0",
         endpoint_route=None,
         record_dumper=None,
+        record_relations=None,
         schema_path=None,
         index_name=None,
         search_options=None,
@@ -74,6 +75,7 @@ class RecordTypeFactory(object):
         # record class attributes
         self.schema_version = schema_version
         self.record_dumper = record_dumper
+        self.record_relations = record_relations
         self.schema_path = self._build_schema_path(schema_path)
         self.index_name = self._build_index_name(index_name)
 
@@ -145,6 +147,10 @@ class RecordTypeFactory(object):
             "pid": pid_field,
             "dumper": self.record_dumper or ElasticsearchDumper(),
         }
+
+        if self.record_relations:
+            record_class_attributes["relations"] = self.record_relations
+
         self.record_cls = type(
             self.record_type_name, (Record,), record_class_attributes
         )
