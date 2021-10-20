@@ -17,8 +17,8 @@ readme = open("README.rst").read()
 history = open("CHANGES.rst").read()
 
 tests_require = [
-    "invenio-app>=1.3.0",
-    "pytest-invenio>=1.4.1",
+    "invenio-app>=1.3.1",
+    "pytest-invenio>=1.4.2",
 ]
 
 # Should follow inveniosoftware/invenio versions
@@ -59,16 +59,16 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask-resources>=0.8.0,<0.9.0",
-    "invenio-accounts>=1.4.7",
-    "invenio-base>=1.2.4",
-    "invenio-files-rest>=1.2.0",
-    "invenio-i18n>=1.3.0",
+    "flask-resources>=0.8.1,<0.9.0",
+    "invenio-accounts>=1.4.8",
+    "invenio-base>=1.2.5",
+    "invenio-files-rest>=1.3.0",
+    "invenio-i18n>=1.3.1",
     "invenio-indexer>=1.2.1",
     "invenio-jsonschemas>=1.1.3",
     "invenio-pidstore>=1.2.2",
     "invenio-records-permissions>=0.13.0,<0.14.0",
-    "invenio-records>=1.5.0b1",
+    "invenio-records>=1.6.0",
     "luqum>=0.11.0",
     "marshmallow-utils>=0.5.2,<0.6.0",
     "uritemplate>=3.0.1",
