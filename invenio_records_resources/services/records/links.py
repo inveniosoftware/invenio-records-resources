@@ -18,7 +18,7 @@ class RecordLink(Link):
     def vars(record, vars):
         """Variables for the URI template."""
         vars.update({
-            "id": record.pid.pid_value
+            "id": record.id
         })
 
 
