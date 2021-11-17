@@ -13,13 +13,11 @@ from flask_babelex import gettext as _
 from invenio_files_rest.errors import InvalidKeyError
 from marshmallow import ValidationError
 
+from ..base.components import BaseServiceComponent
 
-class ServiceComponent:
+
+class ServiceComponent(BaseServiceComponent):
     """Base service component."""
-
-    def __init__(self, service, *args, **kwargs):
-        """Constructor."""
-        self.service = service
 
     def create(self, identity, **kwargs):
         """Create handler."""

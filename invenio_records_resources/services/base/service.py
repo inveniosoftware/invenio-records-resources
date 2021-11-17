@@ -60,10 +60,17 @@ class Service:
 
     def run_components(self, action, *args, **kwargs):
         """Run components for a given action."""
-        # Run post commit components
+        uow = kwargs.pop("uow", None)
+
         for component in self.components:
             if hasattr(component, action):
+                # Done like this to avoid breaking API changes.
+                # uow should eventually be passed directly to the component
+                # so service/component method signature matches.
+                if uow is not None:
+                    component.uow = uow
                 getattr(component, action)(*args, **kwargs)
+                component.uow = None
 
     #
     # Units of transaction methods (creation...)

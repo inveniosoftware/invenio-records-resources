@@ -10,6 +10,7 @@
 
 from ....proxies import current_service_registry
 from ....tasks import extract_file_metadata
+from ...uow import TaskOp
 from ..processors import ProcessorRunner
 from .base import FileServiceComponent
 
@@ -17,11 +18,12 @@ from .base import FileServiceComponent
 class FileProcessorComponent(FileServiceComponent):
     """File metadata service component."""
 
-    def post_commit_file(self, id, file_key, identity, record):
+    def commit_file(self, id, file_key, identity, record):
         """Post commit file handler."""
         # Ship off a task to extract file metadata once a file is committed.
         service_id = current_service_registry.get_service_id(self.service)
-        extract_file_metadata.delay(service_id, id, file_key)
+        self.uow.register(
+            TaskOp(extract_file_metadata, service_id, id, file_key))
 
     def extract_file_metadata(
             self, id_, file_key, identity, record, file_record):

@@ -9,10 +9,9 @@
 
 """File Service API."""
 
-from invenio_db import db
-
 from ..base import LinksTemplate, Service
 from ..records.schema import ServiceSchemaWrapper
+from ..uow import RecordCommitOp, unit_of_work
 
 
 class FileService(Service):
@@ -79,15 +78,12 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def init_files(self, id_, identity, data):
+    @unit_of_work()
+    def init_files(self, id_, identity, data, uow=None):
         """Initialize the file upload for the record."""
         record = self.get_record(id_, identity, "create_files")
 
-        self.run_components("init_files", id_, identity, record, data)
-
-        db.session.commit()
-
-        self.run_components("post_init_files", id_, identity, record, data)
+        self.run_components("init_files", id_, identity, record, data, uow=uow)
 
         return self.file_result_list(
             self,
@@ -98,17 +94,14 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    def update_file_metadata(self, id_, file_key, identity, data):
+    @unit_of_work()
+    def update_file_metadata(self, id_, file_key, identity, data, uow=None):
         """Update the metadata of a file."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "update_file_metadata", id_, file_key, identity, record, data)
-
-        db.session.commit()
-
-        self.run_components(
-            "post_update_file_metadata", id_, file_key, identity, record, data)
+            "update_file_metadata", id_, file_key, identity, record, data,
+            uow=uow)
 
         return self.file_result_item(
             self,
@@ -133,17 +126,17 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def extract_file_metadata(self, id_, file_key, identity):
+    @unit_of_work()
+    def extract_file_metadata(self, id_, file_key, identity, uow=None):
         """Extract metadata from a file and update the file metadata file."""
         record = self.get_record(id_, identity, "create_files")
         file_record = record.files[file_key]
 
         self.run_components(
             "extract_file_metadata", id_, file_key, identity, record,
-            file_record)
+            file_record, uow=uow)
 
-        file_record.commit()
-        db.session.commit()
+        uow.register(RecordCommitOp(file_record))
 
         return self.file_result_item(
             self,
@@ -153,16 +146,13 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def commit_file(self, id_, file_key, identity):
+    @unit_of_work()
+    def commit_file(self, id_, file_key, identity, uow=None):
         """Commit a file upload."""
         record = self.get_record(id_, identity, "create_files")
 
-        self.run_components("commit_file", id_, file_key, identity, record)
-
-        db.session.commit()
-
         self.run_components(
-            "post_commit_file", id_, file_key, identity, record)
+            "commit_file", id_, file_key, identity, record, uow=uow)
 
         return self.file_result_item(
             self,
@@ -172,20 +162,18 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def delete_file(self, id_, file_key, identity):
+    @unit_of_work()
+    def delete_file(self, id_, file_key, identity, uow=None):
         """Delete a single file."""
         record = self.get_record(id_, identity, "delete_files")
         deleted_file = record.files.delete(file_key)
 
         self.run_components(
-            "delete_file", id_, file_key, identity, record, deleted_file)
+            "delete_file", id_, file_key, identity, record, deleted_file,
+            uow=uow)
 
         # We also commit the record in case the file was the `default_preview`
-        record.commit()
-        db.session.commit()
-
-        self.run_components(
-            "post_delete_file", id_, file_key, identity, record, deleted_file)
+        uow.register(RecordCommitOp(record))
 
         return self.file_result_item(
             self,
@@ -195,7 +183,8 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def delete_all_files(self, id_, identity):
+    @unit_of_work()
+    def delete_all_files(self, id_, identity, uow=None):
         """Delete all the files of the record."""
         record = self.get_record(id_, identity, "delete_files")
 
@@ -204,13 +193,10 @@ class FileService(Service):
         file_keys = [fk for fk in record.files]
         results = [record.files.delete(file_key) for file_key in file_keys]
 
-        self.run_components("delete_all_files", id_, identity, record, results)
-
-        record.commit()
-        db.session.commit()
-
         self.run_components(
-            "post_delete_all_files", id_, identity, record, results)
+            "delete_all_files", id_, identity, record, results, uow=uow)
+
+        uow.register(RecordCommitOp(record))
 
         return self.file_result_list(
             self,
@@ -221,21 +207,16 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
+    @unit_of_work()
     def set_file_content(
-            self, id_, file_key, identity, stream, content_length=None):
+            self, id_, file_key, identity, stream, content_length=None,
+            uow=None):
         """Save file content."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
             "set_file_content", id_, file_key, identity, stream,
-            content_length, record)
-
-        db.session.commit()
-
-        self.run_components(
-            "post_set_file_content", id_, file_key, identity, stream,
-            content_length, record
-        )
+            content_length, record, uow=uow)
 
         return self.file_result_item(
             self,
