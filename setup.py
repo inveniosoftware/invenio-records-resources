@@ -26,7 +26,7 @@ invenio_search_version = '>=1.4.2,<2.0.0'
 invenio_db_version = '>=1.0.9,<2.0.0'
 
 extras_require = {
-    "docs": ["Sphinx>=2.4,<3"],
+    "docs": ["Sphinx==4.2.0"],
     # Elasticsearch version
     'elasticsearch6': [
         'invenio-search[elasticsearch6]{}'.format(invenio_search_version),

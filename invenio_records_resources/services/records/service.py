@@ -11,13 +11,13 @@
 """Record Service API."""
 
 from elasticsearch_dsl import Q
-from invenio_db import db
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 
 from ...config import lt_es7
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
+from ..uow import RecordCommitOp, RecordDeleteOp, unit_of_work
 from .schema import ServiceSchemaWrapper
 
 
@@ -218,15 +218,17 @@ class RecordService(Service):
         self.indexer.bulk_index(iterable_ids)
         return True
 
-    def create(self, identity, data):
+    @unit_of_work()
+    def create(self, identity, data, uow=None):
         """Create a record.
 
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
-        return self._create(self.record_cls, identity, data)
+        return self._create(self.record_cls, identity, data, uow=uow)
 
-    def _create(self, record_cls, identity, data, raise_errors=True):
+    @unit_of_work()
+    def _create(self, record_cls, identity, data, raise_errors=True, uow=None):
         """Create a record.
 
         :param identity: Identity of user creating the record.
@@ -248,20 +250,17 @@ class RecordService(Service):
         record = record_cls.create({})
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'create'):
-                component.create(
-                    identity,
-                    data=data,
-                    record=record,
-                    errors=errors
-                )
+        self.run_components(
+            'create',
+            identity,
+            data=data,
+            record=record,
+            errors=errors,
+            uow=uow,
+        )
 
         # Persist record (DB and index)
-        record.commit()
-        db.session.commit()
-        if self.indexer:
-            self.indexer.index(record)
+        uow.register(RecordCommitOp(record, self.indexer))
 
         return self.result_item(
             self,
@@ -343,7 +342,8 @@ class RecordService(Service):
 
         return self.result_list(self, identity, results)
 
-    def update(self, id_, identity, data, revision_id=None):
+    @unit_of_work()
+    def update(self, id_, identity, data, revision_id=None, uow=None):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -362,15 +362,10 @@ class RecordService(Service):
         )
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'update'):
-                component.update(identity, data=data, record=record)
+        self.run_components(
+            'update', identity, data=data, record=record, uow=uow)
 
-        record.commit()
-        db.session.commit()
-
-        if self.indexer:
-            self.indexer.index(record)
+        uow.register(RecordCommitOp(record, self.indexer))
 
         return self.result_item(
             self,
@@ -379,7 +374,8 @@ class RecordService(Service):
             links_tpl=self.links_item_tpl,
         )
 
-    def delete(self, id_, identity, revision_id=None):
+    @unit_of_work()
+    def delete(self, id_, identity, revision_id=None, uow=None):
         """Delete a record from database and search indexes."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -389,19 +385,13 @@ class RecordService(Service):
         self.require_permission(identity, "delete", record=record)
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'delete'):
-                component.delete(identity, record=record)
+        self.run_components('delete', identity, record=record, uow=uow)
 
-        record.delete()
-        db.session.commit()
-
-        if self.indexer:
-            self.indexer.delete(record, refresh=True)
+        uow.register(RecordDeleteOp(record, self.indexer, index_refresh=True))
 
         return True
 
-    def rebuild_index(self, identity):
+    def rebuild_index(self, identity, uow=None):
         """Reindex all records managed by this service.
 
         Note: Skips (soft) deleted records.
