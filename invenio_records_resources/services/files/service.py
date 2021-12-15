@@ -63,7 +63,7 @@ class FileService(Service):
     #
     # High-level API
     #
-    def list_files(self, id_, identity):
+    def list_files(self, identity, id_):
         """List the files of a record."""
         record = self.get_record(id_, identity, "read_files")
 
@@ -79,11 +79,11 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def init_files(self, id_, identity, data, uow=None):
+    def init_files(self, identity, id_, data, uow=None):
         """Initialize the file upload for the record."""
         record = self.get_record(id_, identity, "create_files")
 
-        self.run_components("init_files", id_, identity, record, data, uow=uow)
+        self.run_components("init_files", identity, id_, record, data, uow=uow)
 
         return self.file_result_list(
             self,
@@ -95,12 +95,12 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def update_file_metadata(self, id_, file_key, identity, data, uow=None):
+    def update_file_metadata(self, identity, id_, file_key, data, uow=None):
         """Update the metadata of a file."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "update_file_metadata", id_, file_key, identity, record, data,
+            "update_file_metadata", identity, id_, file_key, record, data,
             uow=uow)
 
         return self.file_result_item(
@@ -111,12 +111,12 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def read_file_metadata(self, id_, file_key, identity):
+    def read_file_metadata(self, identity, id_, file_key):
         """Read the metadata of a file."""
         record = self.get_record(id_, identity, "read_files")
 
         self.run_components(
-            "read_file_metadata", id_, file_key, identity, record)
+            "read_file_metadata", identity, id_, file_key, record)
 
         return self.file_result_item(
             self,
@@ -127,13 +127,13 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def extract_file_metadata(self, id_, file_key, identity, uow=None):
+    def extract_file_metadata(self, identity, id_, file_key, uow=None):
         """Extract metadata from a file and update the file metadata file."""
         record = self.get_record(id_, identity, "create_files")
         file_record = record.files[file_key]
 
         self.run_components(
-            "extract_file_metadata", id_, file_key, identity, record,
+            "extract_file_metadata", identity, id_, file_key, record,
             file_record, uow=uow)
 
         uow.register(RecordCommitOp(file_record))
@@ -147,12 +147,12 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def commit_file(self, id_, file_key, identity, uow=None):
+    def commit_file(self, identity, id_, file_key, uow=None):
         """Commit a file upload."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "commit_file", id_, file_key, identity, record, uow=uow)
+            "commit_file", identity, id_, file_key, record, uow=uow)
 
         return self.file_result_item(
             self,
@@ -163,13 +163,13 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def delete_file(self, id_, file_key, identity, uow=None):
+    def delete_file(self, identity, id_, file_key, uow=None):
         """Delete a single file."""
         record = self.get_record(id_, identity, "delete_files")
         deleted_file = record.files.delete(file_key)
 
         self.run_components(
-            "delete_file", id_, file_key, identity, record, deleted_file,
+            "delete_file", identity, id_, file_key, record, deleted_file,
             uow=uow)
 
         # We also commit the record in case the file was the `default_preview`
@@ -184,7 +184,7 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def delete_all_files(self, id_, identity, uow=None):
+    def delete_all_files(self, identity, id_, uow=None):
         """Delete all the files of the record."""
         record = self.get_record(id_, identity, "delete_files")
 
@@ -194,7 +194,7 @@ class FileService(Service):
         results = [record.files.delete(file_key) for file_key in file_keys]
 
         self.run_components(
-            "delete_all_files", id_, identity, record, results, uow=uow)
+            "delete_all_files", identity, id_, record, results, uow=uow)
 
         uow.register(RecordCommitOp(record))
 
@@ -209,13 +209,13 @@ class FileService(Service):
 
     @unit_of_work()
     def set_file_content(
-            self, id_, file_key, identity, stream, content_length=None,
+            self, identity, id_, file_key, stream, content_length=None,
             uow=None):
         """Save file content."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "set_file_content", id_, file_key, identity, stream,
+            "set_file_content", identity, id_, file_key, stream,
             content_length, record, uow=uow)
 
         return self.file_result_item(
@@ -226,12 +226,12 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def get_file_content(self, id_, file_key, identity):
+    def get_file_content(self, identity, id_, file_key):
         """Retrieve file content."""
         record = self.get_record(id_, identity, "read_files")
 
         self.run_components(
-            "get_file_content", id_, file_key, identity, record)
+            "get_file_content", identity, id_, file_key, record)
 
         return self.file_result_item(
             self,

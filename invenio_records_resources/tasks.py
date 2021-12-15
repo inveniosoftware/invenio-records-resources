@@ -18,4 +18,4 @@ from .proxies import current_service_registry
 def extract_file_metadata(service_id, record_id, file_key):
     """Process file."""
     service = current_service_registry.get(service_id)
-    service.extract_file_metadata(record_id, file_key, system_identity)
+    service.extract_file_metadata(system_identity, record_id, file_key)

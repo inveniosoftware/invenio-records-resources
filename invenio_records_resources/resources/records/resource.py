@@ -95,8 +95,8 @@ class RecordResource(ErrorHandlersMixin, Resource):
     def read(self):
         """Read an item."""
         item = self.service.read(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return item.to_dict(), 200
 
@@ -107,8 +107,8 @@ class RecordResource(ErrorHandlersMixin, Resource):
     def update(self):
         """Update an item."""
         item = self.service.update(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
             resource_requestctx.data,
             revision_id=resource_requestctx.headers.get("if_match"),
         )
@@ -119,8 +119,8 @@ class RecordResource(ErrorHandlersMixin, Resource):
     def delete(self):
         """Delete an item."""
         self.service.delete(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
             revision_id=resource_requestctx.headers.get("if_match"),
         )
         return "", 204

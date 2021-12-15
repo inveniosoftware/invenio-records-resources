@@ -14,9 +14,9 @@ from io import BytesIO
 
 def add_file_to_record(file_service, recid, file_id, identity):
     """Add a file to the record."""
-    file_service.init_files(recid, identity, data=[{'key': file_id}])
+    file_service.init_files(identity, recid, data=[{'key': file_id}])
     file_service.set_file_content(
-        recid, file_id, identity, BytesIO(b'test file content')
+        identity, recid, file_id, BytesIO(b'test file content')
     )
-    result = file_service.commit_file(recid, file_id, identity)
+    result = file_service.commit_file(identity, recid, file_id)
     return result

@@ -30,7 +30,7 @@ def test_simple_flow(app, consumer, service, identity_simple, input_data):
     id_ = item.id
 
     # Read it
-    read_item = service.read(id_, identity_simple)
+    read_item = service.read(identity_simple, id_)
     assert item.id == read_item.id
     assert item.data == read_item.data
 
@@ -55,19 +55,19 @@ def test_simple_flow(app, consumer, service, identity_simple, input_data):
     # Update it
     data = read_item.data
     data['metadata']['title'] = 'New title'
-    update_item = service.update(id_, identity_simple, data)
+    update_item = service.update(identity_simple, id_, data)
     assert item.id == update_item.id
     assert update_item['metadata']['title'] == 'New title'
 
     # Delete it
-    assert service.delete(id_, identity_simple)
+    assert service.delete(identity_simple, id_)
 
     # Refresh to make changes live
     Record.index.refresh()
 
     # Retrieve it - deleted so cannot
     # - db
-    pytest.raises(PIDDeletedError, service.read, id_, identity_simple)
+    pytest.raises(PIDDeletedError, service.read, identity_simple, id_)
     # - search
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 0

@@ -36,17 +36,17 @@ def test_image_meta_extraction(
 
     # Upload file
     file_service.init_files(
-        recid, identity_simple, [{'key': 'image.png'}])
+        identity_simple, recid, [{'key': 'image.png'}])
     file_service.set_file_content(
-        recid, 'image.png', identity_simple, image_fp)
+        identity_simple, recid, 'image.png', image_fp)
 
     # Commit (should send celery task)
     assert not task.delay.called
-    file_service.commit_file(recid, 'image.png', identity_simple)
+    file_service.commit_file(identity_simple, recid, 'image.png')
     assert task.delay.called
 
     # Call task manually
     extract_file_metadata(*task.delay.call_args[0])
 
-    item = file_service.read_file_metadata(recid, 'image.png', identity_simple)
+    item = file_service.read_file_metadata(identity_simple, recid, 'image.png')
     assert item.data['metadata'] == {"width": 1000, "height": 1000}

@@ -19,7 +19,7 @@ from .base import FileServiceComponent
 class FileMetadataComponent(FileServiceComponent):
     """File metadata service component."""
 
-    def init_files(self, id, identity, record, data):
+    def init_files(self, identity, id, record, data):
         """Init files handler."""
         schema = InitFileSchema(many=True)
         validated_data = schema.load(data)
@@ -27,12 +27,12 @@ class FileMetadataComponent(FileServiceComponent):
             temporary_obj = deepcopy(file_metadata)
             record.files.create(temporary_obj.pop('key'), data=temporary_obj)
 
-    def update_file_metadata(self, id, file_key, identity, record, data):
+    def update_file_metadata(self, identity, id, file_key, record, data):
         """Update file metadata handler."""
         record.files.update(file_key, data=data)
 
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
-    def commit_file(self, id, file_key, identity, record):
+    def commit_file(self, identity, id, file_key, record):
         """Commit file handler."""
         # TODO: Add other checks here (e.g. verify checksum, S3 upload)
         file_obj = ObjectVersion.get(record.bucket.id, file_key)

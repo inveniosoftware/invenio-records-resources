@@ -48,7 +48,7 @@ def test_simple_flow(app, identity_simple, db):
     id_ = item.id
 
     # Read it
-    read_item = service.read(id_, identity_simple)
+    read_item = service.read(identity_simple, id_)
     assert item.id == read_item.id
     assert item.data == read_item.data
 

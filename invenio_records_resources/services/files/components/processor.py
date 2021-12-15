@@ -18,7 +18,7 @@ from .base import FileServiceComponent
 class FileProcessorComponent(FileServiceComponent):
     """File metadata service component."""
 
-    def commit_file(self, id, file_key, identity, record):
+    def commit_file(self, identity, id, file_key, record):
         """Post commit file handler."""
         # Ship off a task to extract file metadata once a file is committed.
         service_id = current_service_registry.get_service_id(self.service)
@@ -26,7 +26,7 @@ class FileProcessorComponent(FileServiceComponent):
             TaskOp(extract_file_metadata, service_id, id, file_key))
 
     def extract_file_metadata(
-            self, id_, file_key, identity, record, file_record):
+            self, identity, id_, file_key, record, file_record):
         """Extract and save file metadata for a given file."""
         if file_record.metadata is None:
             file_record.metadata = {}

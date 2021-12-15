@@ -270,7 +270,7 @@ class RecordService(Service):
             errors=errors
         )
 
-    def read(self, id_, identity):
+    def read(self, identity, id_):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
@@ -343,7 +343,7 @@ class RecordService(Service):
         return self.result_list(self, identity, results)
 
     @unit_of_work()
-    def update(self, id_, identity, data, revision_id=None, uow=None):
+    def update(self, identity, id_, data, revision_id=None, uow=None):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -375,7 +375,7 @@ class RecordService(Service):
         )
 
     @unit_of_work()
-    def delete(self, id_, identity, revision_id=None, uow=None):
+    def delete(self, identity, id_, revision_id=None, uow=None):
         """Delete a record from database and search indexes."""
         record = self.record_cls.pid.resolve(id_)
 

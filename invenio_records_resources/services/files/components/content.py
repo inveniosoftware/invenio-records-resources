@@ -19,7 +19,7 @@ class FileContentComponent(FileServiceComponent):
     """File metadata service component."""
 
     def set_file_content(
-            self, id, file_key, identity, stream, content_length, record):
+            self, identity, id, file_key, stream, content_length, record):
         """Set file content handler."""
         # Check if associated file record exists and is not already committed.
         # TODO: raise an appropriate exception
@@ -50,7 +50,7 @@ class FileContentComponent(FileServiceComponent):
             obj.set_contents(
                 stream, size=content_length, size_limit=size_limit)
 
-    def get_file_content(self, id, file_key, identity, record):
+    def get_file_content(self, identity, id, file_key, record):
         """Get file content handler."""
         # TODO Signal here or in resource?
         # file_downloaded.send(file_obj)
