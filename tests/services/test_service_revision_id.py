@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -36,13 +36,13 @@ def test_revision_id_update(app, service, identity_simple, input_data):
     data_revision_id = data['revision_id']
 
     # Update outdated record
-    pytest.raises(RevisionIdMismatchError, service.update, input_data.id,
-                  identity_simple, data, revision_id=100)
+    with pytest.raises(RevisionIdMismatchError):
+        service.update(identity_simple, input_data.id, data, revision_id=100)
 
     # Update with correct revision_id
 
     assert service.update(
-        input_data.id, identity_simple, data,
+        identity_simple, input_data.id, data,
         revision_id=data_revision_id
     )
 
@@ -54,10 +54,10 @@ def test_revision_id_delete(app, service, identity_simple, input_data):
     data_revision_id = data['revision_id']
 
     # Delete outdated record
-    pytest.raises(RevisionIdMismatchError, service.delete, input_data.id,
-                  identity_simple, revision_id=100)
+    with pytest.raises(RevisionIdMismatchError):
+        service.delete(identity_simple, input_data.id, revision_id=100)
 
     # Delete with correct revision_id
 
     assert service.delete(
-        input_data.id, identity_simple, revision_id=data_revision_id)
+        identity_simple, input_data.id, revision_id=data_revision_id)

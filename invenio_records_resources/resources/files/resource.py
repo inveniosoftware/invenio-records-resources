@@ -72,8 +72,8 @@ class FileResource(ErrorHandlersMixin, Resource):
     def search(self):
         """List files."""
         files = self.service.list_files(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return files.to_dict(), 200
 
@@ -81,8 +81,8 @@ class FileResource(ErrorHandlersMixin, Resource):
     def delete_all(self):
         """Delete all files."""
         self.service.delete_all_files(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
 
         return "", 204
@@ -93,8 +93,8 @@ class FileResource(ErrorHandlersMixin, Resource):
     def create(self):
         """Initialize an upload on a record."""
         item = self.service.init_files(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
             resource_requestctx.data or [],
         )
         return item.to_dict(), 201
@@ -104,9 +104,9 @@ class FileResource(ErrorHandlersMixin, Resource):
     def read(self):
         """Read a single file."""
         item = self.service.read_file_metadata(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
         )
         return item.to_dict(), 200
 
@@ -116,9 +116,9 @@ class FileResource(ErrorHandlersMixin, Resource):
     def update(self):
         """Update the metadata a single file."""
         item = self.service.update_file_metadata(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
             resource_requestctx.data or {},
         )
         return item.to_dict(), 200
@@ -127,9 +127,9 @@ class FileResource(ErrorHandlersMixin, Resource):
     def delete(self):
         """Delete a file."""
         self.service.delete_file(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
         )
 
         return "", 204
@@ -139,9 +139,9 @@ class FileResource(ErrorHandlersMixin, Resource):
     def create_commit(self):
         """Commit a file."""
         item = self.service.commit_file(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
         )
         return item.to_dict(), 200
 
@@ -149,9 +149,9 @@ class FileResource(ErrorHandlersMixin, Resource):
     def read_content(self):
         """Read file content."""
         item = self.service.get_file_content(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
         )
         return item.send_file(), 200
 
@@ -162,9 +162,9 @@ class FileResource(ErrorHandlersMixin, Resource):
         """Upload file content."""
         # TODO: Parse in `resource_requestctx`
         item = self.service.set_file_content(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
-            g.identity,
             resource_requestctx.data["request_stream"],
             content_length=resource_requestctx.data["request_content_length"],
         )

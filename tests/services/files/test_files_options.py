@@ -53,7 +53,7 @@ def test_disable_files_when_files_already_present_should_error(
     }
 
     with pytest.raises(ValidationError):
-        item = service.update(item.id, identity_simple, input_data)
+        item = service.update(identity_simple, item.id, input_data)
 
 
 def test_set_default_file_preview(
@@ -69,7 +69,7 @@ def test_set_default_file_preview(
         "default_preview": default_file
     }
 
-    item = service.update(item.id, identity_simple, input_data)
+    item = service.update(identity_simple, item.id, input_data)
 
     item_dict = item.to_dict()
     assert (
@@ -93,4 +93,4 @@ def test_set_default_file_preview_when_unknown_should_raise(
     }
 
     with pytest.raises(ValidationError):
-        item = service.update(item.id, identity_simple, input_data)
+        item = service.update(identity_simple, item.id, input_data)
