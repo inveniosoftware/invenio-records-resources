@@ -2,6 +2,16 @@
   "$schema": {
     "type": "string"
   },
+  "entity_reference": {
+    "description": "Reference to an entity, with the type as key and ID as value",
+    "type": ["object", "null"],
+    "additionalProperties": false,
+    "patternProperties": {
+      "^[a-z_]+$": {
+        "type": "string"
+      }
+    }
+  },
   "identifier": {
     "description": "An identifier.",
     "type": "string"
