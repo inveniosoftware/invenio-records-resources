@@ -99,25 +99,3 @@ def check_allowed_references(
 
     ref_type = list(ref_dict.keys())[0]
     return ref_type in get_allowed_types(request)
-
-
-check_allowed_creators = partial(
-    check_allowed_references,
-    lambda r: r.type.creator_can_be_none,
-    lambda r: r.type.allowed_creator_ref_types,
-)
-"""Check function specific for the ``created_by`` field of requests."""
-
-check_allowed_receivers = partial(
-    check_allowed_references,
-    lambda r: r.type.receiver_can_be_none,
-    lambda r: r.type.allowed_receiver_ref_types,
-)
-"""Check function specific for the ``receiver`` field of requests."""
-
-check_allowed_topics = partial(
-    check_allowed_references,
-    lambda r: r.type.topic_can_be_none,
-    lambda r: r.type.allowed_topic_ref_types,
-)
-"""Check function specific for the ``topic`` field of requests."""
