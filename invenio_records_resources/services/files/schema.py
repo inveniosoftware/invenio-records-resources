@@ -11,7 +11,7 @@
 from datetime import timezone
 
 from marshmallow import INCLUDE, Schema
-from marshmallow.fields import UUID, Dict, Number, Str
+from marshmallow.fields import UUID, Dict, Integer, Str
 from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, \
     TZDateTime
 
@@ -58,7 +58,7 @@ class FileSchema(Schema):
     checksum = Str(dump_only=True, attribute='file.checksum')
     storage_class = Str(dump_only=True, attribute='file.storage_class')
     mimetype = Str(dump_only=True, attribute='file.mimetype')
-    size = Number(attribute='file.size')
+    size = Integer(attribute='file.size')
     version_id = UUID(attribute='file.version_id')
     file_id = UUID(attribute='file.file_id')
     bucket_id = UUID(attribute='file.bucket_id')

@@ -9,6 +9,7 @@
 
 """Invenio Resources module to create REST APIs."""
 
+import re
 from io import BytesIO
 
 import pytest
@@ -116,6 +117,8 @@ def test_files_api_flow(client, es_clear, headers, input_data, location):
     assert res.json['key'] == 'test.pdf'
     assert res.json['status'] == 'completed'
     assert res.json['metadata'] == {'title': 'Test file'}
+    file_size = str(res.json['size'])
+    assert bool(re.match(r'^(\d+)$', file_size)), "File size not integer"
 
     # Read a file's content
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
