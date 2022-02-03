@@ -106,6 +106,8 @@ from functools import wraps
 
 from invenio_db import db
 
+from .events import EventBus
+
 
 #
 # Unit of work operations
@@ -199,6 +201,21 @@ class TaskOp(Operation):
         self._celery_task.delay(*self._args, **self._kwargs)
 
 
+class EventOp(Operation):
+    """A task to send an event.
+
+    All events will be sent after the commit phase.
+    """
+
+    def __init__(self, event, *args, **kwargs):
+        """Constructor."""
+        self._event = event
+
+    def on_post_commit(self, uow):
+        """Publish the event to the bus."""
+        uow._event_bus.publish(self._event)
+
+
 #
 # Unit of work context manager
 #
@@ -215,6 +232,7 @@ class UnitOfWork:
         """Initialize unit of work context."""
         self._session = session or db.session
         self._operations = []
+        self._event_bus = EventBus()
         self._dirty = False
 
     def __enter__(self):
