@@ -119,7 +119,7 @@ def test_files_api_flow(client, es_clear, headers, input_data, location):
     assert res.json['status'] == 'completed'
     assert res.json['metadata'] == {'title': 'Test file'}
     file_size = str(res.json['size'])
-    assert int(file_size), "File size not integer"
+    assert isinstance(res.json['size'], int), "File size not integer"
 
     # Read a file's content
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
