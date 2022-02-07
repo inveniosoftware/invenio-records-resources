@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2021 CERN.
 # Copyright (C) 2021 Northwestern University.
+# Copyright (C) 2021 European Union.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -118,7 +119,7 @@ def test_files_api_flow(client, es_clear, headers, input_data, location):
     assert res.json['status'] == 'completed'
     assert res.json['metadata'] == {'title': 'Test file'}
     file_size = str(res.json['size'])
-    assert bool(re.match(r'^(\d+)$', file_size)), "File size not integer"
+    assert int(file_size), "File size not integer"
 
     # Read a file's content
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
