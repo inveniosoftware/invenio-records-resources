@@ -10,7 +10,6 @@
 
 """Invenio Resources module to create REST APIs."""
 
-import re
 from io import BytesIO
 
 import pytest
