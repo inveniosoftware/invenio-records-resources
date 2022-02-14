@@ -7,7 +7,7 @@
 # 
 # Translators:
 # Mojib Wali <mojib.wali@tugraz.at>, 2021
-# Chriz Uniba <christina.zeller@uni-bamberg.de>, 2021
+# chriz_uniba <christina.zeller@uni-bamberg.de>, 2021
 # Alexander Gruber <alexander.gruber@tugraz.at>, 2021
 # 
 msgid ""

@@ -1,15 +1,15 @@
 # Translations template for invenio-records-resources.
-# Copyright (C) 2021 CERN
-# Copyright (C) 2021 Graz University of Technology
+# Copyright (C) 2022 CERN
 # This file is distributed under the same license as the
 # invenio-records-resources project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-records-resources 0.16.7\n"
+"Project-Id-Version: invenio-records-resources 0.18.3\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-07-13 14:13+0200\n"
+"POT-Creation-Date: 2022-02-14 17:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,20 +18,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.9.1\n"
 
-#: invenio_records_resources/resources/errors.py:45
-#: invenio_records_resources/resources/errors.py:46
+#: invenio_records_resources/resources/errors.py:47
+#: invenio_records_resources/resources/errors.py:48
 msgid "Invalid query string syntax."
 msgstr ""
 
-#: invenio_records_resources/resources/errors.py:47
+#: invenio_records_resources/resources/errors.py:49
 msgid "Misconfigured search."
 msgstr ""
 
-#: invenio_records_resources/resources/errors.py:58
+#: invenio_records_resources/resources/errors.py:60
 msgid "Internal server error"
 msgstr ""
 
-#: invenio_records_resources/services/records/components.py:94
+#: invenio_records_resources/services/records/components.py:92
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
 
