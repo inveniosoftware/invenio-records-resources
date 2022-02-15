@@ -1,44 +1,44 @@
-# Translations template for invenio-records-resources.
+# German translations for invenio-records-resources.
 # Copyright (C) 2021 CERN
 # Copyright (C) 2021 Graz University of Technology
 # This file is distributed under the same license as the
 # invenio-records-resources project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
-# 
+#
 # Translators:
 # Mojib Wali <mojib.wali@tugraz.at>, 2021
-# Chriz Uniba <christina.zeller@uni-bamberg.de>, 2021
+# chriz_uniba <christina.zeller@uni-bamberg.de>, 2021
 # Alexander Gruber <alexander.gruber@tugraz.at>, 2021
-# 
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-records-resources 0.16.7\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-07-13 14:13+0200\n"
+"POT-Creation-Date: 2022-02-14 17:03+0100\n"
 "PO-Revision-Date: 2021-07-13 12:50+0000\n"
 "Last-Translator: Alexander Gruber <alexander.gruber@tugraz.at>, 2021\n"
-"Language-Team: German (https://www.transifex.com/inveniosoftware/teams/23537/de/)\n"
+"Language: de\n"
+"Language-Team: German "
+"(https://www.transifex.com/inveniosoftware/teams/23537/de/)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.9.1\n"
-"Language: de\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: invenio_records_resources/resources/errors.py:45
-#: invenio_records_resources/resources/errors.py:46
+#: invenio_records_resources/resources/errors.py:47
+#: invenio_records_resources/resources/errors.py:48
 msgid "Invalid query string syntax."
 msgstr "Ungültige Syntax der Abfragezeichenfolge."
 
-#: invenio_records_resources/resources/errors.py:47
+#: invenio_records_resources/resources/errors.py:49
 msgid "Misconfigured search."
 msgstr "Falsch konfigurierte Suche."
 
-#: invenio_records_resources/resources/errors.py:58
+#: invenio_records_resources/resources/errors.py:60
 msgid "Internal server error"
 msgstr "Interner Serverfehler"
 
-#: invenio_records_resources/services/records/components.py:94
+#: invenio_records_resources/services/records/components.py:92
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
 "Sie müssen zuerst alle Dateien löschen, um den Datensatz auf \"nur "
@@ -55,3 +55,4 @@ msgstr "Neuester"
 #: invenio_records_resources/services/records/config.py:44
 msgid "Oldest"
 msgstr "Ältester"
+
