@@ -18,12 +18,12 @@ history = open("CHANGES.rst").read()
 
 tests_require = [
     "invenio-app>=1.3.1",
-    "pytest-invenio>=1.4.2",
+    "pytest-invenio>=1.4.3",
 ]
 
 # Should follow inveniosoftware/invenio versions
 invenio_search_version = '>=1.4.2,<2.0.0'
-invenio_db_version = '>=1.0.9,<2.0.0'
+invenio_db_version = '>=1.0.12,<2.0.0'
 
 extras_require = {
     "docs": ["Sphinx==4.2.0"],
@@ -61,7 +61,7 @@ setup_requires = [
 install_requires = [
     "flask-resources>=0.8.1,<0.9.0",
     "invenio-accounts>=1.4.8",
-    "invenio-base>=1.2.5",
+    "invenio-base>=1.2.8",
     "invenio-files-rest>=1.3.0",
     "invenio-i18n>=1.3.1",
     "invenio-indexer>=1.2.1",
