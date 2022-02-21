@@ -31,9 +31,9 @@ class RecordProxy(EntityProxy):
         pid_value = self._parse_ref_dict_id(self._ref_dict)
         return self.record_cls.pid.resolve(pid_value)
 
-    def get_need(self):
+    def get_needs(self, ctx=None):
         """Return None since Needs are not applicable to records."""
-        return None
+        return []
 
 
 class RecordPKProxy(RecordProxy):

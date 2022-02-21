@@ -94,13 +94,13 @@ class EntityProxy(ABC):
         return None
 
     @abstractmethod
-    def get_need(self):
+    def get_needs(self, ctx=None):
         """Get the Need for the referenced entity, if applicable.
 
         If the concept is not applicable for this resolver's type of entities,
-        ``None`` will be returned.
+        ``[]`` will be returned.
         """
-        return None
+        return []
 
 
 class EntityResolver(ABC):
