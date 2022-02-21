@@ -57,10 +57,10 @@ class ResolverRegistryBase(ABC):
         return proxy.resolve()
 
     @classmethod
-    def resolve_need(cls, reference_dict, raise_=False):
+    def resolve_need(cls, reference_dict, raise_=False, ctx=None):
         """Get the need for the referenced entity via the configured resolvers.
 
-        This calls ``resolve_entity_proxy()`` and then ``get_need()`` on
+        This calls ``resolve_entity_proxy()`` and then ``get_needs()`` on
         the proxy.
         Note: If the concept of needs is not applicable to the referenced
         type of entity (e.g. ``Request``), ``None`` is returned.
@@ -70,7 +70,7 @@ class ResolverRegistryBase(ABC):
         if proxy is None:
             return None
 
-        return proxy.get_need()
+        return proxy.get_needs(ctx=ctx)
 
     @classmethod
     def reference_entity(cls, entity, raise_=False):

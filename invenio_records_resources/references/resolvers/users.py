@@ -23,10 +23,10 @@ class UserProxy(EntityProxy):
         user_id = int(self._parse_ref_dict_id(self._ref_dict))
         return User.query.get(user_id)
 
-    def get_need(self):
+    def get_needs(self, ctx=None):
         """Get the UserNeed for the referenced user."""
         user_id = int(self._parse_ref_dict_id(self._ref_dict))
-        return UserNeed(user_id)
+        return [UserNeed(user_id)]
 
 
 class UserResolver(EntityResolver):
@@ -36,7 +36,7 @@ class UserResolver(EntityResolver):
 
     def matches_reference_dict(self, ref_dict):
         """Check if the reference dict references a user."""
-        return self._parse_ref_dict_type(ref_dict) == "user"
+        return self._parse_ref_dict_type(ref_dict) == self.type_id
 
     def _reference_entity(self, entity):
         """Create a reference dict for the given user."""
