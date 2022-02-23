@@ -53,6 +53,10 @@ def test_aggregating(client, headers, three_indexed_records):
     response_aggs = response.json["aggregations"]
 
     expected_aggs = {
+        "subject": {
+            "buckets": [],
+            "label": "Subject",
+        },
         "type": {
             "label": "Type",
             "buckets": [
@@ -101,6 +105,10 @@ def test_post_filtering(client, headers, three_indexed_records):
     # Test aggregation is the same
     response_aggs = response.json["aggregations"]
     expected_aggs = {
+        "subject": {
+            "buckets": [],
+            "label": "Subject",
+        },
         "type": {
             "label": "Type",
             "buckets": [
