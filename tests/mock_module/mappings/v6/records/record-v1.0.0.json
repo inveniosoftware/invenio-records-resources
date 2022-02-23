@@ -21,6 +21,9 @@
                   "type": "keyword"
                 }
               }
+            },
+            "subject": {
+              "type": "keyword"
             }
           }
         },

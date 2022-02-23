@@ -15,7 +15,8 @@ from invenio_records_resources.services.files.links import FileLink
 from invenio_records_resources.services.records.components import \
     FilesOptionsComponent
 from invenio_records_resources.services.records.config import SearchOptions
-from invenio_records_resources.services.records.facets import NestedTermsFacet
+from invenio_records_resources.services.records.facets import \
+    NestedTermsFacet, TermsFacet
 from invenio_records_resources.services.records.links import RecordLink, \
     pagination_links
 from invenio_records_resources.services.records.params.querystr import \
@@ -35,6 +36,10 @@ class MockSearchOptions(SearchOptions):
             subfield='metadata.type.subtype',
             splitchar="**",
             label='Type'
+        ),
+        'subject': TermsFacet(
+            field='metadata.subject',
+            label='Subject',
         )
     }
 

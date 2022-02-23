@@ -29,6 +29,7 @@ class MetadataSchema(Schema):
 
     title = fields.Str(required=True, validate=validate.Length(min=3))
     type = fields.Nested(TypeSchema)
+    subject = fields.Str()
 
 
 class RecordSchema(BaseRecordSchema):

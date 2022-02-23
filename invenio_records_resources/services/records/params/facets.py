@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2021 CERN.
+# Copyright (C)      2022 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -48,7 +49,7 @@ class FacetsParam(ParamInterpreter):
 
         post_filter = filters[0]
         for f in filters[1:]:
-            post_filter |= f
+            post_filter &= f
 
         return search.post_filter(post_filter)
 
