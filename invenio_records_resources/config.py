@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -16,3 +16,7 @@ lt_es7 = ES_VERSION[0] < 7
 SITE_UI_URL = "https://127.0.0.1:5000"
 
 SITE_API_URL = "https://127.0.0.1:5000/api"
+
+RECORDS_RESOURCES_EVENTS_HANDLERS = {}
+
+RECORDS_RESOURCES_EVENTS_QUEUE = "events"
