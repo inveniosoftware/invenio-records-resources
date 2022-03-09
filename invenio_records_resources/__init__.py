@@ -9,6 +9,8 @@
 """Invenio Resources module to create REST APIs."""
 
 from .ext import InvenioRecordsResources
-from .version import __version__
+
+__version__ = "0.19.1"
+
 
 __all__ = ("__version__", "InvenioRecordsResources")
