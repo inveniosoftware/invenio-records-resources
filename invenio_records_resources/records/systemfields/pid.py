@@ -86,8 +86,8 @@ class PIDField(RelatedModelField):
         :param provider: A PID provider used to create the internal persistent
             identifier.
         :param pid_type: The persistent identifier type (only used if no
-            provider is specified.
-        :param pid_type: The resolver to use.
+            provider is specified).
+        :param object_type: The object type of the persistent identifier.
         :param resolver_cls: The resolver class to use for resolving the PID.
         :param delete: Set to True of pid should be automatically deleted.
         :param create: Set to True of pid should be automatically created.
