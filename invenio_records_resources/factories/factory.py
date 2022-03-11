@@ -58,6 +58,7 @@ class RecordTypeFactory(object):
         permission_policy_cls=None,
         pid_field_cls=PIDField,
         pid_field_kwargs=None,
+        model_cls_attrs=None
     ):
         """Constructor."""
         self.record_type_name = record_type_name
@@ -78,6 +79,7 @@ class RecordTypeFactory(object):
         self.record_relations = record_relations
         self.schema_path = self._build_schema_path(schema_path)
         self.index_name = self._build_index_name(index_name)
+        self.model_cls_attrs = model_cls_attrs or {}
 
         # resource class attributes
         self.endpoint_route = endpoint_route
@@ -127,12 +129,15 @@ class RecordTypeFactory(object):
 
     def create_metadata_model(self):
         """Create metadata model."""
+        model_class_attributes = {
+            "__tablename__": f"{self.record_name_lower}_metadata",
+            **self.model_cls_attrs
+        }
+
         self.model_cls = type(
             f"{self.record_type_name}Metadata",
             (db.Model, RecordMetadataBase),
-            dict(
-                __tablename__=f"{self.record_name_lower}_metadata",
-            ),
+            model_class_attributes,
         )
 
     def create_record_class(self):
