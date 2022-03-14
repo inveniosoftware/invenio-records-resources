@@ -68,6 +68,7 @@ class RecordTypeFactory(object):
         # pid field attributes
         self.pid_field_cls = pid_field_cls
         self.pid_field_kwargs = pid_field_kwargs or {
+            "key": "id",
             "create": True,
             "provider": RecordIdProviderV2,
             "context_cls": PIDFieldContext,
@@ -142,8 +143,7 @@ class RecordTypeFactory(object):
 
     def create_record_class(self):
         """Create record class."""
-        pid_field = self.pid_field_cls(
-            "id", **self.pid_field_kwargs)
+        pid_field = self.pid_field_cls(**self.pid_field_kwargs)
 
         record_class_attributes = {
             "model_cls": self.model_cls,
