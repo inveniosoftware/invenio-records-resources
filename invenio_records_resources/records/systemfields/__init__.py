@@ -11,13 +11,14 @@
 
 from .files import FilesField
 from .index import IndexField
-from .pid import PIDField
+from .pid import ModelPIDField, PIDField
 from .pid_statuscheck import PIDStatusCheckField
 from .relations import PIDListRelation, PIDNestedListRelation, PIDRelation
 
 __all__ = (
     'FilesField',
     'IndexField',
+    'ModelPIDField',
     'PIDField',
     'PIDStatusCheckField',
     'PIDRelation',

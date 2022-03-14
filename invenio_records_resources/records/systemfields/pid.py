@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -38,9 +38,11 @@ key in the record:
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
-from invenio_records.systemfields import RelatedModelField, \
+from invenio_records.systemfields import ModelField, RelatedModelField, \
     RelatedModelFieldContext
 from sqlalchemy import inspect
+
+from ..resolver import ModelResolver
 
 
 class PIDFieldContext(RelatedModelFieldContext):
@@ -180,3 +182,67 @@ class PIDField(RelatedModelField):
 
         # Set ID on desired dictionary key.
         field.set_dictkey(record, pid.pid_value)
+
+
+class ModelPIDFieldContext(PIDFieldContext):
+    """Context for ModelPIDField.
+
+    This class implements the class-level methods available on a PIDField. I.e.
+    when you access the field through the class, for instance:
+
+    .. code-block:: python
+
+        Record.pid.resolve('...')
+        Record.pid.session_merge(record)
+    """
+
+    def resolve(self, pid_value, registered_only=True):
+        """Resolve identifier."""
+        resolver = self.field._resolver_cls(
+            self._record_cls, self.field.model_field_name
+        )
+        pid, record = resolver.resolve(pid_value)
+        self.field._set_cache(record, pid)
+
+        return record
+
+    def create(self, record):
+        """Method to create a new persistent identifier for the record."""
+        pid = record[self.field.model_field_name]
+        setattr(record, self.field.model_field_name, pid)
+
+    def session_merge(self, record):
+        """Inactivate session merge since it all belongs to the same db obj."""
+        pass
+
+
+class ModelPIDField(ModelField):
+    """PID field in a db column on the record model."""
+
+    def __init__(
+        self,
+        model_field_name="pid",
+        resolver_cls=ModelResolver,
+        context_cls=ModelPIDFieldContext,
+    ):
+        """Initialise the dict field.
+
+        :param key: Name of key to store the pid value in.
+        """
+        self._resolver_cls = resolver_cls
+        self._context_cls = context_cls
+        super().__init__(model_field_name=model_field_name)
+
+    #
+    # Data descriptor
+    #
+    def __get__(self, record, owner=None):
+        """Accessing the attribute."""
+        # Class access
+        if record is None:
+            return self._context_cls(self, owner)
+        # Instance access
+        try:
+            return getattr(record.model, self.model_field_name)
+        except AttributeError:
+            return None
