@@ -32,6 +32,14 @@ class RecordMetadata(db.Model, RecordMetadataBase):
     bucket = db.relationship(Bucket)
 
 
+class RecordMetadataWithPID(db.Model, RecordMetadataBase):
+    """Mock record metadata class."""
+
+    __tablename__ = 'mock_metadata_pid'
+
+    pid = db.Column(db.String, unique=True)
+
+
 class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """Model for mock module record files."""
 
