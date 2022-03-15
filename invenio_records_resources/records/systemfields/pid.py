@@ -42,6 +42,7 @@ from invenio_records.systemfields import ModelField, RelatedModelField, \
     RelatedModelFieldContext
 from sqlalchemy import inspect
 
+from ..api import PersistentIdentifierWrapper
 from ..resolver import ModelResolver
 
 
@@ -242,7 +243,8 @@ class ModelPIDField(ModelField):
         if record is None:
             return self._context_cls(self, owner)
         # Instance access
-        try:
-            return getattr(record.model, self.model_field_name)
-        except AttributeError:
+        pid_value = getattr(record.model, self.model_field_name)
+        if not pid_value:
             return None
+
+        return PersistentIdentifierWrapper(pid_value)
