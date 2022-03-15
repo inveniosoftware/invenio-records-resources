@@ -187,6 +187,7 @@ class PersistentIdentifierWrapper:
     It is normally used along with ModelPIDField.
     """
 
-    def __init__(self, pid_value):
+    def __init__(self, pid_value, status):
         """Constructor."""
         self.pid_value = pid_value
+        self.status = status

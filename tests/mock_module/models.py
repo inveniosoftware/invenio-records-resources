@@ -12,8 +12,9 @@
 
 from invenio_db import db
 from invenio_files_rest.models import Bucket
+from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadataBase
-from sqlalchemy_utils.types import UUIDType
+from sqlalchemy_utils.types import ChoiceType, UUIDType
 
 from invenio_records_resources.records.models import FileRecordModelMixin
 
@@ -37,7 +38,8 @@ class RecordMetadataWithPID(db.Model, RecordMetadataBase):
 
     __tablename__ = 'mock_metadata_pid'
 
-    pid = db.Column(db.String, unique=True)
+    pid = db.Column(db.String(255), unique=True)
+    pid_status = db.Column(ChoiceType(PIDStatus, impl=db.CHAR(1)))
 
 
 class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):

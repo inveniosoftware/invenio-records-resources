@@ -11,9 +11,8 @@
 import uuid
 
 from invenio_db import db
+from invenio_pidstore.errors import PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
-from .api import PersistentIdentifierWrapper
 
 
 class UUIDResolver(object):
@@ -76,9 +75,10 @@ class ModelResolver(object):
         """
         with db.session.no_autoflush:  # avoid flushing the current session
             filters = {self.model_field_name: pid_value}
-            query = self._record_cls.model_cls.query.filter_by(**filters)
-            obj = query.one()
-            return (
-                PersistentIdentifierWrapper(pid_value),
-                self._record_cls(obj.data, model=obj)
-            )
+            obj = self._record_cls.model_cls.query.filter_by(**filters).one()
+            # get record and pid
+            record = self._record_cls(obj.data, model=obj)
+            if record.pid.status != PIDStatus.DELETED:
+                return (record.pid, record)
+
+            raise PIDDeletedError(record.pid, record)
