@@ -178,3 +178,14 @@ class File:
     def __repr__(self):
         """Representation string for the file wrapper object."""
         return f"<{type(self).__name__}({self.key}, {self.file_id})"
+
+
+class PersistentIdentifierWrapper:
+    """Persistent Identifer wrapper object.
+
+    It emulates a PID, but it is not stored in pidstore.
+    It is normally used along with ModelPIDField."""
+
+    def __init__(self, pid_value):
+        """Constructor."""
+        self.pid_value = pid_value

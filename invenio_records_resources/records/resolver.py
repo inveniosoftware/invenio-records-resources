@@ -13,6 +13,8 @@ import uuid
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
+from .api import PersistentIdentifierWrapper
+
 
 class UUIDResolver(object):
     """Resolver that uses the record's UUID instead of a persistent id.
@@ -77,6 +79,6 @@ class ModelResolver(object):
             query = self._record_cls.model_cls.query.filter_by(**filters)
             obj = query.one()
             return (
-                pid_value,
+                PersistentIdentifierWrapper(pid_value),
                 self._record_cls(obj.data, model=obj)
             )
