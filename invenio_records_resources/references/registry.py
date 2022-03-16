@@ -83,6 +83,8 @@ class ResolverRegistryBase(ABC):
         for resolver in cls.get_registered_resolvers():
             if resolver.matches_entity(entity):
                 return resolver.reference_entity(entity, check=False)
+            elif resolver.matches_reference_dict(entity):
+                return entity
 
         if raise_:
             msg = f"No matching resolver registered for: {type(entity)}"
