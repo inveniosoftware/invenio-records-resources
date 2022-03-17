@@ -9,7 +9,7 @@
 """ModelPIDField tests."""
 
 import pytest
-from invenio_pidstore.errors import PIDDeletedError
+from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError
 from invenio_pidstore.models import PIDStatus
 from invenio_records.systemfields import ModelField
 from mock_module.api import Record as RecordBase
@@ -64,6 +64,8 @@ def test_record_pid_deletion(base_app, db):
 
 def test_resolver(base_app, db, example_data):
     """Test the resolver."""
-    record = Record.create(example_data, pid="12345-abcde")
+    record = Record.create(
+        example_data, pid="12345-abcde", pid_status=PIDStatus.REGISTERED
+    )
     resolved_record = Record.pid.resolve("12345-abcde")
     assert resolved_record == example_data

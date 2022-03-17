@@ -82,7 +82,7 @@ class RecordTypeFactory(object):
         self.schema_path = self._build_schema_path(schema_path)
         self.index_name = self._build_index_name(index_name)
         self.model_cls_attrs = model_cls_attrs or {}
-        self.extra_record_cls_attributes = record_cls_attrs or {}
+        self.record_cls_attrs = record_cls_attrs or {}
 
         # resource class attributes
         self.endpoint_route = endpoint_route
@@ -155,7 +155,7 @@ class RecordTypeFactory(object):
             "dumper": self.record_dumper or ElasticsearchDumper(),
         }
 
-        record_class_attributes.update(self.extra_record_cls_attributes)
+        record_class_attributes.update(self.record_cls_attrs)
 
         if self.record_relations:
             record_class_attributes["relations"] = self.record_relations
