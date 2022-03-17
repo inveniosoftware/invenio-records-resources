@@ -36,13 +36,14 @@ key in the record:
 """
 
 from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from invenio_records.systemfields import ModelField, RelatedModelField, \
     RelatedModelFieldContext
 from sqlalchemy import inspect
 
 from ..api import PersistentIdentifierWrapper
+from ..providers import ModelPIDProvider
 from ..resolver import ModelResolver
 
 
@@ -209,9 +210,11 @@ class ModelPIDFieldContext(PIDFieldContext):
 
     def create(self, record):
         """Method to create a new persistent identifier for the record."""
-        pid = record.pop(self.field.model_field_name)  # pop from metadata
-        setattr(record, self.field.model_field_name, pid)
-        record.pid_status = PIDStatus.REGISTERED  # trigger __set__
+        # pop from metadata
+        pid_value = record.pop(self.field.model_field_name)
+        self.field._provider.create(
+            pid_value, record, self.field.model_field_name
+        )
 
     def session_merge(self, record):
         """Inactivate session merge since it all belongs to the same db obj."""
@@ -224,6 +227,7 @@ class ModelPIDField(ModelField):
     def __init__(
         self,
         model_field_name="pid",
+        provider=ModelPIDProvider,
         resolver_cls=ModelResolver,
         context_cls=ModelPIDFieldContext,
     ):
@@ -231,6 +235,7 @@ class ModelPIDField(ModelField):
 
         :param key: Name of key to store the pid value in.
         """
+        self._provider = provider
         self._resolver_cls = resolver_cls
         self._context_cls = context_cls
         super().__init__(model_field_name=model_field_name,)
@@ -254,16 +259,6 @@ class ModelPIDField(ModelField):
     #
     # Life-cycle hooks
     #
-    def post_create(self, record):
-        """Called after a record is created."""
-        pid = getattr(record, self.model_field_name)  # trigger __get__
-        if pid:  # support for service level Record.create({})
-            setattr(record, self.model_field_name, pid.pid_value)
-            setattr(
-                record, f"{self.model_field_name}_status", PIDStatus.REGISTERED
-            )
-
     def post_delete(self, record, force=False):
         """Called after a record is created."""
-        # QUESTION: Delegate to provider?
-        setattr(record, f"{self.model_field_name}_status", PIDStatus.DELETED)
+        self._provider.delete(record, self.model_field_name)
