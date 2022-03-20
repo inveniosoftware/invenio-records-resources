@@ -84,8 +84,11 @@ class RecordService(Service):
                       permission_action='read', preference=None,
                       extra_filter=None):
         """Instantiate a search class."""
-        permission = self.permission_policy(
-            action_name=permission_action, identity=identity)
+        if permission_action:
+            permission = self.permission_policy(
+                action_name=permission_action, identity=identity)
+        else:
+            permission = None
 
         default_filter = permission_filter(permission)
         if extra_filter is not None:
