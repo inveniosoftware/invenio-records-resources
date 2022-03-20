@@ -241,7 +241,6 @@ class UnitOfWork:
 
     def commit(self):
         """Commit the unit of work."""
-        self._mark_dirty()
         self.session.commit()
         # Run commit operations
         for op in self._operations:
@@ -249,6 +248,7 @@ class UnitOfWork:
         # Run post commit operations
         for op in self._operations:
             op.on_post_commit(self)
+        self._mark_dirty()
 
     def rollback(self):
         """Rollback the database session."""
