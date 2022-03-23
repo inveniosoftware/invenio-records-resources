@@ -253,12 +253,4 @@ class ModelPIDField(ModelField):
         if not pid_value:
             return None
 
-        status = getattr(record.model, f"{self.model_field_name}_status")
-        return PersistentIdentifierWrapper(pid_value, status)
-
-    #
-    # Life-cycle hooks
-    #
-    def post_delete(self, record, force=False):
-        """Called after a record is created."""
-        self._provider.delete(record, self.model_field_name)
+        return PersistentIdentifierWrapper(pid_value)

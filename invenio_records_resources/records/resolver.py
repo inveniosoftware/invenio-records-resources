@@ -78,7 +78,4 @@ class ModelResolver(object):
             obj = self._record_cls.model_cls.query.filter_by(**filters).one()
             # get record and pid
             record = self._record_cls(obj.data, model=obj)
-            if record.pid.status != PIDStatus.DELETED:
-                return (record.pid, record)
-
-            raise PIDDeletedError(record.pid, record)
+            return (record.pid, record)
