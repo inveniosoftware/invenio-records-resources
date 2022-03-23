@@ -9,7 +9,6 @@
 """Record providers."""
 
 from invenio_pidstore.errors import PIDAlreadyExists
-from invenio_pidstore.models import PIDStatus
 
 
 class ModelPIDProvider:
@@ -34,11 +33,3 @@ class ModelPIDProvider:
                 pid_type=record.__class__.__name__  # FIXME: is informative
             )
         setattr(record, model_field_name, pid_value)
-        setattr(
-            record, f"{model_field_name}_status", PIDStatus.REGISTERED
-        )
-
-    @classmethod
-    def delete(cls, record, model_field_name, **kwargs):
-        """Marks the PID as deleted."""
-        setattr(record, f"{model_field_name}_status", PIDStatus.DELETED)
