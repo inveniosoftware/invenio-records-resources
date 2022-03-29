@@ -125,3 +125,11 @@ class FilesOptionsComponent(ServiceComponent):
         self.assign_files_enabled(record, enabled)
         default_preview = data["files"].get("default_preview")
         self.assign_files_default_preview(record, default_preview)
+
+
+class RelationsComponent(ServiceComponent):
+    """Relations service component."""
+
+    def read(self, identity, record=None):
+        """Read record handler."""
+        record.relations.dereference()
