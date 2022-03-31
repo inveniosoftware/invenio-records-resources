@@ -15,25 +15,25 @@ on:
     branches: master
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron:  '0 3 * * 6'
+    - cron: "0 3 * * 6"
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason'
+        description: "Reason"
         required: false
-        default: 'Manual trigger'
+        default: "Manual trigger"
 
 jobs:
   Tests:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-          python-version: [3.7, 3.8, 3.9]
-          requirements-level: [min, pypi]
-          cache-service: [redis]
-          db-service: [postgresql10, postgresql13, mysql5, mysql8]
-          search-service: [elasticsearch7]
-          exclude:
+        python-version: [3.7, 3.8, 3.9]
+        requirements-level: [min, pypi]
+        cache-service: [redis]
+        db-service: [postgresql10, postgresql13, mysql5, mysql8]
+        search-service: [elasticsearch7]
+        exclude:
           - python-version: 3.8
             requirements-level: min
 
@@ -46,7 +46,7 @@ jobs:
           - python-version: 3.7
             db-service: mysql8
 
-          include:
+        include:
           - db-service: postgresql10
             DB_EXTRAS: "postgresql"
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
+          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt -c constraints-${{ matrix.requirements-level }}.txt
           pip install ".[$EXTRAS]"
           pip freeze
           docker --version

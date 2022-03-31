@@ -1,0 +1,3 @@
+# The constraint file declares version contraints used for testing the minimum
+# version of dependencies.
+SQLAlchemy==1.2.18
