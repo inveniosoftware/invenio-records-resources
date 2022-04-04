@@ -8,8 +8,6 @@
 
 """Pagination parameter interpreter API."""
 
-from marshmallow import ValidationError
-
 from ....pagination import Pagination
 from ...errors import QuerystringValidationError
 from .base import ParamInterpreter
