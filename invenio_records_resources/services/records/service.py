@@ -211,12 +211,21 @@ class RecordService(Service):
         """Reindex records matching the query parameters."""
         self.require_permission(identity, 'search')
 
-        # Prepare and execute the search as scan()
+        # prepare and update query
         params = params or {}
-        search_result = self._search(
-            'reindex', identity, params, es_preference, **kwargs).scan()
+        params.update(kwargs)
 
-        iterable_ids = (res.id for res in search_result)
+        # create an Elasticsearch DSL, we do not want components to run
+        search = self.search_request(
+            identity,
+            params,
+            self.record_cls,
+            self.config.search,
+            preference=es_preference,
+        ).source(False)  # get only the uuid of the records
+
+        search_result = search.scan()
+        iterable_ids = (res.meta.id for res in search_result)
 
         self.indexer.bulk_index(iterable_ids)
         return True
