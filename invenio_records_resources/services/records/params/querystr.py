@@ -27,22 +27,32 @@ from .base import ParamInterpreter
 class QueryParser:
     """Parse query string into a Elasticsearch DSL Q object."""
 
-    def __init__(self, identity=None, extra_params=None):
+    def __init__(self, identity=None, extra_params=None,
+                 tree_transformer_factory=None):
         """Initialise the parser."""
         self.identity = identity
         self.extra_params = extra_params or {}
+        self.tree_transformer_factory = tree_transformer_factory
 
     @classmethod
-    def factory(cls, **extra_params):
+    def factory(cls, tree_transformer_factory=None, **extra_params):
         """Create a new instance of the query parser."""
-        return partial(cls, extra_params=extra_params)
+        return partial(
+            cls,
+            extra_params=extra_params,
+            tree_transformer_factory=tree_transformer_factory
+        )
 
     def parse(self, query_str):
         """Parse the query."""
         try:
             # We parse the Lucene query syntax in Python, so we know upfront
             # if the syntax is correct before executing it in Elasticsearch
-            luqum_parser.parse(query_str)
+            tree = luqum_parser.parse(query_str)
+            if self.tree_transformer_factory is not None:
+                transformer = self.tree_transformer_factory()
+                new_tree = transformer.visit(tree)
+                query_str = str(new_tree)
             return Q('query_string', query=query_str, **self.extra_params)
         except ParseError:
             # Fallback to a multi-match query.
@@ -88,8 +98,8 @@ class SuggestQueryParser(QueryParser):
     ``phrase_prefix`` type, which is slower and less user friendly.
     """  # noqa
 
-    def __init__(self, identity=None, extra_params=None):
-        """."""
+    def __init__(self, identity=None, extra_params=None, **kwargs):
+        """Constructor."""
         super().__init__(identity=identity, extra_params=extra_params)
         self.extra_params.setdefault(
             'type',
