@@ -8,6 +8,8 @@
 
 """Service registry."""
 
+from invenio_indexer.proxies import current_indexer_registry
+
 
 class ServiceRegistry:
     """A simple class to register services."""
@@ -16,7 +18,7 @@ class ServiceRegistry:
         """Initialize the registry."""
         self._services = {}
 
-    def register(self, service_instance, service_id=None):
+    def register(self, service_instance, service_id=None, indexer=True):
         """Register a new service instance."""
         if service_id is None:
             service_id = service_instance.config.service_id
@@ -26,6 +28,10 @@ class ServiceRegistry:
                 "is already registered."
             )
         self._services[service_id] = service_instance
+        if indexer:
+            current_indexer_registry.register(
+                service_instance.indexer, service_id
+            )
 
     def get(self, service_id):
         """Get a service for a given service_id."""
