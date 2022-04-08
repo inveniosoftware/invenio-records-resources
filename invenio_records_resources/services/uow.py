@@ -182,6 +182,19 @@ class RecordDeleteOp(Operation):
             self._indexer.delete(self._record, refresh=self._index_refresh)
 
 
+class IndexRefreshOp(Operation):
+    """Search index refresh operation."""
+
+    def __init__(self, index, **kwargs):
+        """Initialize the index to be refreshed."""
+        self._index = index
+        self._kwargs = kwargs
+
+    def on_post_commit(self, uow):
+        """Run refresh after record commit."""
+        self._index.refresh(**self._kwargs)
+
+
 class TaskOp(Operation):
     """A celery task operation.
 
