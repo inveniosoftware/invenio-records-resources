@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -14,6 +14,7 @@ from invenio_files_rest.errors import InvalidKeyError
 from marshmallow import ValidationError
 
 from ..base.components import BaseServiceComponent
+from ..uow import ChangeNotificationOp
 
 
 class ServiceComponent(BaseServiceComponent):
@@ -133,3 +134,16 @@ class RelationsComponent(ServiceComponent):
     def read(self, identity, record=None):
         """Read record handler."""
         record.relations.dereference()
+
+
+class ChangeNotificationsComponent(ServiceComponent):
+    """Back Relations service component."""
+
+    def update(self, identity, data=None, record=None, uow=None, **kwargs):
+        """Register a task for the update propagation."""
+        # FIXME: until the run_components has been fixed the uow
+        # is passed as a cmp attr instead of param.
+        self.uow.register(ChangeNotificationOp(
+            record_type=self.service.id,
+            records=[record],
+        ))

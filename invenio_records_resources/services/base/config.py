@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@ class ServiceConfig:
     """Service Configuration."""
 
     # Common configuration for all Services
+    service_id = None
     permission_policy_cls = BasePermissionPolicy
     result_item_cls = ServiceItemResult
     result_list_cls = ServiceListResult

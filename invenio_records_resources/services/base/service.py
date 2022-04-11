@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -71,6 +71,11 @@ class Service:
                     component.uow = uow
                 getattr(component, action)(*args, **kwargs)
                 component.uow = None
+
+    @property
+    def id(self):
+        """Return the id of the service from config."""
+        return self.config.service_id
 
     #
     # Units of transaction methods (creation...)

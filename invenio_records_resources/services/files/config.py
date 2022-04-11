@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@ from .schema import FileSchema
 #
 class FileServiceConfig(ServiceConfig):
     """File Service configuration."""
+
+    service_id = "files"
 
     record_cls = None
 

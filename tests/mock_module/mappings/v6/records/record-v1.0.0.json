@@ -25,6 +25,20 @@
             "subject": {
               "type": "keyword"
             }
+          },
+          "inner_record": {
+            "type": "object",
+            "properties": {
+              "@v": {
+                "type": "keyword"
+              },
+              "id": {
+                "type": "keyword"
+              },
+              "title": {
+                "type": "text"
+              }
+            }
           }
         },
         "created": {
@@ -34,6 +48,9 @@
           "type": "date"
         },
         "expires_at": {
+          "type": "date"
+        },
+        "indexed_at": {
           "type": "date"
         },
         "uuid": {
