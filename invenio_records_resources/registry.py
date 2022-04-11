@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 CERN.
+# Copyright (C) 2021-2022 CERN.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Service registry."""
+"""Invenio-Records-Resources registry."""
 
 
 class ServiceRegistry:
@@ -19,7 +19,7 @@ class ServiceRegistry:
     def register(self, service_instance, service_id=None):
         """Register a new service instance."""
         if service_id is None:
-            service_id = service_instance.config.service_id
+            service_id = service_instance.id
         if service_id in self._services:
             raise RuntimeError(
                 f"Service with service id '{service_id}' "
@@ -37,3 +37,25 @@ class ServiceRegistry:
             if instance == service_instance:
                 return service_id
         raise KeyError("Service not found in registry.")
+
+
+class NotificationRegistry:
+    """Notifications registry."""
+
+    def __init__(self):
+        """Constructor."""
+        self._handlers = {}
+
+    def register(self, record_type, handler):
+        """Register a handler for a change notification."""
+        if self._handlers.get(record_type, None):
+            self._handlers[record_type].append(handler)
+        else:
+            self._handlers[record_type] = [handler]
+
+    def get(self, record_type):
+        """Get the list of handlers for a record type.
+
+        Returns an empty list if not found.
+        """
+        return self._handlers.get(record_type, [])

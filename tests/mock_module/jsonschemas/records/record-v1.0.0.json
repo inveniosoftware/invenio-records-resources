@@ -11,6 +11,14 @@
       "properties": {
         "title": {
           "type": "string"
+        },
+        "inner_record": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
         }
       }
     }

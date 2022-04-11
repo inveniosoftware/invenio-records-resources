@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -106,6 +106,8 @@ from functools import wraps
 
 from invenio_db import db
 
+from ..tasks import send_change_notifications
+
 
 #
 # Unit of work operations
@@ -210,6 +212,25 @@ class TaskOp(Operation):
     def on_post_commit(self, uow):
         """Run the post task operation."""
         self._celery_task.delay(*self._args, **self._kwargs)
+
+
+class ChangeNotificationOp(Operation):
+    """A change notification operation."""
+
+    def __init__(self, record_type, records):
+        """Constructor."""
+        self._record_type = record_type
+        self._records = records
+
+    def on_post_commit(self, uow):
+        """Send the notification (run celery task)."""
+        send_change_notifications.delay(
+            self._record_type,
+            [
+                (r.pid.pid_value, str(r.id), r.revision_id)
+                for r in self._records
+            ]
+        )
 
 
 #

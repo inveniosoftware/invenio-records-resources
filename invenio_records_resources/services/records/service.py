@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2020 European Union.
 #
@@ -11,8 +11,10 @@
 """Record Service API."""
 
 from elasticsearch_dsl import Q
+from flask import current_app
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
+from kombu import Queue
 
 from ...config import lt_es7
 from ..base import LinksTemplate, Service
@@ -31,6 +33,11 @@ class RecordService(Service):
     def indexer(self):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls(
+            queue=Queue(
+                self.config.indexer_queue_name,
+                exchange=current_app.config["INDEXER_MQ_EXCHANGE"],
+                routing_key=current_app.config["INDEXER_MQ_ROUTING_KEY"],
+            ),
             record_cls=self.config.record_cls,
             record_to_index=self.record_to_index,
             record_dumper=self.config.index_dumper,
@@ -207,7 +214,14 @@ class RecordService(Service):
             links_item_tpl=self.links_item_tpl,
         )
 
-    def reindex(self, identity, params=None, es_preference=None, **kwargs):
+    def reindex(
+        self,
+        identity,
+        params=None,
+        es_preference=None,
+        es_query=None,
+        **kwargs
+    ):
         """Reindex records matching the query parameters."""
         self.require_permission(identity, 'search')
 
@@ -223,6 +237,9 @@ class RecordService(Service):
             self.config.search,
             preference=es_preference,
         ).source(False)  # get only the uuid of the records
+
+        if es_query:  # incompatible with params={"q":...}
+            search = search.query(es_query)
 
         search_result = search.scan()
         iterable_ids = (res.meta.id for res in search_result)
@@ -414,4 +431,32 @@ class RecordService(Service):
             if not rec.is_deleted:
                 self.indexer.index(rec)
 
+        return True
+
+    #
+    # notification handlers
+    #
+    def on_relation_update(
+        self, identity, record_type, records_info, notif_time
+    ):
+        """Handles the update of a related field record."""
+        fieldpaths = self.config.relations.get(record_type, [])
+        clauses = []
+        for field in fieldpaths:
+            for record in records_info:
+                recid, uuid, revision_id = record
+                clauses.append(Q(
+                    "bool",
+                    must=[Q("term", **{f"{field}.id": recid})],
+                    must_not=[
+                        Q("term", **{f"{field}.@v": f"{uuid}::{revision_id}"})
+                    ]
+                ))
+
+        filter = [Q("range", indexed_at={"lte": notif_time})]
+        es_query = Q(
+            "bool", minimum_should_match=1, should=clauses, filter=filter
+        )
+
+        self.reindex(identity, es_query=es_query)
         return True

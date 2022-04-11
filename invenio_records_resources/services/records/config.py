@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -62,6 +62,7 @@ class RecordServiceConfig(ServiceConfig):
     """Service factory configuration."""
 
     # Common configuration
+    service_id = "records"
     permission_policy_cls = RecordPermissionPolicy
     result_item_cls = RecordItem
     result_list_cls = RecordList
@@ -69,7 +70,10 @@ class RecordServiceConfig(ServiceConfig):
     # Record specific configuration
     record_cls = Record
     indexer_cls = RecordIndexer
+    indexer_queue_name = "records"
     index_dumper = None  # use default dumper defined on record class
+    # inverse relation mapping, stores which fields relate to which record type
+    relations = {}
 
     # Search configuration
     search = SearchOptions
