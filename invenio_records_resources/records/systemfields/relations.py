@@ -12,7 +12,7 @@
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.systemfields.relations import InvalidRelationValue, \
-    ListRelation, NestedListRelation, RelationBase
+    ListRelation, NestedListRelation, NestedRelation, RelationBase
 
 
 class PIDRelation(RelationBase):
@@ -72,3 +72,6 @@ class PIDListRelation(ListRelation, PIDRelation):
 
 class PIDNestedListRelation(NestedListRelation, PIDRelation):
     """PID nested list relation type."""
+
+class PIDNestedRelation(NestedRelation, PIDRelation):
+    """"""
