@@ -14,8 +14,11 @@ fixtures are available.
 """
 
 import pytest
+from celery.messaging import establish_connection
 from flask_principal import Identity, Need, UserNeed
 from invenio_cache import current_cache
+from kombu import Queue
+from kombu.compat import Consumer
 from mock_module.api import Record, RecordWithFiles
 from mock_module.config import ServiceConfig
 
@@ -35,6 +38,53 @@ def identity_simple():
 def service(appctx):
     """Service instance."""
     return RecordService(ServiceConfig)
+
+
+@pytest.fixture(scope='function')
+def queue_config(service):
+    """Declare queue configuration (name, exchange and routing_key)."""
+    # TODO: Move this fixture to pytest-invenio
+    config = {
+        "name": service.config.indexer_queue_name,
+    }
+    return config
+
+
+@pytest.fixture(scope='function')
+def queue(app, queue_config):
+    """Declare an clean the indexer queue."""
+    # TODO: Move this fixture to pytest-invenio
+    queue = Queue(
+        name=queue_config.get("name") or 'indexer',
+        exchange=(
+            queue_config.get("exchange") or
+            app.config["INDEXER_MQ_EXCHANGE"]
+        ),
+        routing_key=(
+            queue_config.get("routing_key") or
+            app.config["INDEXER_MQ_ROUTING_KEY"]
+        )
+    )
+
+    with establish_connection() as c:
+        q = queue(c)
+        q.declare()
+        q.purge()
+
+    return queue
+
+
+@pytest.fixture(scope='function')
+def consumer(app, queue):
+    """Get a consumer on the queue object for testing bulk operations."""
+    # TODO: Move this fixture to pytest-invenio
+    with establish_connection() as c:
+        yield Consumer(
+            connection=c,
+            queue=queue.name,
+            exchange=queue.exchange.name,
+            routing_key=queue.routing_key
+        )
 
 
 @pytest.fixture(scope="function")

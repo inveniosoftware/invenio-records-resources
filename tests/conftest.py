@@ -14,9 +14,7 @@ fixtures are available.
 """
 
 import pytest
-from celery.messaging import establish_connection
 from invenio_app.factory import create_api as _create_api
-from kombu.compat import Consumer
 from mock_module.config import MockFileServiceConfig
 
 from invenio_records_resources.services import FileService
@@ -44,33 +42,6 @@ def extra_entry_points():
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
-
-
-@pytest.fixture(scope='function')
-def queue(app):
-    """Declare an clean the indexer queue."""
-    # TODO: Move this fixture to pytest-invenio
-    queue = app.config['INDEXER_MQ_QUEUE']
-
-    with establish_connection() as c:
-        q = queue(c)
-        q.declare()
-        q.purge()
-
-    return queue
-
-
-@pytest.fixture(scope='function')
-def consumer(app, queue):
-    """Get a consumer on the queue object for testing bulk operations."""
-    # TODO: Move this fixture to pytest-invenio
-    with establish_connection() as c:
-        yield Consumer(
-            connection=c,
-            queue=app.config['INDEXER_MQ_QUEUE'].name,
-            exchange=app.config['INDEXER_MQ_EXCHANGE'].name,
-            routing_key=app.config['INDEXER_MQ_ROUTING_KEY'],
-        )
 
 
 @pytest.fixture(scope="module")
