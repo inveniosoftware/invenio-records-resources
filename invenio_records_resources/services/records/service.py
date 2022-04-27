@@ -34,13 +34,20 @@ class RecordService(Service):
     def indexer(self):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls(
+            # the routing key is mandatory in the indexer constructor since
+            # it is afterwards passed explicitly to the created consumers
+            # and producers. this means that it is not strictly necessary to
+            # pass it to the queue constructor. however, it is passed for
+            # consistency (in case the queue is used by itself) and to help
+            # entity declaration on publish.
             queue=LocalProxy(
                 lambda: Queue(
                     self.config.indexer_queue_name,
                     exchange=current_app.config["INDEXER_MQ_EXCHANGE"],
-                    routing_key=current_app.config["INDEXER_MQ_ROUTING_KEY"],
+                    routing_key=self.config.indexer_queue_name,
                 )
             ),
+            routing_key=self.config.indexer_queue_name,
             record_cls=self.config.record_cls,
             record_to_index=self.record_to_index,
             record_dumper=self.config.index_dumper,
