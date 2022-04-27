@@ -15,6 +15,7 @@ from flask import current_app
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from kombu import Queue
+from werkzeug.local import LocalProxy
 
 from ...config import lt_es7
 from ..base import LinksTemplate, Service
@@ -33,10 +34,12 @@ class RecordService(Service):
     def indexer(self):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls(
-            queue=Queue(
-                self.config.indexer_queue_name,
-                exchange=current_app.config["INDEXER_MQ_EXCHANGE"],
-                routing_key=current_app.config["INDEXER_MQ_ROUTING_KEY"],
+            queue=LocalProxy(
+                lambda: Queue(
+                    self.config.indexer_queue_name,
+                    exchange=current_app.config["INDEXER_MQ_EXCHANGE"],
+                    routing_key=current_app.config["INDEXER_MQ_ROUTING_KEY"],
+                )
             ),
             record_cls=self.config.record_cls,
             record_to_index=self.record_to_index,
