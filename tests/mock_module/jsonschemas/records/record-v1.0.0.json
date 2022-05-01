@@ -19,6 +19,30 @@
               "type": "string"
             }
           }
+        },
+        "referenced_created_by": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "type": "integer"
+            }
+          }
+        },
+        "referenced_simple": {
+          "type": "string"
+        },
+        "referenced_other": {
+          "type": "object",
+          "properties": {
+            "nested": {
+              "type": "object",
+              "properties": {
+                "sub": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         }
       }
     }

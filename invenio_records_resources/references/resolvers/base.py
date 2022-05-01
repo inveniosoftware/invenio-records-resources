@@ -10,6 +10,8 @@
 
 from abc import ABC, abstractmethod
 
+from invenio_records_resources.proxies import current_service_registry
+
 
 def _parse_ref_dict(reference_dict, strict=True):
     """Parse the referenced dict into a tuple (TYPE, ID).
@@ -48,8 +50,9 @@ class EntityProxy(ABC):
     object.
     """
 
-    def __init__(self, reference_dict):
+    def __init__(self, resolver, reference_dict):
         """Constructor."""
+        self._resolver = resolver
         self._ref_dict = reference_dict
         self._entity = None
 
@@ -57,17 +60,17 @@ class EntityProxy(ABC):
         """Return repr(self)."""
         return f"<{type(self).__name__} {self._ref_dict} ({self._entity})>"
 
-    def _parse_ref_dict(self, ref_dict):
+    def _parse_ref_dict(self):
         """Parse the referenced dict into a tuple (TYPE, ID)."""
-        return _parse_ref_dict(ref_dict)
+        return _parse_ref_dict(self._ref_dict)
 
-    def _parse_ref_dict_type(self, ref_dict):
+    def _parse_ref_dict_type(self):
         """Parse the TYPE from the reference dict."""
-        return self._parse_ref_dict(ref_dict)[0]
+        return _parse_ref_dict(self._ref_dict)[0]
 
-    def _parse_ref_dict_id(self, ref_dict):
+    def _parse_ref_dict_id(self):
         """Parse the ID from the reference dict."""
-        return self._parse_ref_dict(ref_dict)[1]
+        return _parse_ref_dict(self._ref_dict)[1]
 
     @property
     def reference_dict(self):
@@ -102,6 +105,15 @@ class EntityProxy(ABC):
         """
         return []
 
+    def get_resolver(self):
+        """Get the concrete resolver obj used to resolve the entity."""
+        return self._resolver
+
+    @abstractmethod
+    def pick_resolved_fields(self, resolved_dict):
+        """Select which fields to return when resolving the reference."""
+        return {}
+
 
 class EntityResolver(ABC):
     """Translation layer between reference dicts and entities (or proxies).
@@ -113,6 +125,13 @@ class EntityResolver(ABC):
     direction (i.e. resolving entities from reference dicts) is the
     responsibility of the EntityProxies created by the resolvers.
     """
+
+    def __init__(self, service_id):
+        """Constructor.
+
+        :params service: the service for the record to resolve.
+        """
+        self._service_id = service_id
 
     def _parse_ref_dict(self, ref_dict):
         """Parse the referenced dict into a tuple (TYPE, ID)."""
@@ -187,3 +206,7 @@ class EntityResolver(ABC):
         creating the reference dict for the given entity.
         """
         return None
+
+    def get_service(self):
+        """Return the record service."""
+        return current_service_registry.get(self._service_id)

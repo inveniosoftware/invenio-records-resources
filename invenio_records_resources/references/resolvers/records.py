@@ -18,22 +18,28 @@ from .base import EntityProxy, EntityResolver
 class RecordProxy(EntityProxy):
     """Resolver proxy for a Record entity using the pid."""
 
-    def __init__(self, ref_dict, record_cls):
+    def __init__(self, resolver, ref_dict, record_cls):
         """Constructor.
 
         :param record_cls: The record class to use.
         """
-        super().__init__(ref_dict)
+        super().__init__(resolver, ref_dict)
         self.record_cls = record_cls
 
     def _resolve(self):
         """Resolve the Record from the proxy's reference dict."""
-        pid_value = self._parse_ref_dict_id(self._ref_dict)
+        pid_value = self._parse_ref_dict_id()
         return self.record_cls.pid.resolve(pid_value)
 
     def get_needs(self, ctx=None):
         """Return None since Needs are not applicable to records."""
         return []
+
+    def pick_resolved_fields(self, resolved_dict):
+        """Select which fields to return when resolving the reference."""
+        return {
+            "id": resolved_dict["id"]
+        }
 
 
 class RecordPKProxy(RecordProxy):
@@ -41,7 +47,7 @@ class RecordPKProxy(RecordProxy):
 
     def _resolve(self):
         """Resolve the Record from the proxy's reference dict."""
-        id_ = self._parse_ref_dict_id(self._ref_dict)
+        id_ = self._parse_ref_dict_id()
         try:
             return self.record_cls.get_record(id_)
         except StatementError as exc:
@@ -51,15 +57,18 @@ class RecordPKProxy(RecordProxy):
 class RecordResolver(EntityResolver):
     """Resolver for records."""
 
-    def __init__(self, record_cls, type_key="record", proxy_cls=RecordProxy):
+    def __init__(self, record_cls, service_id, type_key="record",
+                 proxy_cls=RecordProxy):
         """Constructor.
 
         :param record_cls: The record class to use.
+        :param service_id: The record service id.
         :param type_key: The value to use for the TYPE part of the ref_dicts.
         """
         self.record_cls = record_cls
         self.type_key = type_key
         self.proxy_cls = proxy_cls
+        super().__init__(service_id)
 
     def matches_entity(self, entity):
         """Check if the entity is a record."""
@@ -75,4 +84,4 @@ class RecordResolver(EntityResolver):
 
     def _get_entity_proxy(self, ref_dict):
         """Return a RecordProxy for the given reference dict."""
-        return self.proxy_cls(ref_dict, self.record_cls)
+        return self.proxy_cls(self, ref_dict, self.record_cls)
