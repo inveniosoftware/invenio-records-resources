@@ -39,6 +39,30 @@
                 "type": "text"
               }
             }
+          },
+          "created_by": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "integer"
+              }
+            }
+          },
+          "simple": {
+            "type": "keyword"
+          },
+          "other": {
+            "type": "object",
+            "properties": {
+              "nested": {
+                "type": "object",
+                "properties": {
+                  "sub": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
           }
         },
         "created": {

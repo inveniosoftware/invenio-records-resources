@@ -10,12 +10,11 @@
 
 from .grants import EntityGrant
 from .registry import ResolverRegistryBase
-from .resolvers import EntityResolver, RecordResolver, UserResolver
+from .resolvers import EntityResolver, RecordResolver
 
 __all__ = (
     "EntityGrant",
     "EntityResolver",
     "RecordResolver",
     "ResolverRegistryBase",
-    "UserResolver",
 )

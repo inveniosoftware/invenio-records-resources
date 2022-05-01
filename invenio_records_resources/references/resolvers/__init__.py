@@ -10,11 +10,9 @@
 
 from .base import EntityProxy, EntityResolver
 from .records import RecordResolver
-from .users import UserResolver
 
 __all__ = (
     "EntityProxy",
     "EntityResolver",
     "RecordResolver",
-    "UserResolver",
 )

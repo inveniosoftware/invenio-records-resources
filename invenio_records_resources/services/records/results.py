@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
-# Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2020-2022 CERN.
+# Copyright (C) 2020-2022 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Service results."""
+from abc import ABC, abstractmethod
 
+from invenio_records.dictutils import dict_lookup, dict_merge, dict_set
 
 from ...config import lt_es7
 from ...pagination import Pagination
@@ -19,7 +21,8 @@ class RecordItem(ServiceItemResult):
     """Single record result."""
 
     def __init__(self, service, identity, record, errors=None,
-                 links_tpl=None, schema=None):
+                 links_tpl=None, schema=None, expandable_fields=None,
+                 expand=False):
         """Constructor."""
         self._errors = errors
         self._identity = identity
@@ -27,6 +30,8 @@ class RecordItem(ServiceItemResult):
         self._record = record
         self._service = service
         self._schema = schema or service.schema
+        self._fields_resolver = FieldsResolver(expandable_fields)
+        self._expand = expand
         self._data = None
 
     @property
@@ -63,6 +68,11 @@ class RecordItem(ServiceItemResult):
         )
         if self._links_tpl:
             self._data["links"] = self.links
+
+        if self._expand and self._fields_resolver:
+            self._fields_resolver.resolve(self._identity, [self._data])
+            fields = self._fields_resolver.expand(self._data)
+            self._data["expanded"] = fields
 
         return self._data
 
@@ -109,7 +119,8 @@ class RecordList(ServiceListResult):
     """List of records result."""
 
     def __init__(self, service, identity, results, params=None, links_tpl=None,
-                 links_item_tpl=None, schema=None):
+                 links_item_tpl=None, schema=None, expandable_fields=None,
+                 expand=False):
         """Constructor.
 
         :params service: a service instance
@@ -124,6 +135,8 @@ class RecordList(ServiceListResult):
         self._params = params
         self._links_tpl = links_tpl
         self._links_item_tpl = links_item_tpl
+        self._fields_resolver = FieldsResolver(expandable_fields)
+        self._expand = expand
 
     def __len__(self):
         """Return the total numer of hits."""
@@ -187,12 +200,21 @@ class RecordList(ServiceListResult):
         """Return result as a dictionary."""
         # TODO: This part should imitate the result item above. I.e. add a
         # "data" property which uses a ServiceSchema to dump the entire object.
+        hits = list(self.hits)
+
+        if self._expand and self._fields_resolver:
+            self._fields_resolver.resolve(self._identity, hits)
+            for hit in hits:
+                fields = self._fields_resolver.expand(hit)
+                hit["expanded"] = fields
+
         res = {
             "hits": {
-                "hits": list(self.hits),
+                "hits": hits,
                 "total": self.total,
             }
         }
+
         if self.aggregations:
             res["aggregations"] = self.aggregations
 
@@ -202,3 +224,142 @@ class RecordList(ServiceListResult):
                 res['links'] = self._links_tpl.expand(self.pagination)
 
         return res
+
+
+class ExpandableField(ABC):
+    """Field referencing to another record that can be expanded."""
+
+    def __init__(self, field_name):
+        """Constructor.
+
+        :params field_name: the name of the field containing the value to
+                           resolve the referenced record
+        :params service: the service to fetch the referenced record
+        """
+        self.field_name = field_name
+        self.values = dict()
+        self.service = None
+
+    @abstractmethod
+    def get_value_service(self, value):
+        """Return the value and the service to fetch the referenced record."""
+        return None, None
+
+    def add_value(self, value):
+        """Store each value in the list of results for this field."""
+        self.values.setdefault(value, None)
+
+    def add_dereferenced_record(self, value, resolved_rec):
+        """Store each dereferenced record by its value."""
+        self.values[value] = resolved_rec
+
+    @abstractmethod
+    def pick(self, resolved_rec):
+        """Pick the fields to return from the resolved record dict."""
+        return {
+            "id": resolved_rec["id"]
+        }
+
+
+class FieldsResolver:
+    """Resolve the reference record for each of the configured field.
+
+    Given a list of field that contains the reference to another record,
+    it returns the dereferenced record for each field.
+
+    To minimize the performance impact of resolving reference record, this
+    object will:
+    - first, collect all the possible values contained in the list of result
+      per field and service (which hold the record type) to be called
+    - it will then call the `service.read_many([ids])` method so that all
+      reference records are retrieve with one search per record type
+    - for each of the result to be returned, it will call the `pick` method
+      of each configured field to allow to choose what fields should be
+      selected and returned from the resolved record.
+
+    It supports resolution of nested fields out of the box.
+    """
+
+    def __init__(self, expandable_fields):
+        """Constructor.
+
+        :params expandable_fields: list of ExpandableField obj.
+        """
+        self._fields = expandable_fields
+
+    def _collect_values(self, hits):
+        """Collect all field values to be expanded."""
+        grouped_values = dict()
+        for hit in hits:
+            for field in self._fields:
+                try:
+                    value = dict_lookup(hit, field.field_name)
+                except KeyError:
+                    continue
+                else:
+                    # value is not None
+                    v, service = field.get_value_service(value)
+                    field.service = service
+                    field.add_value(v)
+                    # collect values (ids) and group by service e.g.:
+                    # service_1: (13, 4),
+                    # service_2: (uuid1, uuid2, ...)
+                    grouped_values.setdefault(field.service, set())
+                    grouped_values[field.service].add(v)
+
+        return grouped_values
+
+    def _find_field(self, hit, field_service):
+        """Find field comparing service and value with resolved rec.
+
+        The `id` field used to match the resolved record is hardcoded,
+        as in the `read_many` method.
+        """
+        for field in self._fields:
+            value = hit.get("id", None)
+            if value in field.values and field.service == field_service:
+                return field, value
+
+        return None, None
+
+    def _fetch_referenced(self, grouped_values, identity):
+        """Search and fetch referenced recs by ids."""
+        for service, values in grouped_values.items():
+            results = service.read_many(identity, list(values))
+            for hit in results.hits:
+                field, value = self._find_field(hit, service)
+                if not field:
+                    raise Exception("Cannot find configured field by "
+                                    "referenced record {0}".format(hit))
+                field.add_dereferenced_record(value, hit)
+
+    def resolve(self, identity, hits):
+        """Collect field values and resolve referenced records."""
+        _hits = list(hits)  # ensure it is a list, when a single value passed
+        grouped_values = self._collect_values(_hits)
+        self._fetch_referenced(grouped_values, identity)
+
+    def expand(self, hit):
+        """Return the expanded fields for the given hit."""
+        results = dict()
+        for field in self._fields:
+            try:
+                value = dict_lookup(hit, field.field_name)
+            except KeyError:
+                continue
+            else:
+                # value is not None
+                v, _ = field.get_value_service(value)
+                resolved_rec = field.values[v]
+                if not resolved_rec:
+                    continue
+                output = field.pick(resolved_rec)
+
+                # transform field name (potentially dotted) to nested dicts
+                # to keep the nested structure of the field
+                d = dict()
+                dict_set(d, field.field_name, output)
+                # merge dict with previous results
+                dict_merge(results, d)
+
+        return results

@@ -24,6 +24,24 @@ class TypeSchema(Schema):
     subtype = fields.Str()
 
 
+class ReferencedCreatedBySchema(Schema):
+    """Nested type schema for fake created by field."""
+
+    user = fields.Integer()
+
+
+class ReferencedNestedSchema(Schema):
+    """Nested type schema for fake other.nested field."""
+
+    sub = fields.Str()
+
+
+class ReferencedOtherSchema(Schema):
+    """Nested type schema for fake other field."""
+
+    nested = fields.Nested(ReferencedNestedSchema)
+
+
 class MetadataSchema(Schema):
     """Basic metadata schema class."""
 
@@ -31,6 +49,10 @@ class MetadataSchema(Schema):
     type = fields.Nested(TypeSchema)
     subject = fields.Str()
     inner_record = fields.Dict()
+    # referenced records
+    referenced_created_by = fields.Nested(ReferencedCreatedBySchema)
+    referenced_simple = fields.Str()
+    referenced_other = fields.Nested(ReferencedOtherSchema)
 
 
 class RecordSchema(BaseRecordSchema):
