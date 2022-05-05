@@ -60,6 +60,7 @@ class RecordTypeFactory(object):
         pid_field_kwargs=None,
         model_cls_attrs=None,
         record_cls_attrs=None,
+        service_id=None,
     ):
         """Constructor."""
         self.record_type_name = record_type_name
@@ -88,6 +89,7 @@ class RecordTypeFactory(object):
         self.endpoint_route = endpoint_route
 
         # service attributes
+        self.service_id = service_id
         self.service_schema = service_schema
         self.search_options = search_options or SearchOptions
         self.service_components = service_components
@@ -214,6 +216,10 @@ class RecordTypeFactory(object):
                     "components": self.service_components
                 }
             )
+
+        if self.service_id:
+            config_cls_attributes["service_id"] = self.service_id
+            config_cls_attributes["indexer_queue_name"] = self.service_id
 
         self.service_config_cls = type(
             config_cls_name, (RecordServiceConfig,), config_cls_attributes
