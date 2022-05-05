@@ -70,7 +70,7 @@ class RecordServiceConfig(ServiceConfig):
     # Record specific configuration
     record_cls = Record
     indexer_cls = RecordIndexer
-    indexer_queue_name = "records"
+    indexer_queue_name = service_id
     index_dumper = None  # use default dumper defined on record class
     # inverse relation mapping, stores which fields relate to which record type
     relations = {}
