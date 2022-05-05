@@ -36,19 +36,6 @@ def base_app(base_app, service, file_service):
     yield base_app
 
 
-@pytest.fixture(scope="function")
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test',
-            'type': {
-                'type': "test"
-            }
-        },
-    }
-
-
 @pytest.fixture()
 def example_record(app, db, service, input_data, identity_simple, location):
     """Example data layer record."""
