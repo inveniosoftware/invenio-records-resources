@@ -31,7 +31,10 @@ def test_simple_flow(app, identity_simple, db):
 
     # factory use
     grant_type = RecordTypeFactory(
-        "Grant", RecordSchema, permission_policy_cls=PermissionPolicy
+        "Grant",
+        RecordSchema,
+        permission_policy_cls=PermissionPolicy,
+        service_id="grants",
     )
     db.create_all()
 
@@ -42,6 +45,9 @@ def test_simple_flow(app, identity_simple, db):
     }
 
     service = grant_type.service_cls(grant_type.service_config_cls)
+    assert service.id == "grants"
+    assert service.config.service_id == "grants"
+    assert service.config.indexer_queue_name == "grants"
 
     # Create an item
     item = service.create(identity_simple, input_data)
