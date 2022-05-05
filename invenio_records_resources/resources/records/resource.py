@@ -41,8 +41,8 @@ request_search_args = request_parser(
     from_conf('request_search_args'), location='args'
 )
 
-request_expand_args = request_parser(
-    from_conf('request_expand_args'), location='args'
+request_extra_args = request_parser(
+    from_conf('request_extra_args'), location='args'
 )
 
 
