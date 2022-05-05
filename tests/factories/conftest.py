@@ -36,12 +36,3 @@ def extra_entry_points():
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
-
-
-@pytest.fixture(scope="module")
-def identity_simple():
-    """Simple identity fixture."""
-    i = Identity(1)
-    i.provides.add(UserNeed(1))
-    i.provides.add(Need(method="system_role", value="any_user"))
-    return i

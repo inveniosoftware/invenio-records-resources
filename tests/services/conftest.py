@@ -15,29 +15,10 @@ fixtures are available.
 
 import pytest
 from celery.messaging import establish_connection
-from flask_principal import Identity, Need, UserNeed
 from invenio_cache import current_cache
 from kombu import Queue
 from kombu.compat import Consumer
 from mock_module.api import Record, RecordWithFiles
-from mock_module.config import ServiceConfig
-
-from invenio_records_resources.services import RecordService
-
-
-@pytest.fixture(scope='module')
-def identity_simple():
-    """Simple identity fixture."""
-    i = Identity(1)
-    i.provides.add(UserNeed(1))
-    i.provides.add(Need(method='system_role', value='any_user'))
-    return i
-
-
-@pytest.fixture(scope='module')
-def service(appctx):
-    """Service instance."""
-    return RecordService(ServiceConfig)
 
 
 @pytest.fixture(scope='function')
@@ -85,19 +66,6 @@ def consumer(app, queue):
             exchange=queue.exchange.name,
             routing_key=queue.routing_key
         )
-
-
-@pytest.fixture(scope="function")
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test',
-            'type': {
-                'type': "test"
-            }
-        },
-    }
 
 
 @pytest.fixture()

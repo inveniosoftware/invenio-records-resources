@@ -14,10 +14,11 @@ fixtures are available.
 """
 
 import pytest
+from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
-from mock_module.config import MockFileServiceConfig
+from mock_module.config import MockFileServiceConfig, ServiceConfig
 
-from invenio_records_resources.services import FileService
+from invenio_records_resources.services import FileService, RecordService
 
 pytest_plugins = ("celery.contrib.pytest", )
 
@@ -48,6 +49,25 @@ def create_app(instance_path, entry_points):
 def file_service():
     """File service shared fixture."""
     return FileService(MockFileServiceConfig)
+
+
+@pytest.fixture(scope='module')
+def service(appctx):
+    """Service instance."""
+    return RecordService(ServiceConfig)
+
+
+@pytest.fixture(scope="function")
+def input_data():
+    """Input data (as coming from the view layer)."""
+    return {
+        'metadata': {
+            'title': 'Test',
+            'type': {
+                'type': "test"
+            }
+        },
+    }
 
 
 @pytest.fixture(scope='module')

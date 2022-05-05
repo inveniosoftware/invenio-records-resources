@@ -14,7 +14,6 @@ fixtures are available.
 """
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
 from mock_module.config import ServiceConfig
 from mock_module.resource import CustomRecordResourceConfig
 
@@ -39,15 +38,6 @@ def base_app(base_app, record_resource):
     """Application factory fixture."""
     base_app.register_blueprint(record_resource.as_blueprint())
     yield base_app
-
-
-@pytest.fixture(scope="module")
-def identity_simple():
-    """Simple identity fixture."""
-    i = Identity(1)
-    i.provides.add(UserNeed(1))
-    i.provides.add(Need(method='system_role', value='any_user'))
-    return i
 
 
 @pytest.fixture(scope="module")
