@@ -10,6 +10,6 @@
 
 from .ext import InvenioRecordsResources
 
-__version__ = "0.19.12"
+__version__ = "0.19.13"
 
 __all__ = ("__version__", "InvenioRecordsResources")
