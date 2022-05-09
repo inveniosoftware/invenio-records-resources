@@ -52,6 +52,7 @@ class MetadataSchema(Schema):
     # referenced records
     referenced_created_by = fields.Nested(ReferencedCreatedBySchema)
     referenced_simple = fields.Str()
+    referenced_simple_same = fields.Str()
     referenced_other = fields.Nested(ReferencedOtherSchema)
 
 
