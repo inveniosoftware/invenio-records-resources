@@ -92,6 +92,7 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
             "title": "Test",
             "referenced_created_by": {"user": 3},
             "referenced_simple": "abcde",
+            "referenced_simple_same": "abcde",  # test 2 times the same value
             "referenced_other": {
                 "nested": {"sub": "id_test"},
             },
@@ -118,6 +119,7 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
         expandable_fields=[
             CreatedByExpandableField("metadata.referenced_created_by"),
             SimpleExpandableField("metadata.referenced_simple"),
+            SimpleExpandableField("metadata.referenced_simple_same"),
             OtherExpandableField("metadata.referenced_other.nested.sub"),
         ],
         expand=True,
@@ -139,6 +141,7 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
         expandable_fields=[
             CreatedByExpandableField("metadata.referenced_created_by"),
             SimpleExpandableField("metadata.referenced_simple"),
+            SimpleExpandableField("metadata.referenced_simple_same"),
             OtherExpandableField("metadata.referenced_other.nested.sub"),
         ],
         expand=True,
@@ -153,6 +156,10 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
                 "full_name": "John Doe",
             },
             "referenced_simple": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_simple_same": {
                 "id": "abcde",
                 "simple": "simple value",
             },
@@ -178,6 +185,10 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
                     "full_name": "John Doe",
                 },
                 "referenced_simple": {
+                    "id": "abcde",
+                    "simple": "simple value",
+                },
+                "referenced_simple_same": {
                     "id": "abcde",
                     "simple": "simple value",
                 },

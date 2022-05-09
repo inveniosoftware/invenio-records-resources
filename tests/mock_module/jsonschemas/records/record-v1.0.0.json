@@ -31,6 +31,9 @@
         "referenced_simple": {
           "type": "string"
         },
+        "referenced_simple_same": {
+          "type": "string"
+        },
         "referenced_other": {
           "type": "object",
           "properties": {

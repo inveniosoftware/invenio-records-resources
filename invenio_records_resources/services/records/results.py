@@ -309,29 +309,27 @@ class FieldsResolver:
 
         return grouped_values
 
-    def _find_field(self, hit, field_service):
+    def _find_fields(self, hit, field_service):
         """Find field comparing service and value with resolved rec.
 
         The `id` field used to match the resolved record is hardcoded,
         as in the `read_many` method.
         """
+        fields = []
         for field in self._fields:
             value = hit.get("id", None)
             if value in field.values and field.service == field_service:
-                return field, value
+                fields.append((field, value))
 
-        return None, None
+        return fields
 
     def _fetch_referenced(self, grouped_values, identity):
         """Search and fetch referenced recs by ids."""
         for service, values in grouped_values.items():
             results = service.read_many(identity, list(values))
             for hit in results.hits:
-                field, value = self._find_field(hit, service)
-                if not field:
-                    raise Exception("Cannot find configured field by "
-                                    "referenced record {0}".format(hit))
-                field.add_dereferenced_record(value, hit)
+                for field, value in self._find_fields(hit, service):
+                    field.add_dereferenced_record(value, hit)
 
     def resolve(self, identity, hits):
         """Collect field values and resolve referenced records."""
