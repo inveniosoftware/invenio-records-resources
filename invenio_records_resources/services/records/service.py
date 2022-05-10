@@ -82,6 +82,14 @@ class RecordService(Service):
             self.config.links_item,
         )
 
+    @property
+    def expandable_fields(self):
+        """Get expandable fields.
+
+        Override this method when needed.
+        """
+        return []
+
     def check_revision_id(self, record, expected_revision_id):
         """Validate the given revision_id with current record's one.
 
@@ -185,7 +193,8 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, params=None, es_preference=None, **kwargs):
+    def search(self, identity, params=None, es_preference=None,
+               expand=False, **kwargs):
         """Search for records matching the querystring."""
         self.require_permission(identity, 'search')
 
@@ -204,6 +213,8 @@ class RecordService(Service):
                 "args": params
             }),
             links_item_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
     def scan(self, identity, params=None, es_preference=None, **kwargs):
@@ -258,16 +269,18 @@ class RecordService(Service):
         return True
 
     @unit_of_work()
-    def create(self, identity, data, uow=None):
+    def create(self, identity, data, uow=None, expand=False):
         """Create a record.
 
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
-        return self._create(self.record_cls, identity, data, uow=uow)
+        return self._create(self.record_cls, identity, data, uow=uow,
+                            expand=expand)
 
     @unit_of_work()
-    def _create(self, record_cls, identity, data, raise_errors=True, uow=None):
+    def _create(self, record_cls, identity, data, raise_errors=True, uow=None,
+                expand=False):
         """Create a record.
 
         :param identity: Identity of user creating the record.
@@ -306,10 +319,12 @@ class RecordService(Service):
             identity,
             record,
             links_tpl=self.links_item_tpl,
-            errors=errors
+            errors=errors,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
-    def read(self, identity, id_):
+    def read(self, identity, id_, expand=False):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
@@ -325,6 +340,8 @@ class RecordService(Service):
             identity,
             record,
             links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
     def _read_many(self, identity, es_query, fields=None, max_records=150,
@@ -382,7 +399,8 @@ class RecordService(Service):
         return self.result_list(self, identity, results)
 
     @unit_of_work()
-    def update(self, identity, id_, data, revision_id=None, uow=None):
+    def update(self, identity, id_, data, revision_id=None, uow=None,
+               expand=False):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -411,6 +429,8 @@ class RecordService(Service):
             identity,
             record,
             links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
     @unit_of_work()

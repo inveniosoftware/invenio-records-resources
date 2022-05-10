@@ -71,6 +71,7 @@ class RecordResource(ErrorHandlersMixin, Resource):
     #
     # Primary Interface
     #
+    @request_extra_args
     @request_search_args
     @response_handler(many=True)
     def search(self):
@@ -79,10 +80,12 @@ class RecordResource(ErrorHandlersMixin, Resource):
         hits = self.service.search(
             identity=identity,
             params=resource_requestctx.args,
-            es_preference=es_preference()
+            es_preference=es_preference(),
+            expand=resource_requestctx.args.get("expand", False),
         )
         return hits.to_dict(), 200
 
+    @request_extra_args
     @request_data
     @response_handler()
     def create(self):
@@ -90,9 +93,11 @@ class RecordResource(ErrorHandlersMixin, Resource):
         item = self.service.create(
             g.identity,
             resource_requestctx.data or {},
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 201
 
+    @request_extra_args
     @request_read_args
     @request_view_args
     @response_handler()
@@ -101,9 +106,11 @@ class RecordResource(ErrorHandlersMixin, Resource):
         item = self.service.read(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 200
 
+    @request_extra_args
     @request_headers
     @request_view_args
     @request_data
@@ -115,6 +122,7 @@ class RecordResource(ErrorHandlersMixin, Resource):
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.data,
             revision_id=resource_requestctx.headers.get("if_match"),
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 200
 

@@ -137,7 +137,6 @@ def test_first_search_result_has_next_and_no_prev_link(
         "next": "https://127.0.0.1:5000/api/mocks?page=2&size=1"
                 "&sort=newest",
     }
-    print("response_links", response_links)
     for key, url in expected_links.items():
         assert url == response_links[key]
 

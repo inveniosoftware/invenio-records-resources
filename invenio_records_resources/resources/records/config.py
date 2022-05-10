@@ -33,8 +33,8 @@ class RecordResourceConfig(ResourceConfig):
     request_view_args = {"pid_value": ma.fields.Str()}
     request_search_args = SearchRequestArgsSchema
     request_extra_args = {
-        "expand": ma.fields.Boolean(load_default=False),
-        "refresh": ma.fields.Boolean(load_default=False),
+        "expand": ma.fields.Boolean(),
+        "refresh": ma.fields.Boolean(),
     }
     request_headers = {"if_match": ma.fields.Int()}
     request_body_parsers = {
