@@ -28,6 +28,7 @@ class ReferencedCreatedBySchema(Schema):
     """Nested type schema for fake created by field."""
 
     user = fields.Integer()
+    entity = fields.Str()
 
 
 class ReferencedNestedSchema(Schema):

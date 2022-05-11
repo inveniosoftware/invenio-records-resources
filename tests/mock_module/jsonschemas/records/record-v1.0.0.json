@@ -25,6 +25,9 @@
           "properties": {
             "user": {
               "type": "integer"
+            },
+            "entity": {
+              "type": "string"
             }
           }
         },

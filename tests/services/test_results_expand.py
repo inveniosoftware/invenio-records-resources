@@ -13,6 +13,7 @@ from mock_module.api import Record
 from invenio_records_resources.services.records.results import ExpandableField
 
 MOCK_USER = {"id": 3, "profile": {"full_name": "John Doe"}}
+MOCK_ENTITY = {"id": "ABC", "metadata": {"title": "My title"}}
 MOCK_SIMPLE = {
     "id": "abcde",
     "metadata": {
@@ -38,22 +39,32 @@ class MockedService:
 
 
 mocked_user_service = MockedService(MOCK_USER)
+mocked_entity_service = MockedService(MOCK_ENTITY)
 mocked_simple_service = MockedService(MOCK_SIMPLE)
 mocked_other_service = MockedService(MOCK_NESTED)
 
 
 class CreatedByExpandableField(ExpandableField):
+
     def get_value_service(self, value):
         """Override default."""
-        if isinstance(value, dict) and value.get("user"):
+        if value.get("user"):
             return value["user"], mocked_user_service
+        elif value.get("entity"):
+            return value["entity"], mocked_entity_service
 
     def pick(self, resolved_rec):
         """Override default."""
-        return {
-            "id": resolved_rec["id"],
-            "full_name": resolved_rec["profile"]["full_name"],
-        }
+        if "profile" in resolved_rec:
+            return {
+                "id": resolved_rec["id"],
+                "full_name": resolved_rec["profile"]["full_name"],
+            }
+        else:
+            return {
+                "id": resolved_rec["id"],
+                "title": resolved_rec["metadata"]["title"],
+            }
 
 
 class SimpleExpandableField(ExpandableField):
@@ -87,7 +98,7 @@ class OtherExpandableField(ExpandableField):
 
 def test_result_item_fields_expansion(app, db, service, identity_simple):
 
-    input_data = {
+    input_data1 = {
         "metadata": {
             "title": "Test",
             "referenced_created_by": {"user": 3},
@@ -98,24 +109,51 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
             },
         },
     }
+    input_data2 = {
+        "metadata": {
+            "title": "Test",
+            "referenced_created_by": {"entity": "ABC"},
+            "referenced_simple": "abcde",
+            "referenced_simple_same": "abcde",  # test 2 times the same value
+            "referenced_other": {
+                "nested": {"sub": "id_test"},
+            },
+        },
+    }
 
-    # create one record
-    item = service.create(identity_simple, input_data)
-    id_ = item.id
+    # create 2 records
+    item1 = service.create(identity_simple, input_data1)
+    id1 = item1.id
+    item2 = service.create(identity_simple, input_data2)
+    id2 = item2.id
 
     Record.index.refresh()
 
-    result = service.read(identity_simple, id_)
-    d = result.to_dict()
+    result1 = service.read(identity_simple, id1)
+    result2 = service.read(identity_simple, id2)
+    d = result1.to_dict()
     assert "expanded" not in d
 
     # recreate result item with the extra fields params
     # this is to avoid to mock the service and other dependencies
-    result_item = service.config.result_item_cls(
-        service=result._service,
-        identity=result._identity,
-        record=result._record,
-        links_tpl=result._links_tpl,
+    result_item1 = service.config.result_item_cls(
+        service=result1._service,
+        identity=result1._identity,
+        record=result1._record,
+        links_tpl=result1._links_tpl,
+        expandable_fields=[
+            CreatedByExpandableField("metadata.referenced_created_by"),
+            SimpleExpandableField("metadata.referenced_simple"),
+            SimpleExpandableField("metadata.referenced_simple_same"),
+            OtherExpandableField("metadata.referenced_other.nested.sub"),
+        ],
+        expand=True,
+    )
+    result_item2 = service.config.result_item_cls(
+        service=result2._service,
+        identity=result2._identity,
+        record=result2._record,
+        links_tpl=result2._links_tpl,
         expandable_fields=[
             CreatedByExpandableField("metadata.referenced_created_by"),
             SimpleExpandableField("metadata.referenced_simple"),
@@ -147,9 +185,9 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
         expand=True,
     )
 
-    result = result_item.to_dict()
-    assert "expanded" in result
-    assert result["expanded"] == {
+    result1 = result_item1.to_dict()
+    assert "expanded" in result1
+    assert result1["expanded"] == {
         "metadata": {
             "referenced_created_by": {
                 "id": 3,
@@ -175,31 +213,88 @@ def test_result_item_fields_expansion(app, db, service, identity_simple):
         }
     }
 
-    hits = result_list.to_dict()["hits"]["hits"]
-    for hit in hits:
-        assert "expanded" in hit
-        assert hit["expanded"] == {
-            "metadata": {
-                "referenced_created_by": {
-                    "id": 3,
-                    "full_name": "John Doe",
-                },
-                "referenced_simple": {
-                    "id": "abcde",
-                    "simple": "simple value",
-                },
-                "referenced_simple_same": {
-                    "id": "abcde",
-                    "simple": "simple value",
-                },
-                "referenced_other": {
-                    "nested": {
-                        "sub": {
-                            "id": "id_test",
-                            "name": "test",
-                            "nested": "foo bar",
-                        }
+    result2 = result_item2.to_dict()
+    assert "expanded" in result2
+    assert result2["expanded"] == {
+        "metadata": {
+            "referenced_created_by": {
+                "id": "ABC",
+                "title": "My title",
+            },
+            "referenced_simple": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_simple_same": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_other": {
+                "nested": {
+                    "sub": {
+                        "id": "id_test",
+                        "name": "test",
+                        "nested": "foo bar",
                     }
-                },
-            }
+                }
+            },
         }
+    }
+
+    hits = result_list.to_dict()["hits"]["hits"]
+    hit1 = [hit for hit in hits if hit["id"] == str(id1)][0]
+    hit2 = [hit for hit in hits if hit["id"] == str(id2)][0]
+
+    assert "expanded" in hit1
+    assert hit1["expanded"] == {
+        "metadata": {
+            "referenced_created_by": {
+                "id": 3,
+                "full_name": "John Doe",
+            },
+            "referenced_simple": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_simple_same": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_other": {
+                "nested": {
+                    "sub": {
+                        "id": "id_test",
+                        "name": "test",
+                        "nested": "foo bar",
+                    }
+                }
+            },
+        }
+    }
+
+    assert "expanded" in hit2
+    assert hit2["expanded"] == {
+        "metadata": {
+            "referenced_created_by": {
+                "id": "ABC",
+                "title": "My title",
+            },
+            "referenced_simple": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_simple_same": {
+                "id": "abcde",
+                "simple": "simple value",
+            },
+            "referenced_other": {
+                "nested": {
+                    "sub": {
+                        "id": "id_test",
+                        "name": "test",
+                        "nested": "foo bar",
+                    }
+                }
+            },
+        }
+    }
