@@ -45,6 +45,9 @@
             "properties": {
               "user": {
                 "type": "integer"
+              },
+              "entity": {
+                "type": "keyword"
               }
             }
           },

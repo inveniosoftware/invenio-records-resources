@@ -236,22 +236,39 @@ class ExpandableField(ABC):
                            resolve the referenced record
         :params service: the service to fetch the referenced record
         """
-        self.field_name = field_name
-        self.values = dict()
-        self.service = None
+        self._field_name = field_name
+        self._service_values = dict()
+
+    @property
+    def field_name(self):
+        """Return field name."""
+        return self._field_name
 
     @abstractmethod
     def get_value_service(self, value):
         """Return the value and the service to fetch the referenced record."""
         return None, None
 
-    def add_value(self, value):
-        """Store each value in the list of results for this field."""
-        self.values.setdefault(value, None)
+    def has(self, service, value):
+        """Return true if field has given value for given service."""
+        try:
+            self._service_values[service][value]
+        except KeyError:
+            return False
+        return True
 
-    def add_dereferenced_record(self, value, resolved_rec):
-        """Store each dereferenced record by its value."""
-        self.values[value] = resolved_rec
+    def add_service_value(self, service, value):
+        """Store each value in the list of results for this field."""
+        self._service_values.setdefault(service, dict())
+        self._service_values[service].setdefault(value, None)
+
+    def add_dereferenced_record(self, service, value, resolved_rec):
+        """Save the dereferenced record."""
+        self._service_values[service][value] = resolved_rec
+
+    def get_dereferenced_record(self, service, value):
+        """Return the dereferenced record."""
+        return self._service_values[service][value]
 
     @abstractmethod
     def pick(self, resolved_rec):
@@ -264,15 +281,15 @@ class ExpandableField(ABC):
 class FieldsResolver:
     """Resolve the reference record for each of the configured field.
 
-    Given a list of field that contains the reference to another record,
-    it returns the dereferenced record for each field.
+    Given a list of fields referencing other records/objects,
+    it fetches and returns the dereferenced record/obj.
 
     To minimize the performance impact of resolving reference record, this
     object will:
-    - first, collect all the possible values contained in the list of result
-      per field and service (which hold the record type) to be called
+    - first, collect all the possible values of each fields, grouping them
+      by service to be called to fetch the referenced record/obj
     - it will then call the `service.read_many([ids])` method so that all
-      reference records are retrieve with one search per record type
+      reference records are retrieved with one search per service type
     - for each of the result to be returned, it will call the `pick` method
       of each configured field to allow to choose what fields should be
       selected and returned from the resolved record.
@@ -299,28 +316,25 @@ class FieldsResolver:
                 else:
                     # value is not None
                     v, service = field.get_value_service(value)
-                    field.service = service
-                    field.add_value(v)
+                    field.add_service_value(service, v)
                     # collect values (ids) and group by service e.g.:
                     # service_1: (13, 4),
                     # service_2: (uuid1, uuid2, ...)
-                    grouped_values.setdefault(field.service, set())
-                    grouped_values[field.service].add(v)
+                    grouped_values.setdefault(service, set())
+                    grouped_values[service].add(v)
 
         return grouped_values
 
-    def _find_fields(self, hit, field_service):
-        """Find field comparing service and value with resolved rec.
+    def _find_fields(self, service, value):
+        """Find all fields matching service and value.
 
         The `id` field used to match the resolved record is hardcoded,
         as in the `read_many` method.
         """
         fields = []
         for field in self._fields:
-            value = hit.get("id", None)
-            if value in field.values and field.service == field_service:
-                fields.append((field, value))
-
+            if field.has(service, value):
+                fields.append(field)
         return fields
 
     def _fetch_referenced(self, grouped_values, identity):
@@ -328,8 +342,9 @@ class FieldsResolver:
         for service, values in grouped_values.items():
             results = service.read_many(identity, list(values))
             for hit in results.hits:
-                for field, value in self._find_fields(hit, service):
-                    field.add_dereferenced_record(value, hit)
+                value = hit.get("id", None)
+                for field in self._find_fields(service, value):
+                    field.add_dereferenced_record(service, value, hit)
 
     def resolve(self, identity, hits):
         """Collect field values and resolve referenced records."""
@@ -347,8 +362,8 @@ class FieldsResolver:
                 continue
             else:
                 # value is not None
-                v, _ = field.get_value_service(value)
-                resolved_rec = field.values[v]
+                v, service = field.get_value_service(value)
+                resolved_rec = field.get_dereferenced_record(service, v)
                 if not resolved_rec:
                     continue
                 output = field.pick(resolved_rec)
