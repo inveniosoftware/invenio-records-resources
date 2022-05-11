@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -12,7 +12,8 @@
 from elasticsearch_dsl import Index
 from invenio_records.systemfields import SystemField
 from invenio_search import current_search_client
-
+from invenio_search.utils import build_index_name
+from werkzeug.local import LocalProxy
 
 class IndexField(SystemField):
     """Index field."""
@@ -26,7 +27,10 @@ class IndexField(SystemField):
         if isinstance(index_or_alias, Index):
             self._index = index_or_alias
         else:
-            self._index = Index(index_or_alias, using=current_search_client)
+            self._index = Index(
+                LocalProxy(lambda: build_index_name(index_or_alias)),
+                using=current_search_client
+            )
         # Set search alias name directly on the index
         self._index.search_alias = search_alias or self._index._name
 
@@ -35,4 +39,5 @@ class IndexField(SystemField):
     #
     def __get__(self, record, owner=None):
         """Get the persistent identifier."""
+
         return self._index
