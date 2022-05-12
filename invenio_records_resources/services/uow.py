@@ -187,14 +187,15 @@ class RecordDeleteOp(Operation):
 class IndexRefreshOp(Operation):
     """Search index refresh operation."""
 
-    def __init__(self, index, **kwargs):
+    def __init__(self, indexer, index=None, **kwargs):
         """Initialize the index to be refreshed."""
+        self._indexer = indexer
         self._index = index
         self._kwargs = kwargs
 
     def on_post_commit(self, uow):
         """Run refresh after record commit."""
-        self._index.refresh(**self._kwargs)
+        self._indexer.refresh(index=self._index, **self._kwargs)
 
 
 class TaskOp(Operation):
