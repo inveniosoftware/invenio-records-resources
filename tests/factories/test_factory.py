@@ -111,7 +111,7 @@ def test_service_class_create():
     assert rec_type.service_config_cls.record_cls == rec_type.record_cls
 
 
-def test_optional_schema_path(app):
+def test_optional_schema_path():
     rec_type = RecordTypeFactory(
         "OptionalSchemaPath",
         RecordSchema,
@@ -124,7 +124,7 @@ def test_optional_schema_path(app):
     )
 
 
-def test_optional_version(app):
+def test_optional_version():
     rec_type = RecordTypeFactory(
         "OptionalVersion", RecordSchema, schema_version="1.1.0"
     )

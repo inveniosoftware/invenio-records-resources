@@ -105,6 +105,7 @@ class and implementing the desired methods:
 from functools import wraps
 
 from invenio_db import db
+from invenio_search.utils import build_alias_name
 
 from ..tasks import send_change_notifications
 
@@ -189,7 +190,7 @@ class IndexRefreshOp(Operation):
 
     def __init__(self, index, **kwargs):
         """Initialize the index to be refreshed."""
-        self._index = index
+        self._index = index.clone(name=build_alias_name(index._name))
         self._kwargs = kwargs
 
     def on_post_commit(self, uow):
