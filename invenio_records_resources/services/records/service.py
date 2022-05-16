@@ -17,7 +17,6 @@ from invenio_search import current_search_client
 from kombu import Queue
 from werkzeug.local import LocalProxy
 
-from ...config import lt_es7
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
 from ..uow import RecordCommitOp, RecordDeleteOp, unit_of_work
@@ -135,8 +134,7 @@ class RecordService(Service):
 
         # Extras
         extras = {}
-        if not lt_es7:
-            extras["track_total_hits"] = True
+        extras["track_total_hits"] = True
         search = search.extra(**extras)
 
         return search

@@ -19,7 +19,6 @@ class LabelledFacetMixin:
         """Initialize class."""
         self._label = label or ''
         self._value_labels = value_labels
-        self._metric = None  # Needed only for ES6 (can be removed later)
         super().__init__(**kwargs)
 
     def get_value(self, bucket):
@@ -64,14 +63,6 @@ class LabelledFacetMixin:
                 "is_selected": self.is_filtered(key, filter_values)
             })
         return {'buckets': out, 'label': str(self._label)}
-
-    def get_metric(self, bucket):
-        """Compatibility for ES6."""
-        # This function is defined by elasticsearch-dsl v7, but not v6, so we
-        # add it here.
-        if self._metric:
-            return bucket["metric"]["value"]
-        return bucket["doc_count"]
 
 
 class TermsFacet(LabelledFacetMixin, TermsFacetBase):

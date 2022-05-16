@@ -12,7 +12,6 @@ from abc import ABC, abstractmethod
 
 from invenio_records.dictutils import dict_lookup, dict_merge, dict_set
 
-from ...config import lt_es7
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
 
@@ -150,10 +149,7 @@ class RecordList(ServiceListResult):
     def total(self):
         """Get total number of hits."""
         if hasattr(self._results, 'hits'):
-            if lt_es7:
-                return self._results.hits.total
-            else:
-                return self._results.hits.total["value"]
+            return self._results.hits.total["value"]
         else:
             # handle scan(): returns a generator
             return None
