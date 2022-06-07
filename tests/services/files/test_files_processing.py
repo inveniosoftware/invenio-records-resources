@@ -20,33 +20,31 @@ from invenio_records_resources.tasks import extract_file_metadata
 @pytest.fixture()
 def image_fp():
     """A test image."""
-    with open(join(dirname(__file__), 'testimage.png'), 'rb') as fp:
+    with open(join(dirname(__file__), "testimage.png"), "rb") as fp:
         yield fp
 
 
 def test_image_meta_extraction(
-        file_service, location, example_record, identity_simple, image_fp,
-        monkeypatch):
+    file_service, location, example_record, identity_simple, image_fp, monkeypatch
+):
     """Image metadata extraction."""
     # Patch celery task
     task = MagicMock()
-    monkeypatch.setattr(processor, 'extract_file_metadata', task)
+    monkeypatch.setattr(processor, "extract_file_metadata", task)
 
-    recid = example_record['id']
+    recid = example_record["id"]
 
     # Upload file
-    file_service.init_files(
-        identity_simple, recid, [{'key': 'image.png'}])
-    file_service.set_file_content(
-        identity_simple, recid, 'image.png', image_fp)
+    file_service.init_files(identity_simple, recid, [{"key": "image.png"}])
+    file_service.set_file_content(identity_simple, recid, "image.png", image_fp)
 
     # Commit (should send celery task)
     assert not task.delay.called
-    file_service.commit_file(identity_simple, recid, 'image.png')
+    file_service.commit_file(identity_simple, recid, "image.png")
     assert task.delay.called
 
     # Call task manually
     extract_file_metadata(*task.delay.call_args[0])
 
-    item = file_service.read_file_metadata(identity_simple, recid, 'image.png')
-    assert item.data['metadata'] == {"width": 1000, "height": 1000}
+    item = file_service.read_file_metadata(identity_simple, recid, "image.png")
+    assert item.data["metadata"] == {"width": 1000, "height": 1000}

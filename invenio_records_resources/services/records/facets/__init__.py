@@ -13,8 +13,8 @@ from .labels import RecordRelationLabels
 from .response import FacetsResponse
 
 __all__ = (
-    'FacetsResponse',
-    'NestedTermsFacet',
-    'RecordRelationLabels',
-    'TermsFacet',
+    "FacetsResponse",
+    "NestedTermsFacet",
+    "RecordRelationLabels",
+    "TermsFacet",
 )

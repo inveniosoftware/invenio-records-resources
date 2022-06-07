@@ -11,8 +11,11 @@
 import pytest
 from invenio_access.permissions import system_identity
 
-from invenio_records_resources.services.records.queryparser import \
-    QueryParser, SearchFieldTransformer, SuggestQueryParser
+from invenio_records_resources.services.records.queryparser import (
+    QueryParser,
+    SearchFieldTransformer,
+    SuggestQueryParser,
+)
 
 
 @pytest.fixture()
@@ -25,22 +28,22 @@ def test_extra_params():
     """Test for the query parser."""
     p = QueryParser(system_identity).factory(fields=["title"])
     assert p(system_identity).parse("a").to_dict() == {
-        'query_string': {'query': "a", "fields": ["title"]}}
+        "query_string": {"query": "a", "fields": ["title"]}
+    }
 
 
 @pytest.mark.parametrize(
     "query",
     [
         "(new your city) OR (big apple)",
-        "\"a phrase\""
-        "status:active",
-        "author:\"John Smith\"",
+        '"a phrase"' "status:active",
+        'author:"John Smith"',
         "book.\\*:(quick OR brown)",
         "_exists_:title",
         "qu?ck bro*",
         "name:/joh?n(ath[oa]n)/",
         "quikc~ brwn~ foks~",
-        "\"fox quick\"~5",
+        '"fox quick"~5',
         "date:[2012-01-01 TO 2012-12-31]",
         "count:[1 TO 5]",
         "tag:{alpha TO omega}",
@@ -54,18 +57,17 @@ def test_extra_params():
         "age:(>=10 AND <20)",
         "age:(+>=10 +<20)",
         "quick^2 fox",
-        "\"john smith\"^2   (foo bar)^4",
+        '"john smith"^2   (foo bar)^4',
         "quick brown +fox -news",
         "((quick AND fox) OR (brown AND fox) OR fox) AND NOT news",
         "(quick OR brown) AND fox",
         "status:(active OR pending) title:(full text search)^2",
-        "doi:10.1234/foo.bar"
+        "doi:10.1234/foo.bar",
     ],
 )
 def test_valid_syntax(parser, query):
     """Test for the query parser."""
-    assert parser.parse(query).to_dict() == {
-        'query_string': {'query': query}}
+    assert parser.parse(query).to_dict() == {"query_string": {"query": query}}
 
 
 @pytest.mark.parametrize(
@@ -73,8 +75,8 @@ def test_valid_syntax(parser, query):
     [
         "doi:",
         "(new your city OR (big apple)",
-        "\"a phrase",
-        "author:\"John Smith",
+        '"a phrase',
+        'author:"John Smith',
         "name:/joh?n(ath[oan)",
         "name:joh?n(ath[oa]n)/",
         "date:[2012-01-01 to 2012-12-31]",
@@ -82,15 +84,14 @@ def test_valid_syntax(parser, query):
         "tag:alpha TO omega}",
         "count:[10 TO ]",
         "date:{ TO 2012-01-01}",
-        "\"john smith\"^2   (foo bar^4",
+        '"john smith"^2   (foo bar^4',
         "((quick AND fox) OR (brown AND fox OR fox) AND NOT news",
         "(quick OR brown AND fox",
     ],
 )
 def test_multimatch(parser, query):
     """Invalid syntax falls back to multi match query."""
-    assert parser.parse(query).to_dict() == {
-        'multi_match': {'query': query}}
+    assert parser.parse(query).to_dict() == {"multi_match": {"query": query}}
 
 
 @pytest.mark.parametrize(
@@ -107,9 +108,10 @@ def test_multimatch(parser, query):
 def test_search_field_tranformer(query, transformed_query, query_type):
     """Invalid syntax falls back to multi match query."""
     p = QueryParser(system_identity).factory(
-        tree_transformer_factory=SearchFieldTransformer.factory(mapping={
-            "title": "metadata.title"
-        })
+        tree_transformer_factory=SearchFieldTransformer.factory(
+            mapping={"title": "metadata.title"}
+        )
     )
     assert p(system_identity).parse(query).to_dict() == {
-        query_type: {'query': transformed_query}}
+        query_type: {"query": transformed_query}
+    }

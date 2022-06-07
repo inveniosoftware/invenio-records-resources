@@ -15,16 +15,26 @@ from elasticsearch.exceptions import RequestError
 from flask import jsonify, make_response, request, url_for
 from flask_babelex import lazy_gettext as _
 from flask_resources import HTTPJSONException, create_error_handler
-from invenio_pidstore.errors import PIDAlreadyExists, PIDDeletedError, \
-    PIDDoesNotExistError, PIDRedirectedError, PIDUnregistered
-from invenio_records.systemfields.relations import InvalidCheckValue, \
-    InvalidRelationValue
+from invenio_pidstore.errors import (
+    PIDAlreadyExists,
+    PIDDeletedError,
+    PIDDoesNotExistError,
+    PIDRedirectedError,
+    PIDUnregistered,
+)
+from invenio_records.systemfields.relations import (
+    InvalidCheckValue,
+    InvalidRelationValue,
+)
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.routing import BuildError
 
 from ..errors import validation_error_to_list_errors
-from ..services.errors import PermissionDeniedError, \
-    QuerystringValidationError, RevisionIdMismatchError
+from ..services.errors import (
+    PermissionDeniedError,
+    QuerystringValidationError,
+    RevisionIdMismatchError,
+)
 
 
 class HTTPJSONValidationException(HTTPJSONException):
@@ -34,24 +44,21 @@ class HTTPJSONValidationException(HTTPJSONException):
 
     def __init__(self, exception):
         """Constructor."""
-        super().__init__(
-            code=400,
-            errors=validation_error_to_list_errors(exception)
-        )
+        super().__init__(code=400, errors=validation_error_to_list_errors(exception))
 
 
 class HTTPJSONElasticsearchRequestError(HTTPJSONException):
     """HTTP exception responsible for mapping Elasticsearch errors."""
 
     causes_responses = {
-        'query_shard_exception': (400, _("Invalid query string syntax.")),
-        'query_parsing_exception': (400, _("Invalid query string syntax.")),
-        'illegal_argument_exception': (500, _("Misconfigured search."))
+        "query_shard_exception": (400, _("Invalid query string syntax.")),
+        "query_parsing_exception": (400, _("Invalid query string syntax.")),
+        "illegal_argument_exception": (500, _("Misconfigured search.")),
     }
 
     def __init__(self, error):
         """Parse RequestError."""
-        cause_types = {c['type'] for c in error.info['error']['root_cause']}
+        cause_types = {c["type"] for c in error.info["error"]["root_cause"]}
         for t in cause_types:
             if t in self.causes_responses:
                 code, msg = self.causes_responses[t]
@@ -71,16 +78,15 @@ def create_pid_redirected_error_handler():
             # Redirection works only for the item route of the format
             # `/records/<pid_value>`
             location = url_for(
-                request.url_rule.endpoint,
-                pid_value=e.destination_pid.pid_value
+                request.url_rule.endpoint, pid_value=e.destination_pid.pid_value
             )
             data = dict(
                 status=301,
-                message='Moved Permanently.',
+                message="Moved Permanently.",
                 location=location,
             )
-            response = make_response(jsonify(data), data['status'])
-            response.headers['Location'] = location
+            response = make_response(jsonify(data), data["status"])
+            response.headers["Location"] = location
             return response
         except (AssertionError, BuildError, KeyError):
             raise e

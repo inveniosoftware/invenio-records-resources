@@ -13,8 +13,7 @@ from datetime import timezone
 
 from marshmallow import INCLUDE, Schema
 from marshmallow.fields import UUID, Dict, Integer, Str
-from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, \
-    TZDateTime
+from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, TZDateTime
 
 
 class InitFileSchema(Schema):
@@ -49,23 +48,23 @@ class FileSchema(Schema):
     """Service schema for files."""
 
     key = SanitizedUnicode(dump_only=True)
-    created = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
-    updated = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
+    created = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
+    updated = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
 
-    status = GenMethod('dump_status')
+    status = GenMethod("dump_status")
 
     metadata = Dict(dump_only=True)
 
-    checksum = Str(dump_only=True, attribute='file.checksum')
-    storage_class = Str(dump_only=True, attribute='file.storage_class')
-    mimetype = Str(dump_only=True, attribute='file.mimetype')
-    size = Integer(attribute='file.size')
-    version_id = UUID(attribute='file.version_id')
-    file_id = UUID(attribute='file.file_id')
-    bucket_id = UUID(attribute='file.bucket_id')
+    checksum = Str(dump_only=True, attribute="file.checksum")
+    storage_class = Str(dump_only=True, attribute="file.storage_class")
+    mimetype = Str(dump_only=True, attribute="file.mimetype")
+    size = Integer(attribute="file.size")
+    version_id = UUID(attribute="file.version_id")
+    file_id = UUID(attribute="file.file_id")
+    bucket_id = UUID(attribute="file.bucket_id")
 
     links = Links()
 
     def dump_status(self, obj):
         """Dump file status."""
-        return 'completed' if obj.file else 'pending'
+        return "completed" if obj.file else "pending"

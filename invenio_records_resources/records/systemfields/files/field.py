@@ -65,9 +65,18 @@ from .manager import FilesManager
 class FilesField(SystemField):
     """Files system field."""
 
-    def __init__(self, key='files', store=True, file_cls=None, enabled=True,
-                 bucket_id_attr='bucket_id', bucket_attr='bucket',
-                 bucket_args=None, create=True, delete=True):
+    def __init__(
+        self,
+        key="files",
+        store=True,
+        file_cls=None,
+        enabled=True,
+        bucket_id_attr="bucket_id",
+        bucket_attr="bucket",
+        bucket_args=None,
+        create=True,
+        delete=True,
+    ):
         """Initialize the FilesField.
 
         :param key: Name of key to store the files metadata in.
@@ -91,7 +100,7 @@ class FilesField(SystemField):
     @property
     def file_cls(self):
         """Record file class."""
-        return self._file_cls or getattr(self.record, 'file_cls', None)
+        return self._file_cls or getattr(self.record, "file_cls", None)
 
     #
     # Life-cycle hooks
@@ -131,9 +140,9 @@ class FilesField(SystemField):
     def _manager_options(self):
         """Return options for the manager."""
         return {
-            'bucket_id_attr': self._bucket_id_attr,
-            'bucket_attr': self._bucket_attr,
-            'bucket_args': self._bucket_args,
+            "bucket_id_attr": self._bucket_id_attr,
+            "bucket_attr": self._bucket_attr,
+            "bucket_args": self._bucket_args,
         }
 
     #
@@ -149,10 +158,10 @@ class FilesField(SystemField):
             obj = FilesManager(
                 record=record,
                 file_cls=self.file_cls,
-                enabled=data.get('enabled', self._enabled),
-                order=data.get('order', []),
-                default_preview=data.get('default_preview'),
-                entries=data.get('entries', {}) if self._store else None,
+                enabled=data.get("enabled", self._enabled),
+                order=data.get("order", []),
+                default_preview=data.get("default_preview"),
+                entries=data.get("entries", {}) if self._store else None,
                 options=self._manager_options,
             )
             self._set_cache(record, obj)
@@ -162,25 +171,25 @@ class FilesField(SystemField):
     def store(self, record, files):
         """Set the object."""
         data = {
-            'enabled': files.enabled,
+            "enabled": files.enabled,
         }
         if files.order:
-            data['order'] = files.order
+            data["order"] = files.order
         if files.default_preview:
-            data['default_preview'] = files.default_preview
+            data["default_preview"] = files.default_preview
 
         if self._store and files.enabled:
-            data['entries'] = {}
+            data["entries"] = {}
             # TODO: Does it make sense now to store separately? We can still
             # include `meta` in each entries object (since storage is now in
             # the FileRecord model)
-            data['meta'] = {}
+            data["meta"] = {}
 
             for key, rf in files.items():
                 if rf.file:
-                    data['entries'][key] = rf.file.dumps()
+                    data["entries"][key] = rf.file.dumps()
                 # TODO: rf.dumps() might be enough as well...
-                data['meta'][key] = rf.metadata
+                data["meta"][key] = rf.metadata
 
         # Store data values on the attribute name (e.g. 'files')
         self.set_dictkey(record, data)

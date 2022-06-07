@@ -9,18 +9,25 @@
 
 """Example service."""
 
-from invenio_records_resources.services import FileServiceConfig, \
-    RecordServiceConfig, SearchOptions
+from invenio_records_resources.services import (
+    FileServiceConfig,
+    RecordServiceConfig,
+    SearchOptions,
+)
 from invenio_records_resources.services.files.links import FileLink
-from invenio_records_resources.services.records.components import \
-    FilesOptionsComponent
+from invenio_records_resources.services.records.components import FilesOptionsComponent
 from invenio_records_resources.services.records.config import SearchOptions
-from invenio_records_resources.services.records.facets import \
-    NestedTermsFacet, TermsFacet
-from invenio_records_resources.services.records.links import RecordLink, \
-    pagination_links
-from invenio_records_resources.services.records.params.querystr import \
-    SuggestQueryParser
+from invenio_records_resources.services.records.facets import (
+    NestedTermsFacet,
+    TermsFacet,
+)
+from invenio_records_resources.services.records.links import (
+    RecordLink,
+    pagination_links,
+)
+from invenio_records_resources.services.records.params.querystr import (
+    SuggestQueryParser,
+)
 
 from .api import Record, RecordWithFiles
 from .permissions import PermissionPolicy
@@ -31,21 +38,21 @@ class MockSearchOptions(SearchOptions):
     """Mock module search options."""
 
     facets = {
-        'type': NestedTermsFacet(
-            field='metadata.type.type',
-            subfield='metadata.type.subtype',
+        "type": NestedTermsFacet(
+            field="metadata.type.type",
+            subfield="metadata.type.subtype",
             splitchar="**",
-            label='Type'
+            label="Type",
         ),
-        'subject': TermsFacet(
-            field='metadata.subject',
-            label='Subject',
-        )
+        "subject": TermsFacet(
+            field="metadata.subject",
+            label="Subject",
+        ),
     }
 
-    suggest_parser_cls = SuggestQueryParser.factory(fields=[
-        "metadata.title", "metadata.title._2gram", "metadata.title._3gram"
-    ])
+    suggest_parser_cls = SuggestQueryParser.factory(
+        fields=["metadata.title", "metadata.title._2gram", "metadata.title._3gram"]
+    )
 
 
 class ServiceConfig(RecordServiceConfig):

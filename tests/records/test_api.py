@@ -26,26 +26,27 @@ def test_record_empty(app, db):
     assert record.schema
 
     # JSONSchema validation works.
-    pytest.raises(ValidationError, Record.create, {'metadata': {'title': 1}})
+    pytest.raises(ValidationError, Record.create, {"metadata": {"title": 1}})
 
 
 def test_record_via_field(app, db):
     """Record creation via field."""
-    record = Record.create({}, metadata={'title': 'test'})
-    assert record.metadata == {'title': 'test'}
+    record = Record.create({}, metadata={"title": "test"})
+    assert record.metadata == {"title": "test"}
 
 
 def test_record_indexing(app, db, es, example_record, indexer):
     """Test indexing of a record."""
     # Index document in ES
-    assert indexer.index(example_record)['result'] == 'created'
+    assert indexer.index(example_record)["result"] == "created"
 
     # Retrieve document from ES
     data = current_search_client.get(
-        'records-record-v1.0.0', id=example_record.id, doc_type='_doc')
+        "records-record-v1.0.0", id=example_record.id, doc_type="_doc"
+    )
 
     # Loads the ES data and compare
-    record = Record.loads(data['_source'])
+    record = Record.loads(data["_source"])
     assert record == example_record
     assert record.id == example_record.id
     assert record.revision_id == example_record.revision_id
@@ -54,25 +55,24 @@ def test_record_indexing(app, db, es, example_record, indexer):
     assert record.expires_at == example_record.expires_at
 
     # Check system fields
-    assert record.metadata == example_record['metadata']
+    assert record.metadata == example_record["metadata"]
 
 
-def test_record_delete_reindex(app, db, es, example_record, example_data,
-                               indexer):
+def test_record_delete_reindex(app, db, es, example_record, example_data, indexer):
     """Test reindexing of a deleted record."""
     record = example_record
 
     # Index record
-    assert indexer.index(record)['result'] == 'created'
+    assert indexer.index(record)["result"] == "created"
 
     # Delete record.
     record.delete()
     db.session.commit()
-    assert indexer.delete(record)['result'] == 'deleted'
+    assert indexer.delete(record)["result"] == "deleted"
 
     # Update record and reindex (this will cause troubles unless proper
     # optimistic concurrency control is used).
     record.undelete()
     record.commit()
     db.session.commit()
-    assert indexer.index(record)['result'] == 'created'
+    assert indexer.index(record)["result"] == "created"

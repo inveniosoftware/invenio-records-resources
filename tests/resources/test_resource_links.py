@@ -20,7 +20,7 @@ def assert_expected_links(pid_value, links, site_hostname="127.0.0.1:5000"):
 
 
 def test_create_links(app, client, input_data, headers):
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
 
     assert res.status_code == 201
     pid_value = res.json["id"]
@@ -28,21 +28,21 @@ def test_create_links(app, client, input_data, headers):
 
 
 def test_read_links(app, client, input_data, headers):
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
     pid_value = res.json["id"]
 
-    res = client.get(f'/mocks/{pid_value}', headers=headers)
+    res = client.get(f"/mocks/{pid_value}", headers=headers)
 
     assert_expected_links(pid_value, res.json["links"])
 
 
 def test_update_links(app, client, input_data, headers):
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
     pid_value = res.json["id"]
     data = res.json
-    data['metadata']['title'] = 'New title'
+    data["metadata"]["title"] = "New title"
 
-    res = client.put(f'/mocks/{pid_value}', headers=headers, json=data)
+    res = client.put(f"/mocks/{pid_value}", headers=headers, json=data)
 
     assert res.status_code == 200
     assert_expected_links(pid_value, res.json["links"])

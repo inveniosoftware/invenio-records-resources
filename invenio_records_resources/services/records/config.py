@@ -18,8 +18,7 @@ from ...records import Record
 from ..base import ServiceConfig
 from .components import MetadataComponent
 from .links import RecordLink, pagination_links
-from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, \
-    SortParam
+from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, SortParam
 from .results import RecordItem, RecordList
 
 
@@ -29,33 +28,25 @@ class SearchOptions:
     search_cls = RecordsSearchV2
     query_parser_cls = QueryParser
     suggest_parser_cls = None
-    sort_default = 'bestmatch'
-    sort_default_no_query = 'newest'
+    sort_default = "bestmatch"
+    sort_default_no_query = "newest"
     sort_options = {
         "bestmatch": dict(
-            title=_('Best match'),
-            fields=['_score'],  # ES defaults to desc on `_score` field
+            title=_("Best match"),
+            fields=["_score"],  # ES defaults to desc on `_score` field
         ),
         "newest": dict(
-            title=_('Newest'),
-            fields=['-created'],
+            title=_("Newest"),
+            fields=["-created"],
         ),
         "oldest": dict(
-            title=_('Oldest'),
-            fields=['created'],
+            title=_("Oldest"),
+            fields=["created"],
         ),
     }
     facets = {}
-    pagination_options = {
-        "default_results_per_page": 25,
-        "default_max_results": 10000
-    }
-    params_interpreters_cls = [
-        QueryStrParam,
-        PaginationParam,
-        SortParam,
-        FacetsParam
-    ]
+    pagination_options = {"default_results_per_page": 25, "default_max_results": 10000}
+    params_interpreters_cls = [QueryStrParam, PaginationParam, SortParam, FacetsParam]
 
 
 class RecordServiceConfig(ServiceConfig):

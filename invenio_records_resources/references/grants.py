@@ -43,7 +43,7 @@ class EntityGrant:
         """Create the grant token."""
         # A need is just a tuple
         parts = (self._prefix,) + self._need
-        return '.'.join((str(p) for p in parts))
+        return ".".join((str(p) for p in parts))
 
     def __str__(self):
         """String representation."""

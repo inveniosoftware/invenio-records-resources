@@ -15,13 +15,17 @@ from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.dumpers import ElasticsearchDumper
 from invenio_records.dumpers.indexedat import IndexedAtDumperExt
 from invenio_records.dumpers.relations import RelationDumperExt
-from invenio_records.systemfields import ConstantField, ModelField, \
-    RelationsField
+from invenio_records.systemfields import ConstantField, ModelField, RelationsField
 
 from invenio_records_resources.records.api import FileRecord as FileRecordBase
 from invenio_records_resources.records.api import Record as RecordBase
-from invenio_records_resources.records.systemfields import FilesField, \
-    IndexField, PIDField, PIDRelation, PIDStatusCheckField
+from invenio_records_resources.records.systemfields import (
+    FilesField,
+    IndexField,
+    PIDField,
+    PIDRelation,
+    PIDStatusCheckField,
+)
 
 from . import models
 
@@ -44,13 +48,14 @@ class Record(RecordBase):
 
     # System fields
     schema = ConstantField(
-        '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
+        "$schema", "http://localhost/schemas/records/record-v1.0.0.json"
+    )
 
-    index = IndexField('records-record-v1.0.0', search_alias='records')
+    index = IndexField("records-record-v1.0.0", search_alias="records")
 
-    pid = PIDField('id', provider=RecordIdProviderV2)
+    pid = PIDField("id", provider=RecordIdProviderV2)
 
-    conceptpid = PIDField('conceptid', provider=RecordIdProviderV2)
+    conceptpid = PIDField("conceptid", provider=RecordIdProviderV2)
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
 
@@ -66,15 +71,13 @@ class RecordWithRelations(Record):
 
     relations = RelationsField(
         languages=PIDRelation(
-            'metadata.inner_record',
-            keys=['metadata.title'],
-            pid_field=Record.pid
+            "metadata.inner_record", keys=["metadata.title"], pid_field=Record.pid
         )
     )
 
     dumper = ElasticsearchDumper(
         extensions=[
-            RelationDumperExt('relations'),
+            RelationDumperExt("relations"),
             IndexedAtDumperExt(),
         ]
     )

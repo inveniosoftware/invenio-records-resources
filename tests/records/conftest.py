@@ -19,9 +19,7 @@ from mock_module.api import Record
 @pytest.fixture()
 def example_data():
     """Example data."""
-    return {
-        'metadata': {'title': 'Test'}
-    }
+    return {"metadata": {"title": "Test"}}
 
 
 @pytest.fixture()
@@ -37,5 +35,5 @@ def example_record(db, example_data):
 def indexer():
     """Indexer instance with correct Record class."""
     return RecordIndexer(
-        record_cls=Record, record_to_index=lambda r: (r.index._name, '_doc')
+        record_cls=Record, record_to_index=lambda r: (r.index._name, "_doc")
     )

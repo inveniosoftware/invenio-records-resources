@@ -17,7 +17,7 @@ class LabelledFacetMixin:
 
     def __init__(self, label=None, value_labels=None, **kwargs):
         """Initialize class."""
-        self._label = label or ''
+        self._label = label or ""
         self._value_labels = value_labels
         self._metric = None  # Needed only for ES6 (can be removed later)
         super().__init__(**kwargs)
@@ -41,13 +41,15 @@ class LabelledFacetMixin:
         out = []
         for bucket in data.buckets:
             key = self.get_value(bucket)
-            out.append({
-                "key": key,
-                "doc_count": self.get_metric(bucket),
-                "is_selected": self.is_filtered(key, filter_values)
-            })
+            out.append(
+                {
+                    "key": key,
+                    "doc_count": self.get_metric(bucket),
+                    "is_selected": self.is_filtered(key, filter_values),
+                }
+            )
 
-        return {'buckets': out}
+        return {"buckets": out}
 
     def get_labelled_values(self, data, filter_values):
         """Get a labelled version of a bucket."""
@@ -57,13 +59,15 @@ class LabelledFacetMixin:
         label_map = self.get_label_mapping(data.buckets)
         for bucket in data.buckets:
             key = self.get_value(bucket)
-            out.append({
-                "key": key,
-                "doc_count": self.get_metric(bucket),
-                "label": label_map[key],
-                "is_selected": self.is_filtered(key, filter_values)
-            })
-        return {'buckets': out, 'label': str(self._label)}
+            out.append(
+                {
+                    "key": key,
+                    "doc_count": self.get_metric(bucket),
+                    "label": label_map[key],
+                    "is_selected": self.is_filtered(key, filter_values),
+                }
+            )
+        return {"buckets": out, "label": str(self._label)}
 
     def get_metric(self, bucket):
         """Compatibility for ES6."""
@@ -131,11 +135,7 @@ class NestedTermsFacet(TermsFacet):
     def get_aggregation(self):
         """Get the aggregation and subaggregation."""
         return A(
-            'terms',
-            field=self._field,
-            aggs={
-                'inner': A('terms', field=self._subfield)
-            }
+            "terms", field=self._field, aggs={"inner": A("terms", field=self._subfield)}
         )
 
     def _parse_values(self, filter_values):
@@ -187,12 +187,11 @@ class NestedTermsFacet(TermsFacet):
         field_value, subfield_values = parsed_value
 
         if subfield_values:
-            return (
-                Q('term', **{self._field: field_value}) &
-                Q('terms', **{self._subfield: subfield_values})
+            return Q("term", **{self._field: field_value}) & Q(
+                "terms", **{self._subfield: subfield_values}
             )
         else:
-            return Q('term', **{self._field: field_value})
+            return Q("term", **{self._field: field_value})
 
     def add_filter(self, filter_values):
         """Construct a filter query for the facet."""
@@ -217,19 +216,18 @@ class NestedTermsFacet(TermsFacet):
             bucket_out = {
                 "key": key,
                 "doc_count": self.get_metric(bucket),
-                "is_selected": self.is_filtered(full_key, filter_values)
+                "is_selected": self.is_filtered(full_key, filter_values),
             }
-            if 'inner' in bucket:
-                bucket_out['inner'] = self.get_values(
-                    bucket.inner,
-                    filter_values,
-                    key_prefix=full_key
+            if "inner" in bucket:
+                bucket_out["inner"] = self.get_values(
+                    bucket.inner, filter_values, key_prefix=full_key
                 )
             out.append(bucket_out)
-        return {'buckets': out}
+        return {"buckets": out}
 
-    def get_labelled_values(self, data, filter_values, bucket_label=True,
-                            key_prefix=None):
+    def get_labelled_values(
+        self, data, filter_values, bucket_label=True, key_prefix=None
+    ):
         """Get a labelled version of a bucket."""
         out = []
         # We get the labels first, so that we can efficiently query a resource
@@ -243,17 +241,14 @@ class NestedTermsFacet(TermsFacet):
                 "key": key,
                 "doc_count": self.get_metric(bucket),
                 "label": label_map[key],
-                "is_selected": self.is_filtered(full_key, filter_values)
+                "is_selected": self.is_filtered(full_key, filter_values),
             }
-            if 'inner' in bucket:
-                bucket_out['inner'] = self.get_labelled_values(
-                    bucket.inner,
-                    filter_values,
-                    bucket_label=False,
-                    key_prefix=full_key
+            if "inner" in bucket:
+                bucket_out["inner"] = self.get_labelled_values(
+                    bucket.inner, filter_values, bucket_label=False, key_prefix=full_key
                 )
             out.append(bucket_out)
-        ret_val = {'buckets': out}
+        ret_val = {"buckets": out}
         if bucket_label:
-            ret_val['label'] = str(self._label)
+            ret_val["label"] = str(self._label)
         return ret_val

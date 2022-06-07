@@ -10,8 +10,7 @@
 
 """Example resource."""
 
-from invenio_records_resources.resources import FileResourceConfig, \
-    RecordResourceConfig
+from invenio_records_resources.resources import FileResourceConfig, RecordResourceConfig
 
 
 class CustomRecordResourceConfig(RecordResourceConfig):

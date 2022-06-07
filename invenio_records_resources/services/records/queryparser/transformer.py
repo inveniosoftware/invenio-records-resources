@@ -17,8 +17,7 @@ from functools import partial
 from flask_babelex import gettext as _
 from luqum.visitor import TreeTransformer
 
-from invenio_records_resources.services.errors import \
-    QuerystringValidationError
+from invenio_records_resources.services.errors import QuerystringValidationError
 
 
 class SearchFieldTransformer(TreeTransformer):
@@ -38,12 +37,10 @@ class SearchFieldTransformer(TreeTransformer):
         """Visit a search field."""
         if node.name not in self._mapping:
             raise QuerystringValidationError(
-                _("Invalid search field: {field_name}.").format(
-                    field_name=node.name)
+                _("Invalid search field: {field_name}.").format(field_name=node.name)
             )
         else:
             new_node = node.clone_item()
             new_node.name = self._mapping[node.name]
-            new_node.children = list(
-                self.clone_children(node, new_node, context))
+            new_node.children = list(self.clone_children(node, new_node, context))
             yield new_node

@@ -25,8 +25,7 @@ class RecordRelationLabels:
 
         for id_ in ids:
             labels[id_] = dict_lookup(
-                self.relation.pid_field.resolve(id_),
-                self.lookup_key
+                self.relation.pid_field.resolve(id_), self.lookup_key
             )
 
         return labels

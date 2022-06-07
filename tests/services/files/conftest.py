@@ -21,7 +21,7 @@ from mock_module.config import ServiceWithFilesConfig
 from invenio_records_resources.services import RecordService
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def service():
     """Service with files instance."""
     return RecordService(ServiceWithFilesConfig)
@@ -30,9 +30,9 @@ def service():
 @pytest.fixture(scope="module")
 def base_app(base_app, service, file_service):
     """Application factory fixture."""
-    registry = base_app.extensions['invenio-records-resources'].registry
-    registry.register(service, service_id='mock-records-service')
-    registry.register(file_service, service_id='mock-files-service')
+    registry = base_app.extensions["invenio-records-resources"].registry
+    registry.register(service, service_id="mock-records-service")
+    registry.register(file_service, service_id="mock-files-service")
     yield base_app
 
 

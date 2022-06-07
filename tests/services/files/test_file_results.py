@@ -13,7 +13,7 @@ import pytest
 from invenio_records_resources.services.files.results import FileItem, FileList
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def file_entry():
     return {
         "created": "2020-11-15T19:04:22",
@@ -24,29 +24,28 @@ def file_entry():
         "metadata": {
             "description": "Published article PDF.",
         },
-        "links": {}
+        "links": {},
     }
 
 
 @pytest.mark.skip()
-def test_file_item_result(service, identity_simple, file_entry,
-                          example_record):
+def test_file_item_result(service, identity_simple, file_entry, example_record):
     """Test the file item result.
 
     NOTE: `links` is an empty dictionary, it's contents are tested at resource
           level, since it is config dependent. Here the default
           `links_config=None` is tested.
     """
-    item = FileItem(service, identity_simple, file_entry,
-                    example_record, links_config=None)
+    item = FileItem(
+        service, identity_simple, file_entry, example_record, links_config=None
+    )
     result = item.to_dict()
 
     assert result == file_entry
 
 
 @pytest.mark.skip()
-def test_file_list_result(service, identity_simple, file_entry,
-                          example_record):
+def test_file_list_result(service, identity_simple, file_entry, example_record):
     """Test the file item result.
 
     NOTE: `links` is an empty dictionary, it's contents are tested at resource

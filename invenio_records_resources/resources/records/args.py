@@ -25,7 +25,7 @@ class SearchRequestArgsSchema(MultiDictSchema):
     @post_load(pass_original=True)
     def facets(self, data, original_data=None, **kwargs):
         """Collect all unknown values into a facets key."""
-        data['facets'] = {}
+        data["facets"] = {}
         for k in set(original_data.keys()) - set(data.keys()):
-            data['facets'][k] = original_data.getlist(k)
+            data["facets"][k] = original_data.getlist(k)
         return data

@@ -54,10 +54,10 @@ def test_simple_flow(app, consumer, service, identity_simple, input_data):
 
     # Update it
     data = read_item.data
-    data['metadata']['title'] = 'New title'
+    data["metadata"]["title"] = "New title"
     update_item = service.update(identity_simple, id_, data)
     assert item.id == update_item.id
-    assert update_item['metadata']['title'] == 'New title'
+    assert update_item["metadata"]["title"] == "New title"
 
     # Delete it
     assert service.delete(identity_simple, id_)
@@ -74,8 +74,7 @@ def test_simple_flow(app, consumer, service, identity_simple, input_data):
 
 
 def _assert_read_all(service, identity_simple, cache=True):
-    records = service.read_all(
-        identity_simple, fields=["metadata.title"], cache=cache)
+    records = service.read_all(identity_simple, fields=["metadata.title"], cache=cache)
 
     assert records.total == 2
     for record in records.hits:
@@ -84,9 +83,7 @@ def _assert_read_all(service, identity_simple, cache=True):
         assert record["metadata"]["title"] == "Test"
 
 
-def test_read_all(
-    app, es_clear, service, identity_simple, input_data
-):
+def test_read_all(app, es_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)
@@ -95,9 +92,7 @@ def test_read_all(
     _assert_read_all(service, identity_simple)
 
 
-def test_read_many_pid_values(
-    app, es_clear, service, identity_simple, input_data
-):
+def test_read_many_pid_values(app, es_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)
@@ -105,9 +100,7 @@ def test_read_many_pid_values(
     Record.index.refresh()
 
     records = service.read_many(
-        identity_simple,
-        ids=[item_one.id, item_two.id],
-        fields=["metadata.type.type"]
+        identity_simple, ids=[item_one.id, item_two.id], fields=["metadata.type.type"]
     )
 
     assert records.total == 2
@@ -117,17 +110,14 @@ def test_read_many_pid_values(
         assert list(record["metadata"]["type"].keys()) == ["type"]
 
 
-def test_read_many_no_filter(
-    app, es_clear, service, identity_simple, input_data
-):
+def test_read_many_no_filter(app, es_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)
     item_three = service.create(identity_simple, input_data)
     Record.index.refresh()
 
-    records = service.read_many(
-        identity_simple, ids=[item_one.id, item_two.id])
+    records = service.read_many(identity_simple, ids=[item_one.id, item_two.id])
 
     assert records.total == 2
 

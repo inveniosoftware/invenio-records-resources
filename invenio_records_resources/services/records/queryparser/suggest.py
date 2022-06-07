@@ -58,17 +58,18 @@ class SuggestQueryParser(QueryParser):
         """Constructor."""
         super().__init__(identity=identity, extra_params=extra_params)
         self.extra_params.setdefault(
-            'type',
-            'phrase_prefix' if lt_es7 else 'bool_prefix'
+            "type", "phrase_prefix" if lt_es7 else "bool_prefix"
         )
 
     def parse(self, query_str):
         """Parse the query."""
-        if lt_es7 and self.extra_params.get('fields'):
+        if lt_es7 and self.extra_params.get("fields"):
             # On ES v6 we have to filter out field names that uses the
             # search_as_you_type field names (ending with ._2gram or ._3gram)
-            self.extra_params['fields'] = list(filter(
-                lambda x: not (x.endswith('._2gram') or x.endswith('._3gram')),
-                self.extra_params['fields']
-            ))
-        return Q('multi_match', query=query_str, **self.extra_params)
+            self.extra_params["fields"] = list(
+                filter(
+                    lambda x: not (x.endswith("._2gram") or x.endswith("._3gram")),
+                    self.extra_params["fields"],
+                )
+            )
+        return Q("multi_match", query=query_str, **self.extra_params)

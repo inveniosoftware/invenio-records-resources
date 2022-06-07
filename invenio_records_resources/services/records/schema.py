@@ -24,8 +24,8 @@ class BaseRecordSchema(Schema):
     """Schema for records v1 in JSON."""
 
     id = fields.Str()
-    created = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
-    updated = TZDateTime(timezone=timezone.utc, format='iso', dump_only=True)
+    created = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
+    updated = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
     links = Links(dump_only=True)
     revision_id = fields.Integer(dump_only=True)
 
@@ -64,10 +64,12 @@ class ServiceSchemaWrapper:
         def _permission_check(action, identity=default_identity, **kwargs):
             return (
                 # TODO: See if context is necessary here
-                self._permission_policy_cls(action, **context, **kwargs)
-                .allows(identity)
+                self._permission_policy_cls(action, **context, **kwargs).allows(
+                    identity
+                )
             )
-        context.setdefault('field_permission_check', _permission_check)
+
+        context.setdefault("field_permission_check", _permission_check)
 
         return context
 

@@ -44,8 +44,8 @@ def base_app(base_app, record_resource):
 def headers():
     """Default headers for making requests."""
     return {
-        'content-type': 'application/json',
-        'accept': 'application/json',
+        "content-type": "application/json",
+        "accept": "application/json",
     }
 
 
@@ -53,7 +53,5 @@ def headers():
 def input_data():
     """Input data (as coming from the view layer)."""
     return {
-        'metadata': {
-            'title': 'Test'
-        },
+        "metadata": {"title": "Test"},
     }

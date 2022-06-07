@@ -12,7 +12,7 @@ from .base import FileProcessor, ProcessorRunner
 from .image import ImageMetadataExtractor
 
 __all__ = (
-    'FileProcessor',
-    'ImageMetadataExtractor',
-    'ProcessorRunner',
+    "FileProcessor",
+    "ImageMetadataExtractor",
+    "ProcessorRunner",
 )

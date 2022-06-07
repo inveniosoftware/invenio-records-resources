@@ -30,8 +30,7 @@ class FileServiceComponent(BaseServiceComponent):
         """Read file metadata."""
         pass
 
-    def extract_file_metadata(
-            self, identity, id_, file_key, record, file_record):
+    def extract_file_metadata(self, identity, id_, file_key, record, file_record):
         """Extract file metadata handler."""
 
     def commit_file(self, identity, id_, file_key, record):
@@ -46,8 +45,7 @@ class FileServiceComponent(BaseServiceComponent):
         """Delete all files handler."""
         pass
 
-    def set_file_content(
-            self, identity, id_, file_key, stream, content_length, record):
+    def set_file_content(self, identity, id_, file_key, stream, content_length, record):
         """Set file content handler."""
         pass
 

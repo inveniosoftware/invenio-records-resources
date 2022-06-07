@@ -227,10 +227,7 @@ class ChangeNotificationOp(Operation):
         """Send the notification (run celery task)."""
         send_change_notifications.delay(
             self._record_type,
-            [
-                (r.pid.pid_value, str(r.id), r.revision_id)
-                for r in self._records
-            ]
+            [(r.pid.pid_value, str(r.id), r.revision_id) for r in self._records],
         )
 
 
@@ -270,8 +267,7 @@ class UnitOfWork:
     def _mark_dirty(self):
         """Mark the unit of work as dirty."""
         if self._dirty:
-            raise RuntimeError(
-                "The unit of work is already committed or rolledback.")
+            raise RuntimeError("The unit of work is already committed or rolledback.")
         self._dirty = True
 
     def commit(self):
@@ -317,17 +313,20 @@ def unit_of_work(**kwargs):
             uow.register(...)
 
     """
+
     def decorator(f):
         @wraps(f)
         def inner(self, *args, **kwargs):
-            if 'uow' not in kwargs:
+            if "uow" not in kwargs:
                 # Migration path - start a UoW and commit
                 with UnitOfWork(db.session) as uow:
-                    kwargs['uow'] = uow
+                    kwargs["uow"] = uow
                     res = f(self, *args, **kwargs)
                     uow.commit()
                     return res
             else:
                 return f(self, *args, **kwargs)
+
         return inner
+
     return decorator

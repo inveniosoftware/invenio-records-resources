@@ -22,8 +22,7 @@ class ServiceRegistry:
             service_id = service_instance.id
         if service_id in self._services:
             raise RuntimeError(
-                f"Service with service id '{service_id}' "
-                "is already registered."
+                f"Service with service id '{service_id}' " "is already registered."
             )
         self._services[service_id] = service_instance
 

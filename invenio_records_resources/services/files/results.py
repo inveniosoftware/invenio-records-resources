@@ -16,8 +16,7 @@ from ..records.results import RecordItem
 class FileItem(RecordItem):
     """List of file items result."""
 
-    def __init__(self, service, identity, file_, record, errors=None,
-                 links_tpl=None):
+    def __init__(self, service, identity, file_, record, errors=None, links_tpl=None):
         """Constructor."""
         super(FileItem, self).__init__(
             service,
@@ -47,7 +46,8 @@ class FileItem(RecordItem):
     def send_file(self, restricted=True, as_attachment=False):
         """Return file stream."""
         return self._file.object_version.send_file(
-            restricted=restricted, as_attachment=as_attachment)
+            restricted=restricted, as_attachment=as_attachment
+        )
 
     def open_stream(self, mode):
         """Return a file stream context manager."""
@@ -64,8 +64,9 @@ class FileItem(RecordItem):
 class FileList(ServiceListResult):
     """List of file items result."""
 
-    def __init__(self, service, identity, results, record, links_tpl=None,
-                 links_item_tpl=None):
+    def __init__(
+        self, service, identity, results, record, links_tpl=None, links_item_tpl=None
+    ):
         """Constructor.
 
         :params service: a service instance
@@ -89,10 +90,10 @@ class FileList(ServiceListResult):
                 entry,
                 context=dict(
                     identity=self._identity,
-                )
+                ),
             )
             if self._links_item_tpl:
-                projection['links'] = self._links_item_tpl.expand(entry)
+                projection["links"] = self._links_item_tpl.expand(entry)
 
             yield projection
 
@@ -104,12 +105,14 @@ class FileList(ServiceListResult):
             "enabled": record_files.enabled,
         }
         if self._links_tpl:
-            result['links'] = self._links_tpl.expand(self._record)
+            result["links"] = self._links_tpl.expand(self._record)
 
-        if result['enabled']:
-            result.update({
-                'entries': list(self.entries),
-                'default_preview': record_files.default_preview,
-                'order': record_files.order,
-            })
+        if result["enabled"]:
+            result.update(
+                {
+                    "entries": list(self.entries),
+                    "default_preview": record_files.default_preview,
+                    "order": record_files.order,
+                }
+            )
         return result

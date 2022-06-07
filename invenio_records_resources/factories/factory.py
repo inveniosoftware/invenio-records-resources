@@ -19,13 +19,13 @@ from invenio_records_permissions import RecordPermissionPolicy
 from invenio_records_resources.records.api import Record
 from invenio_records_resources.records.systemfields import IndexField, PIDField
 from invenio_records_resources.records.systemfields.pid import PIDFieldContext
-from invenio_records_resources.resources import RecordResource, \
-    RecordResourceConfig
-from invenio_records_resources.services import RecordService, \
-    RecordServiceConfig
+from invenio_records_resources.resources import RecordResource, RecordResourceConfig
+from invenio_records_resources.services import RecordService, RecordServiceConfig
 from invenio_records_resources.services.records.config import SearchOptions
-from invenio_records_resources.services.records.links import RecordLink, \
-    pagination_links
+from invenio_records_resources.services.records.links import (
+    RecordLink,
+    pagination_links,
+)
 
 
 class RecordTypeFactory(object):
@@ -136,7 +136,7 @@ class RecordTypeFactory(object):
         """Create metadata model."""
         model_class_attributes = {
             "__tablename__": f"{self.record_name_lower}_metadata",
-            **self.model_cls_attrs
+            **self.model_cls_attrs,
         }
 
         self.model_cls = type(
@@ -173,7 +173,7 @@ class RecordTypeFactory(object):
 
         config_cls_attributes = {
             "blueprint_name": self.record_name_lower,
-            "url_prefix": self.endpoint_route or f"/{self.record_name_lower}s"
+            "url_prefix": self.endpoint_route or f"/{self.record_name_lower}s",
         }
 
         self.resource_config_cls = type(
@@ -182,9 +182,7 @@ class RecordTypeFactory(object):
             config_cls_attributes,
         )
 
-        self.resource_cls = type(
-            resource_cls_name, (RecordResource,), {}
-        )
+        self.resource_cls = type(resource_cls_name, (RecordResource,), {})
 
     def create_service_class(self):
         """Create service class."""
@@ -211,11 +209,7 @@ class RecordTypeFactory(object):
             "links_search": pagination_links("{+api}" + route + "{?args*}"),
         }
         if self.service_components:
-            config_cls_attributes.update(
-                {
-                    "components": self.service_components
-                }
-            )
+            config_cls_attributes.update({"components": self.service_components})
 
         if self.service_id:
             config_cls_attributes["service_id"] = self.service_id
@@ -225,6 +219,4 @@ class RecordTypeFactory(object):
             config_cls_name, (RecordServiceConfig,), config_cls_attributes
         )
 
-        self.service_cls = type(
-            service_cls_name, (RecordService,), {}
-        )
+        self.service_cls = type(service_cls_name, (RecordService,), {})

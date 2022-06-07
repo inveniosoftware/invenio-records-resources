@@ -22,8 +22,7 @@ class BaseServiceComponent:
         """Get the Unit of Work manager."""
         if self._uow is None:
             # Warn about wrong usage
-            raise RuntimeError(
-                "Method is not running in a unit of work context.")
+            raise RuntimeError("Method is not running in a unit of work context.")
         return self._uow
 
     @uow.setter

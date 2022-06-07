@@ -13,6 +13,6 @@ from .field import FilesField
 from .manager import FilesManager
 
 __all__ = (
-    'FilesField',
-    'FilesManager',
+    "FilesField",
+    "FilesManager",
 )

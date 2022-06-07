@@ -15,8 +15,9 @@ import pkg_resources
 from .base import FileProcessor
 
 try:
-    pkg_resources.get_distribution('wand')
+    pkg_resources.get_distribution("wand")
     from wand.image import Image
+
     HAS_IMAGEMAGICK = True
 except pkg_resources.DistributionNotFound:
     # Python module not installed
@@ -33,7 +34,7 @@ class ImageMetadataExtractor(FileProcessor):
         """Images can be processed."""
         if HAS_IMAGEMAGICK:
             ext = self.file_extension(file_record).lower()
-            return ext in ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
+            return ext in [".jpg", ".jpeg", ".png", ".tif", ".tiff"]
         return False
 
     def process(self, file_record):
@@ -50,10 +51,10 @@ class ImageMetadataExtractor(FileProcessor):
 
         ext = self.file_extension(file_record)[1:]
 
-        with file_record.open_stream('rb') as fp:
+        with file_record.open_stream("rb") as fp:
             with Image.ping(file=fp, format=ext) as img:
                 width = img.width
                 height = img.height
 
         if width > 0 and height > 0:
-            file_record.metadata.update({'width': width, 'height': height})
+            file_record.metadata.update({"width": width, "height": height})

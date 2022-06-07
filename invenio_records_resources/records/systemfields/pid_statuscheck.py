@@ -27,7 +27,7 @@ from invenio_records.systemfields import SystemField
 class PIDStatusCheckField(SystemField):
     """PID status field which checks against an expected status."""
 
-    def __init__(self, key='pid', status=None, dump=False):
+    def __init__(self, key="pid", status=None, dump=False):
         """Initialize the PIDField.
 
         :param key: Attribute name of the PIDField to use for status check.
@@ -54,11 +54,7 @@ class PIDStatusCheckField(SystemField):
     def pre_dump(self, record, data, **kwargs):
         """Called before a record is dumped in a secondary storage system."""
         if self._dump:
-            dict_set(
-                data,
-                self.attr_name,
-                getattr(record, self.attr_name)
-            )
+            dict_set(data, self.attr_name, getattr(record, self.attr_name))
 
     def pre_load(self, data, **kwargs):
         """Called before a record is dumped in a secondary storage system."""

@@ -11,8 +11,15 @@
 
 import marshmallow as ma
 from flask import g
-from flask_resources import Resource, from_conf, request_body_parser, \
-    request_parser, resource_requestctx, response_handler, route
+from flask_resources import (
+    Resource,
+    from_conf,
+    request_body_parser,
+    request_parser,
+    resource_requestctx,
+    response_handler,
+    route,
+)
 
 from ..errors import ErrorHandlersMixin
 from .utils import es_preference
@@ -21,29 +28,19 @@ from .utils import es_preference
 # Decorators
 #
 request_data = request_body_parser(
-    parsers=from_conf('request_body_parsers'),
-    default_content_type=from_conf('default_content_type')
+    parsers=from_conf("request_body_parsers"),
+    default_content_type=from_conf("default_content_type"),
 )
 
-request_read_args = request_parser(
-    from_conf('request_read_args'), location='args'
-)
+request_read_args = request_parser(from_conf("request_read_args"), location="args")
 
-request_view_args = request_parser(
-    from_conf('request_view_args'), location='view_args'
-)
+request_view_args = request_parser(from_conf("request_view_args"), location="view_args")
 
-request_headers = request_parser(
-    {"if_match": ma.fields.Int()}, location='headers'
-)
+request_headers = request_parser({"if_match": ma.fields.Int()}, location="headers")
 
-request_search_args = request_parser(
-    from_conf('request_search_args'), location='args'
-)
+request_search_args = request_parser(from_conf("request_search_args"), location="args")
 
-request_extra_args = request_parser(
-    from_conf('request_extra_args'), location='args'
-)
+request_extra_args = request_parser(from_conf("request_extra_args"), location="args")
 
 
 #

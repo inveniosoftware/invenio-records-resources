@@ -45,7 +45,6 @@ mocked_other_service = MockedService(MOCK_NESTED)
 
 
 class CreatedByExpandableField(ExpandableField):
-
     def get_value_service(self, value):
         """Override default."""
         if value.get("user"):

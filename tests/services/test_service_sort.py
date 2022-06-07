@@ -27,19 +27,15 @@ def ids(res):
 #
 # Fixtures
 #
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def records(app, service, identity_simple):
     """Input data (as coming from the view layer)."""
-    parts = [
-        "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"
-    ]
+    parts = ["The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"]
     length = len(parts)
     results = []
     for i in range(3):
         data = {
-           'metadata': {
-                'title': " ".join(parts[:length-3*i])
-            },
+            "metadata": {"title": " ".join(parts[: length - 3 * i])},
         }
         time.sleep(0.01)
         results += [service.create(identity_simple, data).to_dict()]
@@ -54,18 +50,17 @@ def records(app, service, identity_simple):
 #
 def test_default_no_query(service, identity_simple, records):
     """Default sorting without a query."""
-    res = service.search(
-        identity_simple, page=1, size=10, _max_results=100).to_dict()
+    res = service.search(identity_simple, page=1, size=10, _max_results=100).to_dict()
     # default no query is to order by newest (last created first)
-    assert ids(reversed(records)) == ids(res['hits']['hits'])
+    assert ids(reversed(records)) == ids(res["hits"]["hits"])
 
 
 def test_user_selected_sort(service, identity_simple, records):
     """Chosen sort method."""
     res = service.search(
-        identity_simple, sort='newest', page=1, size=10,
-        _max_results=100).to_dict()
-    assert ids(reversed(records)) == ids(res['hits']['hits'])
+        identity_simple, sort="newest", page=1, size=10, _max_results=100
+    ).to_dict()
+    assert ids(reversed(records)) == ids(res["hits"]["hits"])
 
 
 def test_invalid_sort(service, identity_simple, records):

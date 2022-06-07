@@ -15,8 +15,8 @@ from .links import FileLink
 from .service import FileService
 
 __all__ = (
-    'FileLink',
-    'FileService',
-    'FileServiceComponent',
-    'FileServiceConfig',
+    "FileLink",
+    "FileService",
+    "FileServiceComponent",
+    "FileServiceConfig",
 )

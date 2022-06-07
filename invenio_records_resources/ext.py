@@ -30,5 +30,5 @@ class InvenioRecordsResources(object):
     def init_config(self, app):
         """Initialize configuration."""
         for k in dir(config):
-            if k.startswith("RECORDS_RESOURCES_") or k.startswith('SITE_'):
+            if k.startswith("RECORDS_RESOURCES_") or k.startswith("SITE_"):
                 app.config.setdefault(k, getattr(config, k))

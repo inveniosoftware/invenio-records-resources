@@ -37,9 +37,7 @@ class RecordProxy(EntityProxy):
 
     def pick_resolved_fields(self, resolved_dict):
         """Select which fields to return when resolving the reference."""
-        return {
-            "id": resolved_dict["id"]
-        }
+        return {"id": resolved_dict["id"]}
 
 
 class RecordPKProxy(RecordProxy):
@@ -57,8 +55,9 @@ class RecordPKProxy(RecordProxy):
 class RecordResolver(EntityResolver):
     """Resolver for records."""
 
-    def __init__(self, record_cls, service_id, type_key="record",
-                 proxy_cls=RecordProxy):
+    def __init__(
+        self, record_cls, service_id, type_key="record", proxy_cls=RecordProxy
+    ):
         """Constructor.
 
         :param record_cls: The record class to use.

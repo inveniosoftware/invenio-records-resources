@@ -71,11 +71,11 @@ class MetadataComponent(ServiceComponent):
 
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed metadata to the record."""
-        record.metadata = data.get('metadata', {})
+        record.metadata = data.get("metadata", {})
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed metadata to the record."""
-        record.metadata = data.get('metadata', {})
+        record.metadata = data.get("metadata", {})
 
 
 class FilesOptionsComponent(ServiceComponent):
@@ -90,9 +90,11 @@ class FilesOptionsComponent(ServiceComponent):
         """Validate files enabled."""
         if not enabled and record.files.values():
             raise ValidationError(
-                _("You must first delete all files to set the record to "
-                  "be metadata-only."),
-                field_name="files.enabled"
+                _(
+                    "You must first delete all files to set the record to "
+                    "be metadata-only."
+                ),
+                field_name="files.enabled",
             )
 
     def assign_files_enabled(self, record, enabled):
@@ -110,8 +112,7 @@ class FilesOptionsComponent(ServiceComponent):
             record.files.default_preview = default_preview
         except InvalidKeyError as e:
             raise ValidationError(
-                e.get_description(),
-                field_name="files.default_preview"
+                e.get_description(), field_name="files.default_preview"
             )
 
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
@@ -143,7 +144,9 @@ class ChangeNotificationsComponent(ServiceComponent):
         """Register a task for the update propagation."""
         # FIXME: until the run_components has been fixed the uow
         # is passed as a cmp attr instead of param.
-        self.uow.register(ChangeNotificationOp(
-            record_type=self.service.id,
-            records=[record],
-        ))
+        self.uow.register(
+            ChangeNotificationOp(
+                record_type=self.service.id,
+                records=[record],
+            )
+        )

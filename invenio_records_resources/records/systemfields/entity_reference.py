@@ -18,9 +18,7 @@ from ...references.resolvers import EntityProxy
 class ReferencedEntityField(SystemField):
     """Systemfield for managing the request type."""
 
-    def __init__(
-        self, key=None, reference_check_func=None, resolver_registry=None
-    ):
+    def __init__(self, key=None, reference_check_func=None, resolver_registry=None):
         """Constructor."""
         super().__init__(key=key)
         self._ref_check = reference_check_func
@@ -80,9 +78,7 @@ class ReferencedEntityField(SystemField):
         return self.obj(record)
 
 
-def check_allowed_references(
-    get_allows_none, get_allowed_types, request, ref_dict
-):
+def check_allowed_references(get_allows_none, get_allowed_types, request, ref_dict):
     """Check the reference according to rules specific to requests.
 
     In case the ``ref_dict`` is ``None``, it will check if this is allowed
