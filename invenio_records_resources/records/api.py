@@ -56,15 +56,15 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         """Get a record file by record ID and filename/key."""
         with db.session.no_autoflush:
             obj = cls.model_cls.query.filter(
-                cls.record_id == record_id, cls.key == key).one_or_none()
+                cls.record_id == record_id, cls.key == key
+            ).one_or_none()
             if obj:
                 return cls(obj.data, model=obj)
 
     @classmethod
     def list_by_record(cls, record_id):
         """List all record files by record ID."""
-        for obj in cls.model_cls.query.filter(
-                cls.model_cls.record_id == record_id):
+        for obj in cls.model_cls.query.filter(cls.model_cls.record_id == record_id):
             yield cls(obj.data, model=obj)
 
     @property
@@ -113,9 +113,11 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     object_version_id = ModelField()
     object_version = ModelField(dump=False)
     record_id = ModelField()
-    _record = ModelField('record', dump=False)
+    _record = ModelField("record", dump=False)
 
-    def __repr__(self, ):
+    def __repr__(
+        self,
+    ):
         """Represenation string for the record file."""
         return f"<{type(self).__name__}({self.key}, {self.metadata})"
 
@@ -132,38 +134,38 @@ class File:
     def from_dict(cls, data, bucket):
         """Construct a file wrapper from a dictionary."""
         file_args = dict(
-            id=data['file_id'],
-            storage_class=data.get('storage_class'),
-            size=data.get('size'),
-            checksum=data.get('checksum'),
+            id=data["file_id"],
+            storage_class=data.get("storage_class"),
+            size=data.get("size"),
+            checksum=data.get("checksum"),
         )
-        if 'uri' in data:
-            file_args['uri'] = data['uri']
+        if "uri" in data:
+            file_args["uri"] = data["uri"]
 
         fi = FileInstance(**file_args)
         obj = ObjectVersion(
-            version_id=data['version_id'],
-            key=data['key'],
-            file_id=data['file_id'],
-            _mimetype=data['mimetype'],
+            version_id=data["version_id"],
+            key=data["key"],
+            file_id=data["file_id"],
+            _mimetype=data["mimetype"],
             is_head=True,
             bucket=bucket,
-            bucket_id=data.get('bucket_id', bucket.id),
+            bucket_id=data.get("bucket_id", bucket.id),
         )
         return cls(object_model=obj, file_model=fi)
 
     def dumps(self):
         """Dump file model attributes of the object."""
         return {
-            'version_id': str(self.object_model.version_id),
-            'key': self.object_model.key,
-            'bucket_id': str(self.object_model.bucket_id),
-            'file_id': str(self.object_model.file_id),
-            'uri': str(self.object_model.file.uri),
-            'storage_class': self.object_model.file.storage_class,
-            'mimetype': self.object_model.mimetype,
-            'size': self.object_model.file.size,
-            'checksum': self.object_model.file.checksum,
+            "version_id": str(self.object_model.version_id),
+            "key": self.object_model.key,
+            "bucket_id": str(self.object_model.bucket_id),
+            "file_id": str(self.object_model.file_id),
+            "uri": str(self.object_model.file.uri),
+            "storage_class": self.object_model.file.storage_class,
+            "mimetype": self.object_model.mimetype,
+            "size": self.object_model.file.size,
+            "checksum": self.object_model.file.checksum,
         }
 
     def __getattr__(self, name):

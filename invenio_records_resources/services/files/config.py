@@ -11,8 +11,11 @@
 
 from ..base import ServiceConfig
 from ..records.links import RecordLink
-from .components import FileContentComponent, FileMetadataComponent, \
-    FileProcessorComponent
+from .components import (
+    FileContentComponent,
+    FileMetadataComponent,
+    FileProcessorComponent,
+)
 from .links import FileLink
 from .processors import ImageMetadataExtractor
 from .results import FileItem, FileList

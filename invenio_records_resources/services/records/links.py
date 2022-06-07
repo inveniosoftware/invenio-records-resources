@@ -17,9 +17,7 @@ class RecordLink(Link):
     @staticmethod
     def vars(record, vars):
         """Variables for the URI template."""
-        vars.update({
-            "id": record.pid.pid_value
-        })
+        vars.update({"id": record.pid.pid_value})
 
 
 def pagination_links(tpl):
@@ -28,16 +26,16 @@ def pagination_links(tpl):
         "prev": Link(
             tpl,
             when=lambda pagination, ctx: pagination.has_prev,
-            vars=lambda pagination, vars: vars["args"].update({
-                "page": pagination.prev_page.page
-            })
+            vars=lambda pagination, vars: vars["args"].update(
+                {"page": pagination.prev_page.page}
+            ),
         ),
         "self": Link(tpl),
         "next": Link(
             tpl,
             when=lambda pagination, ctx: pagination.has_next,
-            vars=lambda pagination, vars: vars["args"].update({
-                "page": pagination.next_page.page
-            })
+            vars=lambda pagination, vars: vars["args"].update(
+                {"page": pagination.next_page.page}
+            ),
         ),
     }

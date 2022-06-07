@@ -11,8 +11,14 @@
 
 from .base import ConditionalLink, Link, LinksTemplate, Service, ServiceConfig
 from .files import FileLink, FileService, FileServiceConfig
-from .records import RecordLink, RecordService, RecordServiceConfig, \
-    SearchOptions, ServiceSchemaWrapper, pagination_links
+from .records import (
+    RecordLink,
+    RecordService,
+    RecordServiceConfig,
+    SearchOptions,
+    ServiceSchemaWrapper,
+    pagination_links,
+)
 
 __all__ = (
     "ConditionalLink",

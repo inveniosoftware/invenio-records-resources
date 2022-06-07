@@ -37,15 +37,11 @@ class FileService(Service):
 
     def file_links_list_tpl(self, id_):
         """Return a link template for list results."""
-        return LinksTemplate(
-            self.config.file_links_list, context={"id": id_}
-        )
+        return LinksTemplate(self.config.file_links_list, context={"id": id_})
 
     def file_links_item_tpl(self, id_):
         """Return a link template for item results."""
-        return LinksTemplate(
-            self.config.file_links_item, context={"id": id_}
-        )
+        return LinksTemplate(self.config.file_links_item, context={"id": id_})
 
     def check_permission(self, identity, action_name, **kwargs):
         """Check a permission against the identity."""
@@ -100,8 +96,8 @@ class FileService(Service):
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "update_file_metadata", identity, id_, file_key, record, data,
-            uow=uow)
+            "update_file_metadata", identity, id_, file_key, record, data, uow=uow
+        )
 
         return self.file_result_item(
             self,
@@ -115,8 +111,7 @@ class FileService(Service):
         """Read the metadata of a file."""
         record = self.get_record(id_, identity, "read_files")
 
-        self.run_components(
-            "read_file_metadata", identity, id_, file_key, record)
+        self.run_components("read_file_metadata", identity, id_, file_key, record)
 
         return self.file_result_item(
             self,
@@ -133,8 +128,14 @@ class FileService(Service):
         file_record = record.files[file_key]
 
         self.run_components(
-            "extract_file_metadata", identity, id_, file_key, record,
-            file_record, uow=uow)
+            "extract_file_metadata",
+            identity,
+            id_,
+            file_key,
+            record,
+            file_record,
+            uow=uow,
+        )
 
         uow.register(RecordCommitOp(file_record))
 
@@ -151,8 +152,7 @@ class FileService(Service):
         """Commit a file upload."""
         record = self.get_record(id_, identity, "create_files")
 
-        self.run_components(
-            "commit_file", identity, id_, file_key, record, uow=uow)
+        self.run_components("commit_file", identity, id_, file_key, record, uow=uow)
 
         return self.file_result_item(
             self,
@@ -169,8 +169,8 @@ class FileService(Service):
         deleted_file = record.files.delete(file_key)
 
         self.run_components(
-            "delete_file", identity, id_, file_key, record, deleted_file,
-            uow=uow)
+            "delete_file", identity, id_, file_key, record, deleted_file, uow=uow
+        )
 
         # We also commit the record in case the file was the `default_preview`
         uow.register(RecordCommitOp(record))
@@ -193,8 +193,7 @@ class FileService(Service):
         file_keys = [fk for fk in record.files]
         results = [record.files.delete(file_key) for file_key in file_keys]
 
-        self.run_components(
-            "delete_all_files", identity, id_, record, results, uow=uow)
+        self.run_components("delete_all_files", identity, id_, record, results, uow=uow)
 
         uow.register(RecordCommitOp(record))
 
@@ -209,14 +208,21 @@ class FileService(Service):
 
     @unit_of_work()
     def set_file_content(
-            self, identity, id_, file_key, stream, content_length=None,
-            uow=None):
+        self, identity, id_, file_key, stream, content_length=None, uow=None
+    ):
         """Save file content."""
         record = self.get_record(id_, identity, "create_files")
 
         self.run_components(
-            "set_file_content", identity, id_, file_key, stream,
-            content_length, record, uow=uow)
+            "set_file_content",
+            identity,
+            id_,
+            file_key,
+            stream,
+            content_length,
+            record,
+            uow=uow,
+        )
 
         return self.file_result_item(
             self,
@@ -230,8 +236,7 @@ class FileService(Service):
         """Retrieve file content."""
         record = self.get_record(id_, identity, "read_files")
 
-        self.run_components(
-            "get_file_content", identity, id_, file_key, record)
+        self.run_components("get_file_content", identity, id_, file_key, record)
 
         return self.file_result_item(
             self,

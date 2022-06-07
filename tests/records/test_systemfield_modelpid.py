@@ -14,12 +14,12 @@ from mock_module.api import Record as RecordBase
 from mock_module.models import RecordMetadataWithPID
 
 from invenio_records_resources.records.systemfields import ModelPIDField
-from invenio_records_resources.records.systemfields.pid import \
-    ModelPIDFieldContext
+from invenio_records_resources.records.systemfields.pid import ModelPIDFieldContext
 
 
 class Record(RecordBase):
     """Mock record class."""
+
     model_cls = RecordMetadataWithPID
     pid = ModelPIDField()
     pid_status = ModelField()

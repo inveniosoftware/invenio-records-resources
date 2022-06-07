@@ -11,9 +11,16 @@
 
 import marshmallow as ma
 from flask import g
-from flask_resources import JSONDeserializer, RequestBodyParser, Resource, \
-    request_body_parser, request_parser, resource_requestctx, \
-    response_handler, route
+from flask_resources import (
+    JSONDeserializer,
+    RequestBodyParser,
+    Resource,
+    request_body_parser,
+    request_parser,
+    resource_requestctx,
+    response_handler,
+    route,
+)
 
 from ..errors import ErrorHandlersMixin
 from .parser import RequestStreamParser
@@ -21,10 +28,10 @@ from .parser import RequestStreamParser
 #
 # Decorator helpers
 #
-request_view_args = request_parser({
-    'pid_value': ma.fields.Str(required=True),
-    'key': ma.fields.Str()
-}, location='view_args')
+request_view_args = request_parser(
+    {"pid_value": ma.fields.Str(required=True), "key": ma.fields.Str()},
+    location="view_args",
+)
 
 request_data = request_body_parser(
     parsers={"application/json": RequestBodyParser(JSONDeserializer())},

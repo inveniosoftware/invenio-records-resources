@@ -14,18 +14,24 @@ import pytest
 from mock_module.api import Record, RecordWithRelations
 from mock_module.config import ServiceConfig as ServiceConfigBase
 
-from invenio_records_resources.proxies import current_notifications_registry, \
-    current_service_registry
+from invenio_records_resources.proxies import (
+    current_notifications_registry,
+    current_service_registry,
+)
 from invenio_records_resources.services import RecordService
-from invenio_records_resources.services.records.components import \
-    ChangeNotificationsComponent, RelationsComponent
+from invenio_records_resources.services.records.components import (
+    ChangeNotificationsComponent,
+    RelationsComponent,
+)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def service(appctx):
     """Service instance."""
+
     class ServiceConfig(ServiceConfigBase):
         """Record cls config."""
+
         record_cls = Record
 
         components = ServiceConfigBase.components + [
@@ -38,20 +44,17 @@ def service(appctx):
     return service
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def service_wrel(appctx):
     """Service instance for records with relations."""
 
     class ServiceConfig(ServiceConfigBase):
         """Record cls config."""
-        record_cls = RecordWithRelations
-        relations = {
-            "records": ["metadata.inner_record"]
-        }
 
-        components = ServiceConfigBase.components + [
-            RelationsComponent
-        ]
+        record_cls = RecordWithRelations
+        relations = {"records": ["metadata.inner_record"]}
+
+        components = ServiceConfigBase.components + [RelationsComponent]
 
     service = RecordService(ServiceConfig)
     current_service_registry.register(service, "recordwithrelations")
@@ -81,9 +84,7 @@ def test_relation_update_propagation(
     app, service, service_wrel, identity_simple, input_data
 ):
     # this notification handlers would be registerd at extension loading
-    current_notifications_registry.register(
-        service.id, service_wrel.on_relation_update
-    )
+    current_notifications_registry.register(service.id, service_wrel.on_relation_update)
 
     # create a record
     item = service.create(identity_simple, input_data)
@@ -98,12 +99,8 @@ def test_relation_update_propagation(
     rec_two = service_wrel.create(identity_simple, wrel_data)
     service_wrel.record_cls.index.refresh()
 
-    assert_record_from_db_and_es(
-        identity_simple, service_wrel, rec_one.id, id_, title
-    )
-    assert_record_from_db_and_es(
-        identity_simple, service_wrel, rec_two.id, id_, title
-    )
+    assert_record_from_db_and_es(identity_simple, service_wrel, rec_one.id, id_, title)
+    assert_record_from_db_and_es(identity_simple, service_wrel, rec_two.id, id_, title)
 
     # update related record
     updated_data = deepcopy(input_data)

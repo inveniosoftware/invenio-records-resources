@@ -48,8 +48,9 @@ class FacetsResponse(Response):
     def _iter_facets(self):
         # _facets_param instance is added to _search by the FacetsParam.apply
         for name, facet in self._facets_param.facets.items():
-            yield name, facet, getattr(self.aggregations, name), \
-                self._facets_param.selected_values.get(name, [])
+            yield name, facet, getattr(
+                self.aggregations, name
+            ), self._facets_param.selected_values.get(name, [])
 
     @property
     def facets(self):
@@ -63,8 +64,7 @@ class FacetsResponse(Response):
             except AttributeError:
                 # Attribute errors are masked by AttrDict, so we reraise as a
                 # different exception.
-                raise RuntimeError(
-                    'Failed to created facets due to attribute error.')
+                raise RuntimeError("Failed to created facets due to attribute error.")
 
         return self._facets
 
@@ -77,11 +77,13 @@ class FacetsResponse(Response):
             try:
                 for name, facet, data, selection in self._iter_facets():
                     self._labelled_facets[name] = facet.get_labelled_values(
-                        data, selection)
+                        data, selection
+                    )
             except AttributeError:
                 # Attribute errors are masked by AttrDict, so we reraise as a
                 # different exception.
                 raise RuntimeError(
-                    'Failed to build labelled facets due to attribute error.')
+                    "Failed to build labelled facets due to attribute error."
+                )
 
         return self._labelled_facets

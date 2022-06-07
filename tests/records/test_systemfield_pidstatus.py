@@ -31,11 +31,11 @@ def test_record_pid_dump(base_app, db):
     """Test record creation."""
     # Configured to not dump
     record = Record.create({})
-    assert 'is_published' not in record.dumps()
+    assert "is_published" not in record.dumps()
 
     # Configure to dump
     class DumpRecord(Record):
-        is_published = PIDStatusCheckField(
-            status=PIDStatus.REGISTERED, dump=True)
+        is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED, dump=True)
+
     record = DumpRecord.create({})
-    assert record.dumps()['is_published'] is True
+    assert record.dumps()["is_published"] is True

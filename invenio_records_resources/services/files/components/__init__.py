@@ -14,8 +14,8 @@ from .metadata import FileMetadataComponent
 from .processor import FileProcessorComponent
 
 __all__ = (
-    'FileContentComponent',
-    'FileMetadataComponent',
-    'FileProcessorComponent',
-    'FileServiceComponent',
+    "FileContentComponent",
+    "FileMetadataComponent",
+    "FileProcessorComponent",
+    "FileServiceComponent",
 )

@@ -16,12 +16,12 @@ from .querystr import QueryParser, QueryStrParam, SuggestQueryParser
 from .sort import SortParam
 
 __all__ = (
-    'FacetsParam',
-    'FilterParam',
-    'SuggestQueryParser',
-    'PaginationParam',
-    'ParamInterpreter',
-    'QueryParser',
-    'QueryStrParam',
-    'SortParam',
+    "FacetsParam",
+    "FilterParam",
+    "SuggestQueryParser",
+    "PaginationParam",
+    "ParamInterpreter",
+    "QueryParser",
+    "QueryStrParam",
+    "SortParam",
 )

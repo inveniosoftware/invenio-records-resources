@@ -11,6 +11,4 @@
 
 from .xml import XMLSerializer
 
-__all__ = (
-    "XMLSerializer",
-)
+__all__ = ("XMLSerializer",)

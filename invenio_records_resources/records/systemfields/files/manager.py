@@ -66,25 +66,35 @@ from invenio_records.systemfields import SystemField
 
 def ensure_enabled(func):
     """Decorator for ensuring that a FilesField is enabled."""
+
     @wraps(func)
     def inner(self, *args, **kwargs):
         if not self.enabled:
-            raise InvalidOperationError(description='Files are not enabled.')
+            raise InvalidOperationError(description="Files are not enabled.")
         return func(self, *args, **kwargs)
+
     return inner
 
 
 class FilesManager(MutableMapping):
     """Files management dict-like wrapper."""
 
-    def __init__(self, record, file_cls=None, bucket=None, enabled=True,
-                 order=None, default_preview=None, entries=None, options=None):
+    def __init__(
+        self,
+        record,
+        file_cls=None,
+        bucket=None,
+        enabled=True,
+        order=None,
+        default_preview=None,
+        entries=None,
+        options=None,
+    ):
         """Initialize the files collection."""
         self._options = options or {}
         self.record = record
         self.file_cls = file_cls
-        self._bucket = bucket or getattr(
-            record, self._options['bucket_attr'], 'bucket')
+        self._bucket = bucket or getattr(record, self._options["bucket_attr"], "bucket")
 
         self._enabled = enabled
         self._order = order or []
@@ -94,7 +104,7 @@ class FilesManager(MutableMapping):
     def create_bucket(self):
         """Create a bucket."""
         # Create a bucket if the object doesn't already have one.
-        bucket_args = self._options['bucket_args']
+        bucket_args = self._options["bucket_args"]
         if callable(bucket_args):
             # TODO: Document callable params
             bucket_args = bucket_args(record=self.record)
@@ -114,15 +124,15 @@ class FilesManager(MutableMapping):
 
     def unset_bucket(self):
         """Unassign the bucket from the record."""
-        setattr(self.record, self._options['bucket_attr'], None)
-        setattr(self.record, self._options['bucket_id_attr'], None)
+        setattr(self.record, self._options["bucket_attr"], None)
+        setattr(self.record, self._options["bucket_id_attr"], None)
         self._bucket = None
 
     def set_bucket(self, bucket, overwrite=False):
         """Set the bucket on the record."""
         # TODO: Setting these bumps the row's `revision_id`
-        setattr(self.record, self._options['bucket_attr'], bucket)
-        setattr(self.record, self._options['bucket_id_attr'], bucket.id)
+        setattr(self.record, self._options["bucket_attr"], bucket)
+        setattr(self.record, self._options["bucket_id_attr"], bucket.id)
         self._bucket = bucket
 
     def lock(self):
@@ -140,9 +150,7 @@ class FilesManager(MutableMapping):
         assert not (obj and stream)
 
         if key in self:
-            raise InvalidKeyError(
-                description=f'File with key {key} already exists.'
-            )
+            raise InvalidKeyError(description=f"File with key {key} already exists.")
 
         rf = self.file_cls.create({}, key=key, record_id=self.record.id)
         if stream:
@@ -162,9 +170,7 @@ class FilesManager(MutableMapping):
         assert not (obj and stream)
         rf = self.get(key)
         if rf is None:
-            raise InvalidKeyError(
-                description=f'File with {key} does not exist.'
-            )
+            raise InvalidKeyError(description=f"File with {key} does not exist.")
 
         if stream:
             obj = ObjectVersion.create(self.bucket, key, stream=stream)
@@ -187,8 +193,7 @@ class FilesManager(MutableMapping):
             if remove_obj:
                 rf.object_version.remove()
             elif softdelete_obj:
-                ObjectVersion.delete(
-                    rf.object_version.bucket, rf.object_version.key)
+                ObjectVersion.delete(rf.object_version.bucket, rf.object_version.key)
         del self._entries[key]
 
         # Unset the default preview if the file is removed
@@ -291,9 +296,7 @@ class FilesManager(MutableMapping):
         """Set the order of the files."""
         for k in new_order:
             if k not in self:
-                raise InvalidKeyError(
-                    description=f'File with key "{k}" does not exist'
-                )
+                raise InvalidKeyError(description=f'File with key "{k}" does not exist')
         self._order = new_order
 
     @ensure_enabled
@@ -324,7 +327,7 @@ class FilesManager(MutableMapping):
             data = value
         elif isinstance(value, ObjectVersion):
             obj = value
-        elif hasattr(value, 'read'):
+        elif hasattr(value, "read"):
             stream = value
         else:
             raise Exception(f"Invalid set value: {value}")
@@ -332,12 +335,11 @@ class FilesManager(MutableMapping):
         if obj_or_stream:
             if isinstance(obj_or_stream, ObjectVersion):
                 obj = obj_or_stream
-            elif hasattr(obj_or_stream, 'read'):
+            elif hasattr(obj_or_stream, "read"):
                 stream = obj_or_stream
             else:
                 raise InvalidOperationError(
-                    description=f"Item has to be ObjectVersion or "
-                    "file-like object"
+                    description=f"Item has to be ObjectVersion or " "file-like object"
                 )
 
         return obj, stream, data

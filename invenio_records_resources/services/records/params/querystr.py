@@ -9,6 +9,7 @@
 """Query parameter interpreter API."""
 
 from ...errors import QuerystringValidationError
+
 # Here for backward compatibility
 from ..queryparser import QueryParser, SuggestQueryParser
 from .base import ParamInterpreter
@@ -19,8 +20,8 @@ class QueryStrParam(ParamInterpreter):
 
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
-        q_str = params.get('q')
-        suggest_str = params.get('suggest')
+        q_str = params.get("q")
+        suggest_str = params.get("suggest")
 
         if q_str and suggest_str:
             raise QuerystringValidationError(
@@ -34,8 +35,7 @@ class QueryStrParam(ParamInterpreter):
             query_str = suggest_str
             parser_cls = self.config.suggest_parser_cls
             if parser_cls is None:
-                raise QuerystringValidationError(
-                    "Invalid 'suggest' parameter.")
+                raise QuerystringValidationError("Invalid 'suggest' parameter.")
 
         if query_str:
             query = parser_cls(identity).parse(query_str)

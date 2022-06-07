@@ -19,15 +19,13 @@ import pytest
 #
 # Fixtures
 #
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def records(app, service, identity_simple):
     """Input data (as coming from the view layer)."""
     items = []
     for idx in range(3):
         data = {
-           'metadata': {
-                'title': f'00{idx}'
-            },
+            "metadata": {"title": f"00{idx}"},
         }
         items.append(service.create(identity_simple, data))
 
@@ -47,7 +45,5 @@ def test_default_pagination(service, identity_simple, records):
 
 
 def test_explicit_pagination(service, identity_simple, records):
-    result = service.search(
-        identity_simple, page=2, size=1, _max_result=3
-    ).to_dict()
+    result = service.search(identity_simple, page=2, size=1, _max_result=3).to_dict()
     assert 1 == len(result["hits"]["hits"])

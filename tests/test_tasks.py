@@ -19,7 +19,11 @@ def _es_query(uuid):
     """Creates a query for a UUID."""
     clauses = [Q("bool", must=[Q("term", **{"uuid": uuid})])]
 
-    return Q("bool", minimum_should_match=1, should=clauses,)
+    return Q(
+        "bool",
+        minimum_should_match=1,
+        should=clauses,
+    )
 
 
 def test_manage_indexer_queues(app, service, identity_simple, input_data):

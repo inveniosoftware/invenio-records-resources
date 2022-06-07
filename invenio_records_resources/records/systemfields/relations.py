@@ -11,8 +11,12 @@
 
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.systemfields.relations import InvalidRelationValue, \
-    ListRelation, NestedListRelation, RelationBase
+from invenio_records.systemfields.relations import (
+    InvalidRelationValue,
+    ListRelation,
+    NestedListRelation,
+    RelationBase,
+)
 
 
 class PIDRelation(RelationBase):

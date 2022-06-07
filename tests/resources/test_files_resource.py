@@ -14,8 +14,11 @@ from io import BytesIO
 
 import pytest
 from mock_module.config import ServiceWithFilesConfig
-from mock_module.resource import CustomDisabledUploadFileResourceConfig, \
-    CustomFileResourceConfig, CustomRecordResourceConfig
+from mock_module.resource import (
+    CustomDisabledUploadFileResourceConfig,
+    CustomFileResourceConfig,
+    CustomRecordResourceConfig,
+)
 
 from invenio_records_resources.resources import FileResource, RecordResource
 from invenio_records_resources.services import RecordService
@@ -45,102 +48,107 @@ def disabled_file_upload_resource(file_service):
 
 
 @pytest.fixture(scope="module")
-def base_app(base_app, file_resource, disabled_file_upload_resource, service,
-             file_service):
+def base_app(
+    base_app, file_resource, disabled_file_upload_resource, service, file_service
+):
     """Application factory fixture."""
     base_app.register_blueprint(file_resource.as_blueprint())
     base_app.register_blueprint(disabled_file_upload_resource.as_blueprint())
-    registry = base_app.extensions['invenio-records-resources'].registry
-    registry.register(service, service_id='mock-records-service')
-    registry.register(file_service, service_id='mock-files-service')
+    registry = base_app.extensions["invenio-records-resources"].registry
+    registry.register(service, service_id="mock-records-service")
+    registry.register(file_service, service_id="mock-files-service")
     yield base_app
 
 
 @pytest.fixture()
 def input_data(input_data):
-    input_data["files"] = {
-        'enabled': True
-    }
+    input_data["files"] = {"enabled": True}
     return input_data
 
 
 def test_files_api_flow(client, es_clear, headers, input_data, location):
     """Test record creation."""
     # Initialize a draft
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
     assert res.status_code == 201
-    id_ = res.json['id']
-    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
 
     # Initialize files upload
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
-        {'key': 'test.pdf', 'title': 'Test file'},
-    ])
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.pdf", "title": "Test file"},
+        ],
+    )
     assert res.status_code == 201
-    res_file = res.json['entries'][0]
-    assert res_file['key'] == 'test.pdf'
-    assert res_file['status'] == 'pending'
-    assert res_file['metadata'] == {'title': 'Test file'}
-    assert res_file['links']['self'].endswith(
-        f'/api/mocks/{id_}/files/test.pdf')
-    assert res_file['links']['content'].endswith(
-        f'/api/mocks/{id_}/files/test.pdf/content')
-    assert res_file['links']['commit'].endswith(
-        f'/api/mocks/{id_}/files/test.pdf/commit')
+    res_file = res.json["entries"][0]
+    assert res_file["key"] == "test.pdf"
+    assert res_file["status"] == "pending"
+    assert res_file["metadata"] == {"title": "Test file"}
+    assert res_file["links"]["self"].endswith(f"/api/mocks/{id_}/files/test.pdf")
+    assert res_file["links"]["content"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/content"
+    )
+    assert res_file["links"]["commit"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/commit"
+    )
 
     # Get the file metadata
     res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
     assert res.status_code == 200
-    assert res.json['key'] == 'test.pdf'
-    assert res.json['status'] == 'pending'
-    assert res.json['metadata'] == {'title': 'Test file'}
+    assert res.json["key"] == "test.pdf"
+    assert res.json["status"] == "pending"
+    assert res.json["metadata"] == {"title": "Test file"}
 
     # Upload a file
     res = client.put(
-        f"/mocks/{id_}/files/test.pdf/content", headers={
-            'content-type': 'application/octet-stream',
-            'accept': 'application/json',
+        f"/mocks/{id_}/files/test.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
         },
-        data=BytesIO(b'testfile'),
+        data=BytesIO(b"testfile"),
     )
     assert res.status_code == 200
-    assert res.json['status'] == 'pending'
+    assert res.json["status"] == "pending"
 
     # Commit the uploaded file
     res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
     assert res.status_code == 200
-    assert res.json['status'] == 'completed'
+    assert res.json["status"] == "completed"
 
     # Get the file metadata
     res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
     assert res.status_code == 200
-    assert res.json['key'] == 'test.pdf'
-    assert res.json['status'] == 'completed'
-    assert res.json['metadata'] == {'title': 'Test file'}
-    file_size = str(res.json['size'])
-    assert isinstance(res.json['size'], int), "File size not integer"
+    assert res.json["key"] == "test.pdf"
+    assert res.json["status"] == "completed"
+    assert res.json["metadata"] == {"title": "Test file"}
+    file_size = str(res.json["size"])
+    assert isinstance(res.json["size"], int), "File size not integer"
 
     # Read a file's content
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
     assert res.status_code == 200
-    assert res.data == b'testfile'
+    assert res.data == b"testfile"
 
     # Update file metadata
     res = client.put(
-        f"/mocks/{id_}/files/test.pdf", headers=headers,
-        json={'title': 'New title'})
+        f"/mocks/{id_}/files/test.pdf", headers=headers, json={"title": "New title"}
+    )
     assert res.status_code == 200
-    assert res.json['key'] == 'test.pdf'
-    assert res.json['status'] == 'completed'
-    assert res.json['metadata'] == {'title': 'New title'}
+    assert res.json["key"] == "test.pdf"
+    assert res.json["status"] == "completed"
+    assert res.json["metadata"] == {"title": "New title"}
 
     # Get all files
     res = client.get(f"/mocks/{id_}/files", headers=headers)
     assert res.status_code == 200
-    assert len(res.json['entries']) == 1
-    assert res.json['entries'][0]['key'] == 'test.pdf'
-    assert res.json['entries'][0]['status'] == 'completed'
-    assert res.json['entries'][0]['metadata'] == {'title': 'New title'}
+    assert len(res.json["entries"]) == 1
+    assert res.json["entries"][0]["key"] == "test.pdf"
+    assert res.json["entries"][0]["status"] == "completed"
+    assert res.json["entries"][0]["metadata"] == {"title": "New title"}
 
     # Delete a file
     res = client.delete(f"/mocks/{id_}/files/test.pdf", headers=headers)
@@ -149,79 +157,82 @@ def test_files_api_flow(client, es_clear, headers, input_data, location):
     # Get all files
     res = client.get(f"/mocks/{id_}/files", headers=headers)
     assert res.status_code == 200
-    assert len(res.json['entries']) == 0
+    assert len(res.json["entries"]) == 0
 
 
-def test_default_preview_file(
-        app, client, es_clear, headers, input_data, location):
+def test_default_preview_file(app, client, es_clear, headers, input_data, location):
     # Initialize a draft
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
     assert res.status_code == 201
-    id_ = res.json['id']
-    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
 
     # Initialize 3 file uploads
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
-        {'key': 'f1.pdf'},
-        {'key': 'f2.pdf'},
-        {'key': 'f3.pdf'},
-    ])
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "f1.pdf"},
+            {"key": "f2.pdf"},
+            {"key": "f3.pdf"},
+        ],
+    )
     assert res.status_code == 201
-    file_entries = res.json['entries']
+    file_entries = res.json["entries"]
     assert len(file_entries) == 3
-    assert {(f['key'], f['status']) for f in file_entries} == {
-        ('f1.pdf', 'pending'),
-        ('f2.pdf', 'pending'),
-        ('f3.pdf', 'pending'),
+    assert {(f["key"], f["status"]) for f in file_entries} == {
+        ("f1.pdf", "pending"),
+        ("f2.pdf", "pending"),
+        ("f3.pdf", "pending"),
     }
-    assert res.json['default_preview'] is None
+    assert res.json["default_preview"] is None
 
     # Upload and commit the 3 files
     for f in file_entries:
         res = client.put(
-            f"/mocks/{id_}/files/{f['key']}/content", headers={
-                'content-type': 'application/octet-stream',
-                'accept': 'application/json',
+            f"/mocks/{id_}/files/{f['key']}/content",
+            headers={
+                "content-type": "application/octet-stream",
+                "accept": "application/json",
             },
-            data=BytesIO(b'testfile'),
+            data=BytesIO(b"testfile"),
         )
         assert res.status_code == 200
-        assert res.json['status'] == 'pending'
+        assert res.json["status"] == "pending"
 
-        res = client.post(
-            f"/mocks/{id_}/files/{f['key']}/commit", headers=headers)
+        res = client.post(f"/mocks/{id_}/files/{f['key']}/commit", headers=headers)
         assert res.status_code == 200
-        assert res.json['status'] == 'completed'
+        assert res.json["status"] == "completed"
 
     # Set the default preview file
-    input_data["files"]["default_preview"] = 'f1.pdf'
+    input_data["files"]["default_preview"] = "f1.pdf"
     res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json["files"]['default_preview'] == 'f1.pdf'
+    assert res.json["files"]["default_preview"] == "f1.pdf"
 
     # Change the default preview file
-    input_data["files"]["default_preview"] = 'f2.pdf'
+    input_data["files"]["default_preview"] = "f2.pdf"
     res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json["files"]['default_preview'] == 'f2.pdf'
+    assert res.json["files"]["default_preview"] == "f2.pdf"
 
     # Unset the default preview file
     input_data["files"]["default_preview"] = None
     res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json["files"].get('default_preview') is None
+    assert res.json["files"].get("default_preview") is None
 
     # Empty string the default preview file
-    input_data["files"]["default_preview"] = ''
+    input_data["files"]["default_preview"] = ""
     res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json["files"].get('default_preview') is None
+    assert res.json["files"].get("default_preview") is None
 
     # Set the default preview file
-    input_data["files"]["default_preview"] = 'f3.pdf'
+    input_data["files"]["default_preview"] = "f3.pdf"
     res = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
     assert res.status_code == 200
-    assert res.json["files"]['default_preview'] == 'f3.pdf'
+    assert res.json["files"]["default_preview"] == "f3.pdf"
 
     # Delete the default preview file
     res = client.delete(f"/mocks/{id_}/files/f3.pdf", headers=headers)
@@ -230,8 +241,8 @@ def test_default_preview_file(
     # Get all files and check default preview
     res = client.get(f"/mocks/{id_}/files", headers=headers)
     assert res.status_code == 200
-    assert len(res.json['entries']) == 2
-    assert res.json['default_preview'] is None
+    assert len(res.json["entries"]) == 2
+    assert res.json["default_preview"] is None
 
 
 def test_file_api_errors(client, es_clear, headers, input_data, location):
@@ -239,48 +250,54 @@ def test_file_api_errors(client, es_clear, headers, input_data, location):
     h = headers
 
     # Initialize a draft
-    res = client.post('/mocks', headers=headers, json=input_data)
+    res = client.post("/mocks", headers=headers, json=input_data)
     assert res.status_code == 201
-    id_ = res.json['id']
-    assert res.json['links']['files'].endswith(f'/api/mocks/{id_}/files')
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
 
     # Initialize files upload
     # Pass an object instead of an array
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json={
-        'key': 'test.pdf'
-    })
+    res = client.post(f"/mocks/{id_}/files", headers=headers, json={"key": "test.pdf"})
     assert res.status_code == 400
 
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
-        {'key': 'test.pdf', 'title': 'Test file'},
-    ])
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.pdf", "title": "Test file"},
+        ],
+    )
     assert res.status_code == 201
 
     # Upload a file
     res = client.put(
-        f"/mocks/{id_}/files/test.pdf/content", headers={
-            'content-type': 'application/octet-stream',
-            'accept': 'application/json',
+        f"/mocks/{id_}/files/test.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
         },
-        data=BytesIO(b'testfile'),
+        data=BytesIO(b"testfile"),
     )
     assert res.status_code == 200
-    assert res.json['status'] == 'pending'
+    assert res.json["status"] == "pending"
 
     # Commit the uploaded file
     res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
     assert res.status_code == 200
-    assert res.json['status'] == 'completed'
+    assert res.json["status"] == "completed"
 
     # Initialize same file upload again
-    res = client.post(f'/mocks/{id_}/files', headers=headers, json=[
-        {'key': 'test.pdf', 'title': 'Test file'},
-    ])
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.pdf", "title": "Test file"},
+        ],
+    )
     assert res.status_code == 400
 
 
-def test_disabled_upload_file_resource(
-        client, es_clear, headers, input_data, location):
+def test_disabled_upload_file_resource(client, es_clear, headers, input_data, location):
     """Test file resources with disabled file upload"""
 
     # Initialize a draft
@@ -310,40 +327,35 @@ def test_disabled_upload_file_resource(
 
 
 def test_disable_files_when_files_already_present_should_error(
-        app, client, es_clear, headers, input_data, location):
+    app, client, es_clear, headers, input_data, location
+):
     # Initialize a record
-    response = client.post('/mocks', headers=headers, json=input_data)
+    response = client.post("/mocks", headers=headers, json=input_data)
     id_ = response.json["id"]
     # Add file
-    file_id = 'f1.pdf'
-    client.post(
-        f'/mocks/{id_}/files',
-        headers=headers,
-        json=[{'key': file_id}]
-    )
+    file_id = "f1.pdf"
+    client.post(f"/mocks/{id_}/files", headers=headers, json=[{"key": file_id}])
     client.put(
         f"/mocks/{id_}/files/{file_id}/content",
         headers={
-            'content-type': 'application/octet-stream',
-            'accept': 'application/json',
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
         },
-        data=BytesIO(b'testfile'),
+        data=BytesIO(b"testfile"),
     )
     client.post(f"/mocks/{id_}/files/{file_id}/commit", headers=headers)
     # Disable files
-    input_data["files"] = {
-        'enabled': False
-    }
+    input_data["files"] = {"enabled": False}
 
     response = client.put(f"/mocks/{id_}", headers=headers, json=input_data)
 
     assert response.status_code == 400
     assert response.json["errors"] == [
         {
-            'field': 'files.enabled',
-            'messages': [
+            "field": "files.enabled",
+            "messages": [
                 "You must first delete all files to set the record to be "
                 "metadata-only."
-            ]
+            ],
         }
     ]

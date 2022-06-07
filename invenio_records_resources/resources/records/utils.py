@@ -16,9 +16,9 @@ from flask import request
 
 def es_preference():
     """Generating an identifier for use with Elasticsearch preference param."""
-    user_agent = request.headers.get('User-Agent', '')
+    user_agent = request.headers.get("User-Agent", "")
     ip = request.remote_addr
-    user_hash = f"{ip}-{user_agent}".encode('utf8')
+    user_hash = f"{ip}-{user_agent}".encode("utf8")
     alg = hashlib.md5()
     alg.update(user_hash)
     return alg.hexdigest()

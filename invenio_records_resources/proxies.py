@@ -12,13 +12,12 @@ from flask import current_app
 from werkzeug.local import LocalProxy
 
 current_service_registry = LocalProxy(
-    lambda: current_app.extensions['invenio-records-resources'].registry
+    lambda: current_app.extensions["invenio-records-resources"].registry
 )
 """Helper proxy to get the current service registry."""
 
 
 current_notifications_registry = LocalProxy(
-    lambda: current_app.extensions[
-        'invenio-records-resources'].notification_registry
+    lambda: current_app.extensions["invenio-records-resources"].notification_registry
 )
 """Helper proxy to get the current notifications registry."""

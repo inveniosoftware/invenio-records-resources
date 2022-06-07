@@ -34,8 +34,8 @@ class FilterParam(ParamInterpreter):
         value = params.pop(self.param_name, None)
         if value:
             if isinstance(value, str):
-                search = search.filter('term', **{self.field_name: value})
+                search = search.filter("term", **{self.field_name: value})
             else:
-                search = search.filter('terms', **{self.field_name: value})
+                search = search.filter("terms", **{self.field_name: value})
 
         return search

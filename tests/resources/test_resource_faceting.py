@@ -30,10 +30,7 @@ def three_indexed_records(app, identity_simple, es):
 
     def _create(metadata):
         data = {
-            'metadata': {
-                'title': 'Test',
-                **metadata
-            },
+            "metadata": {"title": "Test", **metadata},
         }
         service.create(identity_simple, data)
 
@@ -47,6 +44,7 @@ def three_indexed_records(app, identity_simple, es):
 #
 # 1- results are aggregated / post_filtered
 #
+
 
 def test_aggregating(client, headers, three_indexed_records):
     response = client.get("/mocks", headers=headers)
@@ -78,7 +76,7 @@ def test_aggregating(client, headers, three_indexed_records):
                                 "key": "AB",
                                 "label": "AB",
                                 "is_selected": False,
-                            }
+                            },
                         ],
                     },
                 },
@@ -87,12 +85,10 @@ def test_aggregating(client, headers, three_indexed_records):
                     "key": "B",
                     "label": "B",
                     "is_selected": False,
-                    "inner": {
-                        "buckets": []
-                    }
-                }
+                    "inner": {"buckets": []},
+                },
             ],
-        }
+        },
     }
     assert expected_aggs == response_aggs
 
@@ -130,21 +126,19 @@ def test_post_filtering(client, headers, three_indexed_records):
                                 "key": "AB",
                                 "label": "AB",
                                 "is_selected": False,
-                            }
+                            },
                         ],
-                    }
+                    },
                 },
                 {
                     "doc_count": 1,
                     "key": "B",
                     "label": "B",
                     "is_selected": False,
-                    "inner": {
-                        "buckets": []
-                    }
-                }
+                    "inner": {"buckets": []},
+                },
             ],
-        }
+        },
     }
     assert expected_aggs == response_aggs
 
@@ -174,10 +168,7 @@ def test_links_keep_facets(client, headers, three_indexed_records):
 
 
 def test_links_keep_repeated_facets(client, headers, three_indexed_records):
-    response = client.get(
-        "/mocks?size=1&type=B&type=A",
-        headers=headers
-    )
+    response = client.get("/mocks?size=1&type=B&type=A", headers=headers)
 
     response_links = response.json["links"]
     expected_links = {

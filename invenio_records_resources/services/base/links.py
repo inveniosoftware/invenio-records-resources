@@ -71,10 +71,12 @@ class LinksTemplate:
         """Get the context for the links."""
         ctx = {}
         if current_app:
-            ctx.update({
-                "ui": current_app.config.get('SITE_UI_URL', ''),
-                "api": current_app.config.get('SITE_API_URL', '/api'),
-            })
+            ctx.update(
+                {
+                    "ui": current_app.config.get("SITE_UI_URL", ""),
+                    "api": current_app.config.get("SITE_API_URL", "/api"),
+                }
+            )
         ctx.update(self._context)
         return ctx
 

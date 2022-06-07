@@ -14,8 +14,7 @@ from elasticsearch_dsl import Q
 from luqum.exceptions import ParseError
 from luqum.parser import parser as luqum_parser
 
-from invenio_records_resources.services.errors import \
-    QuerystringValidationError
+from invenio_records_resources.services.errors import QuerystringValidationError
 
 
 class QueryParser:
@@ -62,8 +61,7 @@ class QueryParser:
             )
     """
 
-    def __init__(self, identity=None, extra_params=None,
-                 tree_transformer_factory=None):
+    def __init__(self, identity=None, extra_params=None, tree_transformer_factory=None):
         """Initialise the parser."""
         self.identity = identity
         self.extra_params = extra_params or {}
@@ -75,7 +73,7 @@ class QueryParser:
         return partial(
             cls,
             extra_params=extra_params,
-            tree_transformer_factory=tree_transformer_factory
+            tree_transformer_factory=tree_transformer_factory,
         )
 
     def parse(self, query_str):
@@ -88,12 +86,9 @@ class QueryParser:
             # Perform transformation on the abstract syntax tree (AST)
             if self.tree_transformer_factory is not None:
                 transformer = self.tree_transformer_factory()
-                new_tree = transformer.visit(
-                    tree,
-                    context={"identity": self.identity}
-                )
+                new_tree = transformer.visit(tree, context={"identity": self.identity})
                 query_str = str(new_tree)
-            return Q('query_string', query=query_str, **self.extra_params)
+            return Q("query_string", query=query_str, **self.extra_params)
         except (ParseError, QuerystringValidationError):
             # Fallback to a multi-match query.
-            return Q('multi_match', query=query_str, **self.extra_params)
+            return Q("multi_match", query=query_str, **self.extra_params)

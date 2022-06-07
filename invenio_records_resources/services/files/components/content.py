@@ -18,16 +18,14 @@ from .base import FileServiceComponent
 class FileContentComponent(FileServiceComponent):
     """File metadata service component."""
 
-    def set_file_content(
-            self, identity, id, file_key, stream, content_length, record):
+    def set_file_content(self, identity, id, file_key, stream, content_length, record):
         """Set file content handler."""
         # Check if associated file record exists and is not already committed.
         # TODO: raise an appropriate exception
         # TODO: check if stream is not exhausted
         file_record = record.files.get(file_key)
         if file_record is None:
-            raise Exception(
-                f'File with key "{file_key}" has not been initialized yet.')
+            raise Exception(f'File with key "{file_key}" has not been initialized yet.')
         if file_record.file:
             raise Exception(f'File with key "{file_key}" is commited.')
 
@@ -35,8 +33,11 @@ class FileContentComponent(FileServiceComponent):
         bucket = record.bucket
         size_limit = bucket.size_limit
         if content_length and size_limit and content_length > size_limit:
-            desc = 'File size limit exceeded.' \
-                if isinstance(size_limit, int) else size_limit.reason
+            desc = (
+                "File size limit exceeded."
+                if isinstance(size_limit, int)
+                else size_limit.reason
+            )
             raise FileSizeError(description=desc)
 
         # DB connection?
@@ -47,8 +48,7 @@ class FileContentComponent(FileServiceComponent):
             # FileInstance. It might be better to call ObjectVersion.remove()
             # before or after the "set_content"
             obj = ObjectVersion.create(bucket, file_key)
-            obj.set_contents(
-                stream, size=content_length, size_limit=size_limit)
+            obj.set_contents(stream, size=content_length, size_limit=size_limit)
 
     def get_file_content(self, identity, id, file_key, record):
         """Get file content handler."""

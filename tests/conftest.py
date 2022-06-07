@@ -20,22 +20,22 @@ from mock_module.config import MockFileServiceConfig, ServiceConfig
 
 from invenio_records_resources.services import FileService, RecordService
 
-pytest_plugins = ("celery.contrib.pytest", )
+pytest_plugins = ("celery.contrib.pytest",)
 
 
 @pytest.fixture(scope="module")
 def extra_entry_points():
     """Extra entry points to load the mock_module features."""
     return {
-        'invenio_db.model': [
-            'mock_module = mock_module.models',
+        "invenio_db.model": [
+            "mock_module = mock_module.models",
         ],
-        'invenio_jsonschemas.schemas': [
-            'mock_module = mock_module.jsonschemas',
+        "invenio_jsonschemas.schemas": [
+            "mock_module = mock_module.jsonschemas",
         ],
-        'invenio_search.mappings': [
-            'records = mock_module.mappings',
-        ]
+        "invenio_search.mappings": [
+            "records = mock_module.mappings",
+        ],
     }
 
 
@@ -51,7 +51,7 @@ def file_service():
     return FileService(MockFileServiceConfig)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def service(appctx):
     """Service instance."""
     return RecordService(ServiceConfig)
@@ -61,19 +61,14 @@ def service(appctx):
 def input_data():
     """Input data (as coming from the view layer)."""
     return {
-        'metadata': {
-            'title': 'Test',
-            'type': {
-                'type': "test"
-            }
-        },
+        "metadata": {"title": "Test", "type": {"type": "test"}},
     }
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
     i.provides.add(UserNeed(1))
-    i.provides.add(Need(method='system_role', value='any_user'))
+    i.provides.add(Need(method="system_role", value="any_user"))
     return i

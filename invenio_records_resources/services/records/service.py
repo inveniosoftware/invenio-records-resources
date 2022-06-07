@@ -58,7 +58,7 @@ class RecordService(Service):
         # We are returning "_doc" as document type as recommended by
         # Elasticsearch documentation to have v6.x and v7.x equivalent. In v8
         # document types will have been completely removed.
-        return record.index._name, '_doc'
+        return record.index._name, "_doc"
 
     @property
     def schema(self):
@@ -99,19 +99,26 @@ class RecordService(Service):
         :raises services.errors.RevisionIdMismatchError: If the
             condition is not met.
         """
-        if expected_revision_id is not None \
-           and record.revision_id != expected_revision_id:
-            raise RevisionIdMismatchError(
-                record.revision_id, expected_revision_id
-            )
+        if (
+            expected_revision_id is not None
+            and record.revision_id != expected_revision_id
+        ):
+            raise RevisionIdMismatchError(record.revision_id, expected_revision_id)
 
-    def create_search(self, identity, record_cls, search_opts,
-                      permission_action='read', preference=None,
-                      extra_filter=None):
+    def create_search(
+        self,
+        identity,
+        record_cls,
+        search_opts,
+        permission_action="read",
+        preference=None,
+        extra_filter=None,
+    ):
         """Instantiate a search class."""
         if permission_action:
             permission = self.permission_policy(
-                action_name=permission_action, identity=identity)
+                action_name=permission_action, identity=identity
+            )
         else:
             permission = None
 
@@ -141,9 +148,16 @@ class RecordService(Service):
 
         return search
 
-    def search_request(self, identity, params, record_cls, search_opts,
-                       preference=None, extra_filter=None,
-                       permission_action='read'):
+    def search_request(
+        self,
+        identity,
+        params,
+        record_cls,
+        search_opts,
+        preference=None,
+        extra_filter=None,
+        permission_action="read",
+    ):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
             identity,
@@ -156,15 +170,22 @@ class RecordService(Service):
 
         # Run search args evaluator
         for interpreter_cls in search_opts.params_interpreters_cls:
-            search = interpreter_cls(search_opts).apply(
-                identity, search, params
-            )
+            search = interpreter_cls(search_opts).apply(identity, search, params)
 
         return search
 
-    def _search(self, action, identity, params, es_preference, record_cls=None,
-                search_opts=None, extra_filter=None, permission_action='read',
-                **kwargs):
+    def _search(
+        self,
+        action,
+        identity,
+        params,
+        es_preference,
+        record_cls=None,
+        search_opts=None,
+        extra_filter=None,
+        permission_action="read",
+        **kwargs,
+    ):
         """Create the Elasticsearch DSL."""
         # Merge params
         # NOTE: We allow using both the params variable, as well as kwargs. The
@@ -193,15 +214,13 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, params=None, es_preference=None,
-               expand=False, **kwargs):
+    def search(self, identity, params=None, es_preference=None, expand=False, **kwargs):
         """Search for records matching the querystring."""
-        self.require_permission(identity, 'search')
+        self.require_permission(identity, "search")
 
         # Prepare and execute the search
         params = params or {}
-        search = self._search(
-            'search', identity, params, es_preference, **kwargs)
+        search = self._search("search", identity, params, es_preference, **kwargs)
         search_result = search.execute()
 
         return self.result_list(
@@ -209,9 +228,7 @@ class RecordService(Service):
             identity,
             search_result,
             params,
-            links_tpl=LinksTemplate(self.config.links_search, context={
-                "args": params
-            }),
+            links_tpl=LinksTemplate(self.config.links_search, context={"args": params}),
             links_item_tpl=self.links_item_tpl,
             expandable_fields=self.expandable_fields,
             expand=expand,
@@ -219,12 +236,13 @@ class RecordService(Service):
 
     def scan(self, identity, params=None, es_preference=None, **kwargs):
         """Scan for records matching the querystring."""
-        self.require_permission(identity, 'search')
+        self.require_permission(identity, "search")
 
         # Prepare and execute the search as scan()
         params = params or {}
         search_result = self._search(
-            'scan', identity, params, es_preference, **kwargs).scan()
+            "scan", identity, params, es_preference, **kwargs
+        ).scan()
 
         return self.result_list(
             self,
@@ -236,15 +254,10 @@ class RecordService(Service):
         )
 
     def reindex(
-        self,
-        identity,
-        params=None,
-        es_preference=None,
-        es_query=None,
-        **kwargs
+        self, identity, params=None, es_preference=None, es_query=None, **kwargs
     ):
         """Reindex records matching the query parameters."""
-        self.require_permission(identity, 'search')
+        self.require_permission(identity, "search")
 
         # prepare and update query
         params = params or {}
@@ -257,7 +270,9 @@ class RecordService(Service):
             self.record_cls,
             self.config.search,
             preference=es_preference,
-        ).source(False)  # get only the uuid of the records
+        ).source(
+            False
+        )  # get only the uuid of the records
 
         if es_query:  # incompatible with params={"q":...}
             search = search.query(es_query)
@@ -275,12 +290,12 @@ class RecordService(Service):
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
-        return self._create(self.record_cls, identity, data, uow=uow,
-                            expand=expand)
+        return self._create(self.record_cls, identity, data, uow=uow, expand=expand)
 
     @unit_of_work()
-    def _create(self, record_cls, identity, data, raise_errors=True, uow=None,
-                expand=False):
+    def _create(
+        self, record_cls, identity, data, raise_errors=True, uow=None, expand=False
+    ):
         """Create a record.
 
         :param identity: Identity of user creating the record.
@@ -294,8 +309,8 @@ class RecordService(Service):
             data,
             context={"identity": identity},
             raise_errors=raise_errors  # if False, flow is continued with data
-                                       # only containing valid data, but errors
-                                       # are reported (as warnings)
+            # only containing valid data, but errors
+            # are reported (as warnings)
         )
 
         # It's the components who saves the actual data in the record.
@@ -303,7 +318,7 @@ class RecordService(Service):
 
         # Run components
         self.run_components(
-            'create',
+            "create",
             identity,
             data=data,
             record=record,
@@ -332,7 +347,7 @@ class RecordService(Service):
 
         # Run components
         for component in self.components:
-            if hasattr(component, 'read'):
+            if hasattr(component, "read"):
                 component.read(identity, record=record)
 
         return self.result_item(
@@ -344,9 +359,18 @@ class RecordService(Service):
             expand=expand,
         )
 
-    def _read_many(self, identity, es_query, fields=None, max_records=150,
-                   record_cls=None, search_opts=None, extra_filter=None,
-                   preference=None, **kwargs):
+    def _read_many(
+        self,
+        identity,
+        es_query,
+        fields=None,
+        max_records=150,
+        record_cls=None,
+        search_opts=None,
+        extra_filter=None,
+        preference=None,
+        **kwargs,
+    ):
         """Search for records matching the ids."""
         # We use create_search() to avoid the overhead of aggregations etc
         # being added to the query with using search_request().
@@ -354,7 +378,7 @@ class RecordService(Service):
             identity=identity,
             record_cls=record_cls or self.record_cls,
             search_opts=search_opts or self.config.search,
-            permission_action='search',
+            permission_action="search",
             preference=preference,
             extra_filter=extra_filter,
         )
@@ -362,8 +386,7 @@ class RecordService(Service):
         # Fetch only certain fields - explicitly add internal system fields
         # required to use the result list to dump the output.
         if fields:
-            dumper_fields = [
-                "uuid", "version_id", "created", "updated", "expires_at"]
+            dumper_fields = ["uuid", "version_id", "created", "updated", "expires_at"]
             fields = fields + dumper_fields
             # ES 7.11+ supports a more efficient way of fetching only certain
             # fields using the "fields"-option to a query. However, ES 6 and
@@ -380,27 +403,22 @@ class RecordService(Service):
         """Search for records matching the ids."""
         clauses = []
         for id_ in ids:
-            clauses.append(Q('term', **{"id": id_}))
-        query = Q('bool', minimum_should_match=1, should=clauses)
+            clauses.append(Q("term", **{"id": id_}))
+        query = Q("bool", minimum_should_match=1, should=clauses)
 
-        results = self._read_many(
-            identity, query, fields, len(ids), **kwargs)
+        results = self._read_many(identity, query, fields, len(ids), **kwargs)
 
         return self.result_list(self, identity, results)
 
-    def read_all(
-        self, identity, fields, max_records=150, **kwargs
-    ):
+    def read_all(self, identity, fields, max_records=150, **kwargs):
         """Search for records matching the querystring."""
         es_query = Q("match_all")
-        results = self._read_many(
-            identity, es_query, fields, max_records, **kwargs)
+        results = self._read_many(identity, es_query, fields, max_records, **kwargs)
 
         return self.result_list(self, identity, results)
 
     @unit_of_work()
-    def update(self, identity, id_, data, revision_id=None, uow=None,
-               expand=False):
+    def update(self, identity, id_, data, revision_id=None, uow=None, expand=False):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
@@ -410,17 +428,11 @@ class RecordService(Service):
         self.require_permission(identity, "update", record=record)
 
         data, _ = self.schema.load(
-            data,
-            context=dict(
-                identity=identity,
-                pid=record.pid,
-                record=record
-            )
+            data, context=dict(identity=identity, pid=record.pid, record=record)
         )
 
         # Run components
-        self.run_components(
-            'update', identity, data=data, record=record, uow=uow)
+        self.run_components("update", identity, data=data, record=record, uow=uow)
 
         uow.register(RecordCommitOp(record, self.indexer))
 
@@ -444,7 +456,7 @@ class RecordService(Service):
         self.require_permission(identity, "delete", record=record)
 
         # Run components
-        self.run_components('delete', identity, record=record, uow=uow)
+        self.run_components("delete", identity, record=record, uow=uow)
 
         uow.register(RecordDeleteOp(record, self.indexer, index_refresh=True))
 
@@ -466,27 +478,25 @@ class RecordService(Service):
     #
     # notification handlers
     #
-    def on_relation_update(
-        self, identity, record_type, records_info, notif_time
-    ):
+    def on_relation_update(self, identity, record_type, records_info, notif_time):
         """Handles the update of a related field record."""
         fieldpaths = self.config.relations.get(record_type, [])
         clauses = []
         for field in fieldpaths:
             for record in records_info:
                 recid, uuid, revision_id = record
-                clauses.append(Q(
-                    "bool",
-                    must=[Q("term", **{f"{field}.id": recid})],
-                    must_not=[
-                        Q("term", **{f"{field}.@v": f"{uuid}::{revision_id}"})
-                    ]
-                ))
+                clauses.append(
+                    Q(
+                        "bool",
+                        must=[Q("term", **{f"{field}.id": recid})],
+                        must_not=[
+                            Q("term", **{f"{field}.@v": f"{uuid}::{revision_id}"})
+                        ],
+                    )
+                )
 
         filter = [Q("range", indexed_at={"lte": notif_time})]
-        es_query = Q(
-            "bool", minimum_should_match=1, should=clauses, filter=filter
-        )
+        es_query = Q("bool", minimum_should_match=1, should=clauses, filter=filter)
 
         self.reindex(identity, es_query=es_query)
         return True

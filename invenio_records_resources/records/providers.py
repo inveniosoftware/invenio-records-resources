@@ -30,6 +30,6 @@ class ModelPIDProvider:
         if obj:
             raise PIDAlreadyExists(
                 pid_value=pid_value,
-                pid_type=record.__class__.__name__  # FIXME: is informative
+                pid_type=record.__class__.__name__,  # FIXME: is informative
             )
         setattr(record, model_field_name, pid_value)

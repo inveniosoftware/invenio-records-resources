@@ -69,8 +69,7 @@ class FacetsParam(ParamInterpreter):
                 self.add_filter(name, values)
 
         # Customize response class to add a ".facets" property.
-        search = search.response_class(
-            FacetsResponse.create_response_cls(self))
+        search = search.response_class(FacetsResponse.create_response_cls(self))
 
         # Build search
         search = self.aggregate(search)

@@ -28,9 +28,7 @@ class Pagination:
 
     def valid(self):
         """Returns True if valid, False if not."""
-        pre_condition = (
-            1 <= self.size and 1 <= self.page
-        )
+        pre_condition = 1 <= self.size and 1 <= self.page
         return pre_condition and 0 <= self.from_idx < self.max_results
 
     @property

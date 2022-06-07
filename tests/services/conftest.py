@@ -21,7 +21,7 @@ from kombu.compat import Consumer
 from mock_module.api import Record, RecordWithFiles
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def queue_config(service):
     """Declare queue configuration (name, exchange and routing_key)."""
     # TODO: Move this fixture to pytest-invenio
@@ -31,20 +31,16 @@ def queue_config(service):
     return config
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def queue(app, queue_config):
     """Declare an clean the indexer queue."""
     # TODO: Move this fixture to pytest-invenio
     queue = Queue(
-        name=queue_config.get("name") or 'indexer',
-        exchange=(
-            queue_config.get("exchange") or
-            app.config["INDEXER_MQ_EXCHANGE"]
-        ),
+        name=queue_config.get("name") or "indexer",
+        exchange=(queue_config.get("exchange") or app.config["INDEXER_MQ_EXCHANGE"]),
         routing_key=(
-            queue_config.get("routing_key") or
-            app.config["INDEXER_MQ_ROUTING_KEY"]
-        )
+            queue_config.get("routing_key") or app.config["INDEXER_MQ_ROUTING_KEY"]
+        ),
     )
 
     with establish_connection() as c:
@@ -55,7 +51,7 @@ def queue(app, queue_config):
     return queue
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def consumer(app, queue):
     """Get a consumer on the queue object for testing bulk operations."""
     # TODO: Move this fixture to pytest-invenio
@@ -64,7 +60,7 @@ def consumer(app, queue):
             connection=c,
             queue=queue.name,
             exchange=queue.exchange.name,
-            routing_key=queue.routing_key
+            routing_key=queue.routing_key,
         )
 
 

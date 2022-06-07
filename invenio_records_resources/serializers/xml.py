@@ -20,9 +20,7 @@ class XMLSerializer(SerializerMixin):
         """Dump the object into an XML string."""
         return xmltodict.unparse({"root": obj})
 
-    def serialize_object_list(
-        self, obj_list, response_ctx=None, *args, **kwargs
-    ):
+    def serialize_object_list(self, obj_list, response_ctx=None, *args, **kwargs):
         """Dump the object list into an XML string.
 
         :param: obj_list an IdentifiedRecords object

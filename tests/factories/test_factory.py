@@ -15,10 +15,8 @@ from mock_module.schemas import RecordSchema
 from sqlalchemy.exc import InvalidRequestError
 
 from invenio_records_resources.factories.factory import RecordTypeFactory
-from invenio_records_resources.services import RecordServiceConfig, \
-    SearchOptions
-from invenio_records_resources.services.records.components import \
-    ServiceComponent
+from invenio_records_resources.services import RecordServiceConfig, SearchOptions
+from invenio_records_resources.services.records.components import ServiceComponent
 from invenio_records_resources.services.records.facets import TermsFacet
 
 
@@ -60,9 +58,7 @@ def test_resource_class_create():
     assert rec_type.resource_config_cls
 
     assert rec_type.resource_cls.__name__ == "ResourceTestResource"
-    assert (
-        rec_type.resource_config_cls.__name__ == "ResourceTestResourceConfig"
-    )
+    assert rec_type.resource_config_cls.__name__ == "ResourceTestResourceConfig"
 
     assert rec_type.resource_config_cls.url_prefix == "/resourcetests"
     assert rec_type.resource_config_cls.blueprint_name == "resourcetest"
@@ -129,14 +125,10 @@ def test_optional_version():
         "OptionalVersion", RecordSchema, schema_version="1.1.0"
     )
     assert (
-        rec_type.record_cls.schema.value
-        == "https://localhost/schemas/optionalversions"
+        rec_type.record_cls.schema.value == "https://localhost/schemas/optionalversions"
         "/optionalversion-v1.1.0.json"
     )
-    assert (
-        rec_type.record_cls.index._name
-        == "optionalversions-optionalversion-v1.1.0"
-    )
+    assert rec_type.record_cls.index._name == "optionalversions-optionalversion-v1.1.0"
 
 
 def test_optional_index_name():
@@ -157,9 +149,7 @@ def test_optional_endpoint_route():
 
 def test_optional_service_params():
     class Opts(SearchOptions):
-        facets = {
-            'vocabulary_type': TermsFacet(field='vocabulary_type')
-        }
+        facets = {"vocabulary_type": TermsFacet(field="vocabulary_type")}
 
     class CustomComponent(ServiceComponent):
         """Service component for metadata."""

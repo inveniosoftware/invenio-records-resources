@@ -34,4 +34,4 @@ class PaginationParam(ParamInterpreter):
         if not p.valid():
             raise QuerystringValidationError("Invalid pagination parameters.")
 
-        return search[p.from_idx:p.to_idx]
+        return search[p.from_idx : p.to_idx]

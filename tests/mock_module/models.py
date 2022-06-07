@@ -22,12 +22,9 @@ from invenio_records_resources.records.models import FileRecordModelMixin
 class RecordMetadata(db.Model, RecordMetadataBase):
     """Model for mock module metadata."""
 
-    __tablename__ = 'mock_metadata'
+    __tablename__ = "mock_metadata"
 
-    expires_at = db.Column(
-        db.DateTime(),
-        nullable=True
-    )
+    expires_at = db.Column(db.DateTime(), nullable=True)
 
     bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id))
     bucket = db.relationship(Bucket)
@@ -36,7 +33,7 @@ class RecordMetadata(db.Model, RecordMetadataBase):
 class RecordMetadataWithPID(db.Model, RecordMetadataBase):
     """Mock record metadata class."""
 
-    __tablename__ = 'mock_metadata_pid'
+    __tablename__ = "mock_metadata_pid"
 
     pid = db.Column(db.String(255), unique=True)
     pid_status = db.Column(ChoiceType(PIDStatus, impl=db.CHAR(1)))
@@ -47,4 +44,4 @@ class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
 
     __record_model_cls__ = RecordMetadata
 
-    __tablename__ = 'mock_record_files'
+    __tablename__ = "mock_record_files"

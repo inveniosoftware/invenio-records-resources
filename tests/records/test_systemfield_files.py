@@ -45,11 +45,11 @@ def test_record_files_creation(base_app, db, location):
     assert len(record.files) == 0
     assert set(record.files) == set()
 
-    assert record['files']
-    assert record['files']['enabled'] is True
-    assert 'default_preview' not in record['files']
-    assert 'order' not in record['files']
-    assert record['files']['entries'] == {}
+    assert record["files"]
+    assert record["files"]["enabled"] is True
+    assert "default_preview" not in record["files"]
+    assert "order" not in record["files"]
+    assert record["files"]["entries"] == {}
 
 
 def test_record_files_deletion(base_app, db, location):
@@ -70,49 +70,49 @@ def test_record_files_operations(base_app, db, location):
     record = Record.create({})
 
     # Initialize a file
-    record.files['test.pdf'] = {'description': 'A test file.'}
-    rf = record.files['test.pdf']
-    assert rf.key == 'test.pdf'
+    record.files["test.pdf"] = {"description": "A test file."}
+    rf = record.files["test.pdf"]
+    assert rf.key == "test.pdf"
     assert rf.object_version is None
     assert rf.object_version_id is None
     assert rf.record_id is not None
     assert rf.record_id == record.id
-    assert rf.metadata == {'description': 'A test file.'}
-    assert rf['metadata'] == {'description': 'A test file.'}
+    assert rf.metadata == {"description": "A test file."}
+    assert rf["metadata"] == {"description": "A test file."}
     db.session.commit()
 
     assert models.FileRecordMetadata.query.count() == 1
     assert ObjectVersion.query.count() == 0
 
     # Update the file's metadata
-    record.files['test.pdf'] = {'description': 'A new description'}
-    rf = record.files['test.pdf']
-    assert rf.key == 'test.pdf'
+    record.files["test.pdf"] = {"description": "A new description"}
+    rf = record.files["test.pdf"]
+    assert rf.key == "test.pdf"
     assert rf.object_version is None
     assert rf.object_version_id is None
     assert rf.record_id is not None
     assert rf.record_id == record.id
-    assert rf.metadata == {'description': 'A new description'}
-    assert rf['metadata'] == {'description': 'A new description'}
+    assert rf.metadata == {"description": "A new description"}
+    assert rf["metadata"] == {"description": "A new description"}
 
     # Add an actual file
-    dummy_file = BytesIO(b'testfile')
-    record.files['test.pdf'] = dummy_file
-    rf = record.files['test.pdf']
-    assert rf.key == 'test.pdf'
+    dummy_file = BytesIO(b"testfile")
+    record.files["test.pdf"] = dummy_file
+    rf = record.files["test.pdf"]
+    assert rf.key == "test.pdf"
     assert rf.object_version
     assert rf.object_version_id
-    assert rf.object_version.key == rf.key == 'test.pdf'
+    assert rf.object_version.key == rf.key == "test.pdf"
     assert rf.object_version.file
-    assert rf.metadata == {'description': 'A new description'}
-    assert rf['metadata'] == {'description': 'A new description'}
+    assert rf.metadata == {"description": "A new description"}
+    assert rf["metadata"] == {"description": "A new description"}
     db.session.commit()
 
     assert FileInstance.query.count() == 1
     assert ObjectVersion.query.count() == 1
 
     # Delete the file
-    del record.files['test.pdf']
+    del record.files["test.pdf"]
     record.commit()
     db.session.commit()
 
@@ -121,9 +121,9 @@ def test_record_files_operations(base_app, db, location):
     assert ObjectVersion.query.count() == 0
     assert Bucket.query.count() == 1
     assert len(record.files) == 0
-    assert 'test.pdf' not in record.files
-    assert record['files']['entries'] == {}
-    assert record['files']['meta'] == {}
+    assert "test.pdf" not in record.files
+    assert record["files"]["entries"] == {}
+    assert record["files"]["meta"] == {}
 
 
 def test_record_files_clear(base_app, db, location):
@@ -131,14 +131,11 @@ def test_record_files_clear(base_app, db, location):
     record = Record.create({})
 
     # Add a file with metadata + bytes
-    record.files['f1.pdf'] = (
-        BytesIO(b'testfile'),
-        {'description': 'Test file'}
-    )
+    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
     # Add a file with only bytes
-    record.files['f2.pdf'] = BytesIO(b'testfile')
+    record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files['f3.pdf'] = {'description': 'Metadata only'}
+    record.files["f3.pdf"] = {"description": "Metadata only"}
     record.commit()
     db.session.commit()
 
@@ -158,11 +155,11 @@ def test_record_files_clear(base_app, db, location):
     assert ObjectVersion.query.count() == 0
     assert Bucket.query.count() == 1
     assert len(record.files) == 0
-    assert 'f1.pdf' not in record.files
-    assert 'f2.pdf' not in record.files
-    assert 'f3.pdf' not in record.files
-    assert record['files']['entries'] == {}
-    assert record['files']['meta'] == {}
+    assert "f1.pdf" not in record.files
+    assert "f2.pdf" not in record.files
+    assert "f3.pdf" not in record.files
+    assert record["files"]["entries"] == {}
+    assert record["files"]["meta"] == {}
 
 
 def test_record_files_store(base_app, db, location):
@@ -170,35 +167,33 @@ def test_record_files_store(base_app, db, location):
     record = Record.create({})
 
     # Add a file with bytes + metadata
-    record.files['f1.pdf'] = (
-        BytesIO(b'testfile'),
-        {'description': 'Test file'}
-    )
+    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
     # Add a file with only bytes
-    record.files['f2.pdf'] = BytesIO(b'testfile')
+    record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files['f3.pdf'] = {'description': 'Metadata only'}
+    record.files["f3.pdf"] = {"description": "Metadata only"}
 
-    rf1 = record.files['f1.pdf']
-    rf2 = record.files['f2.pdf']
+    rf1 = record.files["f1.pdf"]
+    rf2 = record.files["f2.pdf"]
     record.commit()
-    assert record['files']['meta'] == {
-        'f1.pdf': {'description': 'Test file'},
-        'f2.pdf': None,
-        'f3.pdf': {'description': 'Metadata only'},
+    assert record["files"]["meta"] == {
+        "f1.pdf": {"description": "Test file"},
+        "f2.pdf": None,
+        "f3.pdf": {"description": "Metadata only"},
     }
-    assert record['files']['entries'] == {
+    assert record["files"]["entries"] == {
         rf.key: {
-            'bucket_id': str(record.bucket_id),
-            'checksum': rf.file.checksum,
-            'file_id': str(rf.file.file_id),
-            'key': rf.key,
-            'mimetype': rf.file.mimetype,
-            'size': rf.file.size,
-            'storage_class': rf.file.storage_class,
-            'uri': rf.file.uri,
-            'version_id': str(rf.object_version_id),
-        } for rf in (rf1, rf2)
+            "bucket_id": str(record.bucket_id),
+            "checksum": rf.file.checksum,
+            "file_id": str(rf.file.file_id),
+            "key": rf.key,
+            "mimetype": rf.file.mimetype,
+            "size": rf.file.size,
+            "storage_class": rf.file.storage_class,
+            "uri": rf.file.uri,
+            "version_id": str(rf.object_version_id),
+        }
+        for rf in (rf1, rf2)
     }
 
 
@@ -206,12 +201,9 @@ def test_record_files_copy(base_app, db, location):
     """Test record files bucket creation."""
     # Create source record
     src = Record.create({})
-    src.files['f1.pdf'] = (
-        BytesIO(b'testfile'),
-        {'description': 'Test file'}
-    )
-    src.files.default_preview = 'f1.pdf'
-    src.files.order = ['f1.pdf']
+    src.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    src.files.default_preview = "f1.pdf"
+    src.files.order = ["f1.pdf"]
     src.commit()
     db.session.commit()
 
@@ -231,8 +223,10 @@ def test_record_files_copy(base_app, db, location):
     assert dst.files.default_preview == src.files.default_preview
     assert dst.files.order == src.files.order
     assert list(dst.files.keys()) == list(src.files.keys())
-    assert dst.files['f1.pdf'].object_version.version_id != \
-        src.files['f1.pdf'].object_version.version_id
+    assert (
+        dst.files["f1.pdf"].object_version.version_id
+        != src.files["f1.pdf"].object_version.version_id
+    )
     db.session.commit()
 
     # Unset preview and test sync()

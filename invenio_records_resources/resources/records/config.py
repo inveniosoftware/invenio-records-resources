@@ -10,8 +10,13 @@
 """Record Resource Configuration."""
 
 import marshmallow as ma
-from flask_resources import JSONDeserializer, JSONSerializer, \
-    RequestBodyParser, ResourceConfig, ResponseHandler
+from flask_resources import (
+    JSONDeserializer,
+    JSONSerializer,
+    RequestBodyParser,
+    ResourceConfig,
+    ResponseHandler,
+)
 
 from .args import SearchRequestArgsSchema
 from .headers import etag_headers
@@ -37,14 +42,11 @@ class RecordResourceConfig(ResourceConfig):
         "refresh": ma.fields.Boolean(),
     }
     request_headers = {"if_match": ma.fields.Int()}
-    request_body_parsers = {
-        "application/json": RequestBodyParser(JSONDeserializer())
-    }
+    request_body_parsers = {"application/json": RequestBodyParser(JSONDeserializer())}
     default_content_type = "application/json"
 
     # Response handling
     response_handlers = {
-        "application/json": ResponseHandler(
-            JSONSerializer(), headers=etag_headers)
+        "application/json": ResponseHandler(JSONSerializer(), headers=etag_headers)
     }
     default_accept_mimetype = "application/json"

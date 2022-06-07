@@ -16,7 +16,7 @@ from werkzeug.http import quote_etag
 def etag_headers(obj_or_list, code, many=False):
     """Headers for a single resource item."""
     headers = {
-        'content-type': resource_requestctx.accept_mimetype,
+        "content-type": resource_requestctx.accept_mimetype,
     }
     if many:
         return headers

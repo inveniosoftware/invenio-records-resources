@@ -22,7 +22,7 @@ class FileRecordModelMixin:
     """Record model to be for the ``record_id`` foreign key."""
 
     key = db.Column(
-        db.Text().with_variant(mysql.VARCHAR(255), 'mysql'),
+        db.Text().with_variant(mysql.VARCHAR(255), "mysql"),
         nullable=False,
     )
     """Filename key (can be path-like also)."""
@@ -32,7 +32,7 @@ class FileRecordModelMixin:
         """Record ID foreign key."""
         return db.Column(
             UUIDType,
-            db.ForeignKey(cls.__record_model_cls__.id, ondelete='RESTRICT'),
+            db.ForeignKey(cls.__record_model_cls__.id, ondelete="RESTRICT"),
             nullable=False,
         )
 
@@ -46,7 +46,7 @@ class FileRecordModelMixin:
         """Object version ID foreign key."""
         return db.Column(
             UUIDType,
-            db.ForeignKey(ObjectVersion.version_id, ondelete='RESTRICT'),
+            db.ForeignKey(ObjectVersion.version_id, ondelete="RESTRICT"),
             nullable=True,
         )
 
@@ -60,7 +60,9 @@ class FileRecordModelMixin:
         """Table args."""
         return (
             db.Index(
-                f'uidx_{cls.__tablename__}_id_key',
-                'id', 'key', unique=True,
+                f"uidx_{cls.__tablename__}_id_key",
+                "id",
+                "key",
+                unique=True,
             ),
         )

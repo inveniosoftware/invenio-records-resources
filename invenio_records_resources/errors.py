@@ -10,7 +10,7 @@
 """Common errors utilities."""
 
 
-def _iter_errors_dict(message_node, fieldpath=''):
+def _iter_errors_dict(message_node, fieldpath=""):
     """Recursively yield validation error dicts.
 
     :params dict|list|value: Marshmallow error node (first is a dict)
@@ -42,21 +42,14 @@ def _iter_errors_dict(message_node, fieldpath=''):
     if isinstance(message_node, dict):
         for field, child in message_node.items():
             yield from _iter_errors_dict(
-                child,
-                fieldpath=(f"{fieldpath}." if fieldpath else '') + f"{field}"
+                child, fieldpath=(f"{fieldpath}." if fieldpath else "") + f"{field}"
             )
     elif isinstance(message_node, list):
         # If the node is a list, it's a leaf node of messages
-        yield {
-            "field": f"{fieldpath}",
-            "messages": message_node
-        }
+        yield {"field": f"{fieldpath}", "messages": message_node}
     else:
         # leaf node - always wrap in a list
-        yield {
-            "field": f"{fieldpath}",
-            "messages": [message_node]
-        }
+        yield {"field": f"{fieldpath}", "messages": [message_node]}
 
 
 def validation_error_to_list_errors(exception):

@@ -38,8 +38,11 @@ key in the record:
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
-from invenio_records.systemfields import ModelField, RelatedModelField, \
-    RelatedModelFieldContext
+from invenio_records.systemfields import (
+    ModelField,
+    RelatedModelField,
+    RelatedModelFieldContext,
+)
 from sqlalchemy import inspect
 
 from ..api import PersistentIdentifierWrapper
@@ -81,9 +84,17 @@ class PIDFieldContext(RelatedModelFieldContext):
 class PIDField(RelatedModelField):
     """Persistent identifier system field."""
 
-    def __init__(self, key='id', provider=None, pid_type=None,
-                 object_type='rec', resolver_cls=None, delete=True,
-                 create=True, context_cls=PIDFieldContext):
+    def __init__(
+        self,
+        key="id",
+        provider=None,
+        pid_type=None,
+        object_type="rec",
+        resolver_cls=None,
+        delete=True,
+        create=True,
+        context_cls=PIDFieldContext,
+    ):
         """Initialize the PIDField.
 
         :param key: Name of key to store the pid value in.
@@ -159,11 +170,11 @@ class PIDField(RelatedModelField):
         # If we have both data and pid_value, we construct the object:
         if pid_value and data:
             obj = PersistentIdentifier(
-                id=data.get('pk'),
-                pid_type=data.get('pid_type'),
+                id=data.get("pk"),
+                pid_type=data.get("pid_type"),
                 pid_value=pid_value,
-                status=data.get('status'),
-                object_type=data.get('obj_type'),
+                status=data.get("status"),
+                object_type=data.get("obj_type"),
                 object_uuid=record.id,
             )
             return obj
@@ -176,10 +187,10 @@ class PIDField(RelatedModelField):
 
         # Store data values on the attribute name (e.g. 'pid')
         record[field.attr_name] = {
-            'pk': pid.id,
-            'pid_type': pid.pid_type,
-            'status': str(pid.status),
-            'obj_type': pid.object_type,
+            "pk": pid.id,
+            "pid_type": pid.pid_type,
+            "status": str(pid.status),
+            "obj_type": pid.object_type,
         }
 
         # Set ID on desired dictionary key.
@@ -212,9 +223,7 @@ class ModelPIDFieldContext(PIDFieldContext):
         """Method to create a new persistent identifier for the record."""
         # pop from metadata
         pid_value = record.pop(self.field.model_field_name)
-        self.field._provider.create(
-            pid_value, record, self.field.model_field_name
-        )
+        self.field._provider.create(pid_value, record, self.field.model_field_name)
 
     def session_merge(self, record):
         """Inactivate session merge since it all belongs to the same db obj."""
@@ -238,7 +247,9 @@ class ModelPIDField(ModelField):
         self._provider = provider
         self._resolver_cls = resolver_cls
         self._context_cls = context_cls
-        super().__init__(model_field_name=model_field_name,)
+        super().__init__(
+            model_field_name=model_field_name,
+        )
 
     #
     # Data descriptor

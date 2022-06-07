@@ -15,10 +15,10 @@ from .schema import ServiceSchemaWrapper
 from .service import RecordService
 
 __all__ = (
-    'pagination_links',
-    'RecordLink',
-    'RecordService',
-    'RecordServiceConfig',
-    'SearchOptions',
-    'ServiceSchemaWrapper',
+    "pagination_links",
+    "RecordLink",
+    "RecordService",
+    "RecordServiceConfig",
+    "SearchOptions",
+    "ServiceSchemaWrapper",
 )

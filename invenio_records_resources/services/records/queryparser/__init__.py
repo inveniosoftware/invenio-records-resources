@@ -13,7 +13,7 @@ from .suggest import SuggestQueryParser
 from .transformer import SearchFieldTransformer
 
 __all__ = (
-    'QueryParser',
-    'SuggestQueryParser',
-    'SearchFieldTransformer',
+    "QueryParser",
+    "SuggestQueryParser",
+    "SearchFieldTransformer",
 )

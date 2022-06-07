@@ -25,7 +25,7 @@ class FileMetadataComponent(FileServiceComponent):
         validated_data = schema.load(data)
         for file_metadata in validated_data:
             temporary_obj = deepcopy(file_metadata)
-            record.files.create(temporary_obj.pop('key'), data=temporary_obj)
+            record.files.create(temporary_obj.pop("key"), data=temporary_obj)
 
     def update_file_metadata(self, identity, id, file_key, record, data):
         """Update file metadata handler."""
@@ -37,5 +37,5 @@ class FileMetadataComponent(FileServiceComponent):
         # TODO: Add other checks here (e.g. verify checksum, S3 upload)
         file_obj = ObjectVersion.get(record.bucket.id, file_key)
         if not file_obj:
-            raise Exception(f'File with key {file_key} not uploaded yet.')
+            raise Exception(f"File with key {file_key} not uploaded yet.")
         record.files[file_key] = file_obj

@@ -14,8 +14,7 @@ import pytest
 from marshmallow import ValidationError
 
 
-def test_file_flow(
-        file_service, location, example_file_record, identity_simple):
+def test_file_flow(file_service, location, example_file_record, identity_simple):
     """Test the lifecycle of a file.
 
     - Initialize file saving
@@ -28,57 +27,53 @@ def test_file_flow(
     - Delete all remaining files
     - List should be empty
     """
-    recid = example_file_record['id']
-    file_to_initialise = [{
-        'key': 'article.txt',
-        'checksum': 'md5:c785060c866796cc2a1708c997154c8e',
-        'size': 17,  # 2kB
-        'metadata': {
-            'description': 'Published article PDF.',
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,  # 2kB
+            "metadata": {
+                "description": "Published article PDF.",
+            },
         }
-    }]
+    ]
     # Initialize file saving
-    result = file_service.init_files(
-        identity_simple, recid, file_to_initialise)
-    assert result.to_dict()['entries'][0]['key'] == \
-        file_to_initialise[0]['key']
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
 
     # for to_file in to_files:
-    content = BytesIO(b'test file content')
+    content = BytesIO(b"test file content")
     result = file_service.set_file_content(
-        identity_simple, recid, file_to_initialise[0]['key'], content,
-        content.getbuffer().nbytes
+        identity_simple,
+        recid,
+        file_to_initialise[0]["key"],
+        content,
+        content.getbuffer().nbytes,
     )
     # TODO figure response for succesfully saved file
-    assert result.to_dict()['key'] == file_to_initialise[0]['key']
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
 
-    result = file_service.commit_file(
-        identity_simple, recid, 'article.txt')
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
     # TODO currently there is no status in the json between the initialisation
     # and the commiting.
-    assert result.to_dict()['key'] == \
-        file_to_initialise[0]['key']
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
 
     # List files
     result = file_service.list_files(identity_simple, recid)
-    assert result.to_dict()['entries'][0]['key'] == \
-        file_to_initialise[0]['key']
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
 
     # Read file metadata
-    result = file_service.read_file_metadata(
-        identity_simple, recid, 'article.txt')
-    assert result.to_dict()['key'] == \
-        file_to_initialise[0]['key']
+    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
 
     # Retrieve file
-    result = file_service.get_file_content(
-        identity_simple, recid, 'article.txt')
-    assert result.file_id == 'article.txt'
+    result = file_service.get_file_content(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"
 
     # Delete file
-    result = file_service.delete_file(
-        identity_simple, recid, 'article.txt')
-    assert result.file_id == 'article.txt'
+    result = file_service.delete_file(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"
 
     # Assert deleted
     result = file_service.list_files(identity_simple, recid)
@@ -90,10 +85,9 @@ def test_file_flow(
     assert list(result.entries) == []
 
 
-def test_init_files(
-        file_service, location, example_file_record, identity_simple):
+def test_init_files(file_service, location, example_file_record, identity_simple):
 
-    recid = example_file_record['id']
+    recid = example_file_record["id"]
 
     # Pass an object with missing required field
     file_to_initialise = [{}]
@@ -102,20 +96,20 @@ def test_init_files(
         file_service.init_files(identity_simple, recid, file_to_initialise)
 
     error = e.value
-    assert (
-        {0: {'key': ['Missing data for required field.']}} ==
-        error.normalized_messages()
-    )
+    assert {
+        0: {"key": ["Missing data for required field."]}
+    } == error.normalized_messages()
 
     # Pass an object with added field
-    file_to_initialise = [{
-        'key': 'article.txt',
-        'foo': 'bar',
-    }]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "foo": "bar",
+        }
+    ]
 
-    result = file_service.init_files(
-        identity_simple, recid, file_to_initialise)
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
 
-    entry = result.to_dict()['entries'][0]
-    assert file_to_initialise[0]['key'] == entry['key']
-    assert file_to_initialise[0]['foo'] == entry['metadata']['foo']
+    entry = result.to_dict()["entries"][0]
+    assert file_to_initialise[0]["key"] == entry["key"]
+    assert file_to_initialise[0]["foo"] == entry["metadata"]["foo"]

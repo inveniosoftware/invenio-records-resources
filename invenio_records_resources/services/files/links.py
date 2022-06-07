@@ -17,6 +17,8 @@ class FileLink(Link):
     @staticmethod
     def vars(file_record, vars):
         """Variables for the URI template."""
-        vars.update({
-            "key": file_record.key,
-        })
+        vars.update(
+            {
+                "key": file_record.key,
+            }
+        )

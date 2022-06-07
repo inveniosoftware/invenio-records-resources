@@ -20,9 +20,17 @@ from ..base import ServiceItemResult, ServiceListResult
 class RecordItem(ServiceItemResult):
     """Single record result."""
 
-    def __init__(self, service, identity, record, errors=None,
-                 links_tpl=None, schema=None, expandable_fields=None,
-                 expand=False):
+    def __init__(
+        self,
+        service,
+        identity,
+        record,
+        errors=None,
+        links_tpl=None,
+        schema=None,
+        expandable_fields=None,
+        expand=False,
+    ):
         """Constructor."""
         self._errors = errors
         self._identity = identity
@@ -64,7 +72,7 @@ class RecordItem(ServiceItemResult):
             context=dict(
                 identity=self._identity,
                 record=self._record,
-            )
+            ),
         )
         if self._links_tpl:
             self._data["links"] = self.links
@@ -85,7 +93,7 @@ class RecordItem(ServiceItemResult):
         """Get a dictionary for the record."""
         res = self.data
         if self._errors:
-            res['errors'] = self._errors
+            res["errors"] = self._errors
         return res
 
     def has_permissions_to(self, actions):
@@ -118,9 +126,18 @@ class RecordItem(ServiceItemResult):
 class RecordList(ServiceListResult):
     """List of records result."""
 
-    def __init__(self, service, identity, results, params=None, links_tpl=None,
-                 links_item_tpl=None, schema=None, expandable_fields=None,
-                 expand=False):
+    def __init__(
+        self,
+        service,
+        identity,
+        results,
+        params=None,
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=None,
+        expandable_fields=None,
+        expand=False,
+    ):
         """Constructor.
 
         :params service: a service instance
@@ -149,7 +166,7 @@ class RecordList(ServiceListResult):
     @property
     def total(self):
         """Get total number of hits."""
-        if hasattr(self._results, 'hits'):
+        if hasattr(self._results, "hits"):
             if lt_es7:
                 return self._results.hits.total
             else:
@@ -180,10 +197,10 @@ class RecordList(ServiceListResult):
                 context=dict(
                     identity=self._identity,
                     record=record,
-                )
+                ),
             )
             if self._links_item_tpl:
-                projection['links'] = self._links_item_tpl.expand(record)
+                projection["links"] = self._links_item_tpl.expand(record)
 
             yield projection
 
@@ -191,8 +208,8 @@ class RecordList(ServiceListResult):
     def pagination(self):
         """Create a pagination object."""
         return Pagination(
-            self._params['size'],
-            self._params['page'],
+            self._params["size"],
+            self._params["page"],
             self.total,
         )
 
@@ -221,7 +238,7 @@ class RecordList(ServiceListResult):
         if self._params:
             res["sortBy"] = self._params["sort"]
             if self._links_tpl:
-                res['links'] = self._links_tpl.expand(self.pagination)
+                res["links"] = self._links_tpl.expand(self.pagination)
 
         return res
 
@@ -273,9 +290,7 @@ class ExpandableField(ABC):
     @abstractmethod
     def pick(self, resolved_rec):
         """Pick the fields to return from the resolved record dict."""
-        return {
-            "id": resolved_rec["id"]
-        }
+        return {"id": resolved_rec["id"]}
 
 
 class FieldsResolver:
