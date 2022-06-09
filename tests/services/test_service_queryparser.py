@@ -36,7 +36,8 @@ def test_extra_params():
     "query",
     [
         "(new your city) OR (big apple)",
-        '"a phrase"' "status:active",
+        '"a phrase"',
+        "status:active",
         'author:"John Smith"',
         "book.\\*:(quick OR brown)",
         "_exists_:title",
