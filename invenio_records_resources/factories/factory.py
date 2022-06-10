@@ -60,6 +60,7 @@ class RecordTypeFactory(object):
         pid_field_kwargs=None,
         model_cls_attrs=None,
         record_cls_attrs=None,
+        resource_cls_attrs=None,
         service_id=None,
     ):
         """Constructor."""
@@ -84,6 +85,7 @@ class RecordTypeFactory(object):
         self.index_name = self._build_index_name(index_name)
         self.model_cls_attrs = model_cls_attrs or {}
         self.record_cls_attrs = record_cls_attrs or {}
+        self.resource_cls_attrs = resource_cls_attrs or {}
 
         # resource class attributes
         self.endpoint_route = endpoint_route
@@ -174,6 +176,7 @@ class RecordTypeFactory(object):
         config_cls_attributes = {
             "blueprint_name": self.record_name_lower,
             "url_prefix": self.endpoint_route or f"/{self.record_name_lower}s",
+            **self.resource_cls_attrs,
         }
 
         self.resource_config_cls = type(
