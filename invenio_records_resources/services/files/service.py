@@ -95,6 +95,9 @@ class FileService(Service):
         """Update the metadata of a file."""
         record = self.get_record(id_, identity, "create_files")
 
+        if file_key not in record.files:
+            return None
+
         self.run_components(
             "update_file_metadata", identity, id_, file_key, record, data, uow=uow
         )
@@ -111,6 +114,9 @@ class FileService(Service):
         """Read the metadata of a file."""
         record = self.get_record(id_, identity, "read_files")
 
+        if file_key not in record.files:
+            return None
+
         self.run_components("read_file_metadata", identity, id_, file_key, record)
 
         return self.file_result_item(
@@ -125,6 +131,10 @@ class FileService(Service):
     def extract_file_metadata(self, identity, id_, file_key, uow=None):
         """Extract metadata from a file and update the file metadata file."""
         record = self.get_record(id_, identity, "create_files")
+
+        if file_key not in record.files:
+            return None
+
         file_record = record.files[file_key]
 
         self.run_components(
@@ -151,6 +161,9 @@ class FileService(Service):
     def commit_file(self, identity, id_, file_key, uow=None):
         """Commit a file upload."""
         record = self.get_record(id_, identity, "create_files")
+
+        if file_key not in record.files:
+            return None
 
         self.run_components("commit_file", identity, id_, file_key, record, uow=uow)
 
@@ -213,6 +226,9 @@ class FileService(Service):
         """Save file content."""
         record = self.get_record(id_, identity, "create_files")
 
+        if file_key not in record.files:
+            return None
+
         self.run_components(
             "set_file_content",
             identity,
@@ -235,6 +251,9 @@ class FileService(Service):
     def get_file_content(self, identity, id_, file_key):
         """Retrieve file content."""
         record = self.get_record(id_, identity, "read_files")
+
+        if file_key not in record.files:
+            return None
 
         self.run_components("get_file_content", identity, id_, file_key, record)
 
