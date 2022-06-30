@@ -43,10 +43,10 @@ class FileItem(RecordItem):
         """Get links for this result item."""
         return self._links_tpl.expand(self._file)
 
-    def send_file(self, restricted=True, as_attachment=False):
+    def send_file(self, restricted=True, as_attachment=False, max_age=None, no_cache=False):
         """Return file stream."""
         return self._file.object_version.send_file(
-            restricted=restricted, as_attachment=as_attachment
+            restricted=restricted, as_attachment=as_attachment, max_age=max_age, no_cache=no_cache
         )
 
     def open_stream(self, mode):
