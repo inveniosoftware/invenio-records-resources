@@ -66,7 +66,7 @@ def input_data(input_data):
     return input_data
 
 
-def test_files_api_flow(client, es_clear, headers, input_data, location):
+def test_files_api_flow(client, search_clear, headers, input_data, location):
     """Test record creation."""
     # Initialize a draft
     res = client.post("/mocks", headers=headers, json=input_data)
@@ -160,7 +160,7 @@ def test_files_api_flow(client, es_clear, headers, input_data, location):
     assert len(res.json["entries"]) == 0
 
 
-def test_default_preview_file(app, client, es_clear, headers, input_data, location):
+def test_default_preview_file(app, client, search_clear, headers, input_data, location):
     # Initialize a draft
     res = client.post("/mocks", headers=headers, json=input_data)
     assert res.status_code == 201
@@ -245,7 +245,7 @@ def test_default_preview_file(app, client, es_clear, headers, input_data, locati
     assert res.json["default_preview"] is None
 
 
-def test_file_api_errors(client, es_clear, headers, input_data, location):
+def test_file_api_errors(client, search_clear, headers, input_data, location):
     """Test REST API errors for file management."""
     h = headers
 
@@ -297,7 +297,9 @@ def test_file_api_errors(client, es_clear, headers, input_data, location):
     assert res.status_code == 400
 
 
-def test_disabled_upload_file_resource(client, es_clear, headers, input_data, location):
+def test_disabled_upload_file_resource(
+    client, search_clear, headers, input_data, location
+):
     """Test file resources with disabled file upload"""
 
     # Initialize a draft
@@ -327,7 +329,7 @@ def test_disabled_upload_file_resource(client, es_clear, headers, input_data, lo
 
 
 def test_disable_files_when_files_already_present_should_error(
-    app, client, es_clear, headers, input_data, location
+    app, client, search_clear, headers, input_data, location
 ):
     # Initialize a record
     response = client.post("/mocks", headers=headers, json=input_data)

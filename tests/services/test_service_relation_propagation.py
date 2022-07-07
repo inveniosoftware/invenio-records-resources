@@ -72,12 +72,12 @@ def assert_record_from_db_and_es(
     assert from_db["metadata"]["inner_record"]["id"] == id_
     assert from_db["metadata"]["inner_record"]["metadata"]["title"] == title_db
 
-    # elasticseach
-    from_es = service.search(identity, {"q": recid})
-    assert from_es.total == 1
-    from_es = list(from_es.hits)[0]
-    assert from_es["metadata"]["inner_record"]["id"] == id_
-    assert from_es["metadata"]["inner_record"]["metadata"]["title"] == title_es
+    # search
+    from_search = service.search(identity, {"q": recid})
+    assert from_search.total == 1
+    from_search = list(from_search.hits)[0]
+    assert from_search["metadata"]["inner_record"]["id"] == id_
+    assert from_search["metadata"]["inner_record"]["metadata"]["title"] == title_es
 
 
 def test_relation_update_propagation(
@@ -120,7 +120,7 @@ def test_relation_update_propagation(
         rec_one.id,
         id_,
         title_db="new title",  # cmp deref makes a query so it is updated
-        title_es=title,  # es did not get updated yet
+        title_es=title,  # search did not get updated yet
     )
     assert_record_from_db_and_es(
         identity_simple, service_wrel, rec_two.id, id_, "new title"

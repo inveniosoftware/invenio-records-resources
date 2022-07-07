@@ -14,8 +14,8 @@ import hashlib
 from flask import request
 
 
-def es_preference():
-    """Generating an identifier for use with Elasticsearch preference param."""
+def search_preference():
+    """Generating an identifier for use with the search engine preference param."""
     user_agent = request.headers.get("User-Agent", "")
     ip = request.remote_addr
     user_hash = f"{ip}-{user_agent}".encode("utf8")

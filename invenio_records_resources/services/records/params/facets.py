@@ -9,7 +9,6 @@
 
 """Facets parameter interpreter API."""
 
-from elasticsearch_dsl.query import Q
 
 from ..facets import FacetsResponse
 from .base import ParamInterpreter

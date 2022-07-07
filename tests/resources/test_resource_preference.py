@@ -14,11 +14,12 @@ from unittest import mock
 from invenio_records_resources.resources.records import resource
 
 
-def test_get_es_preference(app, client, headers, monkeypatch):
-    monkeypatch.setattr(resource, "es_preference", mock.MagicMock(return_value="test"))
+def test_get_search_preference(app, client, headers, monkeypatch):
+    _mock = mock.MagicMock(return_value="test")
+    monkeypatch.setattr(resource, "search_preference", _mock)
 
     h = {**headers, "User-Agent": "Chrome"}
     environ = {"REMOTE_ADDR": "1.2.3.4"}
     r = client.get("/mocks", headers=h, environ_overrides=environ)
 
-    assert resource.es_preference.called
+    assert resource.search_preference.called

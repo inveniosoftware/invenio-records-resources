@@ -8,4 +8,4 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Elasticsearch version 6 mappings."""
+"""OpenSearch version 1 mappings."""

@@ -20,7 +20,7 @@ class Mapping:
 
     @classmethod
     def properties_for_fields(cls, given_fields_name, available_fields):
-        """Prepare ES mapping properties for each field."""
+        """Prepare search mapping properties for each field."""
         fields = []
         if given_fields_name:  # create only specified fields
             given_fields_name = set(given_fields_name)

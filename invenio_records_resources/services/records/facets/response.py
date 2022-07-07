@@ -6,13 +6,12 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Elasticsearch DSL response class for adding a facets property."""
+"""Search engine DSL response class for adding a facets property."""
 
-from elasticsearch_dsl import AttrDict
-from elasticsearch_dsl.response import Response
+from invenio_search.engine import dsl
 
 
-class FacetsResponse(Response):
+class FacetsResponse(dsl.response.Response):
     """Search response class that adds a facet property.
 
     Provides a ``facets`` and ``labelled_facets`` property that you can use
@@ -56,7 +55,7 @@ class FacetsResponse(Response):
     def facets(self):
         """Unlabelled facets."""
         if not hasattr(self, "_facets"):
-            super().__setattr__("_facets", AttrDict({}))
+            super().__setattr__("_facets", dsl.AttrDict({}))
 
             try:
                 for name, facet, data, selection in self._iter_facets():
@@ -72,7 +71,7 @@ class FacetsResponse(Response):
     def labelled_facets(self):
         """Labelled facets."""
         if not hasattr(self, "_labelled_facets"):
-            super().__setattr__("_labelled_facets", AttrDict({}))
+            super().__setattr__("_labelled_facets", dsl.AttrDict({}))
 
             try:
                 for name, facet, data, selection in self._iter_facets():

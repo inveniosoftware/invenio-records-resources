@@ -35,7 +35,7 @@ jobs:
         requirements-level: [pypi]
         cache-service: [redis]
         db-service: [postgresql10, postgresql13, mysql5, mysql8]
-        search-service: [elasticsearch7]
+        search-service: [opensearch1,elasticsearch7]
         exclude:
           - python-version: 3.7
             db-service: postgresql13
@@ -55,6 +55,9 @@ jobs:
 
           - db-service: mysql8
             DB_EXTRAS: "mysql"
+
+          - search-service: opensearch1
+            SEARCH_EXTRAS: "opensearch1"
 
           - search-service: elasticsearch7
             SEARCH_EXTRAS: "elasticsearch7"

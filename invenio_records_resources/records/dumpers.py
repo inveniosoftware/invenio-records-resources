@@ -10,7 +10,6 @@
 
 from flask import current_app
 from invenio_records.dumpers import ElasticsearchDumperExt
-from werkzeug.utils import cached_property
 
 
 class CustomFieldsDumperExt(ElasticsearchDumperExt):

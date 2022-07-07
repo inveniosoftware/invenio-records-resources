@@ -11,7 +11,6 @@
 from json import JSONDecodeError
 
 import marshmallow as ma
-from elasticsearch.exceptions import RequestError
 from flask import jsonify, make_response, request, url_for
 from flask_babelex import lazy_gettext as _
 from flask_resources import HTTPJSONException, create_error_handler
@@ -26,6 +25,7 @@ from invenio_records.systemfields.relations import (
     InvalidCheckValue,
     InvalidRelationValue,
 )
+from invenio_search.engine import search
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.routing import BuildError
 
@@ -47,8 +47,8 @@ class HTTPJSONValidationException(HTTPJSONException):
         super().__init__(code=400, errors=validation_error_to_list_errors(exception))
 
 
-class HTTPJSONElasticsearchRequestError(HTTPJSONException):
-    """HTTP exception responsible for mapping Elasticsearch errors."""
+class HTTPJSONSearchRequestError(HTTPJSONException):
+    """HTTP exception responsible for mapping search engine errors."""
 
     causes_responses = {
         "query_shard_exception": (400, _("Invalid query string syntax.")),
@@ -168,7 +168,7 @@ class ErrorHandlersMixin:
                 description="Not a valid value.",
             )
         ),
-        RequestError: create_error_handler(
-            lambda e: HTTPJSONElasticsearchRequestError(e)
+        search.exceptions.RequestError: create_error_handler(
+            lambda e: HTTPJSONSearchRequestError(e)
         ),
     }
