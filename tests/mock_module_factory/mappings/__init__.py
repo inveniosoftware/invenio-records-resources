@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #
+# This file is part of Invenio.
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
@@ -7,8 +8,4 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio Resources module to create REST APIs."""
-
-SITE_UI_URL = "https://127.0.0.1:5000"
-
-SITE_API_URL = "https://127.0.0.1:5000/api"
+"""Factory mock test module mappings."""

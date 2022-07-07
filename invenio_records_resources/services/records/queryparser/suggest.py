@@ -8,9 +8,7 @@
 
 """Query parameter interpreter API."""
 
-from elasticsearch_dsl import Q
-
-from invenio_records_resources.config import lt_es7
+from invenio_search.engine import dsl, uses_es7
 
 from .query import QueryParser
 
@@ -18,9 +16,9 @@ from .query import QueryParser
 class SuggestQueryParser(QueryParser):
     """Query parser is useful for search-as-you-type/auto completion features.
 
-    The query parser creates an Elasticsearch multi match query with the
+    The query parser creates a search engine multi match query with the
     default type ``bool_prefix``. It works in conjunction with having one or
-    more ``search_as_you_type`` fields defined in your Elasticsearch mapping.
+    more ``search_as_you_type`` fields defined in your search engine mapping.
 
     First, you need to define one or more ``search_as_you_type`` fields in your
     index mapping, e.g.::
@@ -58,12 +56,12 @@ class SuggestQueryParser(QueryParser):
         """Constructor."""
         super().__init__(identity=identity, extra_params=extra_params)
         self.extra_params.setdefault(
-            "type", "phrase_prefix" if lt_es7 else "bool_prefix"
+            "type", "phrase_prefix" if not uses_es7() else "bool_prefix"
         )
 
     def parse(self, query_str):
         """Parse the query."""
-        if lt_es7 and self.extra_params.get("fields"):
+        if not uses_es7() and self.extra_params.get("fields"):
             # On ES v6 we have to filter out field names that uses the
             # search_as_you_type field names (ending with ._2gram or ._3gram)
             self.extra_params["fields"] = list(
@@ -72,4 +70,4 @@ class SuggestQueryParser(QueryParser):
                     self.extra_params["fields"],
                 )
             )
-        return Q("multi_match", query=query_str, **self.extra_params)
+        return dsl.Q("multi_match", query=query_str, **self.extra_params)

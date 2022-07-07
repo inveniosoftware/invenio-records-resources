@@ -9,17 +9,17 @@
 """Tasks tests."""
 
 from celery import current_app as current_celery_app
-from elasticsearch_dsl import Q
 from invenio_indexer.proxies import current_indexer_registry
+from invenio_search.engine import dsl
 
 from invenio_records_resources.tasks import manage_indexer_queues
 
 
-def _es_query(uuid):
+def _search_query(uuid):
     """Creates a query for a UUID."""
-    clauses = [Q("bool", must=[Q("term", **{"uuid": uuid})])]
+    clauses = [dsl.Q("bool", must=[dsl.Q("term", **{"uuid": uuid})])]
 
-    return Q(
+    return dsl.Q(
         "bool",
         minimum_should_match=1,
         should=clauses,
@@ -36,7 +36,7 @@ def test_manage_indexer_queues(app, service, identity_simple, input_data):
     uuid = item._record.id
 
     # send to reindex
-    assert service.reindex(identity_simple, es_query=_es_query(uuid))
+    assert service.reindex(identity_simple, search_query=_search_query(uuid))
     # check there is one item in the queue
     queue = service.indexer.mq_queue.bind(channel)
     _, num_messages, _ = queue.queue_declare()

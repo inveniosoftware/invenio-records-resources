@@ -8,8 +8,7 @@
 
 """Facets types defined."""
 
-from elasticsearch_dsl import A, Q
-from elasticsearch_dsl import TermsFacet as TermsFacetBase
+from invenio_search.engine import dsl
 
 
 class LabelledFacetMixin:
@@ -19,7 +18,6 @@ class LabelledFacetMixin:
         """Initialize class."""
         self._label = label or ""
         self._value_labels = value_labels
-        self._metric = None  # Needed only for ES6 (can be removed later)
         super().__init__(**kwargs)
 
     def get_value(self, bucket):
@@ -69,16 +67,8 @@ class LabelledFacetMixin:
             )
         return {"buckets": out, "label": str(self._label)}
 
-    def get_metric(self, bucket):
-        """Compatibility for ES6."""
-        # This function is defined by elasticsearch-dsl v7, but not v6, so we
-        # add it here.
-        if self._metric:
-            return bucket["metric"]["value"]
-        return bucket["doc_count"]
 
-
-class TermsFacet(LabelledFacetMixin, TermsFacetBase):
+class TermsFacet(LabelledFacetMixin, dsl.TermsFacet):
     """Terms facet.
 
     .. code-block:: python
@@ -134,8 +124,10 @@ class NestedTermsFacet(TermsFacet):
 
     def get_aggregation(self):
         """Get the aggregation and subaggregation."""
-        return A(
-            "terms", field=self._field, aggs={"inner": A("terms", field=self._subfield)}
+        return dsl.A(
+            "terms",
+            field=self._field,
+            aggs={"inner": dsl.A("terms", field=self._subfield)},
         )
 
     def _parse_values(self, filter_values):
@@ -187,11 +179,11 @@ class NestedTermsFacet(TermsFacet):
         field_value, subfield_values = parsed_value
 
         if subfield_values:
-            return Q("term", **{self._field: field_value}) & Q(
+            return dsl.Q("term", **{self._field: field_value}) & dsl.Q(
                 "terms", **{self._subfield: subfield_values}
             )
         else:
-            return Q("term", **{self._field: field_value})
+            return dsl.Q("term", **{self._field: field_value})
 
     def add_filter(self, filter_values):
         """Construct a filter query for the facet."""

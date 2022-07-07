@@ -35,17 +35,17 @@ def test_record_via_field(app, db):
     assert record.metadata == {"title": "test"}
 
 
-def test_record_indexing(app, db, es, example_record, indexer):
+def test_record_indexing(app, db, search, example_record, indexer):
     """Test indexing of a record."""
-    # Index document in ES
+    # Index document in the search cluster
     assert indexer.index(example_record)["result"] == "created"
 
-    # Retrieve document from ES
+    # Retrieve document from search
     data = current_search_client.get(
         "records-record-v1.0.0", id=example_record.id, doc_type="_doc"
     )
 
-    # Loads the ES data and compare
+    # Loads the search data and compare
     record = Record.loads(data["_source"])
     assert record == example_record
     assert record.id == example_record.id
@@ -58,7 +58,7 @@ def test_record_indexing(app, db, es, example_record, indexer):
     assert record.metadata == example_record["metadata"]
 
 
-def test_record_delete_reindex(app, db, es, example_record, example_data, indexer):
+def test_record_delete_reindex(app, db, search, example_record, example_data, indexer):
     """Test reindexing of a deleted record."""
     record = example_record
 

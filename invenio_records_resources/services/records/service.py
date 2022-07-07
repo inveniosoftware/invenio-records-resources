@@ -10,14 +10,13 @@
 
 """Record Service API."""
 
-from elasticsearch_dsl import Q
 from flask import current_app
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
+from invenio_search.engine import dsl
 from kombu import Queue
 from werkzeug.local import LocalProxy
 
-from ...config import lt_es7
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
 from ..uow import RecordCommitOp, RecordDeleteOp, unit_of_work
@@ -56,7 +55,7 @@ class RecordService(Service):
     def record_to_index(self, record):
         """Function used to map a record to an index."""
         # We are returning "_doc" as document type as recommended by
-        # Elasticsearch documentation to have v6.x and v7.x equivalent. In v8
+        # the search engine documentation. In v8
         # document types will have been completely removed.
         return record.index._name, "_doc"
 
@@ -136,14 +135,13 @@ class RecordService(Service):
             search
             # Avoid query bounce problem
             .with_preference_param(preference)
-            # Add document version to ES response
+            # Add document version to search response
             .params(version=True)
         )
 
         # Extras
         extras = {}
-        if not lt_es7:
-            extras["track_total_hits"] = True
+        extras["track_total_hits"] = True
         search = search.extra(**extras)
 
         return search
@@ -179,14 +177,14 @@ class RecordService(Service):
         action,
         identity,
         params,
-        es_preference,
+        search_preference,
         record_cls=None,
         search_opts=None,
         extra_filter=None,
         permission_action="read",
         **kwargs,
     ):
-        """Create the Elasticsearch DSL."""
+        """Create the search engine DSL."""
         # Merge params
         # NOTE: We allow using both the params variable, as well as kwargs. The
         # params is used by the resource, and kwargs is used to have an easier
@@ -194,13 +192,13 @@ class RecordService(Service):
         # .search(idty, params={'q': '...'}).
         params.update(kwargs)
 
-        # Create an Elasticsearch DSL
+        # Create an search engine DSL
         search = self.search_request(
             identity,
             params,
             record_cls or self.record_cls,
             search_opts or self.config.search,
-            preference=es_preference,
+            preference=search_preference,
             extra_filter=extra_filter,
             permission_action=permission_action,
         )
@@ -214,13 +212,15 @@ class RecordService(Service):
     #
     # High-level API
     #
-    def search(self, identity, params=None, es_preference=None, expand=False, **kwargs):
+    def search(
+        self, identity, params=None, search_preference=None, expand=False, **kwargs
+    ):
         """Search for records matching the querystring."""
         self.require_permission(identity, "search")
 
         # Prepare and execute the search
         params = params or {}
-        search = self._search("search", identity, params, es_preference, **kwargs)
+        search = self._search("search", identity, params, search_preference, **kwargs)
         search_result = search.execute()
 
         return self.result_list(
@@ -234,14 +234,14 @@ class RecordService(Service):
             expand=expand,
         )
 
-    def scan(self, identity, params=None, es_preference=None, **kwargs):
+    def scan(self, identity, params=None, search_preference=None, **kwargs):
         """Scan for records matching the querystring."""
         self.require_permission(identity, "search")
 
         # Prepare and execute the search as scan()
         params = params or {}
         search_result = self._search(
-            "scan", identity, params, es_preference, **kwargs
+            "scan", identity, params, search_preference, **kwargs
         ).scan()
 
         return self.result_list(
@@ -254,7 +254,7 @@ class RecordService(Service):
         )
 
     def reindex(
-        self, identity, params=None, es_preference=None, es_query=None, **kwargs
+        self, identity, params=None, search_preference=None, search_query=None, **kwargs
     ):
         """Reindex records matching the query parameters."""
         self.require_permission(identity, "search")
@@ -263,19 +263,19 @@ class RecordService(Service):
         params = params or {}
         params.update(kwargs)
 
-        # create an Elasticsearch DSL, we do not want components to run
+        # create a search engine DSL, we do not want components to run
         search = self.search_request(
             identity,
             params,
             self.record_cls,
             self.config.search,
-            preference=es_preference,
+            preference=search_preference,
         ).source(
             False
         )  # get only the uuid of the records
 
-        if es_query:  # incompatible with params={"q":...}
-            search = search.query(es_query)
+        if search_query:  # incompatible with params={"q":...}
+            search = search.query(search_query)
 
         search_result = search.scan()
         iterable_ids = (res.meta.id for res in search_result)
@@ -362,7 +362,7 @@ class RecordService(Service):
     def _read_many(
         self,
         identity,
-        es_query,
+        search_query,
         fields=None,
         max_records=150,
         record_cls=None,
@@ -389,13 +389,13 @@ class RecordService(Service):
             dumper_fields = ["uuid", "version_id", "created", "updated", "expires_at"]
             fields = fields + dumper_fields
             # ES 7.11+ supports a more efficient way of fetching only certain
-            # fields using the "fields"-option to a query. However, ES 6 and
-            # ES 7 versions does not support it, so we use the source filtering
+            # fields using the "fields"-option to a query. However, ES 7 and
+            # OS 1 versions does not support it, so we use the source filtering
             # method instead for now.
             search = search.source(fields)
 
         search = search[0:max_records]
-        search_result = search.query(es_query).execute()
+        search_result = search.query(search_query).execute()
 
         return search_result
 
@@ -403,8 +403,8 @@ class RecordService(Service):
         """Search for records matching the ids."""
         clauses = []
         for id_ in ids:
-            clauses.append(Q("term", **{"id": id_}))
-        query = Q("bool", minimum_should_match=1, should=clauses)
+            clauses.append(dsl.Q("term", **{"id": id_}))
+        query = dsl.Q("bool", minimum_should_match=1, should=clauses)
 
         results = self._read_many(identity, query, fields, len(ids), **kwargs)
 
@@ -412,8 +412,8 @@ class RecordService(Service):
 
     def read_all(self, identity, fields, max_records=150, **kwargs):
         """Search for records matching the querystring."""
-        es_query = Q("match_all")
-        results = self._read_many(identity, es_query, fields, max_records, **kwargs)
+        search_query = dsl.Q("match_all")
+        results = self._read_many(identity, search_query, fields, max_records, **kwargs)
 
         return self.result_list(self, identity, results)
 
@@ -486,17 +486,19 @@ class RecordService(Service):
             for record in records_info:
                 recid, uuid, revision_id = record
                 clauses.append(
-                    Q(
+                    dsl.Q(
                         "bool",
-                        must=[Q("term", **{f"{field}.id": recid})],
+                        must=[dsl.Q("term", **{f"{field}.id": recid})],
                         must_not=[
-                            Q("term", **{f"{field}.@v": f"{uuid}::{revision_id}"})
+                            dsl.Q("term", **{f"{field}.@v": f"{uuid}::{revision_id}"})
                         ],
                     )
                 )
 
-        filter = [Q("range", indexed_at={"lte": notif_time})]
-        es_query = Q("bool", minimum_should_match=1, should=clauses, filter=filter)
+        filter = [dsl.Q("range", indexed_at={"lte": notif_time})]
+        search_query = dsl.Q(
+            "bool", minimum_should_match=1, should=clauses, filter=filter
+        )
 
-        self.reindex(identity, es_query=es_query)
+        self.reindex(identity, search_query=search_query)
         return True

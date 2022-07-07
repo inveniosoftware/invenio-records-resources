@@ -10,7 +10,7 @@
 
 from functools import partial
 
-from elasticsearch_dsl import Q
+from invenio_search.engine import dsl
 from luqum.exceptions import ParseError
 from luqum.parser import parser as luqum_parser
 
@@ -18,7 +18,7 @@ from invenio_records_resources.services.errors import QuerystringValidationError
 
 
 class QueryParser:
-    """Parse a query string into a Elasticsearch DSL Q object.
+    """Parse a query string into a search engine DSL Q object.
 
     You usually set the query parser on the ``SearchOptions``::
 
@@ -33,7 +33,7 @@ class QueryParser:
                 fields=["title^2", "description"]
             )
 
-    See the Elasticsearch/Open Search reference documentation for supported
+    See the search engine reference documentation for supported
     parameters. Some include:
 
     - ``allow_leading_wildcard``
@@ -80,7 +80,7 @@ class QueryParser:
         """Parse the query."""
         try:
             # We parse the Lucene query syntax in Python, so we know upfront
-            # if the syntax is correct before executing it in Elasticsearch
+            # if the syntax is correct before executing it in the search engine
             tree = luqum_parser.parse(query_str)
 
             # Perform transformation on the abstract syntax tree (AST)
@@ -88,7 +88,7 @@ class QueryParser:
                 transformer = self.tree_transformer_factory()
                 new_tree = transformer.visit(tree, context={"identity": self.identity})
                 query_str = str(new_tree)
-            return Q("query_string", query=query_str, **self.extra_params)
+            return dsl.Q("query_string", query=query_str, **self.extra_params)
         except (ParseError, QuerystringValidationError):
             # Fallback to a multi-match query.
-            return Q("multi_match", query=query_str, **self.extra_params)
+            return dsl.Q("multi_match", query=query_str, **self.extra_params)

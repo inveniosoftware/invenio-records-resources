@@ -83,7 +83,7 @@ def _assert_read_all(service, identity_simple, cache=True):
         assert record["metadata"]["title"] == "Test"
 
 
-def test_read_all(app, es_clear, service, identity_simple, input_data):
+def test_read_all(app, search_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)
@@ -92,7 +92,7 @@ def test_read_all(app, es_clear, service, identity_simple, input_data):
     _assert_read_all(service, identity_simple)
 
 
-def test_read_many_pid_values(app, es_clear, service, identity_simple, input_data):
+def test_read_many_pid_values(app, search_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)
@@ -110,7 +110,7 @@ def test_read_many_pid_values(app, es_clear, service, identity_simple, input_dat
         assert list(record["metadata"]["type"].keys()) == ["type"]
 
 
-def test_read_many_no_filter(app, es_clear, service, identity_simple, input_data):
+def test_read_many_no_filter(app, search_clear, service, identity_simple, input_data):
     # Create an items
     item_one = service.create(identity_simple, input_data)
     item_two = service.create(identity_simple, input_data)

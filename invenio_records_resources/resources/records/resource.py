@@ -22,7 +22,7 @@ from flask_resources import (
 )
 
 from ..errors import ErrorHandlersMixin
-from .utils import es_preference
+from .utils import search_preference
 
 #
 # Decorators
@@ -77,7 +77,7 @@ class RecordResource(ErrorHandlersMixin, Resource):
         hits = self.service.search(
             identity=identity,
             params=resource_requestctx.args,
-            es_preference=es_preference(),
+            search_preference=search_preference(),
             expand=resource_requestctx.args.get("expand", False),
         )
         return hits.to_dict(), 200

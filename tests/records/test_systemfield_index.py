@@ -9,7 +9,7 @@
 
 """Index field tests."""
 
-from elasticsearch_dsl import Index
+from invenio_search.engine import dsl
 from mock_module.api import Record
 
 from invenio_records_resources.records.systemfields import IndexField
@@ -17,15 +17,15 @@ from invenio_records_resources.records.systemfields import IndexField
 
 def test_class_attribute_access():
     """Test that field is returned."""
-    assert isinstance(Record.index, Index)
+    assert isinstance(Record.index, dsl.Index)
 
 
 def test_instance_attribute_access(base_app, db):
     """Test record creation."""
     record = Record.create({})
-    assert isinstance(record.index, Index)
+    assert isinstance(record.index, dsl.Index)
 
 
-def test_refresh(app, db, es):
+def test_refresh(app, db, search):
     """Test record creation."""
     assert Record.index.refresh()

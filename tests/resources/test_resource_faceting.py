@@ -22,8 +22,8 @@ from invenio_records_resources.services import RecordService
 
 
 @pytest.fixture(scope="module")
-def three_indexed_records(app, identity_simple, es):
-    # NOTE: es is used (and not es_clear) here because all tests
+def three_indexed_records(app, identity_simple, search):
+    # NOTE: search is used (and not search_clear) here because all tests
     #       assume 3 records have been indexed and NO tests in this module
     #       adds/deletes any.
     service = RecordService(ServiceConfig)
