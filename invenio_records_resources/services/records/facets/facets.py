@@ -252,3 +252,21 @@ class NestedTermsFacet(TermsFacet):
         if bucket_label:
             ret_val["label"] = str(self._label)
         return ret_val
+
+
+class CFTermsFacet(TermsFacet):
+    """Terms facet for custom fields.
+
+    Works exactly as TermsFacet except that prepends the prefix `custom_fields`
+    in the field definition.
+    """
+
+    def __init__(self, field=None, label=None, value_labels=None, **kwargs):
+        """Constructor."""
+        kwargs["field"] = self.field(field)
+        super().__init__(label, value_labels, **kwargs)
+
+    @classmethod
+    def field(cls, field):
+        """Format field with `custom_fields` prefix."""
+        return f"custom_fields.{field}"

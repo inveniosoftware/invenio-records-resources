@@ -8,11 +8,12 @@
 
 """Facets."""
 
-from .facets import NestedTermsFacet, TermsFacet
+from .facets import CFTermsFacet, NestedTermsFacet, TermsFacet
 from .labels import RecordRelationLabels
 from .response import FacetsResponse
 
 __all__ = (
+    "CFTermsFacet",
     "FacetsResponse",
     "NestedTermsFacet",
     "RecordRelationLabels",
