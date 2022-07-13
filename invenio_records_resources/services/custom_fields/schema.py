@@ -18,6 +18,8 @@ class CustomFieldsSchema(Schema):
     Uses the singleton pattern to avoid loading multiple times.
     """
 
+    field_schema_method = "schema"
+
     # FIXME: config_var better name? somehow link to service config?
     # they are still used independently (e.g. schema in rdm-records)
     def __init__(self, config_var, *args, **kwargs):
@@ -25,7 +27,8 @@ class CustomFieldsSchema(Schema):
         super().__init__(*args, **kwargs)
         config = current_app.config.get(config_var, {})
         self.fields = {
-            field_key: field.schema() for field_key, field in config.items()
+            field_key: getattr(field, self.field_schema_method)()
+            for field_key, field in config.items()
         }
         self._schema = Schema.from_dict(self.fields)()
 
@@ -36,3 +39,9 @@ class CustomFieldsSchema(Schema):
     def _deserialize(self, data, **kwargs):
         """Loads the custom fields values."""
         return self._schema.load(data=data)
+
+
+class CustomFieldsSchemaUI(CustomFieldsSchema):
+    """Marshmallow schema for custom fields in the UI."""
+
+    field_schema_method = "ui_schema"

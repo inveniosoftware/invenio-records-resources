@@ -18,6 +18,8 @@ class BaseCF(ABC):
         # TODO: this is duplicated in the config.
         # if we do not use the registry we might not need it?
         self.name = name
+        # FIXME: how to abstract this so relation_cls is not present in BaseCF
+        self.relation_cls = None
         super().__init__()
 
     @abstractmethod
@@ -29,3 +31,7 @@ class BaseCF(ABC):
     def schema(self):
         """Marshmallow schema for vocabulary custom fields."""
         pass
+
+    def ui_schema(self):
+        """Marshmallow UI schema for vocabulary custom fields."""
+        return self.schema()
