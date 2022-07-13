@@ -7,19 +7,18 @@
 
 """Custom Fields for InvenioRDM."""
 
-from .schema import CustomFieldsSchema
+from .schema import CustomFieldsSchema, CustomFieldsSchemaUI
 from .service import CustomFieldsService, CustomFieldsServiceConfig
 from .text import KeywordCF, TextCF
-from .vocabulary import VocabularyCF
 
 # TODO: Should this be a higher level package?
 # and have fields and service separated?
 
 __all__ = (
     "CustomFieldsSchema",
+    "CustomFieldsSchemaUI",
     "CustomFieldsService",
-    "CustomFieldsServiceConfig"
+    "CustomFieldsServiceConfig",
     "KeywordCF",
     "TextCF",
-    "VocabularyCF",
 )
