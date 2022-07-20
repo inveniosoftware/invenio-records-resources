@@ -11,8 +11,6 @@ from .schema import CustomFieldsSchema, CustomFieldsSchemaUI
 from .service import CustomFieldsService, CustomFieldsServiceConfig
 from .text import KeywordCF, TextCF
 
-# TODO: Should this be a higher level package?
-# and have fields and service separated?
 
 __all__ = (
     "CustomFieldsSchema",

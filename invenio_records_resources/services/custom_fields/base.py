@@ -15,10 +15,7 @@ class BaseCF(ABC):
 
     def __init__(self, name):
         """Constructor."""
-        # TODO: this is duplicated in the config.
-        # if we do not use the registry we might not need it?
         self.name = name
-        # FIXME: how to abstract this so relation_cls is not present in BaseCF
         self.relation_cls = None
         super().__init__()
 

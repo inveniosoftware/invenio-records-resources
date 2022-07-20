@@ -20,8 +20,6 @@ class CustomFieldsSchema(Schema):
 
     field_schema_method = "schema"
 
-    # FIXME: config_var better name? somehow link to service config?
-    # they are still used independently (e.g. schema in rdm-records)
     def __init__(self, config_var, *args, **kwargs):
         """constructor."""
         super().__init__(*args, **kwargs)

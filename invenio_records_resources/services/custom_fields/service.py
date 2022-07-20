@@ -25,8 +25,6 @@ class CustomFieldsServiceConfig(RecordServiceConfig):
 class CustomFieldsService(RecordService):
     """Custom Fields service."""
 
-
-    # FIXME: should create also in drafts
     def create(self, fields_name):
         """Create custom fields."""
 
@@ -47,7 +45,6 @@ class CustomFieldsService(RecordService):
 
         properties = {}
         for field in fields:
-            # TODO: custom is binded to json schema. Do we define config to control it?
             properties[f"custom.{field.name}"] = field.mapping
 
         try:
@@ -57,17 +54,10 @@ class CustomFieldsService(RecordService):
 
         return res.get("acknowledged"), None
 
-    # FIXME: should check also in drafts
     def exists(self, field_name):
         """Check if a custom field exists."""
-        # TODO: creating an `is_registered` method makes sense?
-        # to check if it is "configured" or not.
-        # while this method checks existance in ES, or should it do both?
         index = self.record_cls.index
 
-        # FIXME: get_mapping returns a dict with the index as key
-        # we have in index._name the alias, so we cannot access the actual value
-        # assume is only one mapping returned
         mapping = list(index.get_mapping().values())[0]["mappings"]
 
         parts = field_name.split(".")
