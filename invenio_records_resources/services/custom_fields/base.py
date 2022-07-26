@@ -19,16 +19,19 @@ class BaseCF(ABC):
         self.relation_cls = None
         super().__init__()
 
+    @property
     @abstractmethod
     def mapping(self):
         """Return the mapping."""
         pass
 
+    @property
     @abstractmethod
-    def schema(self):
+    def field(self):
         """Marshmallow schema for vocabulary custom fields."""
         pass
 
-    def ui_schema(self):
+    @property
+    def ui_field(self):
         """Marshmallow UI schema for vocabulary custom fields."""
         return self.schema()
