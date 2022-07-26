@@ -9,8 +9,8 @@
 
 from flask import current_app
 from elasticsearch.exceptions import RequestError
-from invenio_drafts_resources.services.records import RecordService, RecordServiceConfig
 
+from ..records import RecordService, RecordServiceConfig
 from .schema import CustomFieldsSchema
 
 
