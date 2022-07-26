@@ -28,15 +28,16 @@ class TextCF(BaseCF):
             _mapping["fields"] = {"keyword": {"type": "keyword"}}
         return _mapping
 
-    def schema(self):
+    @property
+    def field(self):
         """Marshmallow schema for vocabulary custom fields."""
         return SanitizedUnicode()
 
 
 class KeywordCF(TextCF):
-    """Keyword custom field"""
+    """Keyword custom field."""
 
+    @property
     def mapping(self):
-        """Return mapping"""
+        """Return the mapping."""
         return {"type": "keyword"}
-
