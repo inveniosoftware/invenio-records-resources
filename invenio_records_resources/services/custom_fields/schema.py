@@ -18,14 +18,14 @@ class CustomFieldsSchema(Schema):
     Uses the singleton pattern to avoid loading multiple times.
     """
 
-    field_schema_method = "schema"
+    field_property_name = "field"
 
-    def __init__(self, config_var, *args, **kwargs):
+    def __init__(self, fields_var, *args, **kwargs):
         """constructor."""
         super().__init__(*args, **kwargs)
-        config = current_app.config.get(config_var, {})
+        config = current_app.config.get(fields_var, {})
         self.fields = {
-            field_key: getattr(field, self.field_schema_method)()
+            field_key: getattr(field, self.field_property_name)
             for field_key, field in config.items()
         }
         self._schema = Schema.from_dict(self.fields)()
