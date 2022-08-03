@@ -13,10 +13,11 @@ from abc import ABC, abstractmethod
 class BaseCF(ABC):
     """Base Custom Field class."""
 
-    def __init__(self, name):
+    def __init__(self, name, field_args=None):
         """Constructor."""
         self.name = name
         self.relation_cls = None
+        self._field_args = field_args or {}
         super().__init__()
 
     @property
@@ -28,10 +29,10 @@ class BaseCF(ABC):
     @property
     @abstractmethod
     def field(self):
-        """Marshmallow schema for vocabulary custom fields."""
+        """Marshmallow field for custom fields."""
         pass
 
     @property
     def ui_field(self):
-        """Marshmallow UI schema for vocabulary custom fields."""
-        return self.schema()
+        """Marshmallow UI field for custom fields."""
+        return self.field()

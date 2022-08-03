@@ -12,13 +12,31 @@ from marshmallow_utils.fields import SanitizedUnicode
 from .base import BaseCF
 
 
-class TextCF(BaseCF):
+class KeywordCF(BaseCF):
+    """Keyword custom field."""
+
+    def __init__(self, name, **kwargs):
+        """Constructor."""
+        super().__init__(name, **kwargs)
+
+    @property
+    def mapping(self):
+        """Return the mapping."""
+        return {"type": "keyword"}
+
+    @property
+    def field(self):
+        """Marshmallow field custom fields."""
+        return SanitizedUnicode(**self._field_args)
+
+
+class TextCF(KeywordCF):
     """Text custom field."""
 
-    def __init__(self, name, use_as_filter=False):
+    def __init__(self, name, use_as_filter=False, **kwargs):
         """Constructor."""
         self.use_as_filter = use_as_filter
-        super().__init__(name)
+        super().__init__(name, **kwargs)
 
     @property
     def mapping(self):
@@ -27,17 +45,3 @@ class TextCF(BaseCF):
         if self.use_as_filter:
             _mapping["fields"] = {"keyword": {"type": "keyword"}}
         return _mapping
-
-    @property
-    def field(self):
-        """Marshmallow schema for vocabulary custom fields."""
-        return SanitizedUnicode()
-
-
-class KeywordCF(TextCF):
-    """Keyword custom field."""
-
-    @property
-    def mapping(self):
-        """Return the mapping."""
-        return {"type": "keyword"}
