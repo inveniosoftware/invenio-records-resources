@@ -7,6 +7,7 @@
 
 """Custom Fields for InvenioRDM."""
 
+from elasticsearch_dsl.field import Keyword, Text
 from marshmallow_utils.fields import SanitizedUnicode
 
 from .base import BaseCF
@@ -22,7 +23,7 @@ class KeywordCF(BaseCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        return {"type": "keyword"}
+        return Keyword().to_dict()
 
     @property
     def field(self):
@@ -41,7 +42,7 @@ class TextCF(KeywordCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        _mapping = {"type": "text"}
+        _mapping = Text().to_dict()
         if self.use_as_filter:
-            _mapping["fields"] = {"keyword": {"type": "keyword"}}
+            _mapping["fields"] = {"keyword": Keyword().to_dict()}
         return _mapping
