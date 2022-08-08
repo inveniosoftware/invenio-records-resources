@@ -42,4 +42,4 @@ class CustomFieldsSchema(Schema):
 class CustomFieldsSchemaUI(CustomFieldsSchema):
     """Marshmallow schema for custom fields in the UI."""
 
-    field_schema_method = "ui_field"
+    field_property_name = "ui_field"
