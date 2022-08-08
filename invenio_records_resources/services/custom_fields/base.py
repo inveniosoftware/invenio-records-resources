@@ -16,7 +16,6 @@ class BaseCF(ABC):
     def __init__(self, name, field_args=None):
         """Constructor."""
         self.name = name
-        self.relation_cls = None
         self._field_args = field_args or {}
         super().__init__()
 
