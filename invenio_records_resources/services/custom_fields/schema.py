@@ -5,7 +5,7 @@
 # Invenio-RDM-Records is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
-"""Custom Fields sub service for InvenioRDM."""
+"""Custom Fields schema for InvenioRDM."""
 
 from flask import current_app
 from marshmallow import Schema
@@ -42,4 +42,4 @@ class CustomFieldsSchema(Schema):
 class CustomFieldsSchemaUI(CustomFieldsSchema):
     """Marshmallow schema for custom fields in the UI."""
 
-    field_schema_method = "ui_schema"
+    field_schema_method = "ui_field"
