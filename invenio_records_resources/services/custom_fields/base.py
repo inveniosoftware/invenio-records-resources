@@ -34,4 +34,4 @@ class BaseCF(ABC):
     @property
     def ui_field(self):
         """Marshmallow UI field for custom fields."""
-        return self.field()
+        return self.field
