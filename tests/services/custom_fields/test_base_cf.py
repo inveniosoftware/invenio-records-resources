@@ -16,4 +16,4 @@ from invenio_records_resources.services.custom_fields import BaseCF
 def test_basecf_abstract():
     """Cant simply instantiate."""
     with pytest.raises(TypeError):
-        cf = BaseCF("name")
+        cf = BaseCF("name", "myorg")

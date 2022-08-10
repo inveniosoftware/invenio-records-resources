@@ -20,20 +20,20 @@ def app_config(app_config):
 
     Needed to set the fields on the custom fields schema.
     """
-    app_config["RECORDS_RESOURCES_CUSTOM_CONFIG"] = {
-        "txt": TextCF(name="txt"),
-        "req": TextCF(name="req", field_args={"required": True}),
-    }
+    app_config["RECORDS_RESOURCES_CUSTOM_CONFIG"] = [
+        TextCF(name="txt", namespace="myorg"),
+        TextCF(name="req", field_args={"required": True}),
+    ]
 
     return app_config
 
 
 def test_cf_schema(app):
     schema = CustomFieldsSchema("RECORDS_RESOURCES_CUSTOM_CONFIG")
-    assert schema.load({"txt": "some", "req": "other"}) == {
-        "txt": "some",
+    assert schema.load({"myorg:txt": "some", "req": "other"}) == {
+        "myorg:txt": "some",
         "req": "other",
     }
 
     with pytest.raises(ValidationError):
-        assert schema.load({"txt": "some"})
+        assert schema.load({"myorg:txt": "some"})

@@ -25,8 +25,7 @@ class CustomFieldsSchema(Schema):
         super().__init__(*args, **kwargs)
         config = current_app.config.get(fields_var, {})
         self.fields = {
-            field_key: getattr(field, self.field_property_name)
-            for field_key, field in config.items()
+            field.uri: getattr(field, self.field_property_name) for field in config
         }
         self._schema = Schema.from_dict(self.fields)()
 
