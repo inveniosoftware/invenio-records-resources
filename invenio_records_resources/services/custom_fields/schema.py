@@ -23,9 +23,9 @@ class CustomFieldsSchema(Schema):
     def __init__(self, fields_var, *args, **kwargs):
         """constructor."""
         super().__init__(*args, **kwargs)
-        config = current_app.config.get(fields_var, {})
+        config = current_app.config.get(fields_var, [])
         self.fields = {
-            field.uri: getattr(field, self.field_property_name) for field in config
+            field.name: getattr(field, self.field_property_name) for field in config
         }
         self._schema = Schema.from_dict(self.fields)()
 

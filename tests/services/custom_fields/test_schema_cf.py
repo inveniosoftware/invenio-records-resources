@@ -21,7 +21,7 @@ def app_config(app_config):
     Needed to set the fields on the custom fields schema.
     """
     app_config["RECORDS_RESOURCES_CUSTOM_CONFIG"] = [
-        TextCF(name="txt", namespace="myorg"),
+        TextCF(name="myorg:txt"),
         TextCF(name="req", field_args={"required": True}),
     ]
 
