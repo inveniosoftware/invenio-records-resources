@@ -35,3 +35,12 @@ class BaseCF(ABC):
     def ui_field(self):
         """Marshmallow UI field for custom fields."""
         return self.field
+
+
+class ListBaseCF(BaseCF):
+    """Base Custom Field class."""
+
+    def __init__(self, name, multiple=False, **kwargs):
+        """Constructor."""
+        super().__init__(name, **kwargs)
+        self._multiple = multiple
