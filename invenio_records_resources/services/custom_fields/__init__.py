@@ -7,7 +7,7 @@
 
 """Custom Fields for InvenioRDM."""
 
-from .base import BaseCF
+from .base import BaseCF, ListBaseCF
 from .schema import CustomFieldsSchema, CustomFieldsSchemaUI
 from .text import KeywordCF, TextCF
 
@@ -16,5 +16,6 @@ __all__ = (
     "CustomFieldsSchema",
     "CustomFieldsSchemaUI",
     "KeywordCF",
+    "ListBaseCF",
     "TextCF",
 )
