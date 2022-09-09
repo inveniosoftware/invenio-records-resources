@@ -9,6 +9,8 @@
 
 from abc import ABC, abstractmethod
 
+from marshmallow.fields import List
+
 
 class BaseCF(ABC):
     """Base Custom Field class."""
@@ -40,7 +42,19 @@ class BaseCF(ABC):
 class BaseListCF(BaseCF):
     """Base Custom Field class."""
 
-    def __init__(self, name, multiple=False, **kwargs):
-        """Constructor."""
+    def __init__(self, name, field_cls, multiple=False, **kwargs):
+        """Constructor.
+
+        :param field_cls: The Marshmallow field class to use.
+        :param multiple: If True, the field will be a List field.
+        """
         super().__init__(name, **kwargs)
         self._multiple = multiple
+        self._field_cls = field_cls
+
+    @property
+    def field(self):
+        """Marshmallow field custom fields."""
+        _field = self._field_cls(**self._field_args)
+
+        return List(_field) if self._multiple else _field

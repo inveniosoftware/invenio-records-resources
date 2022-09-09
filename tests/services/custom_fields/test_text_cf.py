@@ -80,3 +80,15 @@ def test_textcf_mapping():
 
     cf = TextCF("name", use_as_filter=True)
     assert cf.mapping == {"type": "text", "fields": {"keyword": {"type": "keyword"}}}
+
+
+def test_textcf_list():
+    cf = TextCF("name", multiple=True)
+    schema = Schema.from_dict({"test": cf.field})()
+
+    assert schema.load({"test": ["a string", "another string"]}) == {
+        "test": ["a string", "another string"]
+    }
+
+    with pytest.raises(ValidationError):
+        schema.load({"test": "a string"})
