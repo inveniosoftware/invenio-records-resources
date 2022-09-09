@@ -37,7 +37,7 @@ class BaseCF(ABC):
         return self.field
 
 
-class ListBaseCF(BaseCF):
+class BaseListCF(BaseCF):
     """Base Custom Field class."""
 
     def __init__(self, name, multiple=False, **kwargs):

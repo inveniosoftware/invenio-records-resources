@@ -10,10 +10,10 @@
 from marshmallow import fields
 from marshmallow_utils.fields import SanitizedUnicode
 
-from .base import ListBaseCF
+from .base import BaseListCF
 
 
-class KeywordCF(ListBaseCF):
+class KeywordCF(BaseListCF):
     """Keyword custom field."""
 
     @property
