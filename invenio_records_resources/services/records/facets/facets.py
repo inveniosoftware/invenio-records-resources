@@ -254,7 +254,16 @@ class NestedTermsFacet(TermsFacet):
         return ret_val
 
 
-class CFTermsFacet(TermsFacet):
+class CFFacetMixin:
+    """Mixin to abstract the custom fields path."""
+
+    @classmethod
+    def field(cls, field):
+        """Format field with `custom_fields` prefix."""
+        return f"custom_fields.{field}"
+
+
+class CFTermsFacet(CFFacetMixin, TermsFacet):
     """Terms facet for custom fields.
 
     Works exactly as TermsFacet except that prepends the prefix `custom_fields`
@@ -266,7 +275,15 @@ class CFTermsFacet(TermsFacet):
         kwargs["field"] = self.field(field)
         super().__init__(label, value_labels, **kwargs)
 
-    @classmethod
-    def field(cls, field):
-        """Format field with `custom_fields` prefix."""
-        return f"custom_fields.{field}"
+
+class CFNestedTermsFacet(CFFacetMixin, NestedTermsFacet):
+    """Nested Terms facet for custom fields.
+
+    Works exactly as NestedTermsFacet except that prepends the prefix `custom_fields`
+    in the field definition.
+    """
+
+    def __init__(self, field=None, label=None, value_labels=None, **kwargs):
+        """Constructor."""
+        kwargs["field"] = self.field(field)
+        super().__init__(label, value_labels, **kwargs)
