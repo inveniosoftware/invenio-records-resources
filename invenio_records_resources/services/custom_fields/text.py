@@ -16,18 +16,14 @@ from .base import BaseListCF
 class KeywordCF(BaseListCF):
     """Keyword custom field."""
 
+    def __init__(self, name, **kwargs):
+        """Constructor."""
+        super().__init__(name, field_cls=SanitizedUnicode, **kwargs)
+
     @property
     def mapping(self):
         """Return the mapping."""
         return {"type": "keyword"}
-
-    @property
-    def field(self):
-        """Marshmallow field custom fields."""
-        _schema = SanitizedUnicode(**self._field_args)
-        if self._multiple:
-            return fields.List(_schema)
-        return _schema
 
 
 class TextCF(KeywordCF):
