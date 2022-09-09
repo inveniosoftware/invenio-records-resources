@@ -7,7 +7,6 @@
 
 """Custom Fields for InvenioRDM."""
 
-from marshmallow import fields
 from marshmallow_utils.fields import SanitizedUnicode
 
 from .base import BaseListCF
