@@ -38,6 +38,24 @@ class BaseCF(ABC):
         """Marshmallow UI field for custom fields."""
         return self.field
 
+    def dump(self, record, cf_key="custom_fields"):
+        """Dump the custom field.
+
+        Gets both the record and the custom fields key as parameters.
+        This supports the case where a field is based on others, both
+        custom and non-custom fields.
+        """
+        pass  # no change applied
+
+    def load(self, record, cf_key="custom_fields"):
+        """Load the custom field.
+
+        Gets both the record and the custom fields key as parameters.
+        This supports the case where a field is based on others, both
+        custom and non-custom fields.
+        """
+        pass  # no change applied
+
 
 class BaseListCF(BaseCF):
     """Base Custom Field class."""

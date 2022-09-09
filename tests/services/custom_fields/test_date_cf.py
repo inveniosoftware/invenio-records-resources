@@ -39,8 +39,11 @@ def test_isodatestring_validate():
 def test_edtfdatestring_mapping():
     cf = EDTFDateStringCF("name")
     assert cf.mapping == {
-        "type": "date",
-        "fields": {"date_range": {"type": "date_range"}},
+        "type": "object",
+        "properties": {
+            "date": {"type": "keyword"},
+            "date_range": {"type": "date_range"},
+        },
     }
 
 
