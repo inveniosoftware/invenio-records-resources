@@ -21,12 +21,6 @@ class BaseCF(ABC):
 
     @property
     @abstractmethod
-    def mapping(self):
-        """Return the mapping."""
-        pass
-
-    @property
-    @abstractmethod
     def field(self):
         """Marshmallow field for custom fields."""
         pass
@@ -36,6 +30,13 @@ class BaseCF(ABC):
         """Marshmallow UI field for custom fields."""
         return self.field
 
+    @abstractmethod
+    def mapping(self, search_version=None):
+        """Return the mapping.
+
+        :param search_version: The search engine version to use (ES7, OpenSearch, etc.).
+        """
+        pass
 
 class ListBaseCF(BaseCF):
     """Base Custom Field class."""

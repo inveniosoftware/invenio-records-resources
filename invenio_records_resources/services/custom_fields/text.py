@@ -17,17 +17,16 @@ class KeywordCF(ListBaseCF):
     """Keyword custom field."""
 
     @property
-    def mapping(self):
-        """Return the mapping."""
-        return {"type": "keyword"}
-
-    @property
     def field(self):
         """Marshmallow field custom fields."""
         _schema = SanitizedUnicode(**self._field_args)
         if self._multiple:
             return fields.List(_schema)
         return _schema
+
+    def mapping(self, search_version=None):
+        """Return the mapping."""
+        return {"type": "keyword"}
 
 
 class TextCF(KeywordCF):
@@ -38,8 +37,7 @@ class TextCF(KeywordCF):
         super().__init__(name, **kwargs)
         self._use_as_filter = use_as_filter
 
-    @property
-    def mapping(self):
+    def mapping(self, search_version=None):
         """Return the mapping."""
         _mapping = {"type": "text"}
         if self._use_as_filter:
