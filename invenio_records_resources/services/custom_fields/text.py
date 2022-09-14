@@ -10,6 +10,7 @@
 from marshmallow_utils.fields import SanitizedUnicode
 
 from .base import BaseListCF
+from .mappings import KeywordMapping, TextMapping
 
 
 class KeywordCF(BaseListCF):
@@ -22,7 +23,7 @@ class KeywordCF(BaseListCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        return {"type": "keyword"}
+        return KeywordMapping().to_dict()
 
 
 class TextCF(KeywordCF):
@@ -36,7 +37,4 @@ class TextCF(KeywordCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        _mapping = {"type": "text"}
-        if self._use_as_filter:
-            _mapping["fields"] = {"keyword": {"type": "keyword"}}
-        return _mapping
+        return TextMapping(use_as_filter=self._use_as_filter).to_dict()

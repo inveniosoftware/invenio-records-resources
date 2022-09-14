@@ -17,6 +17,7 @@ from marshmallow_utils.fields import EDTFDateString, ISODateString
 from pytz import utc
 
 from .base import BaseListCF
+from .mappings import EDTFMapping, ISODateMapping
 
 
 class ISODateStringCF(BaseListCF):
@@ -29,7 +30,7 @@ class ISODateStringCF(BaseListCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        return {"type": "date"}
+        return ISODateMapping().to_dict()
 
 
 class EDTFDateStringCF(BaseListCF):
@@ -42,13 +43,7 @@ class EDTFDateStringCF(BaseListCF):
     @property
     def mapping(self):
         """Return the mapping."""
-        return {
-            "type": "object",
-            "properties": {
-                "date": {"type": "keyword"},
-                "date_range": {"type": "date_range"},
-            },
-        }
+        return EDTFMapping().to_dict()
 
     @property
     def field(self):

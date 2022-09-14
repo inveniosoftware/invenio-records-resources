@@ -7,7 +7,7 @@
 
 """Custom Fields for InvenioRDM."""
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractproperty
 
 from marshmallow.fields import List
 
@@ -22,13 +22,13 @@ class BaseCF(ABC):
         super().__init__()
 
     @property
-    @abstractmethod
+    @abstractproperty
     def mapping(self):
         """Return the mapping."""
         pass
 
     @property
-    @abstractmethod
+    @abstractproperty
     def field(self):
         """Marshmallow field for custom fields."""
         pass
