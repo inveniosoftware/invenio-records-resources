@@ -18,6 +18,41 @@ class Mapping:
     def to_dict(self):
         """Return the mapping as a dictionary."""
 
+    @classmethod
+    def properties_for_fields(cls, given_fields_name, available_fields):
+        """Prepare ES mapping properties for each field."""
+        fields = []
+        if given_fields_name:  # create only specified fields
+            given_fields_name = set(given_fields_name)
+            for a_field in available_fields:
+                if a_field.name in given_fields_name:
+                    fields.append(a_field)
+                    given_fields_name.remove(a_field.name)
+                if len(given_fields_name) == 0:
+                    break
+        else:  # create all fields
+            fields = available_fields
+
+        properties = {}
+        for field in fields:
+            properties[f"custom_fields.{field.name}"] = field.mapping
+
+        return properties
+
+    @classmethod
+    def field_exists(cls, field_name, index):
+        """Check if a field is present in `index`'s mapping."""
+        mapping = list(index.get_mapping().values())[0]["mappings"]
+
+        parts = field_name.split(".")
+        for part in parts:
+            mapping = mapping["properties"]  # here to avoid last field access
+            if part not in mapping.keys():
+                return False
+            mapping = mapping[part]
+
+        return True
+
 
 class KeywordMapping(Mapping):
     """Keyword mapping."""
