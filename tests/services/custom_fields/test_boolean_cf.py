@@ -6,7 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Test Text and Keyword Custom Field."""
+"""Test Boolean Custom Field."""
 
 import pytest
 from marshmallow import Schema, ValidationError

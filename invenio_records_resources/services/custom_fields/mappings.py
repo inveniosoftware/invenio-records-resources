@@ -105,3 +105,19 @@ class BooleanMapping(Mapping):
     def to_dict(self):
         """Return the mapping as a dictionary."""
         return {"type": "boolean"}
+
+
+class IntegerMapping(Mapping):
+    """Integer mapping."""
+
+    def to_dict(self):
+        """Return the mapping as a dictionary."""
+        return {"type": "integer"}
+
+
+class DoubleMapping(Mapping):
+    """Double mapping."""
+
+    def to_dict(self):
+        """Return the mapping as a dictionary."""
+        return {"type": "double"}
