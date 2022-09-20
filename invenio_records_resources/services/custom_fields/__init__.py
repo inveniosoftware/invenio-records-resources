@@ -10,6 +10,7 @@
 from .base import BaseCF, BaseListCF
 from .boolean import BooleanCF
 from .date import EDTFDateStringCF, ISODateStringCF
+from .number import DoubleCF, IntegerCF
 from .schema import CustomFieldsSchema, CustomFieldsSchemaUI
 from .text import KeywordCF, TextCF
 
@@ -19,8 +20,10 @@ __all__ = (
     "BooleanCF",
     "CustomFieldsSchema",
     "CustomFieldsSchemaUI",
+    "DoubleCF",
     "EDTFDateStringCF",
-    "KeywordCF",
+    "IntegerCF",
     "ISODateStringCF",
+    "KeywordCF",
     "TextCF",
 )
