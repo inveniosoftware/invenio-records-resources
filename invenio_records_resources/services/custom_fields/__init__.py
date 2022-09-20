@@ -8,6 +8,7 @@
 """Custom Fields for InvenioRDM."""
 
 from .base import BaseCF, BaseListCF
+from .boolean import BooleanCF
 from .date import EDTFDateStringCF, ISODateStringCF
 from .schema import CustomFieldsSchema, CustomFieldsSchemaUI
 from .text import KeywordCF, TextCF
@@ -15,6 +16,7 @@ from .text import KeywordCF, TextCF
 __all__ = (
     "BaseCF",
     "BaseListCF",
+    "BooleanCF",
     "CustomFieldsSchema",
     "CustomFieldsSchemaUI",
     "EDTFDateStringCF",

@@ -97,3 +97,11 @@ class ISODateMapping(Mapping):
     def to_dict(self):
         """Return the mapping as a dictionary."""
         return {"type": "date"}
+
+
+class BooleanMapping(Mapping):
+    """Boolean mapping."""
+
+    def to_dict(self):
+        """Return the mapping as a dictionary."""
+        return {"type": "boolean"}
