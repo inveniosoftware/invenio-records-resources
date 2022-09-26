@@ -11,7 +11,7 @@
 """Record type factory."""
 from invenio_db import db
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
-from invenio_records.dumpers import ElasticsearchDumper
+from invenio_records.dumpers import SearchDumper
 from invenio_records.models import RecordMetadataBase
 from invenio_records.systemfields import ConstantField
 from invenio_records_permissions import RecordPermissionPolicy
@@ -156,7 +156,7 @@ class RecordTypeFactory(object):
             "schema": ConstantField("$schema", self.schema_path),
             "index": IndexField(self.index_name),
             "pid": pid_field,
-            "dumper": self.record_dumper or ElasticsearchDumper(),
+            "dumper": self.record_dumper or SearchDumper(),
         }
 
         record_class_attributes.update(self.record_cls_attrs)
