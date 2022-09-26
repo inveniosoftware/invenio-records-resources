@@ -12,7 +12,7 @@
 
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
-from invenio_records.dumpers import ElasticsearchDumper
+from invenio_records.dumpers import SearchDumper
 from invenio_records.dumpers.indexedat import IndexedAtDumperExt
 from invenio_records.dumpers.relations import RelationDumperExt
 from invenio_records.systemfields import ConstantField, ModelField, RelationsField
@@ -59,7 +59,7 @@ class Record(RecordBase):
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
 
-    dumper = ElasticsearchDumper(
+    dumper = SearchDumper(
         extensions=[
             IndexedAtDumperExt(),
         ]
@@ -75,7 +75,7 @@ class RecordWithRelations(Record):
         )
     )
 
-    dumper = ElasticsearchDumper(
+    dumper = SearchDumper(
         extensions=[
             RelationDumperExt("relations"),
             IndexedAtDumperExt(),

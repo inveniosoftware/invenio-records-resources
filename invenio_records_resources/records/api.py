@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
-from invenio_records.dumpers import ElasticsearchDumper
+from invenio_records.dumpers import SearchDumper
 from invenio_records.systemfields import DictField, SystemFieldsMixin
 from invenio_records.systemfields.model import ModelField
 
@@ -36,7 +36,7 @@ class Record(RecordBase, SystemFieldsMixin):
     model_cls = None
 
     #: Default dumper (which happens to also be used for indexing).
-    dumper = ElasticsearchDumper()
+    dumper = SearchDumper()
 
     #: Metadata system field.
     metadata = DictField(clear_none=True, create_if_missing=True)
@@ -104,7 +104,7 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     record_cls = None
 
     #: Default dumper (which happens to also be used for indexing).
-    dumper = ElasticsearchDumper()
+    dumper = SearchDumper()
 
     #: Metadata system field.
     metadata = DictField(clear_none=True, create_if_missing=True)

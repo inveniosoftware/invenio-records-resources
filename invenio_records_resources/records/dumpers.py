@@ -9,10 +9,10 @@
 """Records dumpers and extensions."""
 
 from flask import current_app
-from invenio_records.dumpers import ElasticsearchDumperExt
+from invenio_records.dumpers import SearchDumperExt
 
 
-class CustomFieldsDumperExt(ElasticsearchDumperExt):
+class CustomFieldsDumperExt(SearchDumperExt):
     """Custom fields dumper extension."""
 
     def __init__(self, fields_var, key="custom_fields"):
