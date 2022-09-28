@@ -41,9 +41,7 @@ def test_record_indexing(app, db, search, example_record, indexer):
     assert indexer.index(example_record)["result"] == "created"
 
     # Retrieve document from search
-    data = current_search_client.get(
-        "records-record-v1.0.0", id=example_record.id, doc_type="_doc"
-    )
+    data = current_search_client.get("records-record-v1.0.0", id=example_record.id)
 
     # Loads the search data and compare
     record = Record.loads(data["_source"])
