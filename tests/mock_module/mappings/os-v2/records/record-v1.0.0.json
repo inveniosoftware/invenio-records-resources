@@ -1,0 +1,90 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "search_as_you_type"
+          },
+          "type": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "keyword"
+              },
+              "subtype": {
+                "type": "keyword"
+              }
+            }
+          },
+          "subject": {
+            "type": "keyword"
+          },
+          "inner_record": {
+            "type": "object",
+            "properties": {
+              "@v": {
+                "type": "keyword"
+              },
+              "id": {
+                "type": "keyword"
+              },
+              "title": {
+                "type": "text"
+              }
+            }
+          },
+          "created_by": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "integer"
+              },
+              "entity": {
+                "type": "keyword"
+              }
+            }
+          },
+          "simple": {
+            "type": "keyword"
+          },
+          "other": {
+            "type": "object",
+            "properties": {
+              "nested": {
+                "type": "object",
+                "properties": {
+                  "sub": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "created": {
+        "type": "date"
+      },
+      "updated": {
+        "type": "date"
+      },
+      "expires_at": {
+        "type": "date"
+      },
+      "indexed_at": {
+        "type": "date"
+      },
+      "uuid": {
+        "type": "keyword"
+      },
+      "version_id": {
+        "type": "integer"
+      }
+    }
+  }
+}
