@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -60,8 +60,7 @@ from collections.abc import MutableMapping
 from functools import wraps
 
 from invenio_files_rest.errors import InvalidKeyError, InvalidOperationError
-from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_records.systemfields import SystemField
+from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 
 
 def ensure_enabled(func):
@@ -145,7 +144,7 @@ class FilesManager(MutableMapping):
 
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
-    def create(self, key, obj=None, stream=None, data=None):
+    def create(self, key, obj=None, stream=None, data=None, **kwargs):
         """Create/initialize a file."""
         assert not (obj and stream)
 
@@ -154,8 +153,12 @@ class FilesManager(MutableMapping):
 
         rf = self.file_cls.create({}, key=key, record_id=self.record.id)
         if stream:
-            obj = ObjectVersion.create(self.bucket, key, stream=stream)
+            obj = ObjectVersion.create(self.bucket, key, stream=stream, **kwargs)
         if obj:
+            if isinstance(obj, dict):
+                fi = FileInstance.create()
+                fi.set_uri(**obj.pop("file"))
+                obj = ObjectVersion.create(self.bucket, key, fi.id)
             rf.object_version_id = obj.version_id
             rf.object_version = obj
         if data:
@@ -165,15 +168,23 @@ class FilesManager(MutableMapping):
         return rf
 
     @ensure_enabled
-    def update(self, key, obj=None, stream=None, data=None):
-        """Update a file."""
-        assert not (obj and stream)
+    def create_obj(self, key, stream, data=None, **kwargs):
+        """Create an ObjectVersion but do not pop it to the top of the stack."""
+        # this is used on set_file_content, since the file is not yet commited
         rf = self.get(key)
         if rf is None:
             raise InvalidKeyError(description=f"File with {key} does not exist.")
 
+        return ObjectVersion.create(self.bucket, key, stream=stream, **kwargs)
+
+    @ensure_enabled
+    def update(self, key, obj=None, stream=None, data=None, **kwargs):
+        """Update a file."""
+        assert not (obj and stream)
+        rf = self.get(key)
+
         if stream:
-            obj = ObjectVersion.create(self.bucket, key, stream=stream)
+            obj = self.create_obj(key, stream=stream, **kwargs)
         if obj:
             rf.object_version_id = obj.version_id
             rf.object_version = obj
@@ -181,6 +192,15 @@ class FilesManager(MutableMapping):
             rf.metadata = data
             rf.commit()
         return rf
+
+    @ensure_enabled
+    def commit(self, file_key):
+        """Commit a file."""
+        # TODO: Add other checks here (e.g. verify checksum, S3 upload)
+        file_obj = ObjectVersion.get(self.bucket.id, file_key)
+        if not file_obj:
+            raise Exception(f"File with key {file_key} not uploaded yet.")
+        self[file_key] = file_obj
 
     @ensure_enabled
     def delete(self, key, remove_obj=True, softdelete_obj=False):

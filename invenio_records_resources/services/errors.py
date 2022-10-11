@@ -40,3 +40,7 @@ class QuerystringValidationError(ValidationError):
     """Error thrown when there is an issue with the querystring."""
 
     pass
+
+
+class TransferException(Exception):
+    """File transfer exception."""
