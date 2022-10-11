@@ -24,6 +24,27 @@ pytest_plugins = ("celery.contrib.pytest",)
 
 
 @pytest.fixture(scope="module")
+def app_config(app_config):
+    """Override pytest-invenio app_config fixture.
+
+    Needed to set the fields on the custom fields schema.
+    """
+    app_config["RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS"] = [
+        "inveniordm.test",
+    ]
+
+    app_config["FILES_REST_STORAGE_CLASS_LIST"] = {
+        "L": "Local",
+        "F": "Fetch",
+        "R": "Remote",
+    }
+
+    app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
+
+    return app_config
+
+
+@pytest.fixture(scope="module")
 def extra_entry_points():
     """Extra entry points to load the mock_module features."""
     return {

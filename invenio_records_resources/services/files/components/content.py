@@ -8,10 +8,7 @@
 
 """Files service components."""
 
-from invenio_db import db
-from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.models import ObjectVersion
-
+from ..transfer import Transfer
 from .base import FileServiceComponent
 
 
@@ -26,29 +23,12 @@ class FileContentComponent(FileServiceComponent):
         file_record = record.files.get(file_key)
         if file_record is None:
             raise Exception(f'File with key "{file_key}" has not been initialized yet.')
-        if file_record.file:
-            raise Exception(f'File with key "{file_key}" is commited.')
 
-        # Check size limitations
-        bucket = record.bucket
-        size_limit = bucket.size_limit
-        if content_length and size_limit and content_length > size_limit:
-            desc = (
-                "File size limit exceeded."
-                if isinstance(size_limit, int)
-                else size_limit.reason
-            )
-            raise FileSizeError(description=desc)
-
-        # DB connection?
-        # re uploading failed upload?
-
-        with db.session.begin_nested():
-            # TODO: in case we want to update a file, this keeps the old
-            # FileInstance. It might be better to call ObjectVersion.remove()
-            # before or after the "set_content"
-            obj = ObjectVersion.create(bucket, file_key)
-            obj.set_contents(stream, size=content_length, size_limit=size_limit)
+        file_type = file_record.file.storage_class if file_record.file else None
+        transfer = Transfer.get_transfer(file_type)
+        transfer.set_file_content(
+            record, file_record.file, file_key, stream, content_length
+        )
 
     def get_file_content(self, identity, id, file_key, record):
         """Get file content handler."""

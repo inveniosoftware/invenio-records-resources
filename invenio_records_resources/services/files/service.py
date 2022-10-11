@@ -48,12 +48,12 @@ class FileService(Service):
         action_name = self.config.permission_action_prefix + action_name
         return super().check_permission(identity, action_name, **kwargs)
 
-    def get_record(self, id_, identity, action):
+    def _get_record(self, id_, identity, action, file_key=None):
         """Get the associated record."""
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, action, record=record)
+        self.require_permission(identity, action, record=record, file_key=file_key)
         return record
 
     #
@@ -61,7 +61,7 @@ class FileService(Service):
     #
     def list_files(self, identity, id_):
         """List the files of a record."""
-        record = self.get_record(id_, identity, "read_files")
+        record = self._get_record(id_, identity, "read_files")
 
         self.run_components("list_files", id_, identity, record)
 
@@ -77,7 +77,7 @@ class FileService(Service):
     @unit_of_work()
     def init_files(self, identity, id_, data, uow=None):
         """Initialize the file upload for the record."""
-        record = self.get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "create_files")
 
         self.run_components("init_files", identity, id_, record, data, uow=uow)
 
@@ -93,7 +93,7 @@ class FileService(Service):
     @unit_of_work()
     def update_file_metadata(self, identity, id_, file_key, data, uow=None):
         """Update the metadata of a file."""
-        record = self.get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "create_files")
 
         if file_key not in record.files:
             return None
@@ -112,7 +112,7 @@ class FileService(Service):
 
     def read_file_metadata(self, identity, id_, file_key):
         """Read the metadata of a file."""
-        record = self.get_record(id_, identity, "read_files")
+        record = self._get_record(id_, identity, "read_files")
 
         if file_key not in record.files:
             return None
@@ -130,7 +130,7 @@ class FileService(Service):
     @unit_of_work()
     def extract_file_metadata(self, identity, id_, file_key, uow=None):
         """Extract metadata from a file and update the file metadata file."""
-        record = self.get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "create_files")
 
         if file_key not in record.files:
             return None
@@ -160,7 +160,7 @@ class FileService(Service):
     @unit_of_work()
     def commit_file(self, identity, id_, file_key, uow=None):
         """Commit a file upload."""
-        record = self.get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "commit_files", file_key=file_key)
 
         if file_key not in record.files:
             return None
@@ -178,7 +178,7 @@ class FileService(Service):
     @unit_of_work()
     def delete_file(self, identity, id_, file_key, uow=None):
         """Delete a single file."""
-        record = self.get_record(id_, identity, "delete_files")
+        record = self._get_record(id_, identity, "delete_files", file_key=file_key)
         deleted_file = record.files.delete(file_key)
 
         self.run_components(
@@ -199,7 +199,7 @@ class FileService(Service):
     @unit_of_work()
     def delete_all_files(self, identity, id_, uow=None):
         """Delete all the files of the record."""
-        record = self.get_record(id_, identity, "delete_files")
+        record = self._get_record(id_, identity, "delete_files")
 
         # We have to separate the gathering of the keys from their deletion
         # because of how record.files is implemented.
@@ -224,7 +224,7 @@ class FileService(Service):
         self, identity, id_, file_key, stream, content_length=None, uow=None
     ):
         """Save file content."""
-        record = self.get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
 
         if file_key not in record.files:
             return None
@@ -250,7 +250,7 @@ class FileService(Service):
 
     def get_file_content(self, identity, id_, file_key):
         """Retrieve file content."""
-        record = self.get_record(id_, identity, "read_files")
+        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
 
         if file_key not in record.files:
             return None
