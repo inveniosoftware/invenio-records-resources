@@ -52,7 +52,7 @@ def service_wrel(appctx):
         """Record cls config."""
 
         record_cls = RecordWithRelations
-        relations = {"records": ["metadata.inner_record"]}
+        relations = {"mock-records": ["metadata.inner_record"]}
 
         components = ServiceConfigBase.components + [RelationsComponent]
 

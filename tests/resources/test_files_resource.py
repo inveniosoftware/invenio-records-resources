@@ -55,8 +55,8 @@ def base_app(
     base_app.register_blueprint(file_resource.as_blueprint())
     base_app.register_blueprint(disabled_file_upload_resource.as_blueprint())
     registry = base_app.extensions["invenio-records-resources"].registry
-    registry.register(service, service_id="mock-records-service")
-    registry.register(file_service, service_id="mock-files-service")
+    registry.register(service, service_id="mock-records")
+    registry.register(file_service, service_id="mock-files")
     yield base_app
 
 
