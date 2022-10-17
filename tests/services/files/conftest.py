@@ -31,8 +31,8 @@ def service():
 def base_app(base_app, service, file_service):
     """Application factory fixture."""
     registry = base_app.extensions["invenio-records-resources"].registry
-    registry.register(service, service_id="mock-records-service")
-    registry.register(file_service, service_id="mock-files-service")
+    registry.register(service, service_id="mock-records")
+    registry.register(file_service, service_id="mock-files")
     yield base_app
 
 

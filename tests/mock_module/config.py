@@ -61,6 +61,7 @@ class ServiceConfig(RecordServiceConfig):
     Needs both configs, with File overwritting the record ones.
     """
 
+    service_id = "mock-records"
     permission_policy_cls = PermissionPolicy
     record_cls = Record
     schema = RecordSchema
@@ -85,6 +86,7 @@ class ServiceWithFilesConfig(ServiceConfig):
 class MockFileServiceConfig(FileServiceConfig):
     """File service configuration."""
 
+    service_id = "mock-files"
     record_cls = RecordWithFiles
     permission_policy_cls = PermissionPolicy
 
