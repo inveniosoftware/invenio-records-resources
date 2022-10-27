@@ -54,10 +54,7 @@ class RecordService(Service):
 
     def record_to_index(self, record):
         """Function used to map a record to an index."""
-        # We are returning "_doc" as document type as recommended by
-        # the search engine documentation. In v8
-        # document types will have been completely removed.
-        return record.index._name, "_doc"
+        return record.index._name
 
     @property
     def schema(self):
