@@ -464,11 +464,8 @@ class RecordService(Service):
 
         Note: Skips (soft) deleted records.
         """
-        for rec_meta in self.record_cls.model_cls.query.all():
-            rec = self.record_cls(rec_meta.data, model=rec_meta)
-
-            if not rec.is_deleted:
-                self.indexer.index(rec)
+        records = self.record_cls.model_cls.query.filter_by(is_deleted=False).all()
+        self.indexer.bulk_index([rec.id for rec in records])
 
         return True
 
