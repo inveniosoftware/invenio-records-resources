@@ -5,10 +5,8 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 # 
 # Translators:
-# Mojib Wali <mojib.wali@tugraz.at>, 2021
-# Alexander Gruber <alexander.gruber@tugraz.at>, 2021
-# Hermann Schranzhofer <hermann.schranzhofer@tugraz.at>, 2022
-# chriz_uniba <christina.zeller@uni-bamberg.de>, 2022
+# Berat Aldemir <berataldemir@gmail.com>, 2021
+# Ben Translation and Interpreting Services <info@bentercume.com>, 2021
 # 
 #, fuzzy
 msgid ""
@@ -17,46 +15,46 @@ msgstr ""
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2022-10-12 11:37+0000\n"
 "PO-Revision-Date: 2021-07-13 12:50+0000\n"
-"Last-Translator: chriz_uniba <christina.zeller@uni-bamberg.de>, 2022\n"
-"Language-Team: German (https://www.transifex.com/inveniosoftware/teams/23537/de/)\n"
+"Last-Translator: Ben Translation and Interpreting Services <info@bentercume.com>, 2021\n"
+"Language-Team: Turkish (https://www.transifex.com/inveniosoftware/teams/23537/tr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.10.3\n"
-"Language: de\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: tr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: invenio_records_resources/resources/errors.py:54
 #: invenio_records_resources/resources/errors.py:55
 msgid "Invalid query string syntax."
-msgstr "Ungültige Syntax der Abfragezeichenfolge."
+msgstr "Geçersiz sorgu dizesi sözdizimi."
 
 #: invenio_records_resources/resources/errors.py:56
 msgid "Misconfigured search."
-msgstr "Falsch konfigurierte Suche."
+msgstr "Hatalı yapılandırılmış arama."
 
 #: invenio_records_resources/resources/errors.py:67
 msgid "Internal server error"
-msgstr "Interner Serverfehler"
+msgstr "İç sunucu hatası"
 
 #: invenio_records_resources/services/records/components.py:93
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
-"Sie müssen zuerst alle Dateien löschen, um den Eintrag auf \"Reiner-"
-"Metadateneintrag\" zu setzen."
+"Kaydı yalnızca-üstveri olarak ayarlamak için önce tüm dosyaları "
+"silmelisiniz."
 
 #: invenio_records_resources/services/records/config.py:35
 msgid "Best match"
-msgstr "Höchste Übereinstimmung"
+msgstr "En iyi eşleşme"
 
 #: invenio_records_resources/services/records/config.py:39
 msgid "Newest"
-msgstr "Neuester"
+msgstr "Yeniden eskiye"
 
 #: invenio_records_resources/services/records/config.py:43
 msgid "Oldest"
-msgstr "Ältester"
+msgstr "Eskiden yeniye"
 
 #: invenio_records_resources/services/records/queryparser/transformer.py:40
 msgid "Invalid search field: {field_name}."
-msgstr "Ungültiges Suchfeld: {field_name}."
+msgstr ""
