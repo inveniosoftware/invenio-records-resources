@@ -17,6 +17,7 @@ class FileResourceConfig(ResourceConfig):
 
     # Blueprint configuration
     allow_upload = True
+    allow_archive_download = True
     blueprint_name = None
     url_prefix = "/records/<pid_value>"
     routes = {
@@ -24,4 +25,5 @@ class FileResourceConfig(ResourceConfig):
         "item": "/files/<key>",
         "item-content": "/files/<key>/content",
         "item-commit": "/files/<key>/commit",
+        "list-archive": "/files-archive",
     }

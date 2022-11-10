@@ -70,6 +70,7 @@ class ServiceConfig(RecordServiceConfig):
     links_item = {
         "self": RecordLink("{+api}/mocks/{id}"),
         "files": RecordLink("{+api}/mocks/{id}/files"),
+        "files-archive": RecordLink("{+api}/mocks/{id}/files-archive"),
     }
 
     links_search = pagination_links("{+api}/mocks{?args*}")
@@ -92,6 +93,7 @@ class MockFileServiceConfig(FileServiceConfig):
 
     file_links_list = {
         "self": RecordLink("{+api}/mocks/{id}/files"),
+        "files-archive": RecordLink("{+api}/mocks/{id}/files-archive"),
     }
 
     file_links_item = {

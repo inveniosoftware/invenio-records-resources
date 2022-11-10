@@ -9,8 +9,10 @@
 
 """Invenio Record File Resources."""
 
+from contextlib import ExitStack
+
 import marshmallow as ma
-from flask import abort, g
+from flask import Response, abort, g, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
@@ -21,6 +23,7 @@ from flask_resources import (
     response_handler,
     route,
 )
+from zipstream import ZIP_STORED, ZipStream
 
 from ..errors import ErrorHandlersMixin
 from .parser import RequestStreamParser
@@ -64,6 +67,10 @@ class FileResource(ErrorHandlersMixin, Resource):
             route("GET", routes["item"], self.read),
             route("GET", routes["item-content"], self.read_content),
         ]
+        if self.config.allow_archive_download:
+            url_rules += [
+                route("GET", routes["list-archive"], self.read_archive),
+            ]
         if self.config.allow_upload:
             url_rules += [
                 route("POST", routes["list"], self.create),
@@ -174,6 +181,30 @@ class FileResource(ErrorHandlersMixin, Resource):
             abort(404)
 
         return item.send_file(), 200
+
+    @request_view_args
+    def read_archive(self):
+        """Read a zipped version of all files."""
+        id_ = resource_requestctx.view_args["pid_value"]
+        files = self.service.list_files(g.identity, id_)
+
+        def _gen_zipstream():
+            """Generator for the streaming of the zipped file."""
+            zs = ZipStream(compress_type=ZIP_STORED)
+            with ExitStack() as stack:
+                for file_obj in files._results:
+                    fp = stack.enter_context(file_obj.open_stream("rb"))
+                    zs.add(fp, file_obj.key)
+                yield from zs.all_files()
+                yield from zs.finalize()
+
+        return Response(
+            stream_with_context(_gen_zipstream()),
+            mimetype="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename={id_}.zip",
+            },
+        )
 
     @request_view_args
     @request_stream

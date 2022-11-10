@@ -15,6 +15,7 @@ def assert_expected_links(pid_value, links, site_hostname="127.0.0.1:5000"):
     expected_links = {
         "self": f"https://{site_hostname}/api/mocks/{pid_value}",
         "files": f"https://{site_hostname}/api/mocks/{pid_value}/files",
+        "files-archive": f"https://{site_hostname}/api/mocks/{pid_value}/files-archive",
     }
     assert expected_links == links
 
