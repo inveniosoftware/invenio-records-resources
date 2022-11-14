@@ -40,6 +40,11 @@ class TransferType(str, Enum):
         """Return its value."""
         return self.value
 
+    @property
+    def is_completed(self):
+        """Return if the type represents a completed transfer."""
+        return self in [TransferType.LOCAL, TransferType.REMOTE]
+
 
 class BaseTransfer(ABC):
     """Local transfer."""
