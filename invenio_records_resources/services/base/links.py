@@ -80,10 +80,12 @@ class LinksTemplate:
         ctx.update(self._context)
         return ctx
 
-    def expand(self, obj):
+    def expand(self, identity, obj):
         """Expand all the link templates."""
         links = {}
-        ctx = self.context
+        ctx = deepcopy(self.context)
+        # pass identity to context
+        ctx["identity"] = identity
         for key, link in self._links.items():
             if link.should_render(obj, ctx):
                 links[key] = link.expand(obj, ctx)

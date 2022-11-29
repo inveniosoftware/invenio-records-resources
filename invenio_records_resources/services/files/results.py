@@ -41,7 +41,7 @@ class FileItem(RecordItem):
     @property
     def links(self):
         """Get links for this result item."""
-        return self._links_tpl.expand(self._file)
+        return self._links_tpl.expand(self._identity, self._file)
 
     def send_file(self, restricted=True, as_attachment=False):
         """Return file stream."""
@@ -93,7 +93,7 @@ class FileList(ServiceListResult):
                 ),
             )
             if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(entry)
+                projection["links"] = self._links_item_tpl.expand(self._identity, entry)
 
             yield projection
 
@@ -105,7 +105,7 @@ class FileList(ServiceListResult):
             "enabled": record_files.enabled,
         }
         if self._links_tpl:
-            result["links"] = self._links_tpl.expand(self._record)
+            result["links"] = self._links_tpl.expand(self._identity, self._record)
 
         if result["enabled"]:
             result.update(

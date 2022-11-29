@@ -52,7 +52,7 @@ class CreatedByExpandableField(ExpandableField):
         elif value.get("entity"):
             return value["entity"], mocked_entity_service
 
-    def pick(self, resolved_rec):
+    def pick(self, identity, resolved_rec):
         """Override default."""
         if "profile" in resolved_rec:
             return {
@@ -71,7 +71,7 @@ class SimpleExpandableField(ExpandableField):
         """Override default."""
         return value, mocked_simple_service
 
-    def pick(self, resolved_rec):
+    def pick(self, identity, resolved_rec):
         """Override default."""
         metadata = resolved_rec["metadata"]
         return {
@@ -85,7 +85,7 @@ class OtherExpandableField(ExpandableField):
         """Override default."""
         return value, mocked_other_service
 
-    def pick(self, resolved_rec):
+    def pick(self, identity, resolved_rec):
         """Override default."""
         metadata = resolved_rec["metadata"]
         return {
