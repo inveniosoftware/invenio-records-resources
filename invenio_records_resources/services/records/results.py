@@ -53,7 +53,7 @@ class RecordItem(ServiceItemResult):
     @property
     def links(self):
         """Get links for this result item."""
-        return self._links_tpl.expand(self._record)
+        return self._links_tpl.expand(self._identity, self._record)
 
     @property
     def _obj(self):
@@ -78,7 +78,7 @@ class RecordItem(ServiceItemResult):
 
         if self._expand and self._fields_resolver:
             self._fields_resolver.resolve(self._identity, [self._data])
-            fields = self._fields_resolver.expand(self._data)
+            fields = self._fields_resolver.expand(self._identity, self._data)
             self._data["expanded"] = fields
 
         return self._data
@@ -196,7 +196,9 @@ class RecordList(ServiceListResult):
                 ),
             )
             if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(record)
+                projection["links"] = self._links_item_tpl.expand(
+                    self._identity, record
+                )
 
             yield projection
 
@@ -218,7 +220,7 @@ class RecordList(ServiceListResult):
         if self._expand and self._fields_resolver:
             self._fields_resolver.resolve(self._identity, hits)
             for hit in hits:
-                fields = self._fields_resolver.expand(hit)
+                fields = self._fields_resolver.expand(self._identity, hit)
                 hit["expanded"] = fields
 
         res = {
@@ -234,7 +236,7 @@ class RecordList(ServiceListResult):
         if self._params:
             res["sortBy"] = self._params["sort"]
             if self._links_tpl:
-                res["links"] = self._links_tpl.expand(self.pagination)
+                res["links"] = self._links_tpl.expand(self._identity, self.pagination)
 
         return res
 
@@ -284,7 +286,7 @@ class ExpandableField(ABC):
         return self._service_values[service][value]
 
     @abstractmethod
-    def pick(self, resolved_rec):
+    def pick(self, identity, resolved_rec):
         """Pick the fields to return from the resolved record dict."""
         return {"id": resolved_rec["id"]}
 
@@ -363,7 +365,7 @@ class FieldsResolver:
         grouped_values = self._collect_values(_hits)
         self._fetch_referenced(grouped_values, identity)
 
-    def expand(self, hit):
+    def expand(self, identity, hit):
         """Return the expanded fields for the given hit."""
         results = dict()
         for field in self._fields:
@@ -377,7 +379,7 @@ class FieldsResolver:
                 resolved_rec = field.get_dereferenced_record(service, v)
                 if not resolved_rec:
                     continue
-                output = field.pick(resolved_rec)
+                output = field.pick(identity, resolved_rec)
 
                 # transform field name (potentially dotted) to nested dicts
                 # to keep the nested structure of the field

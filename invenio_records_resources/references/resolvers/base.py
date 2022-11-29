@@ -110,7 +110,7 @@ class EntityProxy(ABC):
         return self._resolver
 
     @abstractmethod
-    def pick_resolved_fields(self, resolved_dict):
+    def pick_resolved_fields(self, identity, resolved_dict):
         """Select which fields to return when resolving the reference."""
         return {}
 
