@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 1.0.3 (2022-12-01)
+
+- Breaking change: FieldsResolver.expand() method is changed to require an identity parameter.
+- Breaking change: LinksTemplate.expand() method is changed to require an identity parameter.
+
 Version 1.0.2 (2022-11-25)
 
 - Add i18n translations.
