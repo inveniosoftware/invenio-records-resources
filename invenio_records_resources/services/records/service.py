@@ -11,6 +11,7 @@
 """Record Service API."""
 
 from flask import current_app
+from invenio_db import db
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
@@ -464,8 +465,14 @@ class RecordService(Service):
 
         Note: Skips (soft) deleted records.
         """
-        records = self.record_cls.model_cls.query.filter_by(is_deleted=False).all()
-        self.indexer.bulk_index([rec.id for rec in records])
+        model_cls = self.record_cls.model_cls
+        records = (
+            db.session.query(model_cls.id)
+            .filter(model_cls.is_deleted == False)
+            .yield_per(1000)
+        )
+
+        self.indexer.bulk_index((rec.id for rec in records))
 
         return True
 
