@@ -65,6 +65,8 @@ class SearchOptionsMixin:
             attrs["sort_options"] = opts.sort_options
             attrs["sort_default"] = opts.sort_default
             attrs["sort_default_no_query"] = opts.sort_default_no_query
+        if opts.query_parser_cls:
+            attrs["query_parser_cls"] = opts.query_parser_cls
         return _make_cls(cls, attrs) if attrs else cls
 
 
@@ -171,6 +173,7 @@ class SearchConfig:
         config = config or {}
         self._sort = []
         self._facets = []
+        self._query_parser_cls = None
 
         if "sort" in config:
             self._sort = SortOptionsSelector(
@@ -182,6 +185,9 @@ class SearchConfig:
 
         if "facets" in config:
             self._facets = OptionsSelector(facets, config.get("facets"))
+
+        if "query_parser_cls" in config:
+            self._query_parser_cls = config["query_parser_cls"]
 
     @property
     def sort_options(self):
@@ -202,6 +208,11 @@ class SearchConfig:
     def facets(self):
         """Get facets for search."""
         return {k: v["facet"] for (k, v) in self._facets}
+
+    @property
+    def query_parser_cls(self):
+        """Get query parser class for search."""
+        return self._query_parser_cls
 
 
 class FromConfigSearchOptions:
