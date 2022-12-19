@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.0.4 (2022-12-19)
+
+- search: added query parse cls to search config
+
 Version 1.0.3 (2022-12-01)
 
 - Breaking change: FieldsResolver.expand() method is changed to require an identity parameter.
