@@ -31,6 +31,7 @@ from werkzeug.routing import BuildError
 
 from ..errors import validation_error_to_list_errors
 from ..services.errors import (
+    FacetNotFoundError,
     PermissionDeniedError,
     QuerystringValidationError,
     RevisionIdMismatchError,
@@ -148,6 +149,12 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=404,
                 description="Not found.",
+            )
+        ),
+        FacetNotFoundError: create_error_handler(
+            lambda e: HTTPJSONException(
+                code=404,
+                description=f"Facet {e.vocabulary_id} not found.",
             )
         ),
         JSONDecodeError: create_error_handler(
