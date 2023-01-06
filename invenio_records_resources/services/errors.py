@@ -9,6 +9,7 @@
 
 """Errors."""
 
+from flask_babelex import gettext as _
 from flask_principal import PermissionDenied
 from marshmallow import ValidationError
 
@@ -44,3 +45,12 @@ class QuerystringValidationError(ValidationError):
 
 class TransferException(Exception):
     """File transfer exception."""
+
+
+class FacetNotFoundError(Exception):
+    """Facet not found exception."""
+
+    def __init__(self, vocabulary_id):
+        """Initialise error."""
+        self.vocabulary_id = vocabulary_id
+        super().__init__(_("Facet {vocab} not found.").format(vocab=vocabulary_id))
