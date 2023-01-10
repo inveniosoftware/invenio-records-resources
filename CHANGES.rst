@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.0.5 (2023-01-10)
+
+- facets: add facet not found exception
+
 Version 1.0.4 (2022-12-19)
 
 - search: added query parse cls to search config
