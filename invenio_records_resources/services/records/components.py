@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2021 Northwestern University.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,8 +10,8 @@
 
 """Records service component base classes."""
 
-from flask_babelex import gettext as _
 from invenio_files_rest.errors import InvalidKeyError
+from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
 from ..base.components import BaseServiceComponent

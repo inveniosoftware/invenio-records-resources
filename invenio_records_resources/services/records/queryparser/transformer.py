@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2022 CERN.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -14,7 +15,7 @@ how to build your own query tree transformer.
 
 from functools import partial
 
-from flask_babelex import gettext as _
+from invenio_i18n import gettext as _
 from luqum.visitor import TreeTransformer
 
 from invenio_records_resources.services.errors import QuerystringValidationError
