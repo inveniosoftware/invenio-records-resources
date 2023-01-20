@@ -9,7 +9,7 @@
 # details.
 
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import AnyUser
+from invenio_records_permissions.generators import AnyUser, Disable
 from mock_module.schemas import RecordSchema
 
 from invenio_records_resources.factories.factory import RecordTypeFactory
@@ -28,6 +28,17 @@ def test_simple_flow(app, identity_simple, db):
         can_delete = [AnyUser()]
         can_read_files = [AnyUser()]
         can_update_files = [AnyUser()]
+
+    class DenyAllPermissionPolicy(RecordPermissionPolicy):
+        """Mock permission policy. All actions denied."""
+
+        can_search = [Disable()]
+        can_create = [Disable()]
+        can_read = [Disable()]
+        can_update = [Disable()]
+        can_delete = [Disable()]
+        can_read_files = [Disable()]
+        can_update_files = [Disable()]
 
     # factory use
     grant_type = RecordTypeFactory(
@@ -65,3 +76,22 @@ def test_simple_flow(app, identity_simple, db):
     res = service.search(identity_simple, q=f"id:{id_}", size=25, page=1)
     assert res.total == 1
     assert list(res.hits)[0] == read_item.data
+
+    # Check to see if the document exists
+    assert (
+        service.exists(identity_simple, id_) == True
+    )  # Valid ID AND valid permissions
+    assert (
+        service.exists(identity_simple, "not-a-valid-id") == False
+    )  # Invalid ID AND valid permissions
+
+    # Further Tesing for when user does not have permission to read
+    service.permission_policy = DenyAllPermissionPolicy
+
+    # Check to see if the document exists when we have no permissions
+    assert (
+        service.exists(identity_simple, id_) == False
+    )  # Valid ID AND invalid permissions
+    assert (
+        service.exists(identity_simple, "not-a-valid-id") == False
+    )  # Invalid ID AND invalid permissions
