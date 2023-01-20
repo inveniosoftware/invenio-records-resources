@@ -58,6 +58,7 @@ class FileResource(ErrorHandlersMixin, Resource):
     def create_url_rules(self):
         """Routing for the views."""
         routes = self.config.routes
+
         url_rules = [
             route("GET", routes["list"], self.search),
             route("GET", routes["item"], self.read),

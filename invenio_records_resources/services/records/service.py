@@ -12,11 +12,14 @@
 
 from flask import current_app
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from kombu import Queue
 from werkzeug.local import LocalProxy
+
+from invenio_records_resources.services.errors import PermissionDeniedError
 
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
@@ -356,6 +359,15 @@ class RecordService(Service):
             expandable_fields=self.expandable_fields,
             expand=expand,
         )
+
+    def exists(self, identity, id_):
+        """Check if the record exists and user has permission."""
+        try:
+            record = self.record_cls.pid.resolve(id_)
+            self.require_permission(identity, "read", record=record)
+            return True
+        except (PIDDoesNotExistError, PermissionDeniedError):
+            return False
 
     def _read_many(
         self,

@@ -57,6 +57,7 @@ class RecordResource(ErrorHandlersMixin, Resource):
     def create_url_rules(self):
         """Create the URL rules for the record resource."""
         routes = self.config.routes
+
         return [
             route("GET", routes["list"], self.search),
             route("POST", routes["list"], self.create),
