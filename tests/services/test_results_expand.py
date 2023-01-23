@@ -96,7 +96,6 @@ class OtherExpandableField(ExpandableField):
 
 
 def test_result_item_fields_expansion(app, db, service, identity_simple):
-
     input_data1 = {
         "metadata": {
             "title": "Test",

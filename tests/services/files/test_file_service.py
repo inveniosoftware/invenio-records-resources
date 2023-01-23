@@ -25,6 +25,7 @@ from invenio_records_resources.services.errors import PermissionDeniedError
 @pytest.fixture(scope="module")
 def mock_request():
     """Patch response raw."""
+
     # Mock HTTP request
     class MockResponse:
         """Mock response."""
@@ -123,7 +124,6 @@ def test_file_flow(file_service, location, example_file_record, identity_simple)
 
 
 def test_init_files(file_service, location, example_file_record, identity_simple):
-
     recid = example_file_record["id"]
 
     # Pass an object with missing required field

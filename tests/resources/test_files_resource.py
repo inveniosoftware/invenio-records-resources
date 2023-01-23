@@ -367,7 +367,12 @@ def test_disable_files_when_files_already_present_should_error(
 
 
 def test_download_archive(
-    app, client, search_clear, headers, input_data, location,
+    app,
+    client,
+    search_clear,
+    headers,
+    input_data,
+    location,
 ):
     # Initialize a draft
     res = client.post("/mocks", headers=headers, json=input_data)

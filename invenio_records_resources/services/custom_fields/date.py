@@ -86,7 +86,7 @@ class EDTFDateStringCF(BaseListCF):
                 else:
                     # dates is just one date
                     data[cf_key][self.name] = self._calculate_date_range(dates)
-            except (EDTFParseException):
+            except EDTFParseException:
                 pass
 
     def load(self, record, cf_key="custom_fields"):

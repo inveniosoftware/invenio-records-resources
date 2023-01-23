@@ -23,7 +23,6 @@ from invenio_records_resources.records.systemfields.files import FilesField
 
 # Define a files-enabled record class
 class Record(RecordBase):
-
     files = FilesField(store=True, file_cls=FileRecord)
     bucket_id = ModelField()
     bucket = ModelField(dump=False)
