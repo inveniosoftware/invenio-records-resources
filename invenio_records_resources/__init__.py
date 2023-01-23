@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2022 CERN.
+# Copyright (C) 2020-2023 CERN.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,6 +10,6 @@
 
 from .ext import InvenioRecordsResources
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 __all__ = ("__version__", "InvenioRecordsResources")
