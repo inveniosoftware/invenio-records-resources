@@ -13,7 +13,6 @@ from .config import ServiceConfig
 from .links import ConditionalLink, Link, LinksTemplate
 from .results import ServiceItemResult, ServiceListResult
 from .service import Service
-from .utils import get_search_params
 
 __all__ = (
     "ConditionalLink",
@@ -23,5 +22,4 @@ __all__ = (
     "ServiceConfig",
     "ServiceItemResult",
     "ServiceListResult",
-    "get_search_params",
 )
