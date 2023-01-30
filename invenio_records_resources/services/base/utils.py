@@ -19,7 +19,7 @@ def map_search_params(service_search_config, params):
             "page": int,
             "size": int,
             "sort": list of fields for sorting,
-            "sort_direction": string,
+            "sort_direction": ordering function,
             "q": string,
         }
     """
@@ -28,22 +28,22 @@ def map_search_params(service_search_config, params):
     page = params.get("page", 1)
     size = params.get(
         "size",
-        _config.pagination_options.get("default_results_per_page"),
+        _config.pagination_options.get("default_results_per_page", 25),
     )
 
     _sort_name = (
-        params.get("sort")
+        params["sort"]
         if params.get("sort") in _config.sort_options
         else _config.sort_default
     )
     _sort_direction_name = (
-        params.get("sort_direction")
+        params["sort_direction"]
         if params.get("sort_direction") in _config.sort_direction_options
         else _config.sort_direction_default
     )
 
-    sort = _config.sort_options.get(_sort_name)
-    sort_direction = _config.sort_direction_options.get(_sort_direction_name)
+    sort = _config.sort_options.get(_sort_name, {})
+    sort_direction = _config.sort_direction_options.get(_sort_direction_name, {})
 
     query_params = params.get("q", "")
 
