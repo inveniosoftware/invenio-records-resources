@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2023 TU Wien.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,7 +11,7 @@
 """Invenio Resources module to create REST APIs."""
 
 import marshmallow as ma
-from flask import g
+from flask import current_app, g
 from flask_resources import (
     Resource,
     from_conf,
@@ -20,6 +21,7 @@ from flask_resources import (
     response_handler,
     route,
 )
+from invenio_stats.proxies import current_stats
 
 from ..errors import ErrorHandlersMixin
 from .utils import search_preference
@@ -106,6 +108,14 @@ class RecordResource(ErrorHandlersMixin, Resource):
             resource_requestctx.view_args["pid_value"],
             expand=resource_requestctx.args.get("expand", False),
         )
+
+        # we emit the record view stats event here rather than in the service because
+        # the service might be called from other places as well that we don't want
+        # to count, e.g. from some CLI commands
+        emitter = current_stats.get_event_emitter("record-view")
+        if item is not None and emitter is not None:
+            emitter(current_app, record=item._record, via_api=True)
+
         return item.to_dict(), 200
 
     @request_extra_args

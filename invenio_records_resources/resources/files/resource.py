@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2023 TU Wien.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,7 +13,7 @@
 from contextlib import ExitStack
 
 import marshmallow as ma
-from flask import Response, abort, g, stream_with_context
+from flask import Response, abort, current_app, g, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
@@ -23,6 +24,7 @@ from flask_resources import (
     response_handler,
     route,
 )
+from invenio_stats.proxies import current_stats
 from zipstream import ZIP_STORED, ZipStream
 
 from ..errors import ErrorHandlersMixin
@@ -180,6 +182,12 @@ class FileResource(ErrorHandlersMixin, Resource):
         if item is None:
             abort(404)
 
+        # emit file download stats event
+        obj = item._file.object_version
+        emitter = current_stats.get_event_emitter("file-download")
+        if obj is not None and emitter is not None:
+            emitter(current_app, record=item._record, obj=obj, via_api=True)
+
         return item.send_file(), 200
 
     @request_view_args
@@ -187,6 +195,13 @@ class FileResource(ErrorHandlersMixin, Resource):
         """Read a zipped version of all files."""
         id_ = resource_requestctx.view_args["pid_value"]
         files = self.service.list_files(g.identity, id_)
+
+        # emit file download stats events for each file
+        emitter = current_stats.get_event_emitter("file-download")
+        for f in files._results:
+            obj = f.object_version
+            if obj is not None and emitter is not None:
+                emitter(current_app, record=files._record, obj=obj, via_api=True)
 
         def _gen_zipstream():
             """Generator for the streaming of the zipped file."""
