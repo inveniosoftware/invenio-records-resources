@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 1.0.7 (2023-02-06)
+
+- service utils: add utility to map query parameters to a dictionary based
+  on the service config
+
 Version 1.0.6 (2023-01-23)
 
 - resources: add archive download endpoint for record files
