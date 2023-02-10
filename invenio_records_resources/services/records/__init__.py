@@ -12,7 +12,7 @@
 from .config import RecordServiceConfig, SearchOptions
 from .links import RecordLink, pagination_links
 from .schema import ServiceSchemaWrapper
-from .service import RecordService
+from .service import RecordIndexerMixin, RecordService
 
 __all__ = (
     "pagination_links",
@@ -21,4 +21,5 @@ __all__ = (
     "RecordServiceConfig",
     "SearchOptions",
     "ServiceSchemaWrapper",
+    "RecordIndexerMixin",
 )

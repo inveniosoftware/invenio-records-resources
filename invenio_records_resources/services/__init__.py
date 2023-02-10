@@ -12,6 +12,7 @@
 from .base import ConditionalLink, Link, LinksTemplate, Service, ServiceConfig
 from .files import FileLink, FileService, FileServiceConfig
 from .records import (
+    RecordIndexerMixin,
     RecordLink,
     RecordService,
     RecordServiceConfig,
@@ -35,4 +36,5 @@ __all__ = (
     "Service",
     "ServiceConfig",
     "ServiceSchemaWrapper",
+    "RecordIndexerMixin",
 )

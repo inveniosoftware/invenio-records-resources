@@ -27,12 +27,13 @@ from ..uow import RecordCommitOp, RecordDeleteOp, unit_of_work
 from .schema import ServiceSchemaWrapper
 
 
-class RecordService(Service):
-    """Record Service."""
+class RecordIndexerMixin:
+    """Mixin class to define record indexer.
 
-    #
-    # Low-level API
-    #
+    Can be mixed in RecordService classes with the corresponding
+    configuration attributes.
+    """
+
     @property
     def indexer(self):
         """Factory for creating an indexer instance."""
@@ -59,6 +60,14 @@ class RecordService(Service):
     def record_to_index(self, record):
         """Function used to map a record to an index."""
         return record.index._name
+
+
+class RecordService(Service, RecordIndexerMixin):
+    """Record Service."""
+
+    #
+    # Low-level API
+    #
 
     @property
     def schema(self):
