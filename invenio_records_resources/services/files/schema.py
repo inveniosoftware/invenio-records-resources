@@ -85,7 +85,11 @@ class InitFileSchema(Schema):
         if data.file:
             # mandatory fields
             data["storage_class"] = data.file.storage_class
-            data["uri"] = data.file.uri  # TODO: only serialize for external?
+            data["uri"] = data.file.uri
+
+            # If Local -> remove uri as it contains internal file storage info
+            if not TransferType(data["storage_class"]).is_serializable():
+                data.pop("uri")
 
             # optional fields
             fields = ["checksum", "size"]

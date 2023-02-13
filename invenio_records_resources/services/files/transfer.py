@@ -45,6 +45,10 @@ class TransferType(str, Enum):
         """Return if the type represents a completed transfer."""
         return self in [TransferType.LOCAL, TransferType.REMOTE]
 
+    def is_serializable(self):
+        """Return if the type represents a localy available file."""
+        return self != TransferType.LOCAL
+
 
 class BaseTransfer(ABC):
     """Local transfer."""
