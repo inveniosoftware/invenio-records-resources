@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.0.8 (2023-02-13)
+
+- service: add record indexer service mixin
+
 Version 1.0.7 (2023-02-06)
 
 - service utils: add utility to map query parameters to a dictionary based
