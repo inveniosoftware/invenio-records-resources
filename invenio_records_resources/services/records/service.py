@@ -122,6 +122,7 @@ class RecordService(Service, RecordIndexerMixin):
         permission_action="read",
         preference=None,
         extra_filter=None,
+        versioning=True,
     ):
         """Instantiate a search class."""
         if permission_action:
@@ -145,9 +146,14 @@ class RecordService(Service, RecordIndexerMixin):
             search
             # Avoid query bounce problem
             .with_preference_param(preference)
-            # Add document version to search response
-            .params(version=True)
         )
+
+        if versioning:
+            search = (
+                search
+                # Add document version to search response
+                .params(version=True)
+            )
 
         # Extras
         extras = {}
@@ -165,6 +171,7 @@ class RecordService(Service, RecordIndexerMixin):
         preference=None,
         extra_filter=None,
         permission_action="read",
+        versioning=True,
     ):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
@@ -174,6 +181,7 @@ class RecordService(Service, RecordIndexerMixin):
             permission_action=permission_action,
             preference=preference,
             extra_filter=extra_filter,
+            versioning=versioning,
         )
 
         # Run search args evaluator
@@ -192,6 +200,7 @@ class RecordService(Service, RecordIndexerMixin):
         search_opts=None,
         extra_filter=None,
         permission_action="read",
+        versioning=True,
         **kwargs,
     ):
         """Create the search engine DSL."""
@@ -211,6 +220,7 @@ class RecordService(Service, RecordIndexerMixin):
             preference=search_preference,
             extra_filter=extra_filter,
             permission_action=permission_action,
+            versioning=versioning,
         )
 
         # Run components
@@ -400,6 +410,7 @@ class RecordService(Service, RecordIndexerMixin):
             permission_action="search",
             preference=preference,
             extra_filter=extra_filter,
+            versioning=True,
         )
 
         # Fetch only certain fields - explicitly add internal system fields
