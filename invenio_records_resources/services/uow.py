@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2022 CERN.
+# Copyright (C)      2023 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -105,6 +106,7 @@ class and implementing the desired methods:
 from functools import wraps
 
 from invenio_db import db
+from invenio_notifications.tasks import broadcast_notification
 
 from ..tasks import send_change_notifications
 
@@ -229,6 +231,18 @@ class ChangeNotificationOp(Operation):
             self._record_type,
             [(r.pid.pid_value, str(r.id), r.revision_id) for r in self._records],
         )
+
+
+class NotificationOp(Operation):
+    """A notification operation."""
+
+    def __init__(self, notification):
+        """Initialize operation."""
+        self._notification = notification
+
+    def on_post_commit(self, uow):
+        """Start task to send notification."""
+        broadcast_notification.delay(self._notification)
 
 
 #
