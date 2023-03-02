@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 1.1.0 (2023-03-02)
+
+- remove deprecated flask-babelex dependency and imports
+- upgrade invenio-pidstore, invenio-records-permissions, invenio-i18n, invenio-records
+
 Version 1.0.9 (2023-02-24)
 
 - serialization: remove files URI for local files
