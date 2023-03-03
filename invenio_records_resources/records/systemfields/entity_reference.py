@@ -12,7 +12,7 @@ from functools import partial
 
 from invenio_records.systemfields import SystemField
 
-from ...references.resolvers import EntityProxy
+from ...references.entity_resolvers import EntityProxy
 
 
 class ReferencedEntityField(SystemField):

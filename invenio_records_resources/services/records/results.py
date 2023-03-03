@@ -261,8 +261,21 @@ class ExpandableField(ABC):
 
     @abstractmethod
     def get_value_service(self, value):
-        """Return the value and the service to fetch the referenced record."""
-        return None, None
+        """Return the value and the service to fetch the referenced record.
+
+        Example:
+            return (value, MyService())
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def ghost_record(self, value):
+        """Return the ghost representation of the unresolved value.
+
+        This is used when a value cannot be resolved. The returned value
+        will be available when the method `self.pick()` is called.
+        """
+        raise NotImplementedError()
 
     def has(self, service, value):
         """Return true if field has given value for given service."""
@@ -279,6 +292,10 @@ class ExpandableField(ABC):
 
     def add_dereferenced_record(self, service, value, resolved_rec):
         """Save the dereferenced record."""
+        if resolved_rec is None:
+            resolved_rec = self.ghost_record({"id": value})
+            # mark the record as a "ghost" record i.e not resolvable
+            resolved_rec["is_ghost"] = True
         self._service_values[service][value] = resolved_rec
 
     def get_dereferenced_record(self, service, value):
@@ -288,7 +305,7 @@ class ExpandableField(ABC):
     @abstractmethod
     def pick(self, identity, resolved_rec):
         """Pick the fields to return from the resolved record dict."""
-        return {"id": resolved_rec["id"]}
+        raise NotImplementedError()
 
 
 class FieldsResolver:
@@ -352,12 +369,26 @@ class FieldsResolver:
 
     def _fetch_referenced(self, grouped_values, identity):
         """Search and fetch referenced recs by ids."""
+
+        def _add_dereferenced_record(service, value, resolved_rec):
+            """Helper function to set the dereferenced record to the service."""
+            for field in self._find_fields(service, value):
+                field.add_dereferenced_record(service, value, resolved_rec)
+
         for service, values in grouped_values.items():
             results = service.read_many(identity, list(values))
+
+            found_values = set()
             for hit in results.hits:
                 value = hit.get("id", None)
-                for field in self._find_fields(service, value):
-                    field.add_dereferenced_record(service, value, hit)
+                # keep values visited so we can extract the ones not found
+                found_values.add(value)
+                _add_dereferenced_record(service, value, hit)
+
+            not_found_values = values - found_values
+            if not_found_values:
+                for value in not_found_values:
+                    _add_dereferenced_record(service, value, None)
 
     def resolve(self, identity, hits):
         """Collect field values and resolve referenced records."""

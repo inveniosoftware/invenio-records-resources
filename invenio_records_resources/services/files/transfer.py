@@ -62,7 +62,7 @@ class BaseTransfer(ABC):
     @abstractmethod
     def init_file(self, record, file_metadata):
         """Initialize a file."""
-        pass
+        raise NotImplementedError()
 
     def set_file_content(self, record, file, file_key, stream, content_length):
         """Set file content."""

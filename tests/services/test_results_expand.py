@@ -45,6 +45,10 @@ mocked_other_service = MockedService(MOCK_NESTED)
 
 
 class CreatedByExpandableField(ExpandableField):
+    def ghost_record(self, value):
+        """Override default."""
+        return {}
+
     def get_value_service(self, value):
         """Override default."""
         if value.get("user"):
@@ -67,6 +71,10 @@ class CreatedByExpandableField(ExpandableField):
 
 
 class SimpleExpandableField(ExpandableField):
+    def ghost_record(self, value):
+        """Override default."""
+        return {}
+
     def get_value_service(self, value):
         """Override default."""
         return value, mocked_simple_service
@@ -81,6 +89,10 @@ class SimpleExpandableField(ExpandableField):
 
 
 class OtherExpandableField(ExpandableField):
+    def ghost_record(self, value):
+        """Override default."""
+        return {}
+
     def get_value_service(self, value):
         """Override default."""
         return value, mocked_other_service
