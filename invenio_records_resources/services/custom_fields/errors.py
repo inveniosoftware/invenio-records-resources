@@ -18,7 +18,7 @@ class CustomFieldsException(Exception):
     @abstractmethod
     def description(self):
         """Exception's description."""
-        pass
+        raise NotImplementedError()
 
 
 class InvalidCustomFieldsNamespace(CustomFieldsException):

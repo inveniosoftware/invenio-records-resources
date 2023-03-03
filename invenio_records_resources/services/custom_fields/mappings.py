@@ -17,6 +17,7 @@ class Mapping:
     @abstractmethod
     def to_dict(self):
         """Return the mapping as a dictionary."""
+        raise NotImplementedError()
 
     @classmethod
     def properties_for_fields(cls, given_fields_name, available_fields):

@@ -94,7 +94,7 @@ class EntityProxy(ABC):
         Note: The caching logic is already handled in ``resolve()``,
         so this method should contain the pure resolution logic.
         """
-        return None
+        raise NotImplementedError()
 
     @abstractmethod
     def get_needs(self, ctx=None):
@@ -103,7 +103,7 @@ class EntityProxy(ABC):
         If the concept is not applicable for this resolver's type of entities,
         ``[]`` will be returned.
         """
-        return []
+        raise NotImplementedError()
 
     def get_resolver(self):
         """Get the concrete resolver obj used to resolve the entity."""
@@ -112,7 +112,7 @@ class EntityProxy(ABC):
     @abstractmethod
     def pick_resolved_fields(self, identity, resolved_dict):
         """Select which fields to return when resolving the reference."""
-        return {}
+        raise NotImplementedError()
 
 
 class EntityResolver(ABC):
@@ -180,12 +180,12 @@ class EntityResolver(ABC):
     @abstractmethod
     def matches_reference_dict(self, ref_dict):
         """Check if the ref_dict matches the expectations of this resolver."""
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def matches_entity(self, entity):
         """Check if the entity matches the expectations of this resolver."""
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def _get_entity_proxy(self, ref_dict):
@@ -194,8 +194,11 @@ class EntityResolver(ABC):
         Since the compatibility checks are already taken care of, this
         method can assume that the data is valid and can focus on simply
         creating the proxy for the referenced entity.
+
+        Example:
+            return EntityProxy(self, ref_dict)
         """
-        return None
+        raise NotImplementedError()
 
     @abstractmethod
     def _reference_entity(self, entity):
@@ -204,8 +207,11 @@ class EntityResolver(ABC):
         Since the compatibility checks are already taken care of, this method
         can assume that the entity is compatible and can focus on simply
         creating the reference dict for the given entity.
+
+        Example:
+            return {self.type_key: entity.id}
         """
-        return None
+        raise NotImplementedError()
 
     def get_service(self):
         """Return the record service."""

@@ -10,7 +10,7 @@
 
 from .grants import EntityGrant
 from .registry import ResolverRegistryBase
-from .resolvers import EntityResolver, RecordResolver
+from .entity_resolvers import EntityResolver, RecordResolver
 
 __all__ = (
     "EntityGrant",
