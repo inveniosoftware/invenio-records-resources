@@ -106,7 +106,7 @@ class and implementing the desired methods:
 from functools import wraps
 
 from invenio_db import db
-from invenio_notifications.tasks import broadcast_notification
+from invenio_notifications.tasks import broadcast
 
 from ..tasks import send_change_notifications
 
@@ -242,7 +242,7 @@ class NotificationOp(Operation):
 
     def on_post_commit(self, uow):
         """Start task to send notification."""
-        broadcast_notification.delay(self._notification)
+        broadcast.delay(self._notification)
 
 
 #
