@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.1.1 (2023-03-08)
+
+- dependencies: bump flask-resources
+
 Version 1.1.0 (2023-03-02)
 
 - remove deprecated flask-babelex dependency and imports
