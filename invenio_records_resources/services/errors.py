@@ -55,3 +55,17 @@ class FacetNotFoundError(Exception):
         """Initialise error."""
         self.vocabulary_id = vocabulary_id
         super().__init__(_("Facet {vocab} not found.").format(vocab=vocabulary_id))
+
+
+class FileKeyNotFoundError(Exception):
+    """Error denoting that a record doesn't have a certain file."""
+
+    def __init__(self, recid, file_key):
+        """Constructor."""
+        super().__init__(
+            _("Record '{recid}' has no file '{file_key}'.").format(
+                recid=recid, file_key=file_key
+            )
+        )
+        self.recid = recid
+        self.file_key = file_key
