@@ -126,9 +126,6 @@ class FileResource(ErrorHandlersMixin, Resource):
             resource_requestctx.view_args["key"],
         )
 
-        if item is None:
-            abort(404)
-
         return item.to_dict(), 200
 
     @request_view_args
@@ -142,9 +139,6 @@ class FileResource(ErrorHandlersMixin, Resource):
             resource_requestctx.view_args["key"],
             resource_requestctx.data or {},
         )
-
-        if item is None:
-            abort(404)
 
         return item.to_dict(), 200
 
@@ -178,9 +172,6 @@ class FileResource(ErrorHandlersMixin, Resource):
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
         )
-
-        if item is None:
-            abort(404)
 
         # emit file download stats event
         obj = item._file.object_version
@@ -234,8 +225,5 @@ class FileResource(ErrorHandlersMixin, Resource):
             resource_requestctx.data["request_stream"],
             content_length=resource_requestctx.data["request_content_length"],
         )
-
-        if item is None:
-            abort(404)
 
         return item.to_dict(), 200
