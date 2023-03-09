@@ -10,6 +10,7 @@
 """File Service API."""
 
 from ..base import LinksTemplate, Service
+from ..errors import FileKeyNotFoundError
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 
@@ -49,11 +50,19 @@ class FileService(Service):
         return super().check_permission(identity, action_name, **kwargs)
 
     def _get_record(self, id_, identity, action, file_key=None):
-        """Get the associated record."""
+        """Get the associated record.
+
+        If a ``file_key`` is specified and the record in question doesn't have a file
+        for that key, a ``FileKeyNotFoundError`` will be raised.
+        """
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, action, record=record, file_key=file_key)
+
+        if file_key and file_key not in record.files:
+            raise FileKeyNotFoundError(id_, file_key)
+
         return record
 
     #
@@ -92,11 +101,11 @@ class FileService(Service):
 
     @unit_of_work()
     def update_file_metadata(self, identity, id_, file_key, data, uow=None):
-        """Update the metadata of a file."""
-        record = self._get_record(id_, identity, "create_files")
+        """Update the metadata of a file.
 
-        if file_key not in record.files:
-            return None
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "create_files", file_key=file_key)
 
         self.run_components(
             "update_file_metadata", identity, id_, file_key, record, data, uow=uow
@@ -111,11 +120,11 @@ class FileService(Service):
         )
 
     def read_file_metadata(self, identity, id_, file_key):
-        """Read the metadata of a file."""
-        record = self._get_record(id_, identity, "read_files")
+        """Read the metadata of a file.
 
-        if file_key not in record.files:
-            return None
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "read_files", file_key=file_key)
 
         self.run_components("read_file_metadata", identity, id_, file_key, record)
 
@@ -129,12 +138,11 @@ class FileService(Service):
 
     @unit_of_work()
     def extract_file_metadata(self, identity, id_, file_key, uow=None):
-        """Extract metadata from a file and update the file metadata file."""
-        record = self._get_record(id_, identity, "create_files")
+        """Extract metadata from a file and update the file metadata file.
 
-        if file_key not in record.files:
-            return None
-
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "create_files", file_key=file_key)
         file_record = record.files[file_key]
 
         self.run_components(
@@ -159,11 +167,11 @@ class FileService(Service):
 
     @unit_of_work()
     def commit_file(self, identity, id_, file_key, uow=None):
-        """Commit a file upload."""
-        record = self._get_record(id_, identity, "commit_files", file_key=file_key)
+        """Commit a file upload.
 
-        if file_key not in record.files:
-            return None
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "commit_files", file_key=file_key)
 
         self.run_components("commit_file", identity, id_, file_key, record, uow=uow)
 
@@ -177,7 +185,10 @@ class FileService(Service):
 
     @unit_of_work()
     def delete_file(self, identity, id_, file_key, uow=None):
-        """Delete a single file."""
+        """Delete a single file.
+
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
         record = self._get_record(id_, identity, "delete_files", file_key=file_key)
         deleted_file = record.files.delete(file_key)
 
@@ -223,11 +234,11 @@ class FileService(Service):
     def set_file_content(
         self, identity, id_, file_key, stream, content_length=None, uow=None
     ):
-        """Save file content."""
-        record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
+        """Save file content.
 
-        if file_key not in record.files:
-            return None
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
 
         self.run_components(
             "set_file_content",
@@ -249,11 +260,11 @@ class FileService(Service):
         )
 
     def get_file_content(self, identity, id_, file_key):
-        """Retrieve file content."""
-        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+        """Retrieve file content.
 
-        if file_key not in record.files:
-            return None
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
 
         self.run_components("get_file_content", identity, id_, file_key, record)
 
