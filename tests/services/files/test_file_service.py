@@ -15,7 +15,10 @@ import pytest
 from invenio_access.permissions import system_identity
 from marshmallow import ValidationError
 
-from invenio_records_resources.services.errors import PermissionDeniedError
+from invenio_records_resources.services.errors import (
+    FileKeyNotFoundError,
+    PermissionDeniedError,
+)
 
 #
 # Fixtures
@@ -364,8 +367,8 @@ def test_delete_not_committed_external_file(
 
     # Delete file
     file_service.delete_file(identity_simple, recid, "article.txt")
-    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
-    assert result is None
+    with pytest.raises(FileKeyNotFoundError):
+        result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
 
     # Assert deleted
     result = file_service.list_files(identity_simple, recid)
@@ -374,19 +377,21 @@ def test_delete_not_committed_external_file(
 
     # Set content as system
     content = BytesIO(b"test file content")
-    result = file_service.set_file_content(
-        system_identity,
-        recid,
-        file_to_initialise[0]["key"],
-        content,
-        content.getbuffer().nbytes,
-    )
-    assert result is None
-    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
-    assert result is None
+    with pytest.raises(FileKeyNotFoundError):
+        result = file_service.set_file_content(
+            system_identity,
+            recid,
+            file_to_initialise[0]["key"],
+            content,
+            content.getbuffer().nbytes,
+        )
+
+    with pytest.raises(FileKeyNotFoundError):
+        result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
 
     # Commit as system
-    assert file_service.commit_file(system_identity, recid, "article.txt") is None
+    with pytest.raises(FileKeyNotFoundError):
+        assert file_service.commit_file(system_identity, recid, "article.txt")
 
     # Assert deleted
     result = file_service.list_files(identity_simple, recid)

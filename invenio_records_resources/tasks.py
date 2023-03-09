@@ -17,13 +17,18 @@ from invenio_indexer.proxies import current_indexer_registry
 from invenio_indexer.tasks import process_bulk_queue
 
 from .proxies import current_notifications_registry, current_service_registry
+from .services.errors import FileKeyNotFoundError
 
 
 @shared_task(ignore_result=True)
 def extract_file_metadata(service_id, record_id, file_key):
     """Process file."""
-    service = current_service_registry.get(service_id)
-    service.extract_file_metadata(system_identity, record_id, file_key)
+    try:
+        service = current_service_registry.get(service_id)
+        service.extract_file_metadata(system_identity, record_id, file_key)
+
+    except FileKeyNotFoundError as e:
+        current_app.logger.error(e)
 
 
 @shared_task(ignore_result=True)
