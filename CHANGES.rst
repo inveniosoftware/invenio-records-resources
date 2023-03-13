@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.2.0 (2023-03-13)
+
+- resource: add event emitter for usage statistics calculation
+
 Version 1.1.1 (2023-03-08)
 
 - dependencies: bump flask-resources
