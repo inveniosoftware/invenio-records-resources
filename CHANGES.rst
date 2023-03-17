@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.3.0 (2023-03-17)
+
+- errors: add FileKeyNotFoundError
+
 Version 1.2.1 (2023-03-14)
 
 - setup: install invenio_stats
