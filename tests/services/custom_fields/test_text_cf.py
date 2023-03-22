@@ -10,6 +10,7 @@
 
 import pytest
 from marshmallow import Schema, ValidationError
+from marshmallow_utils.fields import SanitizedHTML
 
 from invenio_records_resources.services.custom_fields import KeywordCF, TextCF
 
@@ -69,6 +70,18 @@ def test_keywordcf_error_messages():
     assert errors["test"] == ["Custom error"]
 
 
+def test_keywordcf_custom_field_cls_list():
+    cf = KeywordCF("name", field_cls=SanitizedHTML, multiple=True)
+    schema = Schema.from_dict({"test": cf.field})()
+
+    assert schema.load(
+        {"test": ["<p>a string</p>", "<span>another string</span>"]}
+    ) == {"test": ["<p>a string</p>", "<span>another string</span>"]}
+
+    with pytest.raises(ValidationError):
+        schema.load({"test": "a string"})
+
+
 #
 # TextCF
 #
@@ -89,6 +102,18 @@ def test_textcf_list():
     assert schema.load({"test": ["a string", "another string"]}) == {
         "test": ["a string", "another string"]
     }
+
+    with pytest.raises(ValidationError):
+        schema.load({"test": "a string"})
+
+
+def test_textcf_custom_field_cls_list():
+    cf = TextCF("name", field_cls=SanitizedHTML, multiple=True)
+    schema = Schema.from_dict({"test": cf.field})()
+
+    assert schema.load(
+        {"test": ["<p>a string</p>", "<span>another string</span>"]}
+    ) == {"test": ["<p>a string</p>", "<span>another string</span>"]}
 
     with pytest.raises(ValidationError):
         schema.load({"test": "a string"})

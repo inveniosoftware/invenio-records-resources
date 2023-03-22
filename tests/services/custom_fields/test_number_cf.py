@@ -12,6 +12,9 @@ import pytest
 from marshmallow import Schema, ValidationError
 
 from invenio_records_resources.services.custom_fields import DoubleCF, IntegerCF
+from invenio_records_resources.services.custom_fields.errors import (
+    CustomFieldsInvalidArgument,
+)
 
 #
 # Integer
@@ -36,6 +39,16 @@ def test_integercf():
         schema.load({"test": "1"})
 
 
+def test_integercf_custom_field_cls_list():
+    """Test that field_cls cannot be passed as kwarg."""
+
+    class MyClass:
+        pass
+
+    with pytest.raises(CustomFieldsInvalidArgument):
+        _ = IntegerCF("name", field_cls=MyClass, multiple=True)
+
+
 #
 # Double
 #
@@ -54,3 +67,13 @@ def test_doublecf():
     assert schema.load({"test": 1.1}) == {"test": 1.1}
     # test string acceptance but dumped as double
     assert schema.dump({"test": "1.1"}) == {"test": 1.1}
+
+
+def test_doublecf_custom_field_cls_list():
+    """Test that field_cls cannot be passed as kwarg."""
+
+    class MyClass:
+        pass
+
+    with pytest.raises(CustomFieldsInvalidArgument):
+        _ = DoubleCF("name", field_cls=MyClass, multiple=True)

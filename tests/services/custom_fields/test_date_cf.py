@@ -15,6 +15,9 @@ from invenio_records_resources.services.custom_fields import (
     EDTFDateStringCF,
     ISODateStringCF,
 )
+from invenio_records_resources.services.custom_fields.errors import (
+    CustomFieldsInvalidArgument,
+)
 
 
 #
@@ -31,6 +34,16 @@ def test_isodatestring_validate():
 
     assert schema.load({"test": "1999-10-27"}) == {"test": "1999-10-27"}
     pytest.raises(ValidationError, schema.load, {"f": "2020/2021"})
+
+
+def test_isodatestring_custom_field_cls_list():
+    """Test that field_cls cannot be passed as kwarg."""
+
+    class MyClass:
+        pass
+
+    with pytest.raises(CustomFieldsInvalidArgument):
+        _ = ISODateStringCF("name", field_cls=MyClass, multiple=True)
 
 
 #
@@ -58,3 +71,13 @@ def test_edtfdatestring_validate():
     pytest.raises(ValidationError, schema.load, {"test": "2021/2020"})
     # Not date or interval
     pytest.raises(ValidationError, schema.load, {"test": "2020-01-01T10:00:00"})
+
+
+def test_edtfdatestring_custom_field_cls_list():
+    """Test that field_cls cannot be passed as kwarg."""
+
+    class MyClass:
+        pass
+
+    with pytest.raises(CustomFieldsInvalidArgument):
+        _ = EDTFDateStringCF("name", field_cls=MyClass, multiple=True)
