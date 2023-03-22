@@ -16,9 +16,9 @@ from .mappings import KeywordMapping, TextMapping
 class KeywordCF(BaseListCF):
     """Keyword custom field."""
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, field_cls=SanitizedUnicode, **kwargs):
         """Constructor."""
-        super().__init__(name, field_cls=SanitizedUnicode, **kwargs)
+        super().__init__(name, field_cls=field_cls, **kwargs)
 
     @property
     def mapping(self):
@@ -29,9 +29,9 @@ class KeywordCF(BaseListCF):
 class TextCF(KeywordCF):
     """Text custom field."""
 
-    def __init__(self, name, use_as_filter=False, **kwargs):
+    def __init__(self, name, field_cls=SanitizedUnicode, use_as_filter=False, **kwargs):
         """Constructor."""
-        super().__init__(name, **kwargs)
+        super().__init__(name, field_cls=field_cls, **kwargs)
         self._use_as_filter = use_as_filter
 
     @property

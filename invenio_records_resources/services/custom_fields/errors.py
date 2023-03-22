@@ -49,3 +49,18 @@ class CustomFieldsNotConfigured(CustomFieldsException):
     def description(self):
         """Exception's description."""
         return f"Custom fields {self.field_names} are not configured."
+
+
+class CustomFieldsInvalidArgument(CustomFieldsException):
+    """Invalid argument passed when initializing custom field class."""
+
+    def __init__(self, arg_name):
+        """Constructor."""
+        self.arg_name = arg_name
+
+    @property
+    def description(self):
+        """Exception's description."""
+        return (
+            f"Invalid argument {self.arg_name} passed when initializing custom field."
+        )

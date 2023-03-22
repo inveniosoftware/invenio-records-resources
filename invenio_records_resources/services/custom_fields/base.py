@@ -8,8 +8,11 @@
 """Custom Fields for InvenioRDM."""
 
 from abc import ABC, abstractproperty
+from functools import wraps
 
 from marshmallow.fields import List
+
+from .errors import CustomFieldsInvalidArgument
 
 
 class BaseCF(ABC):
@@ -76,3 +79,19 @@ class BaseListCF(BaseCF):
         _field = self._field_cls(**self._field_args)
 
         return List(_field) if self._multiple else _field
+
+
+def ensure_no_field_cls(func):
+    """Decorator for ensuring that field_cls is not passed as kwarg.
+
+    This is meant to be used in interfaces that implement the `BaseListCF` and they
+    provide a concrete definition of the field cls.
+    """
+
+    @wraps(func)
+    def inner(self, *args, **kwargs):
+        if "field_cls" in kwargs:
+            raise CustomFieldsInvalidArgument("field_cls")
+        return func(self, *args, **kwargs)
+
+    return inner
