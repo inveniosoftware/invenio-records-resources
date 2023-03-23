@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 1.3.1 (2023-03-23)
+
+- custom-fields: control `field_cls` customization
+
 Version 1.3.0 (2023-03-17)
 
 - errors: add FileKeyNotFoundError
