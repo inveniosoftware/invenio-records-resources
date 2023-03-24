@@ -8,9 +8,9 @@
 
 """Module for entity resolvers."""
 
+from .entity_resolvers import EntityResolver, RecordResolver
 from .grants import EntityGrant
 from .registry import ResolverRegistryBase
-from .entity_resolvers import EntityResolver, RecordResolver
 
 __all__ = (
     "EntityGrant",

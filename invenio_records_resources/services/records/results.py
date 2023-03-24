@@ -375,19 +375,21 @@ class FieldsResolver:
             for field in self._find_fields(service, value):
                 field.add_dereferenced_record(service, value, resolved_rec)
 
-        for service, values in grouped_values.items():
-            results = service.read_many(identity, list(values))
+        for service, all_values in grouped_values.items():
+            results = service.read_many(identity, list(all_values))
 
             found_values = set()
             for hit in results.hits:
                 value = hit.get("id", None)
-                # keep values visited so we can extract the ones not found
+                # keep values visited so we can extract the ones not found i.e ghost
                 found_values.add(value)
                 _add_dereferenced_record(service, value, hit)
 
-            not_found_values = values - found_values
-            if not_found_values:
-                for value in not_found_values:
+            ghost_values = all_values - found_values
+            if ghost_values:
+                for value in ghost_values:
+                    # set dereferenced record to None. That will trigger eventually
+                    # the field.ghost_recor() to be called
                     _add_dereferenced_record(service, value, None)
 
     def resolve(self, identity, hits):
