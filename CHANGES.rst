@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version 2.0.0 (2023-03-24)
+
+- expandable-field: add a new abstractmethod called `ghost_record` that returns the
+  unresolvable representation aka "ghost" of the expanding entity.
+- global: renames resolvers to entity_resolvers
+
 Version 1.3.1 (2023-03-23)
 
 - custom-fields: control `field_cls` customization
