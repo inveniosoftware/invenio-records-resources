@@ -24,24 +24,30 @@ from invenio_records_resources.services.errors import QuerystringValidationError
 class SearchFieldTransformer(TreeTransformer):
     """Transform from user-friendly field names to internal field names."""
 
-    def __init__(self, mapping, *args, **kwargs):
+    def __init__(self, mapping, allow_list, *args, **kwargs):
         """Constructor."""
         self._mapping = mapping
+        self._allow_list = allow_list
         super().__init__(self, *args, **kwargs)
 
     @classmethod
-    def factory(cls, mapping=None):
+    def factory(cls, mapping=None, allow_list=None):
         """Create a new field transformer."""
-        return partial(cls, mapping or {})
+        return partial(cls, mapping or {}, allow_list or [])
 
     def visit_search_field(self, node, context):
         """Visit a search field."""
-        if node.name not in self._mapping:
+        # Use the node name if not mapped for transformation.
+        term_name = self._mapping.get(node.name, node.name)
+
+        # If a allow list exists, the term must be allowed to be queried.
+        if self._allow_list and not term_name in self._allow_list:
             raise QuerystringValidationError(
                 _("Invalid search field: {field_name}.").format(field_name=node.name)
             )
-        else:
-            new_node = node.clone_item()
-            new_node.name = self._mapping[node.name]
-            new_node.children = list(self.clone_children(node, new_node, context))
-            yield new_node
+
+        # Returns a copy of the node.
+        new_node = node.clone_item()
+        new_node.name = term_name
+        new_node.children = list(self.clone_children(node, new_node, context))
+        yield new_node

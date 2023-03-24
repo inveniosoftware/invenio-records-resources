@@ -96,21 +96,23 @@ def test_multimatch(parser, query):
 
 
 @pytest.mark.parametrize(
-    "query,transformed_query,query_type",
+    "query,transformed_query,query_type, allow_list",
     [
-        ("title:test", "metadata.title:test", "query_string"),
-        ("title:(test test)", "metadata.title:(test test)", "query_string"),
-        ("title:[1 TO 5]", "metadata.title:[1 TO 5]", "query_string"),
-        # Invalid field names results in multi_match
-        ("description:test", "description:test", "multi_match"),
-        ("metadata.title:test", "metadata.title:test", "multi_match"),
+        ("title:test", "metadata.title:test", "query_string", None),
+        ("title:(test test)", "metadata.title:(test test)", "query_string", None),
+        ("title:[1 TO 5]", "metadata.title:[1 TO 5]", "query_string", None),
+        # Term is allowed and not mapped, results in a query string with the original query
+        ("description:test", "description:test", "query_string", None),
+        ("metadata.title:test", "metadata.title:test", "query_string", None),
+        # Terms might be mapped but not allowed, results in multi_match with the original query
+        ("title:test", "title:test", "multi_match", ["metadata.date"]),
     ],
 )
-def test_search_field_tranformer(query, transformed_query, query_type):
+def test_search_field_tranformer(query, transformed_query, query_type, allow_list):
     """Invalid syntax falls back to multi match query."""
     p = QueryParser(system_identity).factory(
         tree_transformer_factory=SearchFieldTransformer.factory(
-            mapping={"title": "metadata.title"}
+            mapping={"title": "metadata.title"}, allow_list=allow_list
         )
     )
     assert p(system_identity).parse(query).to_dict() == {
