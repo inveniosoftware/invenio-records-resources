@@ -47,9 +47,7 @@ class Record(RecordBase):
     expires_at = ModelField()
 
     # System fields
-    schema = ConstantField(
-        "$schema", "http://localhost/schemas/records/record-v1.0.0.json"
-    )
+    schema = ConstantField("$schema", "local://records/record-v1.0.0.json")
 
     index = IndexField("records-record-v1.0.0", search_alias="records")
 

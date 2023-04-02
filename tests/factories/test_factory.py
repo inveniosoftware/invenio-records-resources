@@ -40,8 +40,7 @@ def test_record_class_create():
 
     # check schema field
     assert (
-        rec_type.record_cls.schema.value
-        == "https://localhost/schemas/recordclss/recordcls-v1.0.0.json"
+        rec_type.record_cls.schema.value == "local://recordclss/recordcls-v1.0.0.json"
     )
 
 
@@ -111,13 +110,10 @@ def test_optional_schema_path():
     rec_type = RecordTypeFactory(
         "OptionalSchemaPath",
         RecordSchema,
-        schema_path="https://localhost/schemas/path/custom-v1.0.0.json",
+        schema_path="local://path/custom-v1.0.0.json",
     )
 
-    assert (
-        rec_type.record_cls.schema.value
-        == "https://localhost/schemas/path/custom-v1.0.0.json"
-    )
+    assert rec_type.record_cls.schema.value == "local://path/custom-v1.0.0.json"
 
 
 def test_optional_version():
@@ -125,7 +121,7 @@ def test_optional_version():
         "OptionalVersion", RecordSchema, schema_version="1.1.0"
     )
     assert (
-        rec_type.record_cls.schema.value == "https://localhost/schemas/optionalversions"
+        rec_type.record_cls.schema.value == "local://optionalversions"
         "/optionalversion-v1.1.0.json"
     )
     assert rec_type.record_cls.index._name == "optionalversions-optionalversion-v1.1.0"
