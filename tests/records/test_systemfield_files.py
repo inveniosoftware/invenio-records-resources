@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -13,17 +13,25 @@
 from io import BytesIO
 
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-from invenio_records.systemfields import ModelField
+from invenio_records.systemfields import ConstantField, ModelField
 from mock_module import models
 from mock_module.api import FileRecord
 from mock_module.api import Record as RecordBase
 
+from invenio_records_resources.records.dumpers import PartialFileDumper
 from invenio_records_resources.records.systemfields.files import FilesField
 
 
 # Define a files-enabled record class
 class Record(RecordBase):
     files = FilesField(store=True, file_cls=FileRecord)
+    bucket_id = ModelField()
+    bucket = ModelField(dump=False)
+
+
+class Record2(RecordBase):
+    schema = ConstantField("$schema", "local://records/record-nofiles-v1.0.0.json")
+    files = FilesField(store=False, dump=True, file_cls=FileRecord)
     bucket_id = ModelField()
     bucket = ModelField(dump=False)
 
@@ -122,7 +130,6 @@ def test_record_files_operations(base_app, db, location):
     assert len(record.files) == 0
     assert "test.pdf" not in record.files
     assert record["files"]["entries"] == {}
-    assert record["files"]["meta"] == {}
 
 
 def test_record_files_clear(base_app, db, location):
@@ -158,7 +165,6 @@ def test_record_files_clear(base_app, db, location):
     assert "f2.pdf" not in record.files
     assert "f3.pdf" not in record.files
     assert record["files"]["entries"] == {}
-    assert record["files"]["meta"] == {}
 
 
 def test_record_files_store(base_app, db, location):
@@ -169,28 +175,22 @@ def test_record_files_store(base_app, db, location):
     record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
-    # Add a file with only metadata
-    record.files["f3.pdf"] = {"description": "Metadata only"}
 
     rf1 = record.files["f1.pdf"]
     rf2 = record.files["f2.pdf"]
     record.commit()
-    assert record["files"]["meta"] == {
-        "f1.pdf": {"description": "Test file"},
-        "f2.pdf": None,
-        "f3.pdf": {"description": "Metadata only"},
-    }
     assert record["files"]["entries"] == {
         rf.key: {
-            "bucket_id": str(record.bucket_id),
             "checksum": rf.file.checksum,
+            "ext": rf.file.ext,
             "file_id": str(rf.file.file_id),
             "key": rf.key,
+            "metadata": rf.metadata or {},
             "mimetype": rf.file.mimetype,
+            "object_version_id": str(rf.object_version_id),
             "size": rf.file.size,
-            "storage_class": rf.file.storage_class,
-            "uri": rf.file.uri,
-            "version_id": str(rf.object_version_id),
+            "uuid": str(rf.id),
+            "version_id": rf.model.version_id,
         }
         for rf in (rf1, rf2)
     }
@@ -250,3 +250,43 @@ def test_record_files_copy_disabled(base_app, db, location):
     assert dst.files.enabled is True
     dst.files.copy(src.files)
     assert dst.files.enabled is False
+
+
+def test_record_files_dump(base_app, db, location):
+    """Test dumped data for record."""
+    record = Record2.create({})
+    record.files["f1.txt"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    rf = record.files["f1.txt"]
+    record.commit()
+
+    # Assert files data dumped inside the record
+    data = record.dumps()
+    assert data["files"] == {
+        "enabled": True,
+        "count": 1,
+        "mimetypes": ["text/plain"],
+        "totalbytes": 8,
+        "types": ["txt"],
+        "entries": [
+            {
+                "uuid": str(rf.id),
+                "version_id": 3,
+                "metadata": {"description": "Test file"},
+                "checksum": "md5:8bc944dbd052ef51652e70a5104492e3",
+                "key": "f1.txt",
+                "mimetype": "text/plain",
+                "size": 8,
+                "ext": "txt",
+                "object_version_id": str(rf.file.version_id),
+                "file_id": str(rf.file.file_id),
+            }
+        ],
+    }
+
+    # Load data
+    new_record = Record2.loads(data)
+    new_rf = new_record.files["f1.txt"]
+    assert new_rf.dumps(dumper=PartialFileDumper()) == rf.dumps(
+        dumper=PartialFileDumper()
+    )
+    assert new_record == record

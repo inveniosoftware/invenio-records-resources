@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -9,6 +9,7 @@
 
 """Records API."""
 
+import mimetypes
 from contextlib import contextmanager
 
 from invenio_db import db
@@ -131,42 +132,42 @@ class File:
         self.file_model = file_model or object_model.file
 
     @classmethod
-    def from_dict(cls, data, bucket):
+    def from_dump(cls, data):
         """Construct a file wrapper from a dictionary."""
         file_args = dict(
             id=data["file_id"],
-            storage_class=data.get("storage_class"),
             size=data.get("size"),
             checksum=data.get("checksum"),
         )
-        if "uri" in data:
-            file_args["uri"] = data["uri"]
-
         fi = FileInstance(**file_args)
         obj = ObjectVersion(
-            version_id=data["version_id"],
+            version_id=data["object_version_id"],
             key=data["key"],
             file_id=data["file_id"],
+            file=fi,
             _mimetype=data["mimetype"],
             is_head=True,
-            bucket=bucket,
-            bucket_id=data.get("bucket_id", bucket.id),
+            bucket_id=data["bucket_id"],
         )
         return cls(object_model=obj, file_model=fi)
 
     def dumps(self):
         """Dump file model attributes of the object."""
-        return {
-            "version_id": str(self.object_model.version_id),
-            "key": self.object_model.key,
-            "bucket_id": str(self.object_model.bucket_id),
-            "file_id": str(self.object_model.file_id),
-            "uri": str(self.object_model.file.uri),
-            "storage_class": self.object_model.file.storage_class,
+        data = {
+            "checksum": self.object_model.file.checksum,
             "mimetype": self.object_model.mimetype,
             "size": self.object_model.file.size,
-            "checksum": self.object_model.file.checksum,
+            "ext": self.ext,
+            "object_version_id": str(self.object_model.version_id),
+            "file_id": str(self.object_model.file_id),
         }
+        return data
+
+    @property
+    def ext(self):
+        """File extension."""
+        ext = mimetypes.guess_extension(self.object_model.mimetype)
+        return ext[1:] if ext else None
 
     def __getattr__(self, name):
         """Override to get attributes from ObjectVersion and FileInstance."""
