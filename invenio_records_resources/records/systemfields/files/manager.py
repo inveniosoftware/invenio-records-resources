@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2022 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -31,12 +31,6 @@ necessarily persisted in the metadata.
             }
         },
         # Persisted when `store=True`
-        'bucket': {
-            'quota_size': 200000,
-            'max_file_size': 200000,
-            'size': 15000,
-            ...
-        },
         'entries': {
             'paper.pdf': {
                 'version_id': '<object-version-id>',
@@ -61,6 +55,8 @@ from functools import wraps
 
 from invenio_files_rest.errors import InvalidKeyError, InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
+
+from ...dumpers import PartialFileDumper
 
 
 def ensure_enabled(func):
@@ -196,7 +192,6 @@ class FilesManager(MutableMapping):
     @ensure_enabled
     def commit(self, file_key):
         """Commit a file."""
-        # TODO: Add other checks here (e.g. verify checksum, S3 upload)
         file_obj = ObjectVersion.get(self.bucket.id, file_key)
         if not file_obj:
             raise Exception(f"File with key {file_key} not uploaded yet.")
@@ -207,6 +202,7 @@ class FilesManager(MutableMapping):
         """Delete a file."""
         rf = self[key]
         ov = rf.object_version
+
         # Delete the entire row
         rf.delete(force=True)
         if ov and remove_obj:
@@ -295,6 +291,32 @@ class FilesManager(MutableMapping):
         self._enabled = value
 
     @property
+    def count(self):
+        """Return total number of files."""
+        return len(self)
+
+    @property
+    def total_bytes(self):
+        """Return total number of bytes."""
+        return sum([f.file.size for f in self.entries.values() if f.file])
+
+    @property
+    def mimetypes(self):
+        """Return list of mimetypes."""
+        return list({f.file.mimetype for f in self.entries.values() if f.file})
+
+    @property
+    def exts(self):
+        """Return list file extensions."""
+        return list(
+            {
+                f.file.ext
+                for f in self.entries.values()
+                if f.file and f.file.ext is not None
+            }
+        )
+
+    @property
     def default_preview(self):
         """Get default preview file."""
         return self._default_preview
@@ -325,9 +347,6 @@ class FilesManager(MutableMapping):
         value = self.entries.get(key)
         if isinstance(value, self.file_cls):
             return value
-        # TODO: implement "file_cls.loads/from_dict"
-        # elif isinstance(value, dict):
-        #     return value
         else:  # fetch from db...
             value = self.file_cls.get_by_key(self.record.id, key)
             if value:
@@ -384,11 +403,6 @@ class FilesManager(MutableMapping):
         """Delete a file."""
         # TODO: Make this configurable?
         self.delete(key)
-
-    # TODO: implement for efficiency?
-    # @ensure_enabled
-    # def __contains__(self, key):
-    #     return key in self.entries
 
     @ensure_enabled
     def __iter__(self):

@@ -7,7 +7,7 @@
       "type": "string"
     },
     "files": {
-      "$ref": "local://definitions-v2.0.0.json#/files"
+      "$ref": "local://definitions-v2.0.0.json#/files-simple"
     },
     "metadata": {
       "type": "object",

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -23,42 +23,32 @@ necessarily persisted in the metadata.
             'figure.png',
             'data.zip',
         ],
-        'meta': {
-            'figure.png': {
-                'description': 'Figure 1.1',
-                'width': 512,
-                'height': 256,
-            }
-        },
         # Persisted when `store=True`
-        'bucket': {
-            'quota_size': 200000,
-            'max_file_size': 200000,
-            'size': 15000,
-            ...
-        },
+        'count': 1,
+        'totalbytes': 12345,
+        'mimetypes': ['application/pdf'],
+        'types': ['pdf'],
         'entries': {
             'paper.pdf': {
-                'version_id': '<object-version-id>',
-                'bucket_id': '<bucket-id>',
+                'uuid': '<file-record-id>',
+                'version_id': '<file-record-version-id>',
+                'object_version_id': '<object-version-id>',
+                'metadata': {...},
                 'file_id': '<file-id>,
-                'storage_class': 'A'
                 'key': 'paper.pdf',
+                'ext': 'pdf',
                 'mimetype': 'application/pdf',
                 'size': 12345,
                 'checksum': 'md5:abcdef...',
             },
-            'data.zip': {...},
-            'figure.png': {...},
-            ...
         }
     }
 }
 """
 
-from invenio_files_rest.models import Bucket
 from invenio_records.systemfields import SystemField
 
+from ...dumpers import PartialFileDumper
 from .manager import FilesManager
 
 
@@ -69,6 +59,7 @@ class FilesField(SystemField):
         self,
         key="files",
         store=True,
+        dump=False,
         file_cls=None,
         enabled=True,
         bucket_id_attr="bucket_id",
@@ -88,6 +79,7 @@ class FilesField(SystemField):
             deleted.
         """
         self._store = store
+        self._dump = dump
         self._enabled = enabled
         self._bucket_id_attr = bucket_id_attr
         self._bucket_attr = bucket_attr
@@ -105,8 +97,6 @@ class FilesField(SystemField):
     #
     # Life-cycle hooks
     #
-    # TODO: Add support for pre_dump/post_load method so that files can be
-    # searched - e.g. files.types:pdf files.size>:10000
     def pre_commit(self, record):
         """Called before a record is committed."""
         # Make sure we serialize the files on record.commit() time as they
@@ -128,6 +118,43 @@ class FilesField(SystemField):
             files.create_bucket()
 
         self.store(record, files)
+
+    def post_dump(self, record, data, **kwargs):
+        """Called before a record is dumped in a secondary storage system."""
+        # Dump files into index if requested (if store=True, files are already
+        # part of the dumped record)
+        if self._dump and not self._store:
+            files = getattr(record, self.attr_name)
+            if files is not None:
+                self.set_dictkey(
+                    data, self.dump(record, files, include_entries=self._dump)
+                )
+
+        # Prepare file entries for index (dict to list)
+        if self._dump or self._store:
+            files = self.get_dictkey(data)
+            if "entries" in files:
+                files["entries"] = list(files["entries"].values())
+
+    def pre_load(self, data, loader=None):
+        """Called before a record is loaded."""
+        if self._dump or self._store:
+            # Undo dict to list transform from post_dump().
+            files = self.get_dictkey(data)
+            if "entries" in files:
+                files["entries"] = {f["key"]: f for f in files["entries"]}
+
+    def post_load(self, record, data, loader=None):
+        """Called after a record is loaded."""
+        file_data = self.get_dictkey(record)
+        if file_data:
+            self._set_cache(record, self.load(record, file_data, from_dump=True))
+        if not self._store:
+            file_data.pop("count", None)
+            file_data.pop("mimetypes", None)
+            file_data.pop("totalbytes", None)
+            file_data.pop("types", None)
+            file_data.pop("entries", None)
 
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""
@@ -155,21 +182,39 @@ class FilesField(SystemField):
             return obj
         data = self.get_dictkey(record)
         if data:
-            obj = FilesManager(
-                record=record,
-                file_cls=self.file_cls,
-                enabled=data.get("enabled", self._enabled),
-                order=data.get("order", []),
-                default_preview=data.get("default_preview"),
-                entries=data.get("entries", {}) if self._store else None,
-                options=self._manager_options,
-            )
+            obj = self.load(record, data)
             self._set_cache(record, obj)
             return obj
         return None
 
-    def store(self, record, files):
-        """Set the object."""
+    def load(self, record, data, from_dump=False):
+        """Create a file manager from a record and data."""
+        entries = None
+        if self._store or from_dump:
+            # If file entries where stored in the database record, or dumped
+            # into the index they will be loaded here.
+            entries = {}
+            for key, file_data in data.get("entries", {}).items():
+                # Inject record_id/bucket_id here to avoid storing it
+                # redundantly for each file.
+                file_data["record_id"] = record.id
+                file_data["bucket_id"] = getattr(record, self._bucket_id_attr)
+                entries[key] = self.file_cls.loads(
+                    file_data, loader=PartialFileDumper()
+                )
+
+        return FilesManager(
+            record=record,
+            file_cls=self.file_cls,
+            enabled=data.get("enabled", self._enabled),
+            order=data.get("order", []),
+            default_preview=data.get("default_preview"),
+            entries=entries,
+            options=self._manager_options,
+        )
+
+    def dump(self, record, files, include_entries=False):
+        """Dump a file manager."""
         data = {
             "enabled": files.enabled,
         }
@@ -178,19 +223,21 @@ class FilesField(SystemField):
         if files.default_preview:
             data["default_preview"] = files.default_preview
 
-        if self._store and files.enabled:
+        if include_entries and files.enabled:
+            data["count"] = len(files)
+            data["mimetypes"] = files.mimetypes
+            data["totalbytes"] = files.total_bytes
+            data["types"] = files.exts
             data["entries"] = {}
-            # TODO: Does it make sense now to store separately? We can still
-            # include `meta` in each entries object (since storage is now in
-            # the FileRecord model)
-            data["meta"] = {}
+            for file_record in files.values():
+                data["entries"][file_record.key] = file_record.dumps(
+                    dumper=PartialFileDumper()
+                )
+        return data
 
-            for key, rf in files.items():
-                if rf.file:
-                    data["entries"][key] = rf.file.dumps()
-                # TODO: rf.dumps() might be enough as well...
-                data["meta"][key] = rf.metadata
-
+    def store(self, record, files):
+        """Set the object."""
+        data = self.dump(record, files, include_entries=self._store)
         # Store data values on the attribute name (e.g. 'files')
         self.set_dictkey(record, data)
         self._set_cache(record, files)
@@ -203,9 +250,3 @@ class FilesField(SystemField):
         if record is None:
             return self
         return self.obj(record)
-
-    # TODO: should `record.files = ...` be possible? Probably not...
-    # - might be interesting from the record->draft or draft-> record POW
-    # def __set__(self, record, files):
-    #     """Set files on a record."""
-    #     raise Exception('Not possible to set.')

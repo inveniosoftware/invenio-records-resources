@@ -1,0 +1,168 @@
+{
+  "$schema": {
+    "type": "string"
+  },
+  "entity_reference": {
+    "description": "Reference to an entity, with the type as key and ID as value",
+    "type": ["object", "null"],
+    "additionalProperties": false,
+    "patternProperties": {
+      "^[a-z_]+$": {
+        "type": "string"
+      }
+    }
+  },
+  "identifier": {
+    "description": "An identifier.",
+    "type": "string"
+  },
+  "identifiers_with_scheme": {
+    "description": "Identifiers object with identifier value and scheme in separate keys.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "identifier": {
+        "$ref": "#/identifier"
+      },
+      "scheme": {
+        "$ref": "#/scheme"
+      }
+    }
+  },
+  "files": {
+    "type": "object",
+    "description": "A file storage for a record.",
+    "properties": {
+      "enabled": {
+        "description": "Flag to determine if files are enabled.",
+        "type": "boolean"
+      },
+      "default_preview": {
+        "description": "File to preview by default.",
+        "type": "string"
+      },
+      "order": {
+        "description": "Order of files.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "count": {
+        "description": "Number of files.",
+        "type": "number"
+      },
+      "mimetypes": {
+        "description": "MIME Types of files.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "totalbytes": {
+        "description": "Total size of all files.",
+        "type": "number"
+      },
+      "types": {
+        "description": "File extensions.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "entries": {
+        "description": "List of files.",
+        "type": "object",
+        "patternProperties": {
+          ".+": {"$ref": "local://definitions-v2.0.0.json#/file"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "files-simple": {
+    "type": "object",
+    "description": "A file storage for a record.",
+    "properties": {
+      "enabled": {},
+      "default_preview": {},
+      "order": {}
+    }
+  },
+  "file": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "A file object.",
+    "properties": {
+      "uuid": {
+        "description": "File record ID.",
+        "type": "string"
+      },
+      "version_id": {
+        "description": "File record version ID.",
+        "type": "number"
+      },
+      "object_version_id": {
+        "description": "Object version identifier.",
+        "type": "string"
+      },
+      "file_id": {
+        "$ref": "local://definitions-v1.0.0.json#/identifier"
+      },
+      "metadata": {
+        "description": "File metadata.",
+        "type": "object",
+        "additionalProperties": true
+      },
+      "mimetype": {
+        "description": "File MIMEType.",
+        "type": "string"
+      },
+      "checksum": {
+        "description": "Checksum of the file.",
+        "type": "string"
+      },
+      "ext": {
+        "description": "Checksum of the file.",
+        "type": "string"
+      },
+      "size": {
+        "description": "Size of the file in bytes.",
+        "type": "number"
+      },
+      "key": {
+        "description": "Key (filename) of the file.",
+        "type": "string"
+      }
+    }
+  },
+  "internal-pid": {
+    "type": "object",
+    "description": "An internal persistent identifier object.",
+    "additionalProperties": false,
+    "required": ["pk", "status"],
+    "properties": {
+      "pk": {
+        "description": "Primary key of the PID object.",
+        "type": "integer"
+      },
+      "status": {
+        "description": "The status of the PID (from Invenio-PIDStore).",
+        "type": "string",
+        "enum": ["N", "K", "R", "M", "D"]
+      },
+      "pid_type": {
+        "description": "The type of the persistent identifier.",
+        "type": "string"
+      },
+      "obj_type": {
+        "description": "The type of the associated object.",
+        "type": "string"
+      }
+    }
+  },
+  "scheme": {
+    "description": "A scheme.",
+    "type": "string"
+  }
+}
