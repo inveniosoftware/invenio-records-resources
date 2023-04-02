@@ -41,6 +41,13 @@ def app_config(app_config):
 
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
 
+    app_config[
+        "RECORDS_REFRESOLVER_CLS"
+    ] = "invenio_records.resolver.InvenioRefResolver"
+    app_config[
+        "RECORDS_REFRESOLVER_STORE"
+    ] = "invenio_jsonschemas.proxies.current_refresolver_store"
+
     return app_config
 
 

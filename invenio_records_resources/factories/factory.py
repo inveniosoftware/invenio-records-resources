@@ -38,9 +38,7 @@ class RecordTypeFactory(object):
     service_config_cls = None
     service_cls = None
 
-    _schema_path_template = (
-        "https://localhost/schemas/{name_plural}/{name}-v{version}.json"
-    )
+    _schema_path_template = "local://{name_plural}/{name}-v{version}.json"
     _index_name_template = "{name_plural}-{name}-v{version}"
 
     def __init__(
