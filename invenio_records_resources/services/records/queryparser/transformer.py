@@ -30,11 +30,6 @@ class SearchFieldTransformer(TreeTransformer):
         self._allow_list = allow_list
         super().__init__(self, *args, **kwargs)
 
-    @classmethod
-    def factory(cls, mapping=None, allow_list=None):
-        """Create a new field transformer."""
-        return partial(cls, mapping or {}, allow_list or [])
-
     def visit_search_field(self, node, context):
         """Visit a search field."""
         # Use the node name if not mapped for transformation.
