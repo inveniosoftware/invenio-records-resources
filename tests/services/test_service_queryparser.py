@@ -14,7 +14,6 @@ from invenio_access.permissions import system_identity
 from invenio_records_resources.services.records.queryparser import (
     QueryParser,
     SearchFieldTransformer,
-    SuggestQueryParser,
 )
 
 
@@ -26,7 +25,7 @@ def parser():
 
 def test_extra_params():
     """Test for the query parser."""
-    p = QueryParser(system_identity).factory(fields=["title"])
+    p = QueryParser.factory(fields=["title"])
     assert p(system_identity).parse("a").to_dict() == {
         "query_string": {"query": "a", "fields": ["title"]}
     }
@@ -90,31 +89,65 @@ def test_valid_syntax(parser, query):
         "(quick OR brown AND fox",
     ],
 )
-def test_multimatch(parser, query):
+def test_multimatch_fallback(parser, query):
     """Invalid syntax falls back to multi match query."""
     assert parser.parse(query).to_dict() == {"multi_match": {"query": query}}
 
 
 @pytest.mark.parametrize(
-    "query,transformed_query,query_type, allow_list",
+    "query,transformed_query, allow_list",
     [
-        ("title:test", "metadata.title:test", "query_string", None),
-        ("title:(test test)", "metadata.title:(test test)", "query_string", None),
-        ("title:[1 TO 5]", "metadata.title:[1 TO 5]", "query_string", None),
-        # Term is allowed and not mapped, results in a query string with the original query
-        ("description:test", "description:test", "query_string", None),
-        ("metadata.title:test", "metadata.title:test", "query_string", None),
-        # Terms might be mapped but not allowed, results in multi_match with the original query
-        ("title:test", "title:test", "multi_match", ["metadata.date"]),
+        ("title:test", "metadata.title:test", None),
+        ("title:(test test)", "metadata.title:(test test)", None),
+        ("title:[1 TO 5]", "metadata.title:[1 TO 5]", None),
+        # term is implicitly allowed and not mapped
+        # results in a query string with the original query
+        ("description:test", "description:test", None),
+        ("metadata.title:test", "metadata.title:test", None),
+        # term is explicitly allowed and not mapped
+        # results in a query string with the original query
+        ("description:test", "description:test", ["description"]),
     ],
 )
-def test_search_field_tranformer(query, transformed_query, query_type, allow_list):
+def test_querystring_parsing(query, transformed_query, allow_list):
     """Invalid syntax falls back to multi match query."""
-    p = QueryParser(system_identity).factory(
-        tree_transformer_factory=SearchFieldTransformer.factory(
-            mapping={"title": "metadata.title"}, allow_list=allow_list
-        )
+    p = QueryParser.factory(
+        mapping={"title": "metadata.title"},
+        allow_list=allow_list,
+        tree_transformer_cls=SearchFieldTransformer,
     )
     assert p(system_identity).parse(query).to_dict() == {
-        query_type: {"query": transformed_query}
+        "query_string": {"query": transformed_query}
     }
+
+
+def test_parser_allowed_list():
+    """Test the allowed list is calculated correctly."""
+    p = QueryParser.factory(
+        mapping={"title": "metadata.title"},
+        allow_list=["description"],
+        tree_transformer_cls=SearchFieldTransformer,
+    )
+
+    assert p(system_identity).allow_list == {"metadata.title", "description"}
+
+
+@pytest.mark.parametrize(
+    "allow_list, fields, expected_fields",
+    [
+        (None, None, {}),
+        (None, ["description"], {"description"}),
+        (["description"], None, {"description", "metadata.title"}),
+        (["description"], ["description^2"], {"description^2", "metadata.title"}),
+    ],
+)
+def test_parser_fields(allow_list, fields, expected_fields):
+    """Test if the list of fields to query is calculated properly."""
+    p = QueryParser.factory(
+        mapping={"title": "metadata.title"},
+        allow_list=allow_list,
+        fields=fields,
+        tree_transformer_cls=SearchFieldTransformer,
+    )
+
+    assert not set(p(system_identity).fields).difference(expected_fields)
