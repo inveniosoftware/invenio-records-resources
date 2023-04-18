@@ -19,13 +19,19 @@ def _parse_ref_dict(reference_dict, strict=True):
     The ``strict`` parameter controls if the number of keys in the
     reference dict is checked strictly or not.
     """
-    keys = list(reference_dict.keys())
+    try:
+        keys = list(reference_dict.keys())
 
-    if strict and len(keys) != 1:
-        raise ValueError(
-            "Reference dicts may only have one property! "
-            f"Offending dict: {reference_dict}"
-        )
+        if strict and len(keys) != 1:
+            raise ValueError(
+                "Reference dicts may only have one property! "
+                f"Offending dict: {reference_dict}"
+            )
+
+    except AttributeError:
+        # if reference dict is not really a dict
+        # happens if entity does not match the type and gets passed to _parse_ref_dict)
+        keys = None
 
     if not keys:
         return None
@@ -66,11 +72,13 @@ class EntityProxy(ABC):
 
     def _parse_ref_dict_type(self):
         """Parse the TYPE from the reference dict."""
-        return _parse_ref_dict(self._ref_dict)[0]
+        r = _parse_ref_dict(self._ref_dict)
+        return r[0] if r else None
 
     def _parse_ref_dict_id(self):
         """Parse the ID from the reference dict."""
-        return _parse_ref_dict(self._ref_dict)[1]
+        r = _parse_ref_dict(self._ref_dict)
+        return r[1] if r else None
 
     @property
     def reference_dict(self):
@@ -139,11 +147,13 @@ class EntityResolver(ABC):
 
     def _parse_ref_dict_type(self, ref_dict):
         """Parse the TYPE from the reference dict."""
-        return self._parse_ref_dict(ref_dict)[0]
+        r = self._parse_ref_dict(ref_dict)
+        return r[0] if r else None
 
     def _parse_ref_dict_id(self, ref_dict):
         """Parse the ID from the reference dict."""
-        return self._parse_ref_dict(ref_dict)[1]
+        r = self._parse_ref_dict(ref_dict)
+        return r[1] if r else None
 
     def get_entity_proxy(self, ref_dict, check=True):
         """Check compatibility and get a proxy for the referenced entity.
