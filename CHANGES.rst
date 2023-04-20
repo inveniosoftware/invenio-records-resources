@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 3.0.0 (2023-04-20)
+
+- query parser: add allow list and fields to fine tune query parsing
+
 Version 2.0.0 (2023-03-24)
 
 - expandable-field: add a new abstractmethod called `ghost_record` that returns the
