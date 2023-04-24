@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.0.0 (2023-04-24)
+
+- files: add support for files metadata indexing
+
 Version 3.0.0 (2023-04-20)
 
 - query parser: add allow list and fields to fine tune query parsing
