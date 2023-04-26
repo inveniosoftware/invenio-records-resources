@@ -84,7 +84,9 @@ class ResolverRegistryBase(ABC):
             try:
                 if resolver.matches_entity(entity):
                     return resolver.reference_entity(entity, check=False)
-                elif resolver.matches_reference_dict(entity):
+                elif isinstance(entity, dict) and resolver.matches_reference_dict(
+                    entity
+                ):
                     return entity
             except ValueError:
                 # Value error ignored from matches_reference_dict

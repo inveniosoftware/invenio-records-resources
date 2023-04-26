@@ -13,7 +13,7 @@ from invenio_access.permissions import system_identity
 from .base import EntityProxy, EntityResolver
 
 
-class ResultItemProxy(EntityProxy):
+class ServiceResultProxy(EntityProxy):
     """Resolver proxy for a result item entity."""
 
     def __init__(self, resolver, ref_dict, service):
@@ -24,12 +24,11 @@ class ResultItemProxy(EntityProxy):
     def _resolve(self):
         """Resolve the result item from the proxy's reference dict."""
         id_ = self._parse_ref_dict_id()
+        # TODO: Make identity customizable
         return self.service.read(system_identity, id_).to_dict()
 
     def get_needs(self, ctx=None):
         """Return needs."""
-        # TODO: service.config.permission_policy_cls.can_read or []
-        #       Since resolving is done by the system, might not be applicable
         return []
 
     def pick_resolved_fields(self, identity, resolved_dict):
@@ -37,24 +36,32 @@ class ResultItemProxy(EntityProxy):
         return {"id": resolved_dict["id"]}
 
 
-class ResultItemResolver(EntityResolver):
+class ServiceResultResolver(EntityResolver):
     """Resolver for result items."""
 
-    def __init__(self, item_cls, service_id, type_key, proxy_cls=ResultItemProxy):
+    def __init__(
+        self,
+        service_id,
+        type_key,
+        proxy_cls=ServiceResultProxy,
+        item_cls=None,
+        record_cls=None,
+    ):
         """Constructor.
 
         :param item_cls: The result item class to use.
         :param service_id: The record service id.
         :param type_key: The value to use for the TYPE part of the ref_dicts.
         """
-        self.item_cls = item_cls
+        super().__init__(service_id)
         self.type_key = type_key
         self.proxy_cls = proxy_cls
-        super().__init__(service_id)
+        self.item_cls = item_cls or self.get_service().config.result_item_cls
+        self.record_cls = record_cls or self.get_service().record_cls
 
     def matches_entity(self, entity):
         """Check if the entity is a result item."""
-        return isinstance(entity, self.item_cls)
+        return isinstance(entity, (self.item_cls, self.record_cls))
 
     def _reference_entity(self, entity):
         """Create a reference dict for the given result item."""

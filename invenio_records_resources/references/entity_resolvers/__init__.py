@@ -10,7 +10,7 @@
 
 from .base import EntityProxy, EntityResolver
 from .records import RecordPKProxy, RecordProxy, RecordResolver
-from .results import ResultItemProxy, ResultItemResolver
+from .results import ServiceResultProxy, ServiceResultResolver
 
 __all__ = (
     "EntityProxy",
@@ -18,6 +18,6 @@ __all__ = (
     "RecordPKProxy",
     "RecordProxy",
     "RecordResolver",
-    "ResultItemProxy",
-    "ResultItemResolver",
+    "ServiceResultProxy",
+    "ServiceResultResolver",
 )
