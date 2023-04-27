@@ -56,8 +56,18 @@ class ServiceResultResolver(EntityResolver):
         super().__init__(service_id)
         self.type_key = type_key
         self.proxy_cls = proxy_cls
-        self.item_cls = item_cls or self.get_service().config.result_item_cls
-        self.record_cls = record_cls or self.get_service().record_cls
+        self._item_cls = item_cls
+        self._record_cls = record_cls
+
+    @property
+    def item_cls(self):
+        """Get specified item class or from service."""
+        return self._item_cls or self.get_service().config.result_item_cls
+
+    @property
+    def record_cls(self):
+        """Get specified record class or from service."""
+        return self._record_cls or self.get_service().record_cls
 
     def matches_entity(self, entity):
         """Check if the entity is a result item."""
