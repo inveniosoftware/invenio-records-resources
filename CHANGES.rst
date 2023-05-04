@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.1.0 (2023-05-04)
+
+- add ServiceResultResolver and ServiceResultProxy
+
 Version 4.0.0 (2023-04-24)
 
 - files: add support for files metadata indexing
