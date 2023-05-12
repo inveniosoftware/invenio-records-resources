@@ -42,6 +42,12 @@ class BaseRecordSchema(Schema):
         return data
 
 
+class BaseGhostSchema(Schema):
+    """Base ghost schema."""
+
+    is_ghost = fields.Constant(True, dump_only=True)
+
+
 class ServiceSchemaWrapper:
     """Schema wrapper that enhances load/dump of wrapped schema.
 

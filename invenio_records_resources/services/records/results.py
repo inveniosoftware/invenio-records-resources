@@ -10,10 +10,12 @@
 """Service results."""
 from abc import ABC, abstractmethod
 
+from invenio_access.permissions import system_user_id
 from invenio_records.dictutils import dict_lookup, dict_merge, dict_set
 
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
+from .schema import BaseGhostSchema
 
 
 class RecordItem(ServiceItemResult):
@@ -277,6 +279,14 @@ class ExpandableField(ABC):
         """
         raise NotImplementedError()
 
+    @abstractmethod
+    def system_record(self):
+        """Return the representation of a system user.
+
+        This is used for the user with id = 'system'.
+        """
+        raise NotImplementedError()
+
     def has(self, service, value):
         """Return true if field has given value for given service."""
         try:
@@ -292,10 +302,12 @@ class ExpandableField(ABC):
 
     def add_dereferenced_record(self, service, value, resolved_rec):
         """Save the dereferenced record."""
+        # mark the record as a "ghost" or "system" record i.e not resolvable
         if resolved_rec is None:
-            resolved_rec = self.ghost_record({"id": value})
-            # mark the record as a "ghost" record i.e not resolvable
-            resolved_rec["is_ghost"] = True
+            if value == system_user_id:
+                resolved_rec = self.system_record()
+            else:
+                resolved_rec = self.ghost_record({"id": value})
         self._service_values[service][value] = resolved_rec
 
     def get_dereferenced_record(self, service, value):
@@ -389,7 +401,7 @@ class FieldsResolver:
             if ghost_values:
                 for value in ghost_values:
                     # set dereferenced record to None. That will trigger eventually
-                    # the field.ghost_recor() to be called
+                    # the field.ghost_record() to be called
                     _add_dereferenced_record(service, value, None)
 
     def resolve(self, identity, hits):
