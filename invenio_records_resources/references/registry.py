@@ -10,7 +10,7 @@
 
 from abc import ABC, abstractmethod
 
-from invenio_access.permissions import system_process
+from invenio_access.permissions import system_identity, system_user_id
 
 
 class ResolverRegistryBase(ABC):
@@ -101,7 +101,7 @@ class ResolverRegistryBase(ABC):
     @classmethod
     def reference_identity(cls, identity, raise_=False):
         """Create a reference dict for the user behind the given identity."""
-        if system_process in identity.provides:
-            return None
+        if identity == system_identity:
+            return {"user": str(system_user_id)}
 
         return {"user": str(identity.id)}

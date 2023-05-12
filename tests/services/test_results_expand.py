@@ -49,6 +49,10 @@ class CreatedByExpandableField(ExpandableField):
         """Override default."""
         return {}
 
+    def system_record(self):
+        """Override default."""
+        raise NotImplementedError()
+
     def get_value_service(self, value):
         """Override default."""
         if value.get("user"):
@@ -75,6 +79,10 @@ class SimpleExpandableField(ExpandableField):
         """Override default."""
         return {}
 
+    def system_record(self):
+        """Override default."""
+        raise NotImplementedError()
+
     def get_value_service(self, value):
         """Override default."""
         return value, mocked_simple_service
@@ -92,6 +100,10 @@ class OtherExpandableField(ExpandableField):
     def ghost_record(self, value):
         """Override default."""
         return {}
+
+    def system_record(self):
+        """Override default."""
+        raise NotImplementedError()
 
     def get_value_service(self, value):
         """Override default."""
