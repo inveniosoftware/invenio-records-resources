@@ -163,6 +163,52 @@ def test_files_api_flow(client, search_clear, headers, input_data, location):
     assert len(res.json["entries"]) == 0
 
 
+def test_empty_file(client, search_clear, headers, input_data, location):
+    """Test if an empty file works properly."""
+    # Initialize a draft
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Initialize files upload
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "empty", "title": "Zero-length test file"},
+        ],
+    )
+    assert res.status_code == 201
+
+    # Upload the empty file
+    res = client.put(
+        f"/mocks/{id_}/files/empty/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b""),
+    )
+    assert res.status_code == 200
+
+    # Commit the uploaded file
+    res = client.post(f"/mocks/{id_}/files/empty/commit", headers=headers)
+    assert res.status_code == 200
+
+    # Get the file metadata, check if everything (especially size) is present
+    res = client.get(f"/mocks/{id_}/files/empty", headers=headers)
+    assert res.status_code == 200
+    assert res.json["key"] == "empty"
+    assert res.json["checksum"] == "md5:d41d8cd98f00b204e9800998ecf8427e"
+    assert res.json["size"] == 0
+
+    # Read a file's content
+    res = client.get(f"/mocks/{id_}/files/empty/content", headers=headers)
+    assert res.status_code == 200
+    assert res.data == b""
+
+
 def test_default_preview_file(app, client, search_clear, headers, input_data, location):
     # Initialize a draft
     res = client.post("/mocks", headers=headers, json=input_data)

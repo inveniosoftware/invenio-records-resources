@@ -95,7 +95,7 @@ class InitFileSchema(Schema):
             fields = ["checksum", "size"]
             for field in fields:
                 value = getattr(data.file, field, None)
-                if value:
+                if value is not None:
                     data[field] = value
 
         return data
