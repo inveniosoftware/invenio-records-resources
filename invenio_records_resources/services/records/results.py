@@ -344,7 +344,7 @@ class FieldsResolver:
 
         :params expandable_fields: list of ExpandableField obj.
         """
-        self._fields = expandable_fields
+        self._fields = expandable_fields or []
 
     def _collect_values(self, hits):
         """Collect all field values to be expanded."""
@@ -356,8 +356,10 @@ class FieldsResolver:
                 except KeyError:
                     continue
                 else:
-                    # value is not None
                     v, service = field.get_value_service(value)
+                    if v is None or service is None:
+                        continue
+
                     field.add_service_value(service, v)
                     # collect values (ids) and group by service e.g.:
                     # service_1: (13, 4),
@@ -421,9 +423,13 @@ class FieldsResolver:
             else:
                 # value is not None
                 v, service = field.get_value_service(value)
+                if v is None or service is None:
+                    continue
+
                 resolved_rec = field.get_dereferenced_record(service, v)
                 if not resolved_rec:
                     continue
+
                 output = field.pick(identity, resolved_rec)
 
                 # transform field name (potentially dotted) to nested dicts
