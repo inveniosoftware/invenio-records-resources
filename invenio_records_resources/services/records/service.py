@@ -359,10 +359,25 @@ class RecordService(Service, RecordIndexerMixin):
             expand=expand,
         )
 
-    def read(self, identity, id_, expand=False):
+    def read(self, identity, id_, expand=False, front_end_call=False):
         """Retrieve a record."""
         # Resolve and require permission
-        record = self.record_cls.pid.resolve(id_)
+        from sqlalchemy.orm.exc import NoResultFound
+
+        try:
+            record = self.record_cls.pid.resolve(id_)
+        except NoResultFound as resolved_pid:
+            hits = self.search(identity, q=f"parent.id:{id_}")
+
+            hits = list(hits.hits)
+            most_recent_id = hits[0][
+                "id"
+            ]  # id of most recent records [TODO] figure  out why only one result is being returned and is the correct one
+
+            record = self.record_cls.pid.resolve(most_recent_id)
+            if front_end_call:
+                raise NoResultFound(str(resolved_pid))
+
         self.require_permission(identity, "read", record=record)
 
         # Run components
