@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.2.0 (2023-06-02)
+
+- schemas: fix 'size' value not being dumped if it is 0
+- expanded fields: add a non-resolvable system record
+
 Version 4.1.0 (2023-05-04)
 
 - add ServiceResultResolver and ServiceResultProxy
