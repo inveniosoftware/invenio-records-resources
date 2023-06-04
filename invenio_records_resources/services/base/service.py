@@ -50,6 +50,14 @@ class Service:
         if not self.check_permission(identity, action_name, **kwargs):
             raise PermissionDeniedError(action_name)
 
+    def has_permission_to(self, identity, actions, **kwargs):
+        """Return a dict of actions and if they are allowed for the identity."""
+        return {
+            f"can_{action}": self.check_permission(identity, action, **kwargs)
+            for action in actions
+        }
+
+
     #
     # Pluggable components
     #
