@@ -18,7 +18,7 @@ from .base import FileServiceComponent
 class FileMetadataComponent(FileServiceComponent):
     """File metadata service component."""
 
-    def init_files(self, identity, id, record, data):
+    def init_files(self, identity, id, record, data, record_files):
         """Init files handler."""
         schema = InitFileSchema(many=True)
         validated_data = schema.load(data)
@@ -28,14 +28,14 @@ class FileMetadataComponent(FileServiceComponent):
             transfer = Transfer.get_transfer(
                 file_type, service=self.service, uow=self.uow
             )
-            _ = transfer.init_file(record, temporary_obj)
+            _ = transfer.init_file(record, temporary_obj, record_files)
 
-    def update_file_metadata(self, identity, id, file_key, record, data):
+    def update_file_metadata(self, identity, id, file_key, record, data, record_files):
         """Update file metadata handler."""
         # FIXME: move this call to a transfer call
-        record.files.update(file_key, data=data)
+        record_files.update(file_key, data=data)
 
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
-    def commit_file(self, identity, id, file_key, record):
+    def commit_file(self, identity, id, file_key, record, record_files):
         """Commit file handler."""
-        Transfer.commit_file(record, file_key)
+        Transfer.commit_file(record, file_key, record_files)

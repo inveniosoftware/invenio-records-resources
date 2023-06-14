@@ -100,7 +100,7 @@ class FileList(ServiceListResult):
     def to_dict(self):
         """Return result as a dictionary."""
         # TODO: Use a FilesSchema or something to dump the top-level object
-        record_files = self._record.files
+        record_files = self._service.get_files(self._record)
         result = {
             "enabled": record_files.enabled,
         }

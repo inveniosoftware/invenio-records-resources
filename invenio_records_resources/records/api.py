@@ -184,7 +184,7 @@ class File:
 
 
 class PersistentIdentifierWrapper:
-    """Persistent Identifer wrapper object.
+    """Persistent Identifier wrapper object.
 
     It emulates a PID, but it is not stored in pidstore.
     It is normally used along with ModelPIDField.

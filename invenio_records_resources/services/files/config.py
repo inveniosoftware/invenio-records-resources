@@ -33,6 +33,8 @@ class FileServiceConfig(ServiceConfig):
     record_cls = None
 
     permission_action_prefix = ""
+    record_files_field = "files"
+    file_bucket = "bucket"
 
     file_result_item_cls = FileItem
     file_result_list_cls = FileList

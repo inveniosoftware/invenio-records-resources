@@ -60,13 +60,16 @@ class BaseTransfer(ABC):
         self.uow = uow
 
     @abstractmethod
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, record_files):
         """Initialize a file."""
         raise NotImplementedError()
 
-    def set_file_content(self, record, file, file_key, stream, content_length):
+    def set_file_content(
+        self, record, file, file_key, stream, content_length, record_files, bucket=None
+    ):
         """Set file content."""
-        bucket = record.bucket
+        if bucket is None:
+            bucket = record.bucket
         size_limit = bucket.size_limit
         if content_length and size_limit and content_length > size_limit:
             desc = (
@@ -76,15 +79,15 @@ class BaseTransfer(ABC):
             )
             raise FileSizeError(description=desc)
 
-        record.files.create_obj(
+        record_files.create_obj(
             file_key, stream, size=content_length, size_limit=size_limit
         )
 
-    def commit_file(self, record, file_key):
+    def commit_file(self, record, file_key, record_files):
         """Commit a file."""
         # fetch files can be committed, its up to permissions to decide by who
         # e.g. system, since its the one downloading the file
-        record.files.commit(file_key)
+        record_files.commit(file_key)
 
     # @abstractmethod
     # def read_file_content(self, record, file_metadata):
@@ -99,22 +102,26 @@ class LocalTransfer(BaseTransfer):
         """Constructor."""
         super().__init__(TransferType.LOCAL, **kwargs)
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, record_files):
         """Initialize a file."""
         uri = file_metadata.pop("uri", None)
         if uri:
             raise Exception("Cannot set URI for local files.")
 
-        file = record.files.create(key=file_metadata.pop("key"), data=file_metadata)
+        file = record_files.create(key=file_metadata.pop("key"), data=file_metadata)
 
         return file
 
-    def set_file_content(self, record, file, file_key, stream, content_length):
+    def set_file_content(
+        self, record, file, file_key, stream, content_length, record_files, bucket=None
+    ):
         """Set file content."""
         if file:
             raise TransferException(f'File with key "{file_key}" is committed.')
 
-        super().set_file_content(record, file, file_key, stream, content_length)
+        super().set_file_content(
+            record, file, file_key, stream, content_length, record_files, bucket=bucket
+        )
 
 
 class FetchTransfer(BaseTransfer):
@@ -124,7 +131,7 @@ class FetchTransfer(BaseTransfer):
         """Constructor."""
         super().__init__(TransferType.FETCH, **kwargs)
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, record_files):
         """Initialize a file."""
         uri = file_metadata.pop("uri", None)
         if not uri:
@@ -140,7 +147,7 @@ class FetchTransfer(BaseTransfer):
         }
 
         file_key = file_metadata.pop("key")
-        file = record.files.create(
+        file = record_files.create(
             key=file_key,
             data=file_metadata,
             obj=obj_kwargs,
@@ -169,10 +176,10 @@ class Transfer:
             return LocalTransfer(**kwargs)
 
     @classmethod
-    def commit_file(cls, record, file_key):
+    def commit_file(cls, record, file_key, record_files):
         """Commit a file."""
-        file = record.files.get(file_key).file
+        file = record_files.get(file_key).file
         transfer = cls.get_transfer(getattr(file, "storage_class", None))
         # file is not passed since that is the current head of the OV
         # committing means setting the latest of the bucket (OV.get)
-        transfer.commit_file(record, file_key)
+        transfer.commit_file(record, file_key, record_files)
