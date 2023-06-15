@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.3.0 (2023-06-15)
+
+- upgrade invenio-accounts
+
 Version 4.2.0 (2023-06-02)
 
 - schemas: fix 'size' value not being dumped if it is 0
