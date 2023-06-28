@@ -15,7 +15,7 @@ from invenio_records_resources.services import (
     SearchOptions,
 )
 from invenio_records_resources.services.files.links import FileLink
-from invenio_records_resources.services.records.components import FilesOptionsComponent
+from invenio_records_resources.services.records.components import FilesComponent
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import (
     NestedTermsFacet,
@@ -80,7 +80,7 @@ class ServiceWithFilesConfig(ServiceConfig):
     """Config for service with files support."""
 
     record_cls = RecordWithFiles
-    components = RecordServiceConfig.components + [FilesOptionsComponent]
+    components = RecordServiceConfig.components + [FilesComponent]
     schema = RecordWithFilesSchema
 
 

@@ -12,7 +12,7 @@
 class BaseServiceComponent:
     """Base service component."""
 
-    def __init__(self, service, *args, **kwargs):
+    def __init__(self, service):
         """Initialize the base service component."""
         self.service = service
         self._uow = None

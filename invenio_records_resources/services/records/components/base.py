@@ -35,35 +35,3 @@ class ServiceComponent(BaseServiceComponent):
     def search(self, identity, search, params, **kwargs):
         """Search handler."""
         return search
-
-
-class BaseRecordFilesComponent(ServiceComponent):
-    _files_attr_key = None
-    _files_data_key = None
-    _files_bucket_attr_key = None
-    _files_bucket_id_attr_key = None
-
-    @property
-    def files_attr_key(self):
-        return self._files_attr_key
-
-    @property
-    def files_data_key(self):
-        return self._files_data_key or self._files_attr_key
-
-    @property
-    def files_bucket_attr_key(self):
-        return self._files_bucket_attr_key
-
-    @property
-    def files_bucket_id_attr_key(self):
-        return self._files_bucket_id_attr_key
-
-    def get_record_files(self, record):
-        return getattr(record, self.files_attr_key)
-
-    def get_record_bucket(self, record):
-        return getattr(record, self._files_bucket_attr_key)
-
-    def get_record_bucket_id(self, record):
-        return getattr(record, self._files_bucket_attr_key)
