@@ -48,6 +48,7 @@ necessarily persisted in the metadata.
 
 from invenio_records.systemfields import SystemField
 
+from ....services.records.components.files import FilesAttrConfig
 from ...dumpers import PartialFileDumper
 from .manager import FilesManager
 
@@ -57,13 +58,13 @@ class FilesField(SystemField):
 
     def __init__(
         self,
-        key="files",
+        key=FilesAttrConfig["_files_attr_key"],
+        bucket_id_attr=FilesAttrConfig["_files_bucket_id_attr_key"],
+        bucket_attr=FilesAttrConfig["_files_bucket_attr_key"],
         store=True,
         dump=False,
         file_cls=None,
         enabled=True,
-        bucket_id_attr="bucket_id",
-        bucket_attr="bucket",
         bucket_args=None,
         create=True,
         delete=True,
@@ -149,12 +150,12 @@ class FilesField(SystemField):
         file_data = self.get_dictkey(record)
         if file_data:
             self._set_cache(record, self.load(record, file_data, from_dump=True))
-        if not self._store:
-            file_data.pop("count", None)
-            file_data.pop("mimetypes", None)
-            file_data.pop("totalbytes", None)
-            file_data.pop("types", None)
-            file_data.pop("entries", None)
+            if not self._store:
+                file_data.pop("count", None)
+                file_data.pop("mimetypes", None)
+                file_data.pop("totalbytes", None)
+                file_data.pop("types", None)
+                file_data.pop("entries", None)
 
     def post_delete(self, record, force=False):
         """Called after a record is deleted."""

@@ -22,7 +22,6 @@ from mock_module.resource import (
 )
 from zipstream import ZipStream
 
-from invenio_records_resources.records.api import FileRecord
 from invenio_records_resources.resources import FileResource, RecordResource
 from invenio_records_resources.services import RecordService
 

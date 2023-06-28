@@ -14,16 +14,71 @@ from invenio_files_rest.errors import InvalidKeyError
 from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
-from .base import ServiceComponent, BaseRecordFilesComponent
+from invenio_records_resources.services.base.config import _make_cls
+
+from .base import ServiceComponent
 
 
-class BaseFilesOptionsComponent(BaseRecordFilesComponent, ServiceComponent):
+class FileConfigMixin:
+    """Mixin class adding dynamic file loading."""
+
+    _files_attr_key = None
+    _files_data_key = None
+    _files_bucket_attr_key = None
+    _files_bucket_id_attr_key = None
+
+    @property
+    def files_attr_key(self):
+        """Returns files attribute (field) key."""
+        return self._files_attr_key
+
+    @property
+    def files_data_key(self):
+        """Returns files data (field) key."""
+        return self._files_data_key or self._files_attr_key
+
+    @property
+    def files_bucket_attr_key(self):
+        """Returns files bucket (field) key."""
+        return self._files_bucket_attr_key
+
+    @property
+    def files_bucket_id_attr_key(self):
+        """Returns files bucket_id (field) key."""
+        return self._files_bucket_id_attr_key
+
+    def get_record_files(self, record):
+        """Get files field value of a given record."""
+        return getattr(record, self.files_attr_key)
+
+    def get_record_bucket(self, record):
+        """Get files bucket of a given record."""
+        return getattr(record, self._files_bucket_attr_key)
+
+    def get_record_bucket_id(self, record):
+        """Get files bucket id of a given record."""
+        return getattr(record, self._files_bucket_attr_key)
+
+
+class BaseRecordFilesComponent(FileConfigMixin, ServiceComponent):
     """Service component for files' options.
 
     It only deals with:
     - enabled / disabled (metadata-only) files
     - default_preview
     """
+
+    def __init__(self, service):
+        """Initialize the file config mixin."""
+        # We assert that attributes are initialized because we cannot
+        # pass the atrributes via the constructor due to the limitation
+        # of component registration
+        assert self._files_attr_key is not None
+        assert self._files_data_key is not None
+        assert self._files_bucket_attr_key is not None
+        assert self._files_bucket_id_attr_key is not None
+
+        super().__init__(service)
 
     def _validate_files_enabled(self, record, enabled):
         """Validate files enabled."""
@@ -54,14 +109,14 @@ class BaseFilesOptionsComponent(BaseRecordFilesComponent, ServiceComponent):
             record_files.default_preview = default_preview
         except InvalidKeyError as e:
             raise ValidationError(
-                e.get_description(), field_name="files.default_preview"
+                e.get_description(), field_name=f"{self.files_data_key}.default_preview"
             )
 
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed files options in the record."""
         # "enabled" presence is guaranteed by schema
         record_files = self.get_record_files(record)
-        record_files.enabled = data["files"]["enabled"]
+        record_files.enabled = data[self.files_data_key]["enabled"]
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Inject parsed files options in the record."""
@@ -73,15 +128,11 @@ class BaseFilesOptionsComponent(BaseRecordFilesComponent, ServiceComponent):
         self.assign_files_default_preview(record, default_preview)
 
 
-class FilesOptionsComponent(BaseFilesOptionsComponent):
-    _files_attr_key = "files"
-    _files_data_key = "files"
-    _files_bucket_attr_key = "bucket"
-    _files_bucket_id_attr_key = "bucket_id"
+FilesAttrConfig = {
+    "_files_attr_key": "files",
+    "_files_data_key": "files",
+    "_files_bucket_attr_key": "bucket",
+    "_files_bucket_id_attr_key": "bucket_id",
+}
 
-
-class AuxFilesOptionsComponent(BaseFilesOptionsComponent):
-    _files_attr_key = "aux_files"
-    _files_data_key = "aux_files"
-    _files_bucket_attr_key = "aux_bucket"
-    _files_bucket_id_attr_key = "aux_bucket_id"
+FilesComponent = _make_cls(BaseRecordFilesComponent, {**FilesAttrConfig})

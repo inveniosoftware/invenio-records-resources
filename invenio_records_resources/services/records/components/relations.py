@@ -10,8 +10,8 @@
 
 """Records service component base classes."""
 
-from .base import ServiceComponent
 from ...uow import ChangeNotificationOp
+from .base import ServiceComponent
 
 
 class RelationsComponent(ServiceComponent):
