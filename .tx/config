@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2022 Graz University of Technology.
+# Copyright (C) 2022-2023 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -24,9 +24,9 @@
 #    $ tx pull -a
 
 [main]
-host = https://www.transifex.com
+host = https://app.transifex.com
 
-[invenio.invenio_records_resources-messages]
+[o:inveniosoftware:p:invenio:r:invenio_records_resources-messages]
 file_filter = invenio_records_resources/translations/<lang>/LC_MESSAGES/messages.po
 source_file = invenio_records_resources/translations/messages.pot
 source_lang = en
