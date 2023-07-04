@@ -6,6 +6,7 @@
 # 
 # Translators:
 # Sam Arbid, 2022
+# yyones, 2023
 # 
 #, fuzzy
 msgid ""
@@ -14,8 +15,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2022-10-12 11:37+0000\n"
 "PO-Revision-Date: 2021-07-13 12:50+0000\n"
-"Last-Translator: Sam Arbid, 2022\n"
-"Language-Team: Swedish (https://www.transifex.com/inveniosoftware/teams/23537/sv/)\n"
+"Last-Translator: yyones, 2023\n"
+"Language-Team: Swedish (https://app.transifex.com/inveniosoftware/teams/23537/sv/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -39,8 +40,8 @@ msgstr "Internt serverfel"
 #: invenio_records_resources/services/records/components.py:93
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
-"Du måste först radera alla filer för att ställa in att rekorden endast ska "
-"vara metadata."
+"Du måste först radera alla filer för att ställa in att posten endast ska "
+"innehålla metadata."
 
 #: invenio_records_resources/services/records/config.py:35
 msgid "Best match"
@@ -48,7 +49,7 @@ msgstr "Bästa matchningen"
 
 #: invenio_records_resources/services/records/config.py:39
 msgid "Newest"
-msgstr "Nyaste"
+msgstr "Nyast"
 
 #: invenio_records_resources/services/records/config.py:43
 msgid "Oldest"
