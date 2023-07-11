@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.4.0 (2023-07-11)
+
+- make files component file attributes configurable
+
 Version 4.3.0 (2023-06-15)
 
 - upgrade invenio-accounts
