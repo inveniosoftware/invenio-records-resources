@@ -8,8 +8,10 @@
 
 """Service tests for record relations propagation."""
 
+import random
 from copy import deepcopy
 
+import arrow
 import pytest
 from mock_module.api import Record, RecordWithRelations
 from mock_module.config import ServiceConfig as ServiceConfigBase
@@ -83,7 +85,7 @@ def assert_record_from_db_and_es(
 def test_relation_update_propagation(
     app, service, service_wrel, identity_simple, input_data
 ):
-    # this notification handlers would be registerd at extension loading
+    # this notification handlers would be registered at extension loading
     current_notifications_registry.register(service.id, service_wrel.on_relation_update)
 
     # create a record
@@ -137,3 +139,48 @@ def test_relation_update_propagation(
     assert_record_from_db_and_es(
         identity_simple, service_wrel, rec_two.id, id_, "new title"
     )
+
+
+def test_on_relation_update_limit(mocker, identity_simple, service_wrel):
+    """Test on relation update max limit."""
+    notif_time = arrow.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
+    mocked_reindex = mocker.patch.object(RecordService, "reindex")
+
+    def _call(n_records, limit):
+        records_list = []
+        for _ in range(n_records):
+            _rand = random.randint(1000, 999999)
+            records_list.append((_rand, _rand, _rand))  # recid, uuid, revision_id
+        service_wrel.on_relation_update(
+            identity_simple, "mock-records", records_list, notif_time, limit
+        )
+
+    _call(n_records=3, limit=5)
+    # below the limit - expected: 1 call, 3 clauses
+    mocked_reindex.call_count == 1
+    _, _, kwargs = mocked_reindex.mock_calls[0]
+    clauses = kwargs["search_query"].to_dict()["bool"]["should"]
+    assert len(clauses) == 3
+
+    mocked_reindex.reset_mock()
+
+    _call(n_records=5, limit=5)
+    # on the limit - expected: 1 call, 5 clauses
+    mocked_reindex.call_count == 1
+    _, _, kwargs = mocked_reindex.mock_calls[0]
+    clauses = kwargs["search_query"].to_dict()["bool"]["should"]
+    assert len(clauses) == 5
+
+    mocked_reindex.reset_mock()
+
+    _call(n_records=8, limit=5)
+    # over the limit - expected: 2 calls, 5 clauses
+    mocked_reindex.call_count == 2
+    # first call
+    _, _, kwargs = mocked_reindex.mock_calls[0]
+    clauses = kwargs["search_query"].to_dict()["bool"]["should"]
+    assert len(clauses) == 5
+    # second call
+    _, _, kwargs = mocked_reindex.mock_calls[1]
+    clauses = kwargs["search_query"].to_dict()["bool"]["should"]
+    assert len(clauses) == 3
