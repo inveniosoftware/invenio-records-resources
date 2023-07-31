@@ -511,8 +511,20 @@ class RecordService(Service, RecordIndexerMixin):
     #
     # notification handlers
     #
-    def on_relation_update(self, identity, record_type, records_info, notif_time):
-        """Handles the update of a related field record."""
+    def on_relation_update(
+        self, identity, record_type, records_info, notif_time, limit=100
+    ):
+        """Handles the update of a related field record.
+
+        :param identity: the identity that will search and reindex.
+        :param record_type: the record type with relations.
+        :param records_info: a list of tuples containing (recid, uuid, revision_id)
+                             for each record to reindex.
+        :param notif_time: reindex records index before this time.
+        :param limit: reindex in chunks of these records. The limit must be lower than
+                      the search engine maxClauseCount setting.
+        :returns: True.
+        """
         fieldpaths = self.config.relations.get(record_type, [])
         clauses = []
         for field in fieldpaths:
@@ -529,9 +541,14 @@ class RecordService(Service, RecordIndexerMixin):
                 )
 
         filter = [dsl.Q("range", indexed_at={"lte": notif_time})]
-        search_query = dsl.Q(
-            "bool", minimum_should_match=1, should=clauses, filter=filter
-        )
+        # split the list in chunks of `limit`, the last chunk will have the remaining
+        chunked_clauses = [
+            clauses[i : i + limit] for i in range(0, len(clauses), limit)
+        ]
+        for chunked_clause in chunked_clauses:
+            search_query = dsl.Q(
+                "bool", minimum_should_match=1, should=chunked_clause, filter=filter
+            )
 
-        self.reindex(identity, search_query=search_query)
+            self.reindex(identity, search_query=search_query)
         return True
