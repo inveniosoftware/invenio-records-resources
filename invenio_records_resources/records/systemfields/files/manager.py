@@ -53,10 +53,12 @@ necessarily persisted in the metadata.
 from collections.abc import MutableMapping
 from functools import wraps
 
-from invenio_files_rest.errors import InvalidKeyError, InvalidOperationError
+from invenio_files_rest.errors import (
+    BucketLockedError,
+    InvalidKeyError,
+    InvalidOperationError,
+)
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-
-from ...dumpers import PartialFileDumper
 
 
 def ensure_enabled(func):
@@ -111,7 +113,6 @@ class FilesManager(MutableMapping):
         if self.bucket:
             bucket = self.bucket
             self.unset_bucket()
-            # TODO: not sure this makes sense???
             if force:
                 bucket.remove()
             else:
@@ -198,18 +199,28 @@ class FilesManager(MutableMapping):
         self[file_key] = file_obj
 
     @ensure_enabled
-    def delete(self, key, remove_obj=True, softdelete_obj=False):
-        """Delete a file."""
+    def delete(self, key, remove_obj=True, softdelete_obj=True, remove_rf=False):
+        """Delete a file.
+
+        Defaults to soft deletion of record file metadata and object versions.
+
+        :param key: The file name to delete.
+        :param remove_obj: Boolean to remove the associated object version.
+        :param softdelete_obj: Boolean to soft/hard delete the object version if `remove_obj`
+            is True.
+        :param remove_rf: Boolean to hard delete the associated file record.
+        :returns: The updated file record.
+        """
         rf = self[key]
         ov = rf.object_version
 
-        # Delete the entire row
-        rf.delete(force=True)
+        # Remove or softdelete the entire row
+        rf.delete(force=remove_rf)
         if ov and remove_obj:
-            if remove_obj:
-                rf.object_version.remove()
-            elif softdelete_obj:
+            if softdelete_obj:
                 ObjectVersion.delete(rf.object_version.bucket, rf.object_version.key)
+            else:
+                rf.object_version.remove()
         del self._entries[key]
 
         # Unset the default preview if the file is removed
@@ -220,10 +231,15 @@ class FilesManager(MutableMapping):
         return rf
 
     @ensure_enabled
-    def delete_all(self, remove_obj=True):
+    def delete_all(self, remove_obj=True, softdelete_obj=True, remove_rf=False):
         """Delete all file records."""
         for key in list(self.keys()):
-            self.delete(key, remove_obj=remove_obj)
+            self.delete(
+                key,
+                remove_obj=remove_obj,
+                softdelete_obj=softdelete_obj,
+                remove_rf=remove_rf,
+            )
 
     def copy(self, src_files, copy_obj=True):
         """Copy from another file manager."""
@@ -248,14 +264,37 @@ class FilesManager(MutableMapping):
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
-    def sync(self, src_files):
-        """Sync changes from source files to this manager."""
+    def sync(self, src_files, delete_extras=True):
+        """Sync changes from source files to this manager.
+
+        The source files are fully mirrored with the destination files following the
+        logic:
+
+         * same ObjectVersions are not touched
+         * new ObjectVersions are added to destination
+         * deleted ObjectVersions are deleted in destination
+         * extra ObjectVersions in dest are deleted if `delete_extras` param is
+           True
+        Logic follows the bucket sync logic
+        """
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
-        # TODO: We don't yet sync file additions/removals/changes from
-        # "src_files". This should take into account if the current bucket
-        # is locked or not.
+        # Sync file additions/removals/changes
+        if self.bucket.locked:
+            raise BucketLockedError()
+
+        _, changed_ovs = src_files.bucket.sync(self.bucket, delete_extras=delete_extras)
+
+        for operation, obj_or_key in changed_ovs:
+            if operation == "delete":
+                # delete key of deleted ov if not already
+                # sync method returns all records even the already deleted ones
+                # thus we need to check if key is present
+                if obj_or_key in self:
+                    del self[obj_or_key]
+            elif operation == "add":
+                self[obj_or_key.key] = obj_or_key
 
     @property
     def entries(self):
@@ -400,8 +439,7 @@ class FilesManager(MutableMapping):
 
     @ensure_enabled
     def __delitem__(self, key):
-        """Delete a file."""
-        # TODO: Make this configurable?
+        """Soft delete a file and record file metadata."""
         self.delete(key)
 
     @ensure_enabled
