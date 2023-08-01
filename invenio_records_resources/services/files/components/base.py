@@ -41,7 +41,7 @@ class FileServiceComponent(BaseServiceComponent):
         """Delete file handler."""
         pass
 
-    def delete_all_file(self, id_, file_key, identity, record, results):
+    def delete_all_files(self, identity, id_, record, results):
         """Delete all files handler."""
         pass
 

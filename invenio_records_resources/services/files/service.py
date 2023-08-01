@@ -190,7 +190,7 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "delete_files", file_key=file_key)
-        deleted_file = record.files.delete(file_key)
+        deleted_file = record.files.delete(file_key, remove_rf=True)
 
         self.run_components(
             "delete_file", identity, id_, file_key, record, deleted_file, uow=uow

@@ -118,8 +118,8 @@ def test_record_files_operations(base_app, db, location):
     assert FileInstance.query.count() == 1
     assert ObjectVersion.query.count() == 1
 
-    # Delete the file
-    del record.files["test.pdf"]
+    # Delete the file and the object version
+    record.files.delete("test.pdf", softdelete_obj=False, remove_rf=True)
     record.commit()
     db.session.commit()
 
@@ -152,7 +152,7 @@ def test_record_files_clear(base_app, db, location):
     assert len(record.files) == 3
 
     # Delete all files
-    record.files.clear()
+    record.files.delete_all(softdelete_obj=False, remove_rf=True)
     record.commit()
     db.session.commit()
 
