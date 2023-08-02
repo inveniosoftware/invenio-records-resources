@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.5.0 (2023-07-11)
+
+- relations: reindex by chunk
+
 Version 4.4.0 (2023-07-11)
 
 - make files component file attributes configurable
