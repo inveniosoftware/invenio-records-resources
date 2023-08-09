@@ -164,6 +164,24 @@ class RecordIndexOp(RecordCommitOp):
         pass
 
 
+class RecordBulkIndexOp(Operation):
+    """Record bulk indexing operation."""
+
+    def __init__(self, records_iter, indexer=None):
+        """Initialize the records bulk index operation.
+
+        :param records_iter: iterable of record ids.
+        :param indexer: indexer instance.
+        """
+        self._records_iter = records_iter
+        self._indexer = indexer
+
+    def on_commit(self, uow):
+        """Run the operation."""
+        if self._indexer is not None:
+            self._indexer.bulk_index(self._records_iter)
+
+
 class RecordDeleteOp(Operation):
     """Record removal operation."""
 
