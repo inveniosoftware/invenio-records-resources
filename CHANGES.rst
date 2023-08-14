@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.6.0 (2023-08-14)
+
+- service: add a method to reindex all record's versions, with the
+  latest first.
+
 Version 4.5.0 (2023-07-11)
 
 - relations: reindex by chunk
