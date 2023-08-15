@@ -12,6 +12,8 @@ import os
 
 import pkg_resources
 
+from invenio_records_resources.config import RECORDS_RESOURCES_IMAGE_FORMATS
+
 from .base import FileProcessor
 
 try:
@@ -34,7 +36,7 @@ class ImageMetadataExtractor(FileProcessor):
         """Images can be processed."""
         if HAS_IMAGEMAGICK:
             ext = self.file_extension(file_record).lower()
-            return ext in [".jpg", ".jpeg", ".png", ".tif", ".tiff"]
+            return ext in RECORDS_RESOURCES_IMAGE_FORMATS
         return False
 
     def process(self, file_record):
