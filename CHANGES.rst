@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version 4.7.0 (2023-08-16)
+
+- Implement file syncing when publishing a record
+- Fixes deletion of files to default to soft deletion unless
+  the correct flags are being used.
+
 Version 4.6.0 (2023-08-14)
 
 - service: add a method to reindex all record's versions, with the
