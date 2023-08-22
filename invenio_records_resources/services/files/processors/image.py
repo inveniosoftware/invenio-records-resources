@@ -11,6 +11,7 @@
 import os
 
 import pkg_resources
+from flask import current_app
 
 from invenio_records_resources.config import RECORDS_RESOURCES_IMAGE_FORMATS
 
@@ -36,7 +37,7 @@ class ImageMetadataExtractor(FileProcessor):
         """Images can be processed."""
         if HAS_IMAGEMAGICK:
             ext = self.file_extension(file_record).lower()
-            return ext in RECORDS_RESOURCES_IMAGE_FORMATS
+            return ext in current_app.config["RECORDS_RESOURCES_IMAGE_FORMATS"]
         return False
 
     def process(self, file_record):
