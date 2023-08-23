@@ -13,7 +13,6 @@ import os
 import pkg_resources
 from flask import current_app
 
-from invenio_records_resources.config import RECORDS_RESOURCES_IMAGE_FORMATS
 
 from .base import FileProcessor
 
