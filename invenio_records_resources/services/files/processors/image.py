@@ -13,7 +13,6 @@ import os
 import pkg_resources
 from flask import current_app
 
-
 from .base import FileProcessor
 
 try:
