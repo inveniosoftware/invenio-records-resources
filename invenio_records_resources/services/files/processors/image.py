@@ -11,6 +11,7 @@
 import os
 
 import pkg_resources
+from flask import current_app
 
 from .base import FileProcessor
 
@@ -34,7 +35,7 @@ class ImageMetadataExtractor(FileProcessor):
         """Images can be processed."""
         if HAS_IMAGEMAGICK:
             ext = self.file_extension(file_record).lower()
-            return ext in [".jpg", ".jpeg", ".png", ".tif", ".tiff"]
+            return ext in current_app.config["RECORDS_RESOURCES_IMAGE_FORMATS"]
         return False
 
     def process(self, file_record):
