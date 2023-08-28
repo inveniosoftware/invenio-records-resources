@@ -50,3 +50,6 @@ class RecordResourceConfig(ResourceConfig):
         "application/json": ResponseHandler(JSONSerializer(), headers=etag_headers)
     }
     default_accept_mimetype = "application/json"
+
+    # Enable record view events
+    record_view_enabled = False

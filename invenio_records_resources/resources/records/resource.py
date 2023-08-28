@@ -112,9 +112,10 @@ class RecordResource(ErrorHandlersMixin, Resource):
         # we emit the record view stats event here rather than in the service because
         # the service might be called from other places as well that we don't want
         # to count, e.g. from some CLI commands
-        emitter = current_stats.get_event_emitter("record-view")
-        if item is not None and emitter is not None:
-            emitter(current_app, record=item._record, via_api=True)
+        if self.config.get("record_view_enabled", False):
+            emitter = current_stats.get_event_emitter("record-view")
+            if item is not None and emitter is not None:
+                emitter(current_app, record=item._record, via_api=True)
 
         return item.to_dict(), 200
 
