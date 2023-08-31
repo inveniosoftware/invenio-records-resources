@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 1.0.10 (2023-08-31)
+
+- files: fix 'size' value not being dumped if it's 0
+- files: introduce 'FileKeyNotFoundError' denoting that no file with such a key exists for a record
+
 Version 1.0.9 (2023-02-24)
 
 - serialization: remove files URI for local files
