@@ -176,8 +176,8 @@ class RecordBulkIndexOp(Operation):
         self._records_iter = records_iter
         self._indexer = indexer
 
-    def on_commit(self, uow):
-        """Run the operation."""
+    def on_post_commit(self, uow):
+        """Run bulk indexing as one of the last operations."""
         if self._indexer is not None:
             self._indexer.bulk_index(self._records_iter)
 
