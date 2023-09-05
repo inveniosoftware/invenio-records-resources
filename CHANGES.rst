@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.9.0 (2023-09-05)
+
+- files: dump files order and preview only if entries are dumped
+
 Version 4.8.0 (2023-08-25)
 
 - services: move reindex latest records to drafts-resources
