@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.10.0 (2023-09-05)
+
+- uow: run bulk indexing on post commit
+
 Version 4.9.1 (2023-09-05)
 
 - files: dump files order and preview only if entries are dumped (revert)
