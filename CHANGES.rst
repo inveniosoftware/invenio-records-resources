@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.9.1 (2023-09-05)
+
+- files: dump files order and preview only if entries are dumped (revert)
+
 Version 4.9.0 (2023-09-05)
 
 - files: dump files order and preview only if entries are dumped
