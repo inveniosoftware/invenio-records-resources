@@ -222,11 +222,11 @@ class FilesField(SystemField):
             "enabled": files.enabled,
         }
 
+        if files.order:
+            data["order"] = files.order
+        if files.default_preview:
+            data["default_preview"] = files.default_preview
         if include_entries and files.enabled:
-            if files.order:
-                data["order"] = files.order
-            if files.default_preview:
-                data["default_preview"] = files.default_preview
             data["count"] = len(files)
             data["mimetypes"] = files.mimetypes
             data["totalbytes"] = files.total_bytes
