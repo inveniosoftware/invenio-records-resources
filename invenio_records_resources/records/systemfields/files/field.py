@@ -120,8 +120,8 @@ class FilesField(SystemField):
 
         self.store(record, files)
 
-    def pre_dump(self, record, data, **kwargs):
-        """Called before a record is dumped in a secondary storage system."""
+    def post_dump(self, record, data, **kwargs):
+        """Called after a record is dumped in a secondary storage system."""
         # Dump files into index if requested (if store=True, files are already
         # part of the dumped record)
         if self._dump and not self._store:
@@ -131,8 +131,6 @@ class FilesField(SystemField):
                     data, self.dump(record, files, include_entries=self._dump)
                 )
 
-    def post_dump(self, record, data, **kwargs):
-        """Called after a record is dumped in a secondary storage system."""
         # Prepare file entries for index (dict to list)
         if self._dump or self._store:
             files = self.get_dictkey(data)
