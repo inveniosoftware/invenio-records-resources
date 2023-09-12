@@ -63,6 +63,7 @@ class FilesField(SystemField):
         bucket_attr=FilesAttrConfig["_files_bucket_attr_key"],
         store=True,
         dump=False,
+        dump_entries=True,
         file_cls=None,
         enabled=True,
         bucket_args=None,
@@ -81,6 +82,7 @@ class FilesField(SystemField):
         """
         self._store = store
         self._dump = dump
+        self._dump_entries = dump_entries
         self._enabled = enabled
         self._bucket_id_attr = bucket_id_attr
         self._bucket_attr = bucket_attr
@@ -127,8 +129,16 @@ class FilesField(SystemField):
         if self._dump and not self._store:
             files = getattr(record, self.attr_name)
             if files is not None:
+                # Determine if entries should be included.
+                # Use to remove file entries from search dump in case a record
+                # is public but files are restricted.
+                if callable(self._dump_entries):
+                    include_entries = self._dump_entries(record)
+                else:
+                    include_entries = self._dump_entries
+
                 self.set_dictkey(
-                    data, self.dump(record, files, include_entries=self._dump)
+                    data, self.dump(record, files, include_entries=include_entries)
                 )
 
         # Prepare file entries for index (dict to list)
