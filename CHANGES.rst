@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.10.1 (2023-09-12)
+
+- systemfields: revert files dumping
+- systemfields: support conditional dumping of files
+
 Version 4.10.0 (2023-09-05)
 
 - uow: run bulk indexing on post commit hook
