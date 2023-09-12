@@ -353,6 +353,8 @@ class FieldsResolver:
             for field in self._fields:
                 try:
                     value = dict_lookup(hit, field.field_name)
+                    if value is None:
+                        continue
                 except KeyError:
                     continue
                 else:
@@ -416,6 +418,8 @@ class FieldsResolver:
         for field in self._fields:
             try:
                 value = dict_lookup(hit, field.field_name)
+                if value is None:
+                    continue
             except KeyError:
                 continue
             else:
