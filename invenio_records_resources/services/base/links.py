@@ -61,9 +61,9 @@ def preprocess_vars(vars):
 class LinksTemplate:
     """Templates for generating links for an object."""
 
-    def __init__(self, links, context=None):
+    def __init__(self, links=None, context=None):
         """Initialize the link templates."""
-        self._links = links
+        self._links = links or {}
         self._context = context or {}
 
     @property

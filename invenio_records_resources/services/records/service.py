@@ -438,7 +438,12 @@ class RecordService(Service, RecordIndexerMixin):
 
         results = self._read_many(identity, query, fields, len(ids), **kwargs)
 
-        return self.result_list(self, identity, results)
+        return self.result_list(
+            self,
+            identity,
+            results,
+            links_item_tpl=self.links_item_tpl,
+        )
 
     def read_all(self, identity, fields, max_records=150, **kwargs):
         """Search for records matching the querystring."""
