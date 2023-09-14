@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version 4.11.0 (2023-09-14)
+
+- expanded fields: add null checks
+- files: set bucket quota
+- service: add sort to read_many
+
 Version 4.10.1 (2023-09-12)
 
 - systemfields: revert files dumping
