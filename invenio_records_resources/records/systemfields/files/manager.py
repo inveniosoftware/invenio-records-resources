@@ -131,6 +131,14 @@ class FilesManager(MutableMapping):
         setattr(self.record, self._options["bucket_id_attr"], bucket.id)
         self._bucket = bucket
 
+    def set_quota(self, quota_size, max_file_size=None):
+        """Set bucket quota."""
+        if self.bucket is not None:
+            assert not self.bucket.locked
+            self.bucket.quota_size = quota_size
+            if max_file_size:
+                self.bucket.max_file_size = max_file_size
+
     def lock(self):
         """Lock the bucket."""
         self.bucket.locked = True
