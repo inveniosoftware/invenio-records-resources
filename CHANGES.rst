@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.1 (2023-09-15)
+
+- records: added link template for read_many calls.
+
 Version 4.11.0 (2023-09-14)
 
 - expanded fields: add null checks
