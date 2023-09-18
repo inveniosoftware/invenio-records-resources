@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.2 (2023-09-18)
+
+-  api: fix bool comparison
+
 Version 4.11.1 (2023-09-15)
 
 - records: added link template for read_many calls.
