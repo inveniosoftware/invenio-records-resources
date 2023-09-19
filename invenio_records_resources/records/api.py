@@ -68,7 +68,7 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         query = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
 
         if not with_deleted:
-            query = query.filter(cls.model_cls.is_deleted is not True)
+            query = query.filter(cls.model_cls.is_deleted != True)
 
         for obj in query:
             yield cls(obj.data, model=obj)
