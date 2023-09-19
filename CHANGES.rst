@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.3 (2023-09-19)
+
+- revert fix bool comparison in api
+
 Version 4.11.2 (2023-09-18)
 
 -  api: fix bool comparison
