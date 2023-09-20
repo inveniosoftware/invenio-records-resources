@@ -13,11 +13,12 @@
 from contextlib import ExitStack
 
 import marshmallow as ma
-from flask import Response, abort, current_app, g, stream_with_context
+from flask import Response, current_app, g, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
     Resource,
+    from_conf,
     request_body_parser,
     request_parser,
     resource_requestctx,
@@ -47,6 +48,8 @@ request_stream = request_body_parser(
     parsers={"application/octet-stream": RequestStreamParser()},
     default_content_type="application/octet-stream",
 )
+
+request_extra_args = request_parser(from_conf("request_extra_args"), location="args")
 
 
 #
@@ -84,13 +87,16 @@ class FileResource(ErrorHandlersMixin, Resource):
             ]
         return url_rules
 
+    @request_extra_args
     @request_view_args
     @response_handler(many=True)
     def search(self):
         """List files."""
+        include_deleted = resource_requestctx.args.get("include_deleted", False)
         files = self.service.list_files(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            include_deleted=include_deleted,
         )
         return files.to_dict(), 200
 
@@ -116,14 +122,17 @@ class FileResource(ErrorHandlersMixin, Resource):
         )
         return item.to_dict(), 201
 
+    @request_extra_args
     @request_view_args
     @response_handler()
     def read(self):
         """Read a single file."""
+        include_deleted = resource_requestctx.args.get("include_deleted", False)
         item = self.service.read_file_metadata(
             g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
+            include_deleted=include_deleted,
         )
 
         return item.to_dict(), 200
@@ -164,13 +173,16 @@ class FileResource(ErrorHandlersMixin, Resource):
         )
         return item.to_dict(), 200
 
+    @request_extra_args
     @request_view_args
     def read_content(self):
         """Read file content."""
+        include_deleted = resource_requestctx.args.get("include_deleted", False)
         item = self.service.get_file_content(
             g.identity,
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.view_args["key"],
+            include_deleted=include_deleted,
         )
 
         # emit file download stats event
@@ -181,12 +193,15 @@ class FileResource(ErrorHandlersMixin, Resource):
 
         return item.send_file(), 200
 
+    @request_extra_args
     @request_view_args
     def read_archive(self):
         """Read a zipped version of all files."""
         id_ = resource_requestctx.view_args["pid_value"]
-        files = self.service.list_files(g.identity, id_)
-
+        include_deleted = resource_requestctx.args.get("include_deleted", False)
+        files = self.service.list_files(
+            g.identity, id_, include_deleted=include_deleted
+        )
         # emit file download stats events for each file
         emitter = current_stats.get_event_emitter("file-download")
         for f in files._results:

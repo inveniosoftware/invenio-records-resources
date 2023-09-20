@@ -11,6 +11,8 @@
 
 from flask_resources import ResourceConfig
 
+from invenio_records_resources.resources.files.args import RequestExtraArgsSchema
+
 
 class FileResourceConfig(ResourceConfig):
     """File resource config."""
@@ -27,3 +29,5 @@ class FileResourceConfig(ResourceConfig):
         "item-commit": "/files/<key>/commit",
         "list-archive": "/files-archive",
     }
+
+    request_extra_args = RequestExtraArgsSchema

@@ -14,6 +14,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from flask import current_app
 from mock_module.config import ServiceWithFilesConfig
 from mock_module.resource import (
     CustomDisabledUploadFileResourceConfig,
@@ -484,3 +485,208 @@ def test_download_archive(
             files.sort()
             assert files == ["f1.pdf", "f2.pdf", "f3.pdf"]
     assert all(f.closed for f in captured_fps)
+
+
+def test_files_api_flow_for_deleted_record(
+    client, search_clear, headers, input_data, location
+):
+    """Test deleted record files."""
+    # Initialize a draft
+    # Hack to override the mock service config and set records as deleted
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = True
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Initialize files upload
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.pdf", "title": "Test file"},
+        ],
+    )
+    assert res.status_code == 201
+    res_file = res.json["entries"][0]
+    assert res_file["key"] == "test.pdf"
+    assert res_file["status"] == "pending"
+    assert res_file["metadata"] == {"title": "Test file"}
+    assert res_file["links"]["self"].endswith(f"/api/mocks/{id_}/files/test.pdf")
+    assert res_file["links"]["content"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/content"
+    )
+    assert res_file["links"]["commit"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/commit"
+    )
+
+    # Get the file metadata
+    res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
+    assert res.status_code == 410
+    assert res.json["message"] == "Record deleted"
+    assert res.json["tombstone"]["note"] == "spam"
+    assert res.json["tombstone"]["removed_by"]["user"] == "system"
+
+    # Upload a file
+    res = client.put(
+        f"/mocks/{id_}/files/test.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"testfile"),
+    )
+    assert res.status_code == 200
+    assert res.json["status"] == "pending"
+
+    # Commit the uploaded file
+    res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+
+    # Get the file metadata
+    res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
+    assert res.status_code == 410
+
+    # Read a file's content
+    res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
+    assert res.status_code == 410
+    assert res.json["message"] == "Record deleted"
+    assert res.json["tombstone"]["note"] == "spam"
+    assert res.json["tombstone"]["removed_by"]["user"] == "system"
+
+    # Update file metadata
+    res = client.put(
+        f"/mocks/{id_}/files/test.pdf", headers=headers, json={"title": "New title"}
+    )
+    assert res.status_code == 200
+    assert res.json["key"] == "test.pdf"
+    assert res.json["status"] == "completed"
+    assert res.json["metadata"] == {"title": "New title"}
+
+    # Get all files
+    res = client.get(f"/mocks/{id_}/files", headers=headers)
+    assert res.status_code == 410
+    assert res.json["message"] == "Record deleted"
+    assert res.json["tombstone"]["note"] == "spam"
+    assert res.json["tombstone"]["removed_by"]["user"] == "system"
+
+    # Delete a file
+    res = client.delete(f"/mocks/{id_}/files/test.pdf", headers=headers)
+    assert res.status_code == 204
+
+    # Get all files
+    res = client.get(f"/mocks/{id_}/files", headers=headers)
+    assert res.status_code == 410
+    assert res.json["message"] == "Record deleted"
+    assert res.json["tombstone"]["note"] == "spam"
+    assert res.json["tombstone"]["removed_by"]["user"] == "system"
+
+    # Hack to override the mock service config to set it back to the default value
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = False
+
+
+def test_files_superuser_access_to_deleted_record(
+    client,
+    search_clear,
+    headers,
+    input_data,
+    location,
+    superuser,
+):
+    """Test deleted record files with superuser access."""
+    superuser_client = superuser.login(client)
+
+    # Hack to override the mock service config and set records as deleted
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = True
+    res = superuser_client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Initialize files upload
+    res = superuser_client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.pdf", "title": "Test file"},
+        ],
+    )
+    assert res.status_code == 201
+    res_file = res.json["entries"][0]
+    assert res_file["key"] == "test.pdf"
+    assert res_file["status"] == "pending"
+    assert res_file["metadata"] == {"title": "Test file"}
+    assert res_file["links"]["self"].endswith(f"/api/mocks/{id_}/files/test.pdf")
+    assert res_file["links"]["content"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/content"
+    )
+    assert res_file["links"]["commit"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/commit"
+    )
+
+    # Upload a file
+    res = superuser_client.put(
+        f"/mocks/{id_}/files/test.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"testfile"),
+    )
+    assert res.status_code == 200
+    assert res.json["status"] == "pending"
+
+    # Commit the uploaded file
+    res = superuser_client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+
+    # Get the files-archive
+    res = superuser_client.get(
+        f"/mocks/{id_}/files-archive?include_deleted=0", headers=headers
+    )
+    assert res.status_code == 410
+
+    res = superuser_client.get(
+        f"/mocks/{id_}/files-archive?include_deleted=1", headers=headers
+    )
+    assert res.status_code == 200
+    res.close()
+
+    # Get the file metadata
+    res = superuser_client.get(
+        f"/mocks/{id_}/files/test.pdf?include_deleted=0", headers=headers
+    )
+    assert res.status_code == 410
+
+    res = superuser_client.get(
+        f"/mocks/{id_}/files/test.pdf?include_deleted=1", headers=headers
+    )
+    assert res.status_code == 200
+
+    # Read a file's content
+    res = superuser_client.get(
+        f"/mocks/{id_}/files/test.pdf/content?include_deleted=0", headers=headers
+    )
+    assert res.status_code == 410
+    assert res.json["message"] == "Record deleted"
+    assert res.json["tombstone"]["note"] == "spam"
+    assert res.json["tombstone"]["removed_by"]["user"] == "system"
+
+    res = superuser_client.get(
+        f"/mocks/{id_}/files/test.pdf/content?include_deleted=1", headers=headers
+    )
+    assert res.status_code == 200
+
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = False
+
+    superuser.logout(client)

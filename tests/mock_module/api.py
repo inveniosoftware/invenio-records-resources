@@ -37,6 +37,34 @@ class FileRecord(FileRecordBase):
     record_cls = None  # is defined below
 
 
+class DeletionStatus:
+    """Mock of Deletion status field."""
+
+    is_deleted = False
+
+
+class Tombstone:
+    """Mock of Tombstone system field."""
+
+    is_visible = True
+    citation_text = "citation text"
+    removal_date = "2023-09-20T08:19:58.431539"
+    removed_by = {"user": "system"}
+    note = "spam"
+
+    def dump(self):
+        """Dump the values."""
+        data = {
+            "note": self.note,
+            "removed_by": self.removed_by,
+            "removal_date": self.removal_date,
+            "citation_text": self.citation_text,
+            "is_visible": self.is_visible,
+        }
+
+        return data
+
+
 class Record(RecordBase):
     """Example record API."""
 
@@ -63,6 +91,10 @@ class Record(RecordBase):
         ]
     )
 
+    deletion_status = DeletionStatus()
+
+    tombstone = Tombstone()
+
 
 class RecordWithRelations(Record):
     """Example record API with relations."""
@@ -87,6 +119,7 @@ class RecordWithFiles(Record):
     files = FilesField(store=False, file_cls=FileRecord)
     bucket_id = ModelField()
     bucket = ModelField(dump=False)
+    is_draft = False
 
 
 FileRecord.record_cls = RecordWithFiles

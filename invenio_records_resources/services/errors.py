@@ -69,3 +69,12 @@ class FileKeyNotFoundError(Exception):
         )
         self.recid = recid
         self.file_key = file_key
+
+
+class RecordDeletedException(Exception):
+    """Exception denoting that the record was deleted."""
+
+    def __init__(self, record, result_item=None):
+        """Constructor."""
+        self.record = record
+        self.result_item = result_item

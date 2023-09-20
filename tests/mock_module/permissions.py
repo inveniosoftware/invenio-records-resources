@@ -31,3 +31,4 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_read_files = [AnyUser(), SystemProcess()]
     can_update_files = [AnyUser(), SystemProcess()]
     can_delete_files = [AnyUser(), SystemProcess()]
+    can_read_deleted_files = [SystemProcess()]

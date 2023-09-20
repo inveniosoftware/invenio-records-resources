@@ -9,11 +9,14 @@
 # details.
 
 """Common Errors handling for Resources."""
+import json
 from json import JSONDecodeError
 
 import marshmallow as ma
-from flask import jsonify, make_response, request, url_for
-from flask_resources import HTTPJSONException, create_error_handler
+from flask import g, jsonify, make_response, request, url_for
+from flask_resources import HTTPJSONException as _HTTPJSONException
+from flask_resources import create_error_handler
+from flask_resources.serializers.json import JSONEncoder
 from invenio_i18n import lazy_gettext as _
 from invenio_pidstore.errors import (
     PIDAlreadyExists,
@@ -36,11 +39,12 @@ from ..services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
     QuerystringValidationError,
+    RecordDeletedException,
     RevisionIdMismatchError,
 )
 
 
-class HTTPJSONValidationException(HTTPJSONException):
+class HTTPJSONValidationException(_HTTPJSONException):
     """HTTP exception serializing to JSON and reflecting Marshmallow errors."""
 
     description = "A validation error occurred."
@@ -50,7 +54,7 @@ class HTTPJSONValidationException(HTTPJSONException):
         super().__init__(code=400, errors=validation_error_to_list_errors(exception))
 
 
-class HTTPJSONSearchRequestError(HTTPJSONException):
+class HTTPJSONSearchRequestError(_HTTPJSONException):
     """HTTP exception responsible for mapping search engine errors."""
 
     causes_responses = {
@@ -68,6 +72,37 @@ class HTTPJSONSearchRequestError(HTTPJSONException):
                 super().__init__(code=code, description=msg)
                 return
         super().__init__(code=500, description=_("Internal server error"))
+
+
+class HTTPJSONException(_HTTPJSONException):
+    """HTTPJSONException that supports setting some extra body fields."""
+
+    def __init__(self, code=None, errors=None, **kwargs):
+        """Constructor."""
+        description = kwargs.pop("description", None)
+        response = kwargs.pop("response", None)
+        super().__init__(code, errors, description=description, response=response)
+        self._extra_fields = kwargs
+
+    def get_body(self, environ=None, scope=None):
+        """Get the response body."""
+        body = {
+            "status": self.code,
+            "message": self.get_description(environ),
+            **self._extra_fields,
+        }
+
+        errors = self.get_errors()
+        if errors:
+            body["errors"] = errors
+
+        # TODO: Revisit how to integrate error monitoring services.
+        # See issue https://github.com/inveniosoftware/flask-resources/issues/56
+        # Temporarily kept for expediency and backward-compatibility
+        if self.code and (self.code >= 500) and hasattr(g, "sentry_event_id"):
+            body["error_id"] = str(g.sentry_event_id)
+
+        return json.dumps(body, cls=JSONEncoder)
 
 
 def create_pid_redirected_error_handler():
@@ -185,5 +220,16 @@ class ErrorHandlersMixin:
         ),
         search.exceptions.RequestError: create_error_handler(
             lambda e: HTTPJSONSearchRequestError(e)
+        ),
+        RecordDeletedException: create_error_handler(
+            lambda e: (
+                HTTPJSONException(code=404, description=_("Record not found"))
+                if not e.record.tombstone.is_visible
+                else HTTPJSONException(
+                    code=410,
+                    description=_("Record deleted"),
+                    tombstone=e.record.tombstone.dump(),
+                )
+            )
         ),
     }

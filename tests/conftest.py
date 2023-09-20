@@ -15,6 +15,8 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from invenio_access import ActionRoles, superuser_access
+from invenio_accounts.models import Role
 from invenio_app.factory import create_api as _create_api
 from mock_module.config import MockFileServiceConfig, ServiceConfig
 
@@ -100,3 +102,48 @@ def identity_simple():
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method="system_role", value="any_user"))
     return i
+
+
+@pytest.fixture()
+def superuser_role_need(db):
+    """Store 1 role with 'superuser-access' ActionNeed.
+
+    WHY: This is needed because expansion of ActionNeed is
+         done on the basis of a User/Role being associated with that Need.
+         If no User/Role is associated with that Need (in the DB), the
+         permission is expanded to an empty list.
+    """
+    role = Role(name="superuser-access")
+    db.session.add(role)
+
+    action_role = ActionRoles.create(action=superuser_access, role=role)
+    db.session.add(action_role)
+
+    db.session.commit()
+
+    return action_role.need
+
+
+@pytest.fixture()
+def superuser(UserFixture, app, db, superuser_role_need):
+    """Superuser."""
+    u = UserFixture(
+        email="superuser@inveniosoftware.org",
+        password="superuser",
+    )
+    u.create(app, db)
+
+    datastore = app.extensions["security"].datastore
+    _, role = datastore._prepare_role_modify_args(u.user, "superuser-access")
+
+    datastore.add_role_to_user(u.user, role)
+    db.session.commit()
+    return u
+
+
+@pytest.fixture()
+def superuser_identity(superuser_role_need):
+    """Superuser identity fixture."""
+    identity = Identity(1)
+    identity.provides.add(superuser_role_need)
+    return identity

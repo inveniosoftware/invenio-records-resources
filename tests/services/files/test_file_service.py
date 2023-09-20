@@ -12,12 +12,14 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from flask import current_app
 from invenio_access.permissions import system_identity
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
+    RecordDeletedException,
 )
 
 #
@@ -450,3 +452,108 @@ def test_read_not_committed_external_file(
     # Retrieve file
     with pytest.raises(PermissionDeniedError):
         file_service.get_file_content(identity_simple, recid, "article.txt")
+
+
+def test_deleted_records_file_flow(
+    file_service, location, example_file_record, identity_simple, superuser_identity
+):
+    """Test the lifecycle of a file.
+
+    - Initialize file saving
+    - Save 1 files
+    - Commit the files
+    - List files of the record (ERROR)
+    - Read file metadata (ERROR)
+    - Retrieve a file (ERROR)
+    - Delete a file
+    """
+    # Hack to override the mock service config and set records as deleted
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = True
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,  # 2kB
+            "metadata": {
+                "description": "Published article PDF.",
+            },
+        }
+    ]
+    # Initialize file saving
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    # for to_file in to_files:
+    content = BytesIO(b"test file content")
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        file_to_initialise[0]["key"],
+        content,
+        content.getbuffer().nbytes,
+    )
+    # TODO figure response for succesfully saved file
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
+    # TODO currently there is no status in the json between the initialisation
+    # and the commiting.
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+
+    # List files
+    with pytest.raises(RecordDeletedException):
+        file_service.list_files(identity_simple, recid)
+
+    with pytest.raises(RecordDeletedException):
+        file_service.list_files(identity_simple, recid, include_deleted=True)
+
+    result = file_service.list_files(superuser_identity, recid, include_deleted=True)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["entries"][0]["storage_class"] == "L"
+    assert "uri" not in result.to_dict()["entries"][0]
+
+    # Read file metadata
+    with pytest.raises(RecordDeletedException):
+        file_service.read_file_metadata(identity_simple, recid, "article.txt")
+
+    with pytest.raises(RecordDeletedException):
+        file_service.read_file_metadata(
+            identity_simple, recid, "article.txt", include_deleted=True
+        )
+
+    result = file_service.read_file_metadata(
+        superuser_identity, recid, "article.txt", include_deleted=True
+    )
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["storage_class"] == "L"
+    assert "uri" not in result.to_dict()
+
+    # Retrieve file
+    with pytest.raises(RecordDeletedException):
+        file_service.get_file_content(identity_simple, recid, "article.txt")
+
+    with pytest.raises(RecordDeletedException):
+        file_service.get_file_content(
+            identity_simple, recid, "article.txt", include_deleted=True
+        )
+
+    result = file_service.get_file_content(
+        superuser_identity, recid, "article.txt", include_deleted=True
+    )
+    assert result.file_id == "article.txt"
+
+    # Delete file
+    result = file_service.delete_file(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"
+
+    # Assert deleted
+    result = file_service.list_files(superuser_identity, recid, include_deleted=True)
+    assert result.entries
+    assert len(list(result.entries)) == 0
+
+    # Hack to override the mock service config to set it back to the default value
+    current_app.extensions["invenio-records-resources"].registry._services[
+        "mock-records"
+    ].record_cls.deletion_status.is_deleted = False

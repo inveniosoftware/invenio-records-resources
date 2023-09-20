@@ -10,7 +10,7 @@
 """File Service API."""
 
 from ..base import LinksTemplate, Service
-from ..errors import FileKeyNotFoundError
+from ..errors import FileKeyNotFoundError, RecordDeletedException
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 
@@ -65,13 +65,27 @@ class FileService(Service):
 
         return record
 
+    def _ensure_record_not_deleted(self, record, identity, include_deleted):
+        """Ensure that the record exists (not deleted) or raise."""
+        if not record.is_published:
+            return
+        if record.deletion_status.is_deleted and not include_deleted:
+            raise RecordDeletedException(record)
+        if record.deletion_status.is_deleted and include_deleted:
+            can_read_deleted = self.check_permission(
+                identity, "read_deleted_files", record=record
+            )
+            if not can_read_deleted:
+                raise RecordDeletedException(record)
+
     #
     # High-level API
     #
-    def list_files(self, identity, id_):
+    def list_files(self, identity, id_, include_deleted=False):
         """List the files of a record."""
         record = self._get_record(id_, identity, "read_files")
 
+        self._ensure_record_not_deleted(record, identity, include_deleted)
         self.run_components("list_files", id_, identity, record)
 
         return self.file_result_list(
@@ -119,12 +133,14 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def read_file_metadata(self, identity, id_, file_key):
+    def read_file_metadata(self, identity, id_, file_key, include_deleted=False):
         """Read the metadata of a file.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "read_files", file_key=file_key)
+
+        self._ensure_record_not_deleted(record, identity, include_deleted)
 
         self.run_components("read_file_metadata", identity, id_, file_key, record)
 
@@ -259,12 +275,14 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def get_file_content(self, identity, id_, file_key):
+    def get_file_content(self, identity, id_, file_key, include_deleted=False):
         """Retrieve file content.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+
+        self._ensure_record_not_deleted(record, identity, include_deleted)
 
         self.run_components("get_file_content", identity, id_, file_key, record)
 
