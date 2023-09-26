@@ -34,6 +34,7 @@ class FileRecordModelMixin:
             UUIDType,
             db.ForeignKey(cls.__record_model_cls__.id, ondelete="RESTRICT"),
             nullable=False,
+            index=True,
         )
 
     @declared_attr
@@ -59,9 +60,10 @@ class FileRecordModelMixin:
     def __table_args__(cls):
         """Table args."""
         return (
+            # To make sure we don't have duplicate keys for record files
             db.Index(
-                f"uidx_{cls.__tablename__}_id_key",
-                "id",
+                f"uidx_{cls.__tablename__}_record_id_key",
+                "record_id",
                 "key",
                 unique=True,
             ),
