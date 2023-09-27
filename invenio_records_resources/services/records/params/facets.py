@@ -9,6 +9,7 @@
 
 """Facets parameter interpreter API."""
 
+from copy import deepcopy
 
 from ..facets import FacetsResponse
 from .base import ParamInterpreter
@@ -26,7 +27,7 @@ class FacetsParam(ParamInterpreter):
     @property
     def facets(self):
         """Get the defined facets."""
-        return self.config.facets
+        return deepcopy(self.config.facets)
 
     def add_filter(self, name, values):
         """Add a filter for a facet."""

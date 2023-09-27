@@ -8,6 +8,8 @@
 
 """Pagination parameter interpreter API."""
 
+from copy import deepcopy
+
 from ....pagination import Pagination
 from ...errors import QuerystringValidationError
 from .base import ParamInterpreter
@@ -18,7 +20,7 @@ class PaginationParam(ParamInterpreter):
 
     def apply(self, identity, search, params):
         """Evaluate the query str on the search."""
-        options = self.config.pagination_options
+        options = deepcopy(self.config.pagination_options)
 
         default_size = options["default_results_per_page"]
 
