@@ -8,6 +8,8 @@
 
 """Sort parameter interpreter API."""
 
+from copy import deepcopy
+
 from marshmallow import ValidationError
 
 from .base import ParamInterpreter
@@ -37,7 +39,7 @@ class SortParam(ParamInterpreter):
 
     def _compute_sort_fields(self, params):
         """Compute sort fields."""
-        options = self.config.sort_options
+        options = deepcopy(self.config.sort_options)
         if "sort" not in params:
             params["sort"] = self._default_sort(params, options)
 
