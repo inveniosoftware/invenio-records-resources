@@ -42,7 +42,7 @@ def send_change_notifications(record_type, records_info):
 
 
 @shared_task(ignore_result=True)
-def manage_indexer_queues():
+def manage_indexer_queues(bulk_chunk_limit=None):
     """Peeks into queues and spawns bulk indexers."""
     channel = current_celery_app.connection().channel()
     indexers = current_indexer_registry.all()
@@ -53,4 +53,4 @@ def manage_indexer_queues():
         max_consumers = current_app.config["INDEXER_MAX_BULK_CONSUMERS"]
 
         if num_messages > 0 and num_consumers < max_consumers:
-            process_bulk_queue.delay(indexer_name=name)
+            process_bulk_queue.delay(indexer_name=name, bulk_chunk_limit=bulk_chunk_limit)
