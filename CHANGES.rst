@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.4 (2023-09-28)
+
+- params: make sort/facets params immutable
+
 Version 4.11.3 (2023-09-19)
 
 - revert fix bool comparison in api
