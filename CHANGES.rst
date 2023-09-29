@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.5 (2023-09-29)
+
+- service: add `extra_filter` to reindex method
+
 Version 4.11.4 (2023-09-28)
 
 - params: make sort/facets params immutable
