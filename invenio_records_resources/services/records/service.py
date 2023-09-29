@@ -274,7 +274,13 @@ class RecordService(Service, RecordIndexerMixin):
         )
 
     def reindex(
-        self, identity, params=None, search_preference=None, search_query=None, **kwargs
+        self,
+        identity,
+        params=None,
+        search_preference=None,
+        search_query=None,
+        extra_filter=None,
+        **kwargs,
     ):
         """Reindex records matching the query parameters."""
         self.require_permission(identity, "search")
@@ -290,6 +296,7 @@ class RecordService(Service, RecordIndexerMixin):
             self.record_cls,
             self.config.search,
             preference=search_preference,
+            extra_filter=extra_filter,
         ).source(
             False
         )  # get only the uuid of the records
