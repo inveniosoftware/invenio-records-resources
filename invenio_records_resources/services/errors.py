@@ -69,3 +69,18 @@ class FileKeyNotFoundError(Exception):
         )
         self.recid = recid
         self.file_key = file_key
+
+
+class FailedFileUploadException(Exception):
+    """File failed to upload exception."""
+
+    def __init__(self, recid, file, file_key):
+        """Constructor."""
+        super().__init__(
+            _("Record '{recid}' failed to upload file file '{file_key}'.").format(
+                recid=recid, file_key=file_key
+            )
+        )
+        self.recid = recid
+        self.file_key = file_key
+        self.file = file
