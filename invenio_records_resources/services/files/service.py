@@ -10,7 +10,7 @@
 """File Service API."""
 
 from ..base import LinksTemplate, Service
-from ..errors import FileKeyNotFoundError
+from ..errors import FailedFileUploadException, FileKeyNotFoundError
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 
@@ -240,21 +240,26 @@ class FileService(Service):
         """
         record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
 
-        self.run_components(
-            "set_file_content",
-            identity,
-            id_,
-            file_key,
-            stream,
-            content_length,
-            record,
-            uow=uow,
-        )
+        try:
+            self.run_components(
+                "set_file_content",
+                identity,
+                id_,
+                file_key,
+                stream,
+                content_length,
+                record,
+                uow=uow,
+            )
+            file = record.files[file_key]
+
+        except FailedFileUploadException as e:
+            file = e.file
 
         return self.file_result_item(
             self,
             identity,
-            record.files[file_key],
+            file,
             record,
             links_tpl=self.file_links_item_tpl(id_),
         )

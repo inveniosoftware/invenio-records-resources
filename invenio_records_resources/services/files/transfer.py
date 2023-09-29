@@ -11,8 +11,10 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from invenio_db import db
+from fs.errors import CreateFailed
 from invenio_files_rest.errors import FileSizeError
+from invenio_i18n import lazy_gettext as _
+from werkzeug.exceptions import ClientDisconnected
 
 from ..errors import TransferException
 from ..uow import TaskOp
@@ -67,18 +69,22 @@ class BaseTransfer(ABC):
     def set_file_content(self, record, file, file_key, stream, content_length):
         """Set file content."""
         bucket = record.bucket
+
         size_limit = bucket.size_limit
         if content_length and size_limit and content_length > size_limit:
             desc = (
-                "File size limit exceeded."
+                _("File size limit exceeded.")
                 if isinstance(size_limit, int)
                 else size_limit.reason
             )
             raise FileSizeError(description=desc)
 
-        record.files.create_obj(
-            file_key, stream, size=content_length, size_limit=size_limit
-        )
+        try:
+            record.files.create_obj(
+                file_key, stream, size=content_length, size_limit=size_limit
+            )
+        except (ClientDisconnected, CreateFailed) as e:
+            raise TransferException(f'Transfer of File with key "{file_key}" failed.')
 
     def commit_file(self, record, file_key):
         """Commit a file."""
