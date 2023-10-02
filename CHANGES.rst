@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.6 (2023-10-02)
+
+- components: handle file upload interruption
+
 Version 4.11.5 (2023-09-29)
 
 - service: add `extra_filter` to reindex method
