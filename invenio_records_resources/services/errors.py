@@ -77,7 +77,7 @@ class FailedFileUploadException(Exception):
     def __init__(self, recid, file, file_key):
         """Constructor."""
         super().__init__(
-            _("Record '{recid}' failed to upload file file '{file_key}'.").format(
+            _("Record '{recid}' failed to upload file '{file_key}'.").format(
                 recid=recid, file_key=file_key
             )
         )
