@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.11.7 (2023-10-02)
+
+- bump invenio-stats
+
 Version 4.11.6 (2023-10-02)
 
 - components: handle file upload interruption
