@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.12.0 (2023-10-11)
+
+- setup: upgrade marshmallow-utils
+
 Version 4.11.7 (2023-10-02)
 
 - bump invenio-stats
