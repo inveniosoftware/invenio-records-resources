@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.14.0 (2023-10-19)
+
+- services: custom_fields: date: use parse_edtf from babel-edtf
+- params: validate param option against all available options if exist
+
 Version 4.13.0 (2023-10-19)
 
 - resolver: raises `PIDDoesNotExistError` when record is deleted
