@@ -39,7 +39,16 @@ class SortParam(ParamInterpreter):
 
     def _compute_sort_fields(self, params):
         """Compute sort fields."""
-        options = deepcopy(self.config.sort_options)
+        # validate sort options in the following order
+        # 1. search all available options if set in the search config. This will be
+        #    added automatically if `SearchOptionsMixin` is used.
+        # 2. selected sort options otherwise. These are also the sort options that the
+        #    UI displays.
+        options = deepcopy(
+            self.config.available_sort_options
+            if hasattr(self.config, "available_sort_options")
+            else self.config.sort_options
+        )
         if "sort" not in params:
             params["sort"] = self._default_sort(params, options)
 
