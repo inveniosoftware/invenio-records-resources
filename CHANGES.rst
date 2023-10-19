@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.14.1 (2023-10-19)
+
+- sort: fallback safely to sort_options
+
 Version 4.14.0 (2023-10-19)
 
 - services: custom_fields: date: use parse_edtf from babel-edtf
