@@ -211,7 +211,8 @@ class SearchConfig:
     @property
     def available_sort_options(self):
         """Get sort options for search."""
-        return {k: v for (k, v) in self._sort()}
+        _sort = self._sort() if callable(self._sort) else self._sort
+        return {k: v for (k, v) in _sort}
 
     @property
     def sort_default(self):
