@@ -61,10 +61,14 @@ class SearchOptionsMixin:
         attrs = {}
         if opts.facets:
             attrs["facets"] = opts.facets
+        # these are the selected sort options
         if opts.sort_options:
             attrs["sort_options"] = opts.sort_options
             attrs["sort_default"] = opts.sort_default
             attrs["sort_default_no_query"] = opts.sort_default_no_query
+        # store all available sort options
+        if opts.available_sort_options:
+            attrs["available_sort_options"] = opts.available_sort_options
         if opts.query_parser_cls:
             attrs["query_parser_cls"] = opts.query_parser_cls
         return _make_cls(cls, attrs) if attrs else cls
@@ -128,19 +132,29 @@ class OptionsSelector:
         # Ensure all selected options are availabe.
         for o in selected_options:
             assert o in available_options, f"Selected option '{o}' is undefined."
+        self.iterate_all_options = False
 
         self.available_options = available_options
         self.selected_options = selected_options
 
     def __iter__(self):
         """Iterate over options to produce RSK options."""
-        for o in self.selected_options:
+        for o in (
+            self.selected_options
+            if not self.iterate_all_options
+            else self.available_options
+        ):
             yield self.map_option(o, self.available_options[o])
 
     def map_option(self, key, option):
         """Map an option."""
         # This interface is used in Invenio-App-RDM.
         return (key, option)
+
+    def __call__(self):
+        """Control if we iterate through all or selected sort options."""
+        self.iterate_all_options = True
+        return self
 
 
 class SortOptionsSelector(OptionsSelector):
@@ -193,6 +207,11 @@ class SearchConfig:
     def sort_options(self):
         """Get sort options for search."""
         return {k: v for (k, v) in self._sort}
+
+    @property
+    def available_sort_options(self):
+        """Get sort options for search."""
+        return {k: v for (k, v) in self._sort()}
 
     @property
     def sort_default(self):
