@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.13.0 (2023-10-19)
+
+- resolver: raises `PIDDoesNotExistError` when record is deleted
+
 Version 4.12.0 (2023-10-11)
 
 - setup: upgrade marshmallow-utils
