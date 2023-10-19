@@ -36,6 +36,7 @@ key in the record:
 """
 
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from invenio_records.systemfields import (
@@ -62,7 +63,7 @@ class PIDFieldContext(RelatedModelFieldContext):
         Record.pid.session_merge(record)
     """
 
-    def resolve(self, pid_value, registered_only=True):
+    def resolve(self, pid_value, registered_only=True, with_deleted=False):
         """Resolve identifier."""
         # Create resolver
         resolver = self.field._resolver_cls(
@@ -74,6 +75,12 @@ class PIDFieldContext(RelatedModelFieldContext):
 
         # Resolve
         pid, record = resolver.resolve(pid_value)
+        # Drafts of published records are soft-deleted and the resolver will
+        # return a deleted record because the PID is registered (record is
+        # published). We do not want to return deleted records so we raise
+        # PID does not exists error.
+        if not with_deleted and record.is_deleted:
+            raise PIDDoesNotExistError(self.field._pid_type, pid_value)
 
         # Store pid in cache on record.
         self.field._set_cache(record, pid)
