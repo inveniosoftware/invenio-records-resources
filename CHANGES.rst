@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.15.0 (2023-10-20)
+
+- base: add possibility to override search options class
+
 Version 4.14.1 (2023-10-19)
 
 - sort: fallback safely to sort_options
