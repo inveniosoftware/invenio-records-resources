@@ -239,7 +239,13 @@ class FromConfigSearchOptions:
     """Data descriptor for search options configuration."""
 
     def __init__(
-        self, config_key, sort_key, facet_key, default=None, search_option_cls=None
+        self,
+        config_key,
+        sort_key,
+        facet_key,
+        default=None,
+        search_option_cls=None,
+        search_option_cls_key=None,
     ):
         """Constructor for data descriptor."""
         self.config_key = config_key
@@ -247,6 +253,7 @@ class FromConfigSearchOptions:
         self.facet_key = facet_key
         self.default = default or {}
         self.search_option_cls = search_option_cls
+        self.search_option_cls_key = search_option_cls_key
 
     def __get__(self, obj, objtype=None):
         """Return value that was grafted on obj (descriptor protocol)."""
@@ -259,5 +266,10 @@ class FromConfigSearchOptions:
             sort=sort_opts,
             facets=facet_opts,
         )
+        _search_option_cls = self.search_option_cls
 
-        return self.search_option_cls.customize(search_config)
+        if self.search_option_cls_key:
+            _search_option_cls = obj._app.config.get(
+                self.search_option_cls_key, _search_option_cls
+            )
+        return _search_option_cls.customize(search_config)
