@@ -44,8 +44,8 @@ class FileServiceConfig(ServiceConfig):
     }
 
     file_links_item = {
-        "self": FileLink("{+api}/records/{id}/files/{key}"),
-        "content": FileLink("{+api}/records/{id}/files/{key}/content"),
+        "self": FileLink("{+api}/records/{id}/files/{+key}"),
+        "content": FileLink("{+api}/records/{id}/files/{+key}/content"),
     }
 
     components = [
