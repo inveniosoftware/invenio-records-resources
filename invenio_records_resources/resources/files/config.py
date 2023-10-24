@@ -22,8 +22,8 @@ class FileResourceConfig(ResourceConfig):
     url_prefix = "/records/<pid_value>"
     routes = {
         "list": "/files",
-        "item": "/files/<key>",
-        "item-content": "/files/<key>/content",
-        "item-commit": "/files/<key>/commit",
+        "item": "/files/<path:key>",
+        "item-content": "/files/<path:key>/content",
+        "item-commit": "/files/<path:key>/commit",
         "list-archive": "/files-archive",
     }
