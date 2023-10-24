@@ -9,6 +9,8 @@
 
 """File Service API."""
 
+from flask import current_app
+
 from ..base import LinksTemplate, Service
 from ..errors import FailedFileUploadException, FileKeyNotFoundError
 from ..records.schema import ServiceSchemaWrapper
@@ -239,7 +241,7 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
-
+        errors = None
         try:
             self.run_components(
                 "set_file_content",
@@ -255,12 +257,17 @@ class FileService(Service):
 
         except FailedFileUploadException as e:
             file = e.file
+            current_app.logger.exception(f"File upload transfer failed.")
+            # we gracefully fail so that uow can commit the cleanup operation in
+            # FileContentComponent
+            errors = "File upload transfer failed."
 
         return self.file_result_item(
             self,
             identity,
             file,
             record,
+            errors=errors,
             links_tpl=self.file_links_item_tpl(id_),
         )
 

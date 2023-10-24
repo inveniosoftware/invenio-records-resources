@@ -33,6 +33,7 @@ from werkzeug.routing import BuildError
 from ..errors import validation_error_to_list_errors
 from ..services.errors import (
     FacetNotFoundError,
+    FailedFileUploadException,
     FileKeyNotFoundError,
     PermissionDeniedError,
     QuerystringValidationError,
@@ -185,5 +186,11 @@ class ErrorHandlersMixin:
         ),
         search.exceptions.RequestError: create_error_handler(
             lambda e: HTTPJSONSearchRequestError(e)
+        ),
+        FailedFileUploadException: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="The file upload failed, please try again",
+            )
         ),
     }

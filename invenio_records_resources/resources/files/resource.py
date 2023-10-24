@@ -27,6 +27,8 @@ from flask_resources import (
 from invenio_stats.proxies import current_stats
 from zipstream import ZIP_STORED, ZipStream
 
+from invenio_records_resources.services.errors import FailedFileUploadException
+
 from ..errors import ErrorHandlersMixin
 from .parser import RequestStreamParser
 
@@ -225,5 +227,11 @@ class FileResource(ErrorHandlersMixin, Resource):
             resource_requestctx.data["request_stream"],
             content_length=resource_requestctx.data["request_content_length"],
         )
+
+        # if errors are set then there was a `TransferException` raised
+        if item.to_dict().get("errors"):
+            raise FailedFileUploadException(
+                file_key=item.file_id, recid=item.id, file=item.to_dict()
+            )
 
         return item.to_dict(), 200
