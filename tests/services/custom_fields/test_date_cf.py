@@ -65,12 +65,19 @@ def test_edtfdatestring_validate():
     schema = Schema.from_dict({"test": cf.field})()
 
     assert schema.load({"test": "2020-09/2020-10"}) == {"test": "2020-09/2020-10"}
+    assert schema.load({"test": "2020-01-01T10:00:00"}) == {
+        "test": "2020-01-01T10:00:00"
+    }
 
     pytest.raises(ValidationError, schema.load, {"test": "2020-09-21garbage"})
     # Not chronological
     pytest.raises(ValidationError, schema.load, {"test": "2021/2020"})
-    # Not date or interval
-    pytest.raises(ValidationError, schema.load, {"test": "2020-01-01T10:00:00"})
+    # Invalid interval
+    pytest.raises(
+        ValidationError,
+        schema.load,
+        {"test": "2020-01-01T10:00:00/2020-02-01T10:00:00"},
+    )
 
 
 def test_edtfdatestring_custom_field_cls_list():
