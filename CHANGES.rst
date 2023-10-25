@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.16.2 (2023-10-25)
+
+- error: improve error wording in `FailedFileUploadException`
+
 Version 4.16.1 (2023-10-25)
 
 - files: abort with 400 on upload failures
