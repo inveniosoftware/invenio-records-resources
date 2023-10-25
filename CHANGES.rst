@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.16.1 (2023-10-25)
+
+- files: abort with 400 on upload failures
+
 Version 4.16.0 (2023-10-23)
 
 - uow: add record delete index op
