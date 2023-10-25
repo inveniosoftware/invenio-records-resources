@@ -190,7 +190,7 @@ class ErrorHandlersMixin:
         FailedFileUploadException: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="The file upload failed, please try again",
+                description="The file upload transfer failed, please try again.",
             )
         ),
     }
