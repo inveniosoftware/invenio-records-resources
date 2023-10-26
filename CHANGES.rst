@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.16.3 (2023-10-26)
+
+- files: updated urls for published files
+- files: allowing slash in url
+
 Version 4.16.2 (2023-10-25)
 
 - error: improve error wording in `FailedFileUploadException`
