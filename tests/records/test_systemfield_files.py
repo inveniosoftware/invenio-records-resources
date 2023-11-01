@@ -9,7 +9,6 @@
 
 """Files field tests."""
 
-
 from io import BytesIO
 
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
@@ -133,7 +132,7 @@ def test_record_files_operations(base_app, db, location):
 
 
 def test_record_files_clear(base_app, db, location):
-    """Test clearing record files."""
+    """Test clearing record files (hard deletion)."""
     record = Record.create({})
 
     # Add a file with metadata + bytes
@@ -159,6 +158,46 @@ def test_record_files_clear(base_app, db, location):
     assert models.FileRecordMetadata.query.count() == 0
     assert FileInstance.query.count() == 2
     assert ObjectVersion.query.count() == 0
+    assert Bucket.query.count() == 1
+    assert len(record.files) == 0
+    assert "f1.pdf" not in record.files
+    assert "f2.pdf" not in record.files
+    assert "f3.pdf" not in record.files
+    assert record["files"]["entries"] == {}
+
+
+def test_record_files_soft_delete(base_app, db, location):
+    """Test soft deleting record files."""
+    record = Record.create({})
+
+    # Add a file with metadata + bytes
+    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    # Add a file with only bytes
+    record.files["f2.pdf"] = BytesIO(b"testfile")
+    # Add a file with only metadata
+    record.files["f3.pdf"] = {"description": "Metadata only"}
+    record.commit()
+    db.session.commit()
+
+    assert models.FileRecordMetadata.query.count() == 3
+    assert FileInstance.query.count() == 2
+    assert ObjectVersion.query.count() == 2
+    assert Bucket.query.count() == 1
+    assert len(record.files) == 3
+
+    # Delete all files
+    record.files.delete_all(softdelete_obj=True, remove_rf=True)
+    record.commit()
+    db.session.commit()
+
+    object_versions = ObjectVersion.query.filter_by(is_head=True).all()
+    assert len(object_versions) == 2
+    assert object_versions[0].deleted is True
+    assert object_versions[1].deleted is True
+
+    assert models.FileRecordMetadata.query.count() == 0
+    assert FileInstance.query.count() == 2
+    assert ObjectVersion.query.count() == 4
     assert Bucket.query.count() == 1
     assert len(record.files) == 0
     assert "f1.pdf" not in record.files
