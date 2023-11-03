@@ -50,15 +50,19 @@ necessarily persisted in the metadata.
 }
 """
 
+import uuid
 from collections.abc import MutableMapping
+from datetime import datetime
 from functools import wraps
 
+from invenio_db import db
 from invenio_files_rest.errors import (
     BucketLockedError,
     InvalidKeyError,
     InvalidOperationError,
 )
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
+from sqlalchemy import insert
 
 
 def ensure_enabled(func):
@@ -266,24 +270,61 @@ class FilesManager(MutableMapping):
         self._order = []
 
     def copy(self, src_files, copy_obj=True):
-        """Copy from another file manager."""
+        """Copy from another file manager.
+
+        This method will copy all object versions to the `self.bucket` assuming
+        that the latter is a new empty bucket.
+        """
         self.enabled = src_files.enabled
 
         if not self.enabled:
             return
 
-        for key, rf in src_files.items():
-            # Copy object version of link existing?
-            if copy_obj:
-                dst_obj = rf.object_version.copy(bucket=self.bucket)
-            else:
-                dst_obj = rf.object_version
+        bucket_objects = ObjectVersion.query.filter_by(bucket_id=self.bucket_id).count()
+        if bucket_objects == 0:
+            # bucket is empty
+            # copy all object versions to self.bucket
+            objs = ObjectVersion.copy_from(src_files.bucket_id, self.bucket_id)
+            ovs_by_key = {obj["key"]: obj for obj in objs}
+            rf_to_bulk_insert = []
 
-            # Copy file record
-            if rf.metadata is not None:
-                self[key] = dst_obj, rf.metadata
-            else:
-                self[key] = dst_obj
+            record_id = self.record.id
+            for key, rf in src_files.items():
+                new_rf = {
+                    "id": uuid.uuid4(),
+                    "created": datetime.utcnow(),
+                    "updated": datetime.utcnow(),
+                    "key": key,
+                    "record_id": record_id,
+                    "version_id": 1,
+                    "object_version_id": ovs_by_key[key]["version_id"],
+                    "json": rf.metadata or {},
+                }
+                rf_to_bulk_insert.append(new_rf)
+
+            if rf_to_bulk_insert:
+                db.session.execute(insert(self.file_cls.model_cls), rf_to_bulk_insert)
+                # we need to populate entries from DB so we store the record file model
+                # instance
+                if not self._entries:
+                    self._entries = {}
+                    for rf in self.file_cls.list_by_record(self.record.id):
+                        self._entries[rf.key] = rf
+        else:
+            # if bucket is not empty then we fallback to the slow process of copying
+            # files
+            for key, rf in src_files.items():
+                # Copy object version of link existing?
+                if copy_obj:
+                    dst_obj = rf.object_version.copy(bucket=self.bucket)
+                else:
+                    dst_obj = rf.object_version
+
+                # Copy file record
+                if rf.metadata is not None:
+                    self[key] = dst_obj, rf.metadata
+                else:
+                    self[key] = dst_obj
 
         self.default_preview = src_files.default_preview
         self.order = src_files.order
