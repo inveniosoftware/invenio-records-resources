@@ -66,13 +66,14 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     @classmethod
     def list_by_record(cls, record_id, with_deleted=False):
         """List all record files by record ID."""
-        query = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
+        with db.session.no_autoflush:
+            query = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
 
-        if not with_deleted:
-            query = query.filter(cls.model_cls.is_deleted != True)
+            if not with_deleted:
+                query = query.filter(cls.model_cls.is_deleted != True)
 
-        for obj in query:
-            yield cls(obj.data, model=obj)
+            for obj in query:
+                yield cls(obj.data, model=obj)
 
     @property
     def file(self):
