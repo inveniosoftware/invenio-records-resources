@@ -100,6 +100,12 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         """Get the file's record."""
         return self.record_cls(self._record.data, model=self._record)
 
+    @classmethod
+    def remove_all(cls, record_id):
+        """Hard delete record's file instances."""
+        record_files = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
+        record_files.delete()
+
     send_signals = False
     enable_jsonref = False
 

@@ -249,6 +249,22 @@ class FilesManager(MutableMapping):
                 remove_rf=remove_rf,
             )
 
+    def teardown(self, full=True):
+        """Clean up all file manager related instances.
+
+        Deletes FileRecords, Bucket and ObjectVersions attached to file manager.
+        equivalent of:
+        softdelete_obj = false, remove_rf=True, remove_obj=true
+        option of deleting only FileRecords if full=False
+        """
+        self.file_cls.remove_all(self.record.id)
+
+        if full:
+            self.remove_bucket(force=True)
+        self.default_preview = None
+        self._entries = None
+        self._order = []
+
     def copy(self, src_files, copy_obj=True):
         """Copy from another file manager."""
         self.enabled = src_files.enabled
