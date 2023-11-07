@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 4.17.0 (2023-11-07)
+
+- file manager: add teardown method (optimise performance)
+- api: add remove_all to FileRecord (optimise performance)
+
 Version 4.16.3 (2023-10-26)
 
 - files: updated urls for published files
