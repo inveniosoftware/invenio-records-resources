@@ -104,7 +104,7 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     def remove_all(cls, record_id):
         """Hard delete record's file instances."""
         record_files = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
-        record_files.delete()
+        record_files.delete(synchronize_session=False)
 
     send_signals = False
     enable_jsonref = False
