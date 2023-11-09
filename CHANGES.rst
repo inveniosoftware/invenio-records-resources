@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.17.1 (2023-11-09)
+
+- api: do not synchronise db session on delete statement
+
 Version 4.17.0 (2023-11-07)
 
 - file manager: add teardown method (optimise performance)
