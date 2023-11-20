@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021 CERN.
+# Copyright (C) 2023 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Facets types defined."""
+
+from functools import reduce
 
 from invenio_search.engine import dsl
 
@@ -103,15 +106,7 @@ class NestedTermsFacet(TermsFacet):
                 splitchar='::',
                 label=_('Resource types'),
                 value_labels=VocabularyL10NLabels(current_service)
-            ),
-
-            'resource_type': NestedTermsFacet(
-                field='metadata.resource_type.type',
-                subfield='metadata.resource_type.subtype',
-                splitchar='::',
-                label=_('Resource types'),
-                value_labels=VocabularyL10NLabels(current_service)
-            ),
+            )
         }
     """
 
@@ -178,12 +173,10 @@ class NestedTermsFacet(TermsFacet):
         # Expects to get a value from the output of "_parse_values()"."
         field_value, subfield_values = parsed_value
 
+        q = dsl.Q("term", **{self._field: field_value})
         if subfield_values:
-            return dsl.Q("term", **{self._field: field_value}) & dsl.Q(
-                "terms", **{self._subfield: subfield_values}
-            )
-        else:
-            return dsl.Q("term", **{self._field: field_value})
+            q &= dsl.Q("terms", **{self._subfield: subfield_values})
+        return q
 
     def add_filter(self, filter_values):
         """Construct a filter query for the facet."""
@@ -244,6 +237,101 @@ class NestedTermsFacet(TermsFacet):
         if bucket_label:
             ret_val["label"] = str(self._label)
         return ret_val
+
+
+class NestedTermsMultipleObjectsFacet(NestedTermsFacet):
+    """
+    Facet for 2-level nested fields ("type": "nested") with multiple objects.
+
+    The code was originally made to support multi-level, but since
+    NestedTermsFacet doesn't, this class was restricted to 2 levels as well.
+
+    Uniqueness of objects is a reasonable assumption and typically enforced
+    in InvenioRDM. (Otherwise a `reverse_nested` aggregation would be needed.)
+
+    This is the facet to use for terms that have the following mapping
+    with multiple objects placed in `<field>`:
+
+    .. code-block:: json
+
+        "<field>": {  #
+            "type": "nested",
+            "properties": {
+                "<subfield 1>": {
+                    ...
+                },
+                "<subfield N>": {
+                    ...
+                }
+            }
+        }
+    """
+
+    def __init__(self, nested_path, field, subfield, splitchar="::", **kwargs):
+        """Constructor.
+
+        :param nested_path: path to 'nested' field
+        :type nested_path: str
+        :param field: top-level faceting field
+        :type field: str
+        :param subfield: lower-level faceting field
+        :type subfield: List[str], length 2
+        :param splitchar: splitting token, defaults to "::"
+        :type splitchar: str, optional
+        """
+        self._nested_path = nested_path
+        super().__init__(field, subfield, splitchar, **kwargs)
+
+    def get_aggregation(self):
+        """Aggregate."""
+        agg_dict = {"nested": {"path": self._nested_path}}
+
+        # This implementation was originally made to support multiple nesting levels
+        # (even more than 2), but was kept after limiting ourselves to only
+        # self._field and self._subfield.
+        subfields_aggs = [
+            {
+                "inner": {  # generic name
+                    "terms": {"field": field},
+                }
+            }
+            for field in [self._field, self._subfield]
+        ]
+
+        def nest_aggs(subagg, agg):
+            """Nest subagg in agg and return agg."""
+            agg["inner"]["aggs"] = subagg
+            return agg
+
+        agg_dict["aggs"] = reduce(
+            lambda subagg, agg: nest_aggs(subagg, agg), reversed(subfields_aggs)
+        )
+
+        return dsl.A(agg_dict)
+
+    def get_labelled_values(
+        self, data, filter_values, bucket_label=True, key_prefix=None
+    ):
+        """Return labelled values.
+
+        :param data: aggregation data
+        :type data: BucketData
+        """
+        # In nested aggregation the top-level layer doesn't contain buckets.
+        # We need to unwrap it. Subsequent layers follow the same pattern
+        # as regular terms aggregation (above).
+        if hasattr(data, "inner"):
+            data = data.inner
+
+        return super().get_labelled_values(
+            data, filter_values, bucket_label, key_prefix
+        )
+
+    def get_value_filter(self, parsed_value):
+        """Return a filter for a single parsed value."""
+        q = super().get_value_filter(parsed_value)
+
+        return dsl.Q("nested", path=self._nested_path, query=q)
 
 
 class CFFacetMixin:

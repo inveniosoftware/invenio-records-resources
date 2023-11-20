@@ -47,9 +47,12 @@ class FacetsResponse(dsl.response.Response):
     def _iter_facets(self):
         # _facets_param instance is added to _search by the FacetsParam.apply
         for name, facet in self._facets_param.facets.items():
-            yield name, facet, getattr(
-                self.aggregations, name
-            ), self._facets_param.selected_values.get(name, [])
+            yield (
+                name,
+                facet,
+                getattr(self.aggregations, name),
+                self._facets_param.selected_values.get(name, []),
+            )
 
     @property
     def facets(self):

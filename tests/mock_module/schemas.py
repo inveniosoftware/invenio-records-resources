@@ -2,7 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2021 CERN.
-# Copyright (C) 2021 Northwestern University.
+# Copyright (C) 2021-2023 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -22,6 +22,13 @@ class TypeSchema(Schema):
 
     type = fields.Str()
     subtype = fields.Str()
+
+
+class SubjectSchema(Schema):
+    """Nested subject schema used for faceting tests."""
+
+    scheme = fields.Str()
+    subject = fields.Str()
 
 
 class ReferencedCreatedBySchema(Schema):
@@ -48,7 +55,7 @@ class MetadataSchema(Schema):
 
     title = fields.Str(required=True, validate=validate.Length(min=3))
     type = fields.Nested(TypeSchema)
-    subject = fields.Str()
+    subjects = fields.List(fields.Nested(SubjectSchema))
     inner_record = fields.Dict()
     # referenced records
     referenced_created_by = fields.Nested(ReferencedCreatedBySchema)

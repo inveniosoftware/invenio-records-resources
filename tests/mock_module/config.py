@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2021 CERN.
-# Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2020-2023 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -19,7 +19,7 @@ from invenio_records_resources.services.records.components import FilesComponent
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import (
     NestedTermsFacet,
-    TermsFacet,
+    NestedTermsMultipleObjectsFacet,
 )
 from invenio_records_resources.services.records.links import (
     RecordLink,
@@ -44,9 +44,11 @@ class MockSearchOptions(SearchOptions):
             splitchar="**",
             label="Type",
         ),
-        "subject": TermsFacet(
-            field="metadata.subject",
-            label="Subject",
+        "subjects": NestedTermsMultipleObjectsFacet(
+            nested_path="metadata.subjects",
+            field="metadata.subjects.scheme",
+            subfield="metadata.subjects.subject.keyword",
+            label="Subjects",
         ),
     }
 

@@ -21,8 +21,21 @@
               }
             }
           },
-          "subject": {
-            "type": "keyword"
+          "subjects": {
+            "type": "nested",
+            "properties": {
+              "subject": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "scheme": {
+                "type": "keyword"
+              }
+            }
           },
           "inner_record": {
             "type": "object",
