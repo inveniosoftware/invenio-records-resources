@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021 CERN.
+# Copyright (C) 2023 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Facets types defined."""
+
+from functools import reduce
 
 from invenio_search.engine import dsl
 
@@ -103,15 +106,7 @@ class NestedTermsFacet(TermsFacet):
                 splitchar='::',
                 label=_('Resource types'),
                 value_labels=VocabularyL10NLabels(current_service)
-            ),
-
-            'resource_type': NestedTermsFacet(
-                field='metadata.resource_type.type',
-                subfield='metadata.resource_type.subtype',
-                splitchar='::',
-                label=_('Resource types'),
-                value_labels=VocabularyL10NLabels(current_service)
-            ),
+            )
         }
     """
 
@@ -149,7 +144,7 @@ class NestedTermsFacet(TermsFacet):
         .. code-block:: python
 
             {
-                'publication': ['publication::book', 'publication::journal'],
+                'publication': ['book', 'journal'],
                 'dataset': []
             }
 
@@ -178,12 +173,10 @@ class NestedTermsFacet(TermsFacet):
         # Expects to get a value from the output of "_parse_values()"."
         field_value, subfield_values = parsed_value
 
+        q = dsl.Q("term", **{self._field: field_value})
         if subfield_values:
-            return dsl.Q("term", **{self._field: field_value}) & dsl.Q(
-                "terms", **{self._subfield: subfield_values}
-            )
-        else:
-            return dsl.Q("term", **{self._field: field_value})
+            q &= dsl.Q("terms", **{self._subfield: subfield_values})
+        return q
 
     def add_filter(self, filter_values):
         """Construct a filter query for the facet."""
@@ -244,6 +237,211 @@ class NestedTermsFacet(TermsFacet):
         if bucket_label:
             ret_val["label"] = str(self._label)
         return ret_val
+
+
+class CombinedTermsFacet(NestedTermsFacet):
+    """
+    Facet to mimic a nested aggregation without having to define a 'nested' field.
+
+    This facet is needed to prevent the "crossed wires" problem of a regular
+    NestedTermsFacet applied to documents with multiple 2-level objects. For example,
+    and the motivating use case for this facet, a "subjects" field with the
+    following mapping:
+
+    .. code-block:: json
+
+        "subjects": {
+            "type": "object",
+            "properties": {
+                "scheme": {
+                    "type": "keyword"
+                },
+                "subject": {
+                    "type": "keyword"
+                }
+            }
+        }
+
+    will lead the document with the following subjects field:
+
+    .. code-block:: json
+
+        "subjects": [
+            {"scheme": "SC1", "subject": "SU1"},
+            {"scheme": "SC2", "subject": "SU2"}
+        ]
+
+    to be internally-indexed in the following manner:
+
+    .. code-block:: json
+
+        "subjects.scheme": ["SC1", "SC2"]
+        "subjects.subject": ["SU1", "SU2"]
+
+    . This indexing loses the original pairwise relationships. This causes searches
+    and aggregations for scheme = SC1 and subject = SU2 to surface the above document
+    when they shouldn't. This is the "crossed wires" problem that this Facet class
+    resolves for aggregations without using "nested" types and searches (the classic
+    solution to this problem).
+
+    This facet requires the following indexed format:
+
+    .. code-block:: json
+
+        "<field>": ["<parent>", ...]
+        // may have independent "<child>" entries
+        "<combined field>": ["<parent><split char><child>", ..., "<child>"]
+
+    The reasoning given for avoiding "nested" fields is to allow regular queries on
+    those fields that would have had to be made "nested" (only nested queries can be
+    done on those fields). This is a UX concern since end-users can make queries to
+    metadata field directly and they wouldn't be able to anymore (without a lot more
+    changes).
+
+    Although this facet allows us to forego the need for a "nested" type field and
+    nested queries to filter on that field, it *does* do extra work that is thrown away.
+    See `get_aggregation` and `get_labelled_values`.
+
+    This facet formats the result of the aggregation such that it looks like it was
+    a nested aggregation.
+    """
+
+    def __init__(self, field, combined_field, parents, splitchar="::", **kwargs):
+        """Constructor.
+
+        :param field: top-level/parent field
+        :type field: str
+        :param combined_field: field containing combined terms
+        :type combined_field: str
+        :param groups: iterable of parent/top-level values
+        :type groups: Iterable[str]
+        :param splitchar: splitting/combining token, defaults to "::"
+        :type splitchar: str, optional
+        """
+        self._field = field
+        self._combined_field = combined_field
+        self._parents = parents
+        self._cached_parents = None
+        self._splitchar = splitchar
+        TermsFacet.__init__(self, **kwargs)
+
+    def get_parents(self):
+        """Return parents.
+
+        We have to delay getting the parents since it may require an application
+        context.
+        """
+        if not self._cached_parents:
+            if callable(self._parents):
+                self._cached_parents = self._parents()
+            else:
+                self._cached_parents = self._parents
+        return self._cached_parents
+
+    def get_aggregation(self):
+        """Aggregate.
+
+        This aggregation repeats ALL group subaggregation for each bucket generated
+        by the top-level terms aggregation. This is to overcome the
+        "irrelevant flooding" problem: when aggregating on a subfield, the top 10
+        (by default) most frequent terms of that subfield are selected, but those
+        terms may not be relevant to the parent because the parent-child relationship
+        is lost when not using "nested". So to make sure only relevant terms are
+        used to select the documents in the aggregation, we "include" (filter) for them.
+
+        Only the subaggregation corresponding to the top-level group will be kept in
+        get_labelled_values.
+        """
+        return dsl.A(
+            {
+                "terms": {
+                    "field": self._field,
+                    "aggs": {
+                        f"inner_{parent}": {
+                            "terms": {
+                                "field": self._combined_field,
+                                "include": f"{parent}{self._splitchar}.*",
+                            },
+                        }
+                        for parent in self.get_parents()
+                    },
+                }
+            }
+        )
+
+    def get_labelled_values(self, data, filter_values):
+        """Get a labelled version of a bucket.
+
+        :param data: Bucket data returned by document engine for a field
+        :type data: dsl.response.aggs.FieldBucketData
+        """
+
+        def get_child_buckets(bucket, key):
+            """Get lower-level/child buckets."""
+            result = []
+
+            # Ignore other subaggregations, and only retrieve inner_{key} one.
+            # inner_{key} should always be present unless disconnect between
+            # parents passed to generate subaggregations and parents actually present.
+            # To not break in that case, we put a default empty list value.
+            inner_data = getattr(bucket, f"inner_{key}", dsl.AttrDict({"buckets": []}))
+
+            for inner_bucket in inner_data.buckets:
+                # get raw key and appropriately formatted key
+                key_raw_inner = self.get_value(inner_bucket)
+                prefix = key + self._splitchar
+                key_inner = key_raw_inner[len(prefix):]  # fmt: skip
+
+                result.append(
+                    {
+                        "key": key_inner,
+                        "doc_count": self.get_metric(inner_bucket),
+                        "label": key_inner,
+                        "is_selected": self.is_filtered(key_raw_inner, filter_values),
+                    }
+                )
+
+            return result
+
+        def get_parent_buckets(data):
+            """Get top-level/group buckets.
+
+            :param data: Bucket data returned by document engine for a field
+            :type data: dsl.response.aggs.FieldBucketData
+            :return: list of labelled buckets
+            :rtype: List[dict]
+            """
+            label_map = self.get_label_mapping(data.buckets)
+            result = []
+            for bucket in data.buckets:
+                key = self.get_value(bucket)
+                result.append(
+                    {
+                        "key": key,
+                        "doc_count": self.get_metric(bucket),
+                        "label": label_map[key],
+                        "is_selected": self.is_filtered(key, filter_values),
+                        "inner": {"buckets": get_child_buckets(bucket, key)},
+                    }
+                )
+            return result
+
+        return {"buckets": get_parent_buckets(data), "label": str(self._label)}
+
+    def get_value_filter(self, parsed_value):
+        """Return a filter for a single parsed value."""
+        # Expect to get a value from the output of `_parse_values()`
+        field_value, subfield_values = parsed_value
+
+        # recombine
+        subfield_values = [
+            f"{field_value}{self._splitchar}{subvalue}" for subvalue in subfield_values
+        ]
+
+        q = dsl.Q("term", **{self._field: field_value})
+        if subfield_values:
+            q &= dsl.Q("terms", **{self._combined_field: subfield_values})
+        return q
 
 
 class CFFacetMixin:

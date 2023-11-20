@@ -21,7 +21,23 @@
               }
             }
           },
-          "subject": {
+          "subjects": {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "scheme": {
+                "type": "keyword"
+              }
+            }
+          },
+          "combined_subjects": {
             "type": "keyword"
           },
           "inner_record": {
