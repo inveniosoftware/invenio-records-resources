@@ -53,7 +53,7 @@ class InitFileSchema(Schema):
 
         unknown = INCLUDE
 
-    key = SanitizedUnicode(required=True)
+    key = Str(required=True)
     storage_class = Str()
     uri = Str()
     checksum = Str()
