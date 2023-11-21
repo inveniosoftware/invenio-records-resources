@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.17.2 (2023-11-21)
+
+- api: add get file extension from key
+
 Version 4.17.1 (2023-11-09)
 
 - api: do not synchronise db session on delete statement
