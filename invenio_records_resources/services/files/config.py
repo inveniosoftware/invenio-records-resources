@@ -39,6 +39,8 @@ class FileServiceConfig(ServiceConfig):
 
     file_schema = FileSchema
 
+    max_files_count = 100
+
     file_links_list = {
         "self": RecordLink("{+api}/records/{id}/files"),
     }
