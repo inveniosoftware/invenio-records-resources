@@ -84,3 +84,17 @@ class FailedFileUploadException(Exception):
         self.recid = recid
         self.file_key = file_key
         self.file = file
+
+
+class FilesCountExceededException(Exception):
+    """Files count is exceeding the max allowed exception."""
+
+    def __init__(self, max_files, resulting_files_count):
+        """Constructor."""
+        super().__init__(
+            _(
+                "Uploading the selected files would result in {files_count} files (max is {max_files}).".format(
+                    max_files=max_files, files_count=resulting_files_count
+                )
+            )
+        )
