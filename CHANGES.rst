@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version 4.18.0 (2023-11-29)
+
+- custom_fields: fix EDTF datetime field
+- files: changed file key type to string
+- files archive: handle broken files
+
 Version 4.17.2 (2023-11-21)
 
 - api: add get file extension from key
