@@ -13,7 +13,7 @@ from arrow import Arrow
 from babel_edtf import parse_edtf
 from edtf.parser.edtf_exceptions import EDTFParseException
 from marshmallow import fields
-from marshmallow_utils.fields import EDTFDateString, ISODateString
+from marshmallow_utils.fields import EDTFDateTimeString, ISODateString
 from pytz import utc
 
 from .base import BaseListCF, ensure_no_field_cls
@@ -40,7 +40,7 @@ class EDTFDateStringCF(BaseListCF):
     @ensure_no_field_cls
     def __init__(self, name, **kwargs):
         """Constructor."""
-        super().__init__(name, field_cls=EDTFDateString, **kwargs)
+        super().__init__(name, field_cls=EDTFDateTimeString, **kwargs)
 
     @property
     def mapping(self):
@@ -50,7 +50,7 @@ class EDTFDateStringCF(BaseListCF):
     @property
     def field(self):
         """Marshmallow field custom fields."""
-        _schema = EDTFDateString(**self._field_args)
+        _schema = self._field_cls(**self._field_args)
         if self._multiple:
             return fields.List(_schema)
         return _schema
