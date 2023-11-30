@@ -194,7 +194,8 @@ class File:
         if ext and len(ext) <= 5:
             return ext[1:].lower()
 
-        return ext_guessed[1:]
+        if ext_guessed:
+            return ext_guessed[1:]
 
     def __getattr__(self, name):
         """Override to get attributes from ObjectVersion and FileInstance."""
