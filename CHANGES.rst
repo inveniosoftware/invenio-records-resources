@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.18.1 (2023-11-30)
+
+- files: fix unknown extension return value
+
 Version 4.18.0 (2023-11-29)
 
 - custom_fields: fix EDTF datetime field
