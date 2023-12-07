@@ -366,11 +366,11 @@ class RecordService(Service, RecordIndexerMixin):
             expand=expand,
         )
 
-    def read(self, identity, id_, expand=False):
+    def read(self, identity, id_, expand=False, action="read"):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
-        self.require_permission(identity, "read", record=record)
+        self.require_permission(identity, action, record=record)
 
         # Run components
         for component in self.components:
