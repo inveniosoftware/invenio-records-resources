@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.18.2 (2023-12-08)
+
+- records: allow overriding of permission action for read method
+
 Version 4.18.1 (2023-11-30)
 
 - files: fix unknown extension return value
