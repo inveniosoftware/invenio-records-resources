@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 4.18.3 (2023-12-13)
+
+- files: limit amount of files in the REST API
+
 Version 4.18.2 (2023-12-08)
 
 - records: allow overriding of permission action for read method
