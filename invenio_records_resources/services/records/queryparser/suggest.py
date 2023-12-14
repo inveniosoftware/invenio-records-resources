@@ -51,7 +51,7 @@ class SuggestQueryParser(QueryParser):
     def __init__(self, identity=None, extra_params=None, **kwargs):
         """Constructor."""
         super().__init__(identity=identity, extra_params=extra_params)
-        self.extra_params.setdefault("type", "bool_prefix")
+        self.extra_params.setdefault("type", "best_fields")
 
     def parse(self, query_str):
         """Parse the query."""
