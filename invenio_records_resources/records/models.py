@@ -48,6 +48,7 @@ class FileRecordModelMixin:
             UUIDType,
             db.ForeignKey(ObjectVersion.version_id, ondelete="RESTRICT"),
             nullable=True,
+            index=True,
         )
 
     @declared_attr
