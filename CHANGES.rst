@@ -1,5 +1,5 @@
 ..
-    Copyright (C) 2020-2023 CERN.
+    Copyright (C) 2020-2024 CERN.
 
     Invenio-Records-Resources is free software; you can redistribute it and/or
     modify it under the terms of the MIT License; see LICENSE file for more
@@ -7,6 +7,10 @@
 
 Changes
 =======
+
+Version 4.19.0 (2024-01-18)
+
+- file manager: copy from other bucket to improve performance
 
 Version 4.18.3 (2023-12-13)
 
