@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.0.0 (released 2024-01-29)
+
+- installation: bump invenio-accounts
+
 Version 4.19.0 (2024-01-18)
 
 - file manager: copy from other bucket to improve performance
