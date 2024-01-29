@@ -335,7 +335,7 @@ class RecordService(Service, RecordIndexerMixin):
         data, errors = self.schema.load(
             data,
             context={"identity": identity},
-            raise_errors=raise_errors  # if False, flow is continued with data
+            raise_errors=raise_errors,  # if False, flow is continued with data
             # only containing valid data, but errors
             # are reported (as warnings)
         )
