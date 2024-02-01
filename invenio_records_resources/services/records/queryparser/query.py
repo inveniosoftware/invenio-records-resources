@@ -12,6 +12,7 @@ from copy import deepcopy
 from functools import partial
 
 from invenio_search.engine import dsl
+from luqum.auto_head_tail import auto_head_tail
 from luqum.exceptions import ParseError
 from luqum.parser import parser as luqum_parser
 from werkzeug.utils import cached_property
@@ -54,7 +55,7 @@ class QueryParser:
         class SearchOptions:
             query_parser_cls = QueryParser.factory(
                 fields=["metadata.title^2", "metadata.description"],
-                tree_transformer_factory=FieldTransformer.factory(
+                tree_transformer_factory=SearchFieldTransformer.factory(
                     mapping={
                         "title": "metadata.title",
                         "description": "metadata.description",
@@ -125,9 +126,11 @@ class QueryParser:
             # Perform transformation on the abstract syntax tree (AST)
             if self.tree_transformer_cls is not None:
                 transformer = self.tree_transformer_cls(
-                    mapping=self.mapping, allow_list=self.allow_list
+                    mapping=self.mapping,
+                    allow_list=self.allow_list,
                 )
                 new_tree = transformer.visit(tree, context={"identity": self.identity})
+                new_tree = auto_head_tail(new_tree)
                 query_str = str(new_tree)
             return dsl.Q("query_string", query=query_str, **self.extra_params)
         except (ParseError, QuerystringValidationError):

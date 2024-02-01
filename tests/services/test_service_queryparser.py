@@ -10,8 +10,10 @@
 
 import pytest
 from invenio_access.permissions import system_identity
+from luqum.tree import Phrase
 
 from invenio_records_resources.services.records.queryparser import (
+    FieldValueMapper,
     QueryParser,
     SearchFieldTransformer,
 )
@@ -151,3 +153,44 @@ def test_parser_fields(allow_list, fields, expected_fields):
     )
 
     assert not set(p(system_identity).fields).difference(expected_fields)
+
+
+@pytest.mark.parametrize(
+    "query,transformed_query",
+    [
+        ("doi:10.5281/zenodo.123", 'metadata.doi:"10.5281/zenodo.123"'),
+        ("doi:(blr OR biosyslit)", 'metadata.doi:("blr" OR "biosyslit")'),
+        ("doi:(+blr -biosyslit) test", 'metadata.doi:(+"blr"  -"biosyslit")  test'),
+        ("lol:test", "lol:lol"),
+        (
+            "doi:(b1 OR b2) lol:(test test1 test2)^2",
+            'metadata.doi:("b1" OR "b2")  lol:(lol lol lol)^2',
+        ),
+    ],
+)
+def test_querystring_valuemapper(query, transformed_query):
+    """Invalid syntax falls back to multi match query."""
+
+    def word_to_phrase(node):
+        return Phrase(
+            f'"{node.value}"',
+            pos=node.pos,
+            size=node.size + 2,
+            head=node.head,
+            tail=node.tail,
+        )
+
+    def lol(node):
+        node.value = "lol"
+        return node
+
+    p = QueryParser.factory(
+        mapping={
+            "doi": FieldValueMapper("metadata.doi", word=word_to_phrase),
+            "lol": FieldValueMapper("lol", word=lol),
+        },
+        tree_transformer_cls=SearchFieldTransformer,
+    )
+    assert p(system_identity).parse(query).to_dict() == {
+        "query_string": {"query": transformed_query}
+    }

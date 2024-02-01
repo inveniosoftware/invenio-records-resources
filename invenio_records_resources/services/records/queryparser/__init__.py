@@ -10,10 +10,11 @@
 
 from .query import QueryParser
 from .suggest import SuggestQueryParser
-from .transformer import SearchFieldTransformer
+from .transformer import FieldValueMapper, SearchFieldTransformer
 
 __all__ = (
+    "FieldValueMapper",
     "QueryParser",
-    "SuggestQueryParser",
     "SearchFieldTransformer",
+    "SuggestQueryParser",
 )
