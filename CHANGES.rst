@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.1.0 (released 2024-02-02)
+
+- queryparser: add search field value mapping
+
 Version 5.0.0 (released 2024-01-29)
 
 - installation: bump invenio-accounts
