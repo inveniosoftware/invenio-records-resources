@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version 5.2.0 (released 2024-02-05)
+
+- models: fix record file indices
+- models: add index on object_version_id
+- tasks: improve exception log grouping
+
 Version 5.1.0 (released 2024-02-02)
 
 - queryparser: add search field value mapping
