@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.2.1 (released 2024-02-09)
+
+- models: remove unique constraint for file record key
+
 Version 5.2.0 (released 2024-02-05)
 
 - models: fix record file indices
