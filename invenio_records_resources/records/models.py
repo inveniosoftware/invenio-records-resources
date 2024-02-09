@@ -57,15 +57,17 @@ class FileRecordModelMixin:
         """Object version connected to the record file."""
         return db.relationship(ObjectVersion)
 
-    @declared_attr
-    def __table_args__(cls):
-        """Table args."""
-        return (
-            # To make sure we don't have duplicate keys for record files
-            db.Index(
-                f"uidx_{cls.__tablename__}_record_id_key",
-                "record_id",
-                "key",
-                unique=True,
-            ),
-        )
+    # NOTE: This seems to break SQLAlchemy-Continuum versioning. We should fix it
+    #       though to make sure we don't have duplicate keys for record files.
+    # @declared_attr
+    # def __table_args__(cls):
+    #     """Table args."""
+    #     return (
+    #         # To make sure we don't have duplicate keys for record files
+    #         db.Index(
+    #             f"uidx_{cls.__tablename__}_record_id_key",
+    #             "record_id",
+    #             "key",
+    #             unique=True,
+    #         ),
+    #     )
