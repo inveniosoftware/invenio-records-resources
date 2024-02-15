@@ -8,7 +8,7 @@
 # details.
 
 """Record schema."""
-
+from copy import deepcopy
 from datetime import timezone
 
 from marshmallow import Schema, ValidationError, fields, pre_load
@@ -30,12 +30,13 @@ class BaseRecordSchema(Schema):
     revision_id = fields.Integer(dump_only=True)
 
     @pre_load
-    def clean(self, data, **kwargs):
+    def clean(self, input_data, **kwargs):
         """Removes dump_only fields.
 
         Why: We want to allow the output of a Schema dump, to be a valid input
              to a Schema load without causing strange issues.
         """
+        data = deepcopy(input_data)
         for name, field in self.fields.items():
             if field.dump_only:
                 data.pop(name, None)
