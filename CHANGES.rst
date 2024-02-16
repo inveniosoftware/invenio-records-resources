@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.2.3 (released 2024-02-16)
+
+- schema: avoid mutating original data in pre_load
+
 Version 5.2.2 (released 2024-02-09)
 
 - models: restore file record key unique index
