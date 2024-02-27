@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.2.4 (released 2024-02-27)
+
+- processors: updated file metadata extractor to handle multi-sequence images
+
 Version 5.2.3 (released 2024-02-16)
 
 - schema: avoid mutating original data in pre_load
