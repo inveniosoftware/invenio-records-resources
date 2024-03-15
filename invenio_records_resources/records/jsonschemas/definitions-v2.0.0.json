@@ -133,6 +133,17 @@
       "key": {
         "description": "Key (filename) of the file.",
         "type": "string"
+      },
+      "access": {
+        "description": "Access properties of the file.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hidden": {
+            "description": "Control whether to hide the file in the UI.",
+            "type": "boolean"
+          }
+        }
       }
     }
   },
