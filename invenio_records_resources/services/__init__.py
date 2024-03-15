@@ -9,7 +9,14 @@
 """High-level API for wokring with records, files, pids and search."""
 
 
-from .base import ConditionalLink, Link, LinksTemplate, Service, ServiceConfig
+from .base import (
+    ConditionalLink,
+    Link,
+    LinksTemplate,
+    NestedDictLinkGenerator,
+    Service,
+    ServiceConfig,
+)
 from .files import FileLink, FileService, FileServiceConfig
 from .records import (
     RecordIndexerMixin,
@@ -37,4 +44,5 @@ __all__ = (
     "ServiceConfig",
     "ServiceSchemaWrapper",
     "RecordIndexerMixin",
+    "NestedDictLinkGenerator",
 )
