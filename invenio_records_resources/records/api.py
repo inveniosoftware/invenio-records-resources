@@ -17,8 +17,10 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import SearchDumper
-from invenio_records.systemfields import DictField, SystemFieldsMixin
+from invenio_records.systemfields import DictField, SystemField, SystemFieldsMixin
 from invenio_records.systemfields.model import ModelField
+
+# TODO move to systemfields folder
 
 
 class Record(RecordBase, SystemFieldsMixin):
@@ -48,6 +50,98 @@ class Record(RecordBase, SystemFieldsMixin):
 
     #: Concrete implementations need to implement the files field.
     # files = FilesField(...)
+
+
+# NOTE: Defined here to avoid circular imports
+class FileAccess:
+    """Access management for files."""
+
+    def __init__(self, hidden=None):
+        """Create a new FileAccess object for a file."""
+        self._hidden = hidden or False
+        self.dirty = hidden is not None
+
+    @property
+    def hidden(self):
+        """Get the hidden status."""
+        return self._hidden
+
+    @hidden.setter
+    def hidden(self, value):
+        """Set the hidden status."""
+        if not isinstance(value, bool):
+            raise ValueError("Invalid value for 'hidden', it must be a boolean.")
+        self._hidden = value
+        self.dirty = True
+
+    @classmethod
+    def from_dict(cls, access_dict):
+        """Create a new FileAccess object from the specified 'access' property."""
+        # provide defaults in case there is no 'access' property
+        return cls(
+            hidden=access_dict.get("hidden", False),
+        )
+
+    def dump(self):
+        """Dump the field values as dictionary."""
+        return {
+            "hidden": self.hidden,
+        }
+
+
+class FileAccessField(SystemField):
+    """File access field."""
+
+    def __init__(self, key=None, access_obj_class=FileAccess):
+        """Initialize the access field."""
+        self._access_obj_class = access_obj_class
+        super().__init__(key=key)
+
+    def obj(self, instance):
+        """Get the access object."""
+        obj = self._get_cache(instance)
+        if obj is not None:
+            return obj
+
+        data = self.get_dictkey(instance)
+        if data:
+            obj = self._access_obj_class.from_dict(data)
+        else:
+            obj = self._access_obj_class()
+
+        self._set_cache(instance, obj)
+        return obj
+
+    def set_obj(self, record, obj):
+        """Set the access object."""
+        # We accept both dicts and access class objects.
+        if isinstance(obj, dict):
+            obj = self._access_obj_class.from_dict(obj)
+
+        assert isinstance(obj, self._access_obj_class)
+
+        # We do not dump the object until the pre_commit hook
+        # I.e. record.access != record['access']
+        self._set_cache(record, obj)
+
+    def __get__(self, record, owner=None):
+        """Get the record's access object."""
+        if record is None:
+            # access by class
+            return self
+
+        # access by object
+        return self.obj(record)
+
+    def __set__(self, record, obj):
+        """Set the records access object."""
+        self.set_obj(record, obj)
+
+    def pre_commit(self, record):
+        """Dump the configured values before the record is committed."""
+        obj = self.obj(record)
+        if obj.dirty:
+            record["access"] = obj.dump()
 
 
 class FileRecord(RecordBase, SystemFieldsMixin):
@@ -122,6 +216,9 @@ class FileRecord(RecordBase, SystemFieldsMixin):
 
     #: Metadata system field.
     metadata = DictField(clear_none=True, create_if_missing=True)
+
+    #: Access system field
+    access = FileAccessField()
 
     key = ModelField()
     object_version_id = ModelField()

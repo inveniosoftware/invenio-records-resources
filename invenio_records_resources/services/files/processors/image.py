@@ -8,8 +8,6 @@
 
 """Image metadata extractor."""
 
-import os
-
 import pkg_resources
 from flask import current_app
 

@@ -81,7 +81,7 @@ def test_files_api_flow(client, search_clear, headers, input_data, location):
         f"/mocks/{id_}/files",
         headers=headers,
         json=[
-            {"key": "test.pdf", "title": "Test file"},
+            {"key": "test.pdf", "metadata": {"title": "Test file"}},
         ],
     )
     assert res.status_code == 201
@@ -137,7 +137,9 @@ def test_files_api_flow(client, search_clear, headers, input_data, location):
 
     # Update file metadata
     res = client.put(
-        f"/mocks/{id_}/files/test.pdf", headers=headers, json={"title": "New title"}
+        f"/mocks/{id_}/files/test.pdf",
+        headers=headers,
+        json={"metadata": {"title": "New title"}},
     )
     assert res.status_code == 200
     assert res.json["key"] == "test.pdf"
@@ -175,7 +177,7 @@ def test_empty_file(client, search_clear, headers, input_data, location):
         f"/mocks/{id_}/files",
         headers=headers,
         json=[
-            {"key": "empty", "title": "Zero-length test file"},
+            {"key": "empty", "metadata": {"title": "Zero-length test file"}},
         ],
     )
     assert res.status_code == 201
@@ -312,7 +314,7 @@ def test_file_api_errors(client, search_clear, headers, input_data, location):
         f"/mocks/{id_}/files",
         headers=headers,
         json=[
-            {"key": "test.pdf", "title": "Test file"},
+            {"key": "test.pdf", "metadata": {"title": "Test file"}},
         ],
     )
     assert res.status_code == 201

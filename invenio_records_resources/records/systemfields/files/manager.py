@@ -171,7 +171,7 @@ class FilesManager(MutableMapping):
             rf.object_version_id = obj.version_id
             rf.object_version = obj
         if data:
-            rf.metadata = data
+            rf.update(data)
         rf.commit()
         self._entries[key] = rf
         return rf
@@ -190,6 +190,7 @@ class FilesManager(MutableMapping):
     def update(self, key, obj=None, stream=None, data=None, **kwargs):
         """Update a file."""
         assert not (obj and stream)
+        data = data or {}
         rf = self.get(key)
 
         if stream:
@@ -198,8 +199,8 @@ class FilesManager(MutableMapping):
             rf.object_version_id = obj.version_id
             rf.object_version = obj
         if data:
-            rf.metadata = data
-            rf.commit()
+            rf.update(data)
+        rf.commit()
         return rf
 
     @ensure_enabled
@@ -298,7 +299,7 @@ class FilesManager(MutableMapping):
                     "record_id": record_id,
                     "version_id": 1,
                     "object_version_id": ovs_by_key[key]["version_id"],
-                    "json": rf.metadata or {},
+                    "json": dict(rf),
                 }
                 rf_to_bulk_insert.append(new_rf)
 
@@ -322,10 +323,9 @@ class FilesManager(MutableMapping):
 
                 # Copy file record
                 if rf.metadata is not None:
-                    self[key] = dst_obj, rf.metadata
+                    self[key] = dst_obj, dict(rf)
                 else:
                     self[key] = dst_obj
-
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
@@ -342,6 +342,7 @@ class FilesManager(MutableMapping):
            True
         Logic follows the bucket sync logic
         """
+        # TODO record file data is not synced
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
