@@ -208,6 +208,7 @@ class RecordTypeFactory(object):
                 "self": RecordLink("{+api}" + route + "/{id}"),
             },
             "links_search": pagination_links("{+api}" + route + "{?args*}"),
+            "nested_links": None,
         }
         if self.service_components:
             config_cls_attributes.update({"components": self.service_components})
