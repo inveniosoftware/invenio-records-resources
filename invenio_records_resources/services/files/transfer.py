@@ -62,7 +62,7 @@ class BaseTransfer(ABC):
         self.uow = uow
 
     @abstractmethod
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_data):
         """Initialize a file."""
         raise NotImplementedError()
 
@@ -93,7 +93,7 @@ class BaseTransfer(ABC):
         record.files.commit(file_key)
 
     # @abstractmethod
-    # def read_file_content(self, record, file_metadata):
+    # def read_file_content(self, record, data):
     #     """Read a file content."""
     #     pass
 
@@ -105,13 +105,13 @@ class LocalTransfer(BaseTransfer):
         """Constructor."""
         super().__init__(TransferType.LOCAL, **kwargs)
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_data):
         """Initialize a file."""
-        uri = file_metadata.pop("uri", None)
+        uri = file_data.pop("uri", None)
         if uri:
             raise Exception("Cannot set URI for local files.")
 
-        file = record.files.create(key=file_metadata.pop("key"), data=file_metadata)
+        file = record.files.create(key=file_data.pop("key"), data=file_data)
 
         return file
 
@@ -130,9 +130,9 @@ class FetchTransfer(BaseTransfer):
         """Constructor."""
         super().__init__(TransferType.FETCH, **kwargs)
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_data):
         """Initialize a file."""
-        uri = file_metadata.pop("uri", None)
+        uri = file_data.pop("uri", None)
         if not uri:
             raise Exception("URI is required for fetch files.")
 
@@ -140,15 +140,15 @@ class FetchTransfer(BaseTransfer):
             "file": {
                 "uri": uri,
                 "storage_class": self.type,
-                "checksum": file_metadata.pop("checksum", None),
-                "size": file_metadata.pop("size", None),
+                "checksum": file_data.pop("checksum", None),
+                "size": file_data.pop("size", None),
             }
         }
 
-        file_key = file_metadata.pop("key")
+        file_key = file_data.pop("key")
         file = record.files.create(
             key=file_key,
-            data=file_metadata,
+            data=file_data,
             obj=obj_kwargs,
         )
 
