@@ -53,6 +53,9 @@ class PartialFileDumper(Dumper):
             "metadata": deepcopy(dict(record.get("metadata", {}))),
             "key": record.key,
         }
+        access = record.get("access")
+        if access:
+            data.update({"access": access})
         if record.file:
             data.update(record.file.dumps())
         return data
@@ -66,7 +69,10 @@ class PartialFileDumper(Dumper):
             "record_id": data["record_id"],
             "object_version_id": data["object_version_id"],
         }
-        record_data = {"metadata": data["metadata"]}
+        record_data = {"metadata": data.get("metadata", {})}
+        access = data.get("access")
+        if access:
+            record_data["access"] = access
         model = record_cls.model_cls(**model_data)
         record = record_cls(record_data, model=model)
         f = File.from_dump(data)
