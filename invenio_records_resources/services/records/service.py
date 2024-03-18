@@ -387,7 +387,7 @@ class RecordService(Service, RecordIndexerMixin):
             record,
             links_tpl=self.links_item_tpl,
             expandable_fields=self.expandable_fields,
-            nested_links=self.config.nested_links,
+            nested_links=getattr(self.config, "nested_links", None),
             expand=expand,
         )
 

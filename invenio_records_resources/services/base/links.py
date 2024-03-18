@@ -12,7 +12,7 @@ import operator
 from copy import deepcopy
 
 from flask import current_app
-from invenio_records.dictutils import dict_lookup, dict_set
+from invenio_records.dictutils import dict_lookup
 from uritemplate import URITemplate
 from werkzeug.datastructures import MultiDict
 
@@ -97,10 +97,17 @@ class LinksTemplate:
 class NestedLinkGeneratorBase:
     """Base class for generating nested links."""
 
-    def __init__(self, tpl, key):
+    def __init__(self, links, key, context_func=None):
         """Initialize NestedLinkGenerator."""
-        self.tpl = tpl
+        self.links = links
         self.key = key
+        self.context_func = context_func
+
+    def context(self, identity, record, key, value):
+        """Get the context for the links."""
+        if not self.context_func:
+            return {}
+        return self.context_func(identity, record, key, value)
 
 
 class NestedDictLinkGenerator(NestedLinkGeneratorBase):
@@ -108,9 +115,19 @@ class NestedDictLinkGenerator(NestedLinkGeneratorBase):
 
     def update(self, identity, data, record):
         """Update data with links in each object inside the dictionary."""
-        for key, rf in operator.attrgetter(self.key)(record).items():
-            links = LinksTemplate(self.tpl, context={"id": rf.id}).expand(identity, rf)
-            dict_lookup(data, self.key)[key]["links"] = links
+        try:
+            nested_data = operator.attrgetter(self.key)(record)
+            if not isinstance(nested_data, dict):
+                return
+            for key, value in nested_data.items():
+                context = self.context(identity, record, key, value)
+                links = LinksTemplate(self.links, context=context).expand(
+                    identity,
+                    value,
+                )
+                dict_lookup(data, self.key)[key]["links"] = links
+        except AttributeError:
+            pass
 
 
 class Link:
