@@ -123,6 +123,47 @@ class LocalTransfer(BaseTransfer):
         super().set_file_content(record, file, file_key, stream, content_length)
 
 
+class RemoteTransfer(BaseTransfer):
+    """Remote transfer."""
+
+    def __init__(self, **kwargs):
+        """Constructor."""
+        super().__init__(TransferType.REMOTE, **kwargs)
+
+    def init_file(self, record, file_metadata):
+        """Initialize a file."""
+        uri = file_metadata.pop("uri", None)
+        if not uri:
+            raise Exception("`uri` is required for remote files.")
+
+        file = record.files.create(
+            key=file_metadata.pop("key"),
+            obj={
+                "file": {
+                    "uri": uri,
+                    "storage_class": "R",
+                    # TODO: We should accept size and checksum, so that we could verify
+                    #       it below on commit.
+                    "size": None,
+                    "checksum": None,
+                }
+            },
+            data=file_metadata,
+        )
+
+        return file
+
+    def set_file_content(self, *args, **kwargs):
+        """Do nothing since it's a remote file."""
+        pass
+
+    def commit_file(self, record, file_key):
+        """Commit a file."""
+        # TODO: Try to verify (or populate) the size and checksum in a
+        #       lightweight fashion (e.g. via a HEAD request to the remote)
+        record.files.commit(file_key)
+
+
 class FetchTransfer(BaseTransfer):
     """Fetch transfer."""
 
@@ -171,6 +212,8 @@ class Transfer:
         """Get transfer type."""
         if file_type == TransferType.FETCH:
             return FetchTransfer(**kwargs)
+        elif TransferType.REMOTE:
+            return RemoteTransfer(**kwargs)
         else:  # default to local
             return LocalTransfer(**kwargs)
 
