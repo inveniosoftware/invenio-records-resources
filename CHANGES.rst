@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.3.0 (released 2024-03-20)
+
+- facets: provide new CombinedTermsFacet (facet to use for nested subjects)
+
 Version 5.2.4 (released 2024-02-27)
 
 - processors: updated file metadata extractor to handle multi-sequence images
