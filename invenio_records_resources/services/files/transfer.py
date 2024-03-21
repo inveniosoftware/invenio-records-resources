@@ -11,6 +11,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
+from flask import current_app
 from fs.errors import CreateFailed
 from invenio_files_rest.errors import FileSizeError
 from invenio_i18n import lazy_gettext as _
@@ -91,6 +92,15 @@ class BaseTransfer(ABC):
         # fetch files can be committed, its up to permissions to decide by who
         # e.g. system, since its the one downloading the file
         record.files.commit(file_key)
+        f_obj = record.files.get(file_key)
+        f_inst = getattr(f_obj, "file", None)
+        file_size = getattr(f_inst, "size", None)
+        if file_size == 0:
+            allow_empty_files = current_app.config.get(
+                "RECORDS_RESOURCES_ALLOW_EMPTY_FILES", True
+            )
+            if not allow_empty_files:
+                raise FileSizeError(description=_("Empty files are not accepted."))
 
     # @abstractmethod
     # def read_file_content(self, record, file_metadata):

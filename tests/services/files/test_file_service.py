@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import pytest
 from invenio_access.permissions import system_identity
+from invenio_files_rest.errors import FileSizeError
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
@@ -450,3 +451,50 @@ def test_read_not_committed_external_file(
     # Retrieve file
     with pytest.raises(PermissionDeniedError):
         file_service.get_file_content(identity_simple, recid, "article.txt")
+
+
+@pytest.mark.parametrize("allow_empty_files", [True, False])
+def test_empty_files(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    allow_empty_files,
+    monkeypatch,
+    base_app,
+):
+    """Test the lifecycle of an empty file."""
+    monkeypatch.setitem(
+        base_app.config, "RECORDS_RESOURCES_ALLOW_EMPTY_FILES", allow_empty_files
+    )
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 0,  # 2kB
+            "metadata": {
+                "description": "Published article PDF.",
+            },
+        }
+    ]
+    # Initialize file saving
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    # for to_file in to_files:
+    content = BytesIO()
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        file_to_initialise[0]["key"],
+        content,
+        content.getbuffer().nbytes,
+    )
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+
+    if allow_empty_files:
+        result = file_service.commit_file(identity_simple, recid, "article.txt")
+        assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+    else:
+        with pytest.raises(FileSizeError):
+            result = file_service.commit_file(identity_simple, recid, "article.txt")
