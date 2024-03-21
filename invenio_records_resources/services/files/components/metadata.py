@@ -11,7 +11,6 @@
 from copy import deepcopy
 
 from ...errors import FilesCountExceededException
-from ..schema import InitFileSchema
 from ..transfer import Transfer
 from .base import FileServiceComponent
 
@@ -21,7 +20,7 @@ class FileMetadataComponent(FileServiceComponent):
 
     def init_files(self, identity, id, record, data):
         """Init files handler."""
-        schema = InitFileSchema(many=True)
+        schema = self.service.file_schema.schema(many=True)
         validated_data = schema.load(data)
 
         # All brand-new drafts don't allow exceeding files limit (while added via rest API).
@@ -36,18 +35,24 @@ class FileMetadataComponent(FileServiceComponent):
                     max_files=maxFiles, resulting_files_count=resulting_files_count
                 )
 
-        for file_metadata in validated_data:
-            temporary_obj = deepcopy(file_metadata)
-            file_type = temporary_obj.pop("storage_class", None)
+        for file_data in validated_data:
+            copy_fdata = deepcopy(file_data)
+            file_type = copy_fdata.pop("storage_class", None)
             transfer = Transfer.get_transfer(
                 file_type, service=self.service, uow=self.uow
             )
-            _ = transfer.init_file(record, temporary_obj)
+            _ = transfer.init_file(record, copy_fdata)
 
     def update_file_metadata(self, identity, id, file_key, record, data):
         """Update file metadata handler."""
         # FIXME: move this call to a transfer call
-        record.files.update(file_key, data=data)
+        schema = self.service.file_schema.schema(many=False)
+
+        # 'key' is required in the schema, but might not be in the data
+        if "key" not in data:
+            data["key"] = file_key
+        validated_data = schema.load(data)
+        record.files.update(file_key, data=validated_data)
 
     # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
     def commit_file(self, identity, id, file_key, record):

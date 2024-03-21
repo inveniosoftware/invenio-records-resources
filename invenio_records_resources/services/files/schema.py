@@ -22,8 +22,8 @@ from marshmallow import (
     validate,
     validates,
 )
-from marshmallow.fields import UUID, Dict, Integer, Str
-from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, TZDateTime
+from marshmallow.fields import UUID, Boolean, Dict, Integer, Nested, Str
+from marshmallow_utils.fields import GenMethod, Links, TZDateTime
 
 from .transfer import TransferType
 
@@ -101,6 +101,17 @@ class InitFileSchema(Schema):
         return data
 
 
+class FileAccessSchema(Schema):
+    """Schema for file access."""
+
+    class Meta:
+        """Meta."""
+
+        unknown = RAISE
+
+    hidden = Boolean()
+
+
 class FileSchema(InitFileSchema):
     """Service schema for files."""
 
@@ -113,11 +124,13 @@ class FileSchema(InitFileSchema):
     updated = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
 
     status = GenMethod("dump_status")
-    metadata = Dict(dump_only=True)
     mimetype = Str(dump_only=True, attribute="file.mimetype")
-    version_id = UUID(attribute="file.version_id")
-    file_id = UUID(attribute="file.file_id")
-    bucket_id = UUID(attribute="file.bucket_id")
+    version_id = UUID(attribute="file.version_id", dump_only=True)
+    file_id = UUID(attribute="file.file_id", dump_only=True)
+    bucket_id = UUID(attribute="file.bucket_id", dump_only=True)
+
+    metadata = Dict()
+    access = Nested(FileAccessSchema)
 
     links = Links()
 

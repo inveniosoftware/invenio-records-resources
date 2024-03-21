@@ -55,7 +55,7 @@ def mock_request():
 #
 
 
-def test_file_flow(file_service, location, example_file_record, identity_simple):
+def test_file_flow(file_service, location, example_file_record, identity_simple, db):
     """Test the lifecycle of a file.
 
     - Initialize file saving
@@ -130,6 +130,7 @@ def test_file_flow(file_service, location, example_file_record, identity_simple)
 
 
 def test_init_files(file_service, location, example_file_record, identity_simple):
+    """Test the initialization of local files, with different metadata and access."""
     recid = example_file_record["id"]
 
     # Pass an object with missing required field
@@ -145,17 +146,21 @@ def test_init_files(file_service, location, example_file_record, identity_simple
 
     # Pass an object with added field
     file_to_initialise = [
-        {
-            "key": "article.txt",
-            "foo": "bar",
-        }
+        {"key": "article.txt", "metadata": {"foo": "bar"}},
+        {"key": "article.csv", "metadata": {"foo": "baz"}, "access": {"hidden": True}},
     ]
 
     result = file_service.init_files(identity_simple, recid, file_to_initialise)
 
-    entry = result.to_dict()["entries"][0]
-    assert file_to_initialise[0]["key"] == entry["key"]
-    assert file_to_initialise[0]["foo"] == entry["metadata"]["foo"]
+    first_entry = result.to_dict()["entries"][0]
+    assert file_to_initialise[0]["key"] == first_entry["key"]
+    assert file_to_initialise[0]["metadata"] == first_entry["metadata"]
+    assert first_entry["access"]["hidden"] is False  # default value
+
+    second_entry = result.to_dict()["entries"][1]
+    assert file_to_initialise[1]["key"] == second_entry["key"]
+    assert file_to_initialise[1]["metadata"] == second_entry["metadata"]
+    assert second_entry["access"]["hidden"] is True
 
 
 #

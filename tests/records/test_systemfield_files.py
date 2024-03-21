@@ -76,7 +76,7 @@ def test_record_files_operations(base_app, db, location):
     record = Record.create({})
 
     # Initialize a file
-    record.files["test.pdf"] = {"description": "A test file."}
+    record.files["test.pdf"] = {"metadata": {"description": "A test file."}}
     rf = record.files["test.pdf"]
     assert rf.key == "test.pdf"
     assert rf.object_version is None
@@ -91,7 +91,7 @@ def test_record_files_operations(base_app, db, location):
     assert ObjectVersion.query.count() == 0
 
     # Update the file's metadata
-    record.files["test.pdf"] = {"description": "A new description"}
+    record.files["test.pdf"] = {"metadata": {"description": "A new description"}}
     rf = record.files["test.pdf"]
     assert rf.key == "test.pdf"
     assert rf.object_version is None
@@ -136,11 +136,14 @@ def test_record_files_clear(base_app, db, location):
     record = Record.create({})
 
     # Add a file with metadata + bytes
-    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files["f3.pdf"] = {"description": "Metadata only"}
+    record.files["f3.pdf"] = {"metadata": {"description": "Metadata only"}}
     record.commit()
     db.session.commit()
 
@@ -171,11 +174,14 @@ def test_record_files_teardown_full(base_app, db, location):
     record = Record.create({})
 
     # Add a file with metadata + bytes
-    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files["f3.pdf"] = {"description": "Metadata only"}
+    record.files["f3.pdf"] = {"metadata": {"description": "Metadata only"}}
     record.commit()
     db.session.commit()
 
@@ -206,11 +212,14 @@ def test_record_files_teardown_partial(base_app, db, location):
     record = Record.create({})
 
     # Add a file with metadata + bytes
-    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files["f3.pdf"] = {"description": "Metadata only"}
+    record.files["f3.pdf"] = {"metadata": {"description": "Metadata only"}}
     record.commit()
     db.session.commit()
 
@@ -246,11 +255,14 @@ def test_record_files_soft_delete(base_app, db, location):
     record = Record.create({})
 
     # Add a file with metadata + bytes
-    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
     # Add a file with only metadata
-    record.files["f3.pdf"] = {"description": "Metadata only"}
+    record.files["f3.pdf"] = {"metadata": {"description": "Metadata only"}}
     record.commit()
     db.session.commit()
 
@@ -286,7 +298,10 @@ def test_record_files_store(base_app, db, location):
     record = Record.create({})
 
     # Add a file with bytes + metadata
-    record.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     # Add a file with only bytes
     record.files["f2.pdf"] = BytesIO(b"testfile")
 
@@ -314,7 +329,10 @@ def test_record_files_copy(base_app, db, location):
     """Test record files bucket creation."""
     # Create source record
     src = Record.create({})
-    src.files["f1.pdf"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    src.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     src.files.default_preview = "f1.pdf"
     src.files.order = ["f1.pdf"]
     src.commit()
@@ -369,7 +387,10 @@ def test_record_files_copy_disabled(base_app, db, location):
 def test_record_files_dump(base_app, db, location):
     """Test dumped data for record."""
     record = Record2.create({})
-    record.files["f1.txt"] = (BytesIO(b"testfile"), {"description": "Test file"})
+    record.files["f1.txt"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}},
+    )
     rf = record.files["f1.txt"]
     record.commit()
 
@@ -404,3 +425,36 @@ def test_record_files_dump(base_app, db, location):
         dumper=PartialFileDumper()
     )
     assert new_record == record
+
+
+def test_record_files_access_explicit_set(base_app, db, location):
+    """Test record files access, when explicitely set.
+
+    When the access field is set, it should be dumped.
+    """
+    record = Record.create({})
+    record.files["f1.txt"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Test file"}, "access": {"hidden": True}},
+    )
+    rf = record.files["f1.txt"]
+    assert rf.access.hidden is True
+    record.commit()
+    data = record.dumps()
+    assert data["files"]["entries"][0]["access"] == {"hidden": True}
+    assert record.files["f1.txt"].model.json["access"] == {"hidden": True}
+
+
+def test_record_files_access_implicit_not_set(base_app, db, location):
+    """Test record files access, when not implicitely set.
+
+    When the access field is not set, it should not be dumped.
+    """
+    record = Record.create({})
+    record.files["f1.txt"] = BytesIO(b"testfile")
+    rf = record.files["f1.txt"]
+    assert rf.access.hidden is False
+    record.commit()
+    data = record.dumps()
+    assert data["files"]["entries"][0].get("access") is None
+    assert record.files["f1.txt"].model.json.get("access") is None
