@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 5.4.0 (released 2024-03-22)
+
+- installation: upgrade invenio-app, invenio-base, invenio-accounts
+  (removes before_first_request_deprecation)
+
 Version 5.3.0 (released 2024-03-20)
 
 - facets: provide new CombinedTermsFacet (facet to use for nested subjects)
