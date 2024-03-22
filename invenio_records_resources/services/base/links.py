@@ -8,9 +8,11 @@
 
 """Utility for rendering URI template links."""
 
+import operator
 from copy import deepcopy
 
 from flask import current_app
+from invenio_records.dictutils import dict_lookup, dict_set
 from uritemplate import URITemplate
 from werkzeug.datastructures import MultiDict
 
@@ -90,6 +92,25 @@ class LinksTemplate:
             if link.should_render(obj, ctx):
                 links[key] = link.expand(obj, ctx)
         return links
+
+
+class NestedLinkGeneratorBase:
+    """Base class for generating nested links."""
+
+    def __init__(self, tpl, key):
+        """Initialize NestedLinkGenerator."""
+        self.tpl = tpl
+        self.key = key
+
+
+class NestedDictLinkGenerator(NestedLinkGeneratorBase):
+    """Nested link generator for nested dictionaries."""
+
+    def update(self, identity, data, record):
+        """Update data with links in each object inside the dictionary."""
+        for key, rf in operator.attrgetter(self.key)(record).items():
+            links = LinksTemplate(self.tpl, context={"id": rf.id}).expand(identity, rf)
+            dict_lookup(data, self.key)[key]["links"] = links
 
 
 class Link:

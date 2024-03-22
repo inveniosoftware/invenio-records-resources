@@ -76,6 +76,7 @@ class ServiceConfig(RecordServiceConfig):
     }
 
     links_search = pagination_links("{+api}/mocks{?args*}")
+    nested_links = None
 
 
 class ServiceWithFilesConfig(ServiceConfig):

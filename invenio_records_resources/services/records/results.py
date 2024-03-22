@@ -31,6 +31,7 @@ class RecordItem(ServiceItemResult):
         schema=None,
         expandable_fields=None,
         expand=False,
+        nested_links=None,
     ):
         """Constructor."""
         self._errors = errors
@@ -41,6 +42,7 @@ class RecordItem(ServiceItemResult):
         self._schema = schema or service.schema
         self._fields_resolver = FieldsResolver(expandable_fields)
         self._expand = expand
+        self._nested_links = nested_links
         self._data = None
 
     @property
@@ -77,6 +79,10 @@ class RecordItem(ServiceItemResult):
         )
         if self._links_tpl:
             self._data["links"] = self.links
+
+        if self._nested_links:
+            for link in self._nested_links:
+                link.update(self._identity, self._data, self._record)
 
         if self._expand and self._fields_resolver:
             self._fields_resolver.resolve(self._identity, [self._data])
