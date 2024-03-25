@@ -1,0 +1,79 @@
+# Translations template for invenio-records-resources.
+# Copyright (C) 2024 CERN
+# This file is distributed under the same license as the
+# invenio-records-resources project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-records-resources 5.3.0\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2024-03-21 15:18+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+#: invenio_records_resources/resources/errors.py:59
+#: invenio_records_resources/resources/errors.py:60
+msgid "Invalid query string syntax."
+msgstr ""
+
+#: invenio_records_resources/resources/errors.py:61
+msgid "Misconfigured search."
+msgstr ""
+
+#: invenio_records_resources/resources/errors.py:72
+msgid "Internal server error"
+msgstr ""
+
+#: invenio_records_resources/services/errors.py:57
+msgid "Facet {vocab} not found."
+msgstr ""
+
+#: invenio_records_resources/services/errors.py:66
+msgid "Record '{recid}' has no file '{file_key}'."
+msgstr ""
+
+#: invenio_records_resources/services/errors.py:80
+msgid "Record '{recid}' failed to upload file '{file_key}'."
+msgstr ""
+
+#: invenio_records_resources/services/errors.py:96
+msgid ""
+"Uploading the selected files would result in {files_count} files (max is "
+"{max_files})."
+msgstr ""
+
+#: invenio_records_resources/services/files/transfer.py:77
+msgid "File size limit exceeded."
+msgstr ""
+
+#: invenio_records_resources/services/files/transfer.py:103
+msgid "Empty files are not accepted."
+msgstr ""
+
+#: invenio_records_resources/services/records/config.py:36
+msgid "Best match"
+msgstr ""
+
+#: invenio_records_resources/services/records/config.py:40
+msgid "Newest"
+msgstr ""
+
+#: invenio_records_resources/services/records/config.py:44
+msgid "Oldest"
+msgstr ""
+
+#: invenio_records_resources/services/records/components/files.py:88
+msgid "You must first delete all files to set the record to be metadata-only."
+msgstr ""
+
+#: invenio_records_resources/services/records/queryparser/transformer.py:67
+msgid "Invalid search field: {field_name}."
+msgstr ""
+
