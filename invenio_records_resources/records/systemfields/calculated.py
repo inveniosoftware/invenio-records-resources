@@ -55,3 +55,24 @@ class CalculatedField(SystemField, abc.ABC):
     def calculate(self, record):
         """Logic for calculating the record's property."""
         return None
+
+
+class CalculatedIndexedField(CalculatedField):
+    """Field that also indexes it's calculated value."""
+
+    def __init__(self, key=None, use_cache=False, index=False):
+        """Constructor."""
+        super().__init__(key, use_cache=use_cache)
+        self._index = index
+
+    def pre_dump(self, record, data, dumper=None):
+        """Called after a record is dumped."""
+        if self._index:
+            data[self.attr_name] = self.obj(record)
+
+    def post_load(self, record, data, loader=None):
+        """Called after a record is loaded."""
+        if self._index:
+            value = data.pop(self.attr_name, None)
+            # Store on cache so if cache is used we don't fetch the object again.
+            self._set_cache(record, value)
