@@ -254,7 +254,9 @@ class RecordService(Service, RecordIndexerMixin):
             expand=expand,
         )
 
-    def scan(self, identity, params=None, search_preference=None, expand=False, **kwargs):
+    def scan(
+        self, identity, params=None, search_preference=None, expand=False, **kwargs
+    ):
         """Scan for records matching the querystring."""
         self.require_permission(identity, "search")
 
