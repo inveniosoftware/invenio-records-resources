@@ -10,6 +10,7 @@
 
 from . import config
 from .registry import NotificationRegistry, ServiceRegistry
+from .services.files.transfer.registry import TransferRegistry
 
 
 class InvenioRecordsResources(object):
@@ -25,6 +26,8 @@ class InvenioRecordsResources(object):
         self.init_config(app)
         self.registry = ServiceRegistry()
         self.notification_registry = NotificationRegistry()
+        self.transfer_registry = TransferRegistry()
+        self.register_builtin_transfers()
         app.extensions["invenio-records-resources"] = self
 
     def init_config(self, app):
@@ -32,3 +35,12 @@ class InvenioRecordsResources(object):
         for k in dir(config):
             if k.startswith("RECORDS_RESOURCES_") or k.startswith("SITE_"):
                 app.config.setdefault(k, getattr(config, k))
+
+    def register_builtin_transfers(self):
+        from invenio_records_resources.services.files.transfer import (
+            FetchTransfer,
+            LocalTransfer,
+        )
+
+        self.transfer_registry.register(LocalTransfer)
+        self.transfer_registry.register(FetchTransfer)

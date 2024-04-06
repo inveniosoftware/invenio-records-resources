@@ -11,6 +11,7 @@
 
 from ..base import ServiceListResult
 from ..records.results import RecordItem
+from ...proxies import current_transfer_registry
 
 
 class FileItem(RecordItem):
@@ -92,8 +93,22 @@ class FileList(ServiceListResult):
                     identity=self._identity,
                 ),
             )
+
+            # create links
             if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(self._identity, entry)
+                links = self._links_item_tpl.expand(self._identity, entry)
+            else:
+                links = {}
+
+            # add transfer links
+            transfer = current_transfer_registry.get_transfer(file_record=entry)
+            for k, v in transfer.expand_links(self._identity, entry).items():
+                if v is not None:
+                    links[k] = v
+                else:
+                    links.pop(k, None)
+
+            projection["links"] = links
 
             yield projection
 

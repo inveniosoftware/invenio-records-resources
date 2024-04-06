@@ -8,7 +8,7 @@
 # details.
 
 """File schema."""
-
+import typing
 from datetime import timezone
 from urllib.parse import urlparse
 
@@ -19,13 +19,17 @@ from marshmallow import (
     Schema,
     ValidationError,
     pre_dump,
+    post_dump,
     validate,
     validates,
 )
 from marshmallow.fields import UUID, Dict, Integer, Str
+from marshmallow.schema import _T
+from marshmallow.utils import missing
 from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, TZDateTime
 
-from .transfer import TransferType
+from .transfer import BaseTransfer
+from ...proxies import current_transfer_registry
 
 
 class InitFileSchema(Schema):
@@ -73,35 +77,11 @@ class InitFileSchema(Schema):
             if domain not in allowed_domains:
                 raise ValidationError("Domain not allowed", field_name="uri")
 
-    @pre_dump(pass_many=False)
-    def fields_from_file_obj(self, data, **kwargs):
-        """Fields coming from the FileInstance model."""
-        # this cannot be implemented as fields.Method since those receive the already
-        # dumped data. it could not be access to data.file.
-        # using data_key and attribute from marshmallow did not work as expected.
-
-        # data is a FileRecord instance, might not have a file yet.
-        # data.file is a File wrapper object.
-        if data.file:
-            # mandatory fields
-            data["storage_class"] = data.file.storage_class
-            data["uri"] = data.file.uri
-
-            # If Local -> remove uri as it contains internal file storage info
-            if not TransferType(data["storage_class"]).is_serializable():
-                data.pop("uri")
-
-            # optional fields
-            fields = ["checksum", "size"]
-            for field in fields:
-                value = getattr(data.file, field, None)
-                if value is not None:
-                    data[field] = value
-
-        return data
+    def dump(self, obj: typing.Any, *, many = None, **kwargs):
+        raise Exception("InitFileSchema should not be used for dumping.")
 
 
-class FileSchema(InitFileSchema):
+class FileSchema(Schema):
     """Service schema for files."""
 
     class Meta:
@@ -109,26 +89,33 @@ class FileSchema(InitFileSchema):
 
         unknown = RAISE
 
+    key = Str(required=True)
+
     created = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
     updated = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
 
-    status = GenMethod("dump_status")
     metadata = Dict(dump_only=True)
     mimetype = Str(dump_only=True, attribute="file.mimetype")
+    checksum = Str(dump_only=True, attribute="file.checksum")
+    size = Integer(dump_only=True, attribute="file.size")
+
+    storage_class = Str(dump_only=True, attribute="file.storage_class")
+
     version_id = UUID(attribute="file.version_id")
     file_id = UUID(attribute="file.file_id")
     bucket_id = UUID(attribute="file.bucket_id")
 
     links = Links()
 
-    def dump_status(self, obj):
-        """Dump file status."""
-        # due to time constraints the status check is done here
-        # however, ideally this class should not need knowledge of
-        # the TransferType class, it should be encapsulated at File
-        # wrapper class or lower.
-        has_file = obj.file is not None
-        if has_file and TransferType(obj.file.storage_class).is_completed:
-            return "completed"
+    # comes from transfer_data
+    # status = Str()
+    # uri = Str()
 
-        return "pending"
+    @post_dump(pass_many=False, pass_original=True)
+    def _dump_transfer_data(self, data, original_data, **kwargs):
+        """
+        Enriches the dumped data with the transfer data.
+        """
+        transfer = current_transfer_registry.get_transfer(file_record=original_data)
+        data |= transfer.transfer_data
+        return data

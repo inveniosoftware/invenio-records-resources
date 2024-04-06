@@ -251,7 +251,7 @@ def test_external_file_invalid_url(
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch_file")
 def test_content_and_commit_external_file(
     p_fetch_file,
     p_response_raw,
@@ -327,7 +327,7 @@ def test_content_and_commit_external_file(
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch_file")
 def test_delete_not_committed_external_file(
     p_fetch_file,
     p_response_raw,
@@ -401,7 +401,7 @@ def test_delete_not_committed_external_file(
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch_file")
 def test_read_not_committed_external_file(
     p_fetch_file,
     p_response_raw,
