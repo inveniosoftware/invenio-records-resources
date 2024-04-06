@@ -8,8 +8,8 @@
 
 """Files service components."""
 from ...errors import FailedFileUploadException, TransferException
-from ..transfer import Transfer
 from .base import FileServiceComponent
+from ....proxies import current_transfer_registry
 
 
 class FileContentComponent(FileServiceComponent):
@@ -23,8 +23,7 @@ class FileContentComponent(FileServiceComponent):
         if file_record is None:
             raise Exception(f'File with key "{file_key}" has not been initialized yet.')
 
-        file_type = file_record.file.storage_class if file_record.file else None
-        transfer = Transfer.get_transfer(file_type)
+        transfer = current_transfer_registry.get_transfer(file_record=file_record)
         try:
             transfer.set_file_content(
                 record, file_record.file, file_key, stream, content_length
