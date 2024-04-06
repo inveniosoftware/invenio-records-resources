@@ -10,6 +10,10 @@
 
 from copy import deepcopy
 
+from flask_babel import gettext as _
+from flask import current_app
+from invenio_files_rest.errors import FileSizeError
+
 from ...errors import FilesCountExceededException
 from ..schema import InitFileSchema
 from .base import FileServiceComponent
@@ -52,7 +56,6 @@ class FileMetadataComponent(FileServiceComponent):
         # FIXME: move this call to a transfer call
         record.files.update(file_key, data=data)
 
-    # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
     def commit_file(self, identity, id, file_key, record):
         """Commit file handler."""
 
@@ -63,3 +66,13 @@ class FileMetadataComponent(FileServiceComponent):
             uow=self.uow)
 
         transfer.commit_file()
+
+        f_obj = record.files.get(file_key)
+        f_inst = getattr(f_obj, "file", None)
+        file_size = getattr(f_inst, "size", None)
+        if file_size == 0:
+            allow_empty_files = current_app.config.get(
+                "RECORDS_RESOURCES_ALLOW_EMPTY_FILES", True
+            )
+            if not allow_empty_files:
+                raise FileSizeError(description=_("Empty files are not accepted."))
