@@ -1,21 +1,14 @@
-from invenio_records_resources.records import FileRecord
-
 from ...errors import TransferException
 from ...uow import TaskOp
 from ..tasks import fetch_file
 from .base import BaseTransfer, TransferStatus
-from .types import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
+from .types import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE, REMOTE_TRANSFER_TYPE
 
 
 class LocalTransfer(BaseTransfer):
     """Local transfer."""
 
     transfer_type = LOCAL_TRANSFER_TYPE
-    is_serializable = False
-
-    def __init__(self, **kwargs):
-        """Constructor."""
-        super().__init__(**kwargs)
 
     def init_file(self, record, file_metadata):
         """Initialize a file."""
@@ -35,15 +28,7 @@ class LocalTransfer(BaseTransfer):
         super().set_file_content(record, file, file_key, stream, content_length)
 
 
-class FetchTransfer(BaseTransfer):
-    """Fetch transfer."""
-
-    transfer_type = FETCH_TRANSFER_TYPE
-    is_serializable = True
-
-    def __init__(self, **kwargs):
-        """Constructor."""
-        super().__init__(**kwargs)
+class RemoteTransferBase(BaseTransfer):
 
     def init_file(self, record, file_metadata):
         """Initialize a file."""
@@ -67,15 +52,8 @@ class FetchTransfer(BaseTransfer):
             obj=obj_kwargs,
         )
 
-        self.uow.register(
-            TaskOp(
-                fetch_file,
-                service_id=self.service.id,
-                record_id=record.pid.pid_value,
-                file_key=file_key,
-            )
-        )
         return file
+
 
     @property
     def transfer_data(self):
@@ -84,3 +62,34 @@ class FetchTransfer(BaseTransfer):
         return super().transfer_data | {
             "uri": self.file_record.file.uri,
         }
+
+
+class FetchTransfer(RemoteTransferBase):
+    """Fetch transfer."""
+
+    transfer_type = FETCH_TRANSFER_TYPE
+
+    def init_file(self, record, file_metadata):
+
+        file = super().init_file(record, file_metadata)
+
+        self.uow.register(
+            TaskOp(
+                fetch_file,
+                service_id=self.service.id,
+                record_id=record.pid.pid_value,
+                file_key=file.key,
+            )
+        )
+        return file
+
+
+class RemoteTransfer(BaseTransfer):
+    """Remote transfer."""
+
+    transfer_type = REMOTE_TRANSFER_TYPE
+
+    @property
+    def status(self):
+        # always return completed for remote files
+        return TransferStatus.COMPLETED

@@ -28,11 +28,6 @@ class BaseTransfer(ABC):
     Overriding classes must set this attribute.
     """
 
-    is_serializable = False
-    """
-    True if this transfer can be serialized, false otherwise
-    """
-
     def __init__(self, record: Record = None, file_record: FileRecord = None, service=None, uow=None):
         """Constructor."""
         self.record = record
