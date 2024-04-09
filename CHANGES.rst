@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 5.5.0 (released 2024-04-09)
+
+* records: add calculated system field with indexing; allows calculated system field to cache the value in the index, and
+  use the cached value when reading from the index.
+
 Version 5.4.0 (released 2024-03-22)
 
 - installation: upgrade invenio-app, invenio-base, invenio-accounts
