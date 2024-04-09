@@ -58,7 +58,7 @@ class CalculatedField(SystemField, abc.ABC):
 
 
 class CalculatedIndexedField(CalculatedField):
-    """Field that also indexes it's calculated value."""
+    """Field that also indexes its calculated value."""
 
     def __init__(self, key=None, use_cache=False, index=False):
         """Constructor."""
