@@ -8,12 +8,11 @@
 
 """High-level API for wokring with records, files, pids and search."""
 
-
 from .base import (
     ConditionalLink,
     Link,
     LinksTemplate,
-    NestedDictLinkGenerator,
+    NestedLinks,
     Service,
     ServiceConfig,
 )
@@ -44,5 +43,5 @@ __all__ = (
     "ServiceConfig",
     "ServiceSchemaWrapper",
     "RecordIndexerMixin",
-    "NestedDictLinkGenerator",
+    "NestedLinks",
 )
