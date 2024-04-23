@@ -8,6 +8,7 @@
 # details.
 
 """Service results."""
+
 from abc import ABC, abstractmethod
 
 from invenio_access.permissions import system_user_id
@@ -15,7 +16,6 @@ from invenio_records.dictutils import dict_lookup, dict_merge, dict_set
 
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
-from .schema import BaseGhostSchema
 
 
 class RecordItem(ServiceItemResult):
@@ -31,6 +31,7 @@ class RecordItem(ServiceItemResult):
         schema=None,
         expandable_fields=None,
         expand=False,
+        nested_links_item=None,
     ):
         """Constructor."""
         self._errors = errors
@@ -41,6 +42,7 @@ class RecordItem(ServiceItemResult):
         self._schema = schema or service.schema
         self._fields_resolver = FieldsResolver(expandable_fields)
         self._expand = expand
+        self._nested_links_item = nested_links_item
         self._data = None
 
     @property
@@ -77,6 +79,10 @@ class RecordItem(ServiceItemResult):
         )
         if self._links_tpl:
             self._data["links"] = self.links
+
+        if self._nested_links_item:
+            for link in self._nested_links_item:
+                link.expand(self._identity, self._record, self._data)
 
         if self._expand and self._fields_resolver:
             self._fields_resolver.resolve(self._identity, [self._data])
@@ -135,6 +141,7 @@ class RecordList(ServiceListResult):
         params=None,
         links_tpl=None,
         links_item_tpl=None,
+        nested_links_item=None,
         schema=None,
         expandable_fields=None,
         expand=False,
@@ -153,6 +160,7 @@ class RecordList(ServiceListResult):
         self._params = params
         self._links_tpl = links_tpl
         self._links_item_tpl = links_item_tpl
+        self._nested_links_item = nested_links_item
         self._fields_resolver = FieldsResolver(expandable_fields)
         self._expand = expand
 
@@ -201,6 +209,9 @@ class RecordList(ServiceListResult):
                 projection["links"] = self._links_item_tpl.expand(
                     self._identity, record
                 )
+            if self._nested_links_item:
+                for link in self._nested_links_item:
+                    link.expand(self._identity, record, projection)
 
             yield projection
 

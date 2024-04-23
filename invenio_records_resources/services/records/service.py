@@ -365,6 +365,7 @@ class RecordService(Service, RecordIndexerMixin):
             identity,
             record,
             links_tpl=self.links_item_tpl,
+            nested_links_item=getattr(self.config, "nested_links_item", None),
             errors=errors,
             expandable_fields=self.expandable_fields,
             expand=expand,
@@ -387,6 +388,7 @@ class RecordService(Service, RecordIndexerMixin):
             record,
             links_tpl=self.links_item_tpl,
             expandable_fields=self.expandable_fields,
+            nested_links_item=getattr(self.config, "nested_links_item", None),
             expand=expand,
         )
 
@@ -490,6 +492,7 @@ class RecordService(Service, RecordIndexerMixin):
             identity,
             record,
             links_tpl=self.links_item_tpl,
+            nested_links_item=getattr(self.config, "nested_links_item", None),
             expandable_fields=self.expandable_fields,
             expand=expand,
         )

@@ -8,9 +8,11 @@
 
 """Utility for rendering URI template links."""
 
+import operator
 from copy import deepcopy
 
 from flask import current_app
+from invenio_records.dictutils import dict_lookup
 from uritemplate import URITemplate
 from werkzeug.datastructures import MultiDict
 
@@ -145,3 +147,51 @@ class ConditionalLink:
             return self._if_link.expand(obj, ctx)
         else:
             return self._else_link.expand(obj, ctx)
+
+
+class NestedLinks:
+    """Base class for generating nested links."""
+
+    def __init__(
+        self,
+        links,
+        key=None,
+        load_key=None,
+        dump_key=None,
+        context_func=None,
+    ):
+        """Initialize NestedLinkGenerator."""
+        self.links = links
+        self.load_key = load_key or key
+        self.dump_key = dump_key or key
+        assert self.load_key and self.dump_key
+        self.context_func = context_func
+
+    def context(self, identity, record, key, value):
+        """Get the context for the links."""
+        if not self.context_func:
+            return {}
+        return self.context_func(identity, record, key, value)
+
+    def expand(self, identity, record, data):
+        """Update data with links in each object inside the dictionary."""
+        try:
+            record_data = operator.attrgetter(self.load_key)(record)
+        except AttributeError:
+            return
+        try:
+            output_data = dict_lookup(data, self.dump_key)
+        except KeyError:
+            return
+
+        if isinstance(record_data, (tuple, list)):
+            items_iter = enumerate(record_data)
+        elif isinstance(record_data, dict):
+            items_iter = record_data.items()
+        else:
+            return
+
+        for key, value in items_iter:
+            context = self.context(identity, record, key, value)
+            links = LinksTemplate(self.links, context=context).expand(identity, value)
+            output_data[key]["links"] = links
