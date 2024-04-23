@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.6.0 (released 2024-04-23)
+
+- services: add support for nested links
+
 Version 5.5.0 (released 2024-04-09)
 
 * records: add calculated system field with indexing; allows calculated system field to cache the value in the index, and
