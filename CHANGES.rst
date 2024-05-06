@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version 5.7.0 (released 2024-05-06)
+
+- files-schema: hide `uri` from serialization
+- records: added access field to files
+
 Version 5.6.0 (released 2024-04-23)
 
 - services: add support for nested links
