@@ -20,8 +20,6 @@ from invenio_records.dumpers import SearchDumper
 from invenio_records.systemfields import DictField, SystemField, SystemFieldsMixin
 from invenio_records.systemfields.model import ModelField
 
-# TODO move to systemfields folder
-
 
 class Record(RecordBase, SystemFieldsMixin):
     """Base class for record APIs.

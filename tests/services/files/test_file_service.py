@@ -109,7 +109,6 @@ def test_file_flow(file_service, location, example_file_record, identity_simple,
     result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
     assert result.to_dict()["key"] == file_to_initialise[0]["key"]
     assert result.to_dict()["storage_class"] == "L"
-    assert "uri" not in result.to_dict()
 
     # Retrieve file
     result = file_service.get_file_content(identity_simple, recid, "article.txt")
@@ -293,7 +292,6 @@ def test_content_and_commit_external_file(
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
     assert result["storage_class"] == "F"
-    assert "uri" in result
 
     # Set content as user
     content = BytesIO(b"test file content")
@@ -317,7 +315,7 @@ def test_content_and_commit_external_file(
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
     assert result["storage_class"] == "F"  # not commited yet
-    assert "uri" in result
+    assert "uri" not in result
 
     # Commit as user
     with pytest.raises(PermissionDeniedError):
@@ -369,7 +367,6 @@ def test_delete_not_committed_external_file(
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
     assert result["storage_class"] == "F"
-    assert "uri" in result
 
     # Delete file
     file_service.delete_file(identity_simple, recid, "article.txt")
@@ -440,7 +437,6 @@ def test_read_not_committed_external_file(
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
     assert result["storage_class"] == "F"
-    assert "uri" in result
 
     # List files
     result = file_service.list_files(identity_simple, recid)
@@ -451,7 +447,6 @@ def test_read_not_committed_external_file(
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
     assert result["storage_class"] == "F"  # changed after commit
-    assert "uri" in result
 
     # Retrieve file
     with pytest.raises(PermissionDeniedError):

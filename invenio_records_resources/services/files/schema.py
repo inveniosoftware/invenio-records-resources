@@ -55,7 +55,7 @@ class InitFileSchema(Schema):
 
     key = Str(required=True)
     storage_class = Str()
-    uri = Str()
+    uri = Str(load_only=True)
     checksum = Str()
     size = Integer()
 
