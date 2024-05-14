@@ -15,6 +15,18 @@ from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
 
+class RecordPermissionDeniedError(PermissionDenied):
+    """Record permission denied error."""
+
+    description = "Permission denied."
+
+    def __init__(self, action_name=None, record=None, *args, **kwargs):
+        """Initialize exception."""
+        self.record = record
+        self.action_name = action_name
+        super(RecordPermissionDeniedError, self).__init__(*args, **kwargs)
+
+
 class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
