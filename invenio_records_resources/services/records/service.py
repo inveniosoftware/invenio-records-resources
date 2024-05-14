@@ -19,11 +19,14 @@ from invenio_search.engine import dsl
 from kombu import Queue
 from werkzeug.local import LocalProxy
 
-from invenio_records_resources.services.errors import PermissionDeniedError
+from invenio_records_resources.services.errors import (
+    PermissionDeniedError,
+    RecordPermissionDeniedError,
+)
 
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
-from ..uow import RecordCommitOp, RecordDeleteOp, RecordIndexOp, unit_of_work
+from ..uow import RecordCommitOp, RecordDeleteOp, unit_of_work
 from .schema import ServiceSchemaWrapper
 
 
@@ -375,8 +378,10 @@ class RecordService(Service, RecordIndexerMixin):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
-        self.require_permission(identity, action, record=record)
-
+        try:
+            self.require_permission(identity, action, record=record)
+        except PermissionDeniedError as e:
+            raise RecordPermissionDeniedError(action_name=action, record=record)
         # Run components
         for component in self.components:
             if hasattr(component, "read"):
