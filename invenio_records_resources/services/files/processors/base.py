@@ -8,7 +8,6 @@
 
 """Files processing engine."""
 
-
 import os
 
 
