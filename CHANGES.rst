@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.8.0 (released 2024-05-21)
+
+- processors: optionally use PyVIPS for image metadata
+
 Version 5.7.0 (released 2024-05-06)
 
 - files-schema: hide `uri` from serialization
