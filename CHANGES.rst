@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.9.0 (released 2024-05-22)
+
+- errors: add RecordPermissionDeniedError
+
 Version 5.8.0 (released 2024-05-21)
 
 - processors: optionally use PyVIPS for image metadata
