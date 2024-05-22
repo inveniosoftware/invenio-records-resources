@@ -136,6 +136,32 @@ class Operation:
         pass
 
 
+class ModelCommitOp(Operation):
+    """SQLAlchemy model add/update operation."""
+
+    def __init__(self, model):
+        """Initialize the commit operation."""
+        super().__init__()
+        self._model = model
+
+    def on_register(self, uow):
+        """Add model to db session."""
+        uow.session.add(self._model)
+
+
+class ModelDeleteOp(Operation):
+    """SQLAlchemy model delete operation."""
+
+    def __init__(self, model):
+        """Initialize the set delete operation."""
+        super().__init__()
+        self._model = model
+
+    def on_register(self, uow):
+        """Delete model."""
+        uow.session.delete(self._model)
+
+
 class RecordCommitOp(Operation):
     """Record commit operation with indexing."""
 
