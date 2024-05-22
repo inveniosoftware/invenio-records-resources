@@ -37,8 +37,8 @@ from ..services.errors import (
     FileKeyNotFoundError,
     FilesCountExceededException,
     PermissionDeniedError,
-    RecordPermissionDeniedError,
     QuerystringValidationError,
+    RecordPermissionDeniedError,
     RevisionIdMismatchError,
 )
 
