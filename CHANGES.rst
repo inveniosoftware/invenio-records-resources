@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.9.1 (released 2024-05-22)
+
+- errors: add error handler for RecordPermissionDeniedError
+
 Version 5.9.0 (released 2024-05-22)
 
 - errors: add RecordPermissionDeniedError
