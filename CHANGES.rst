@@ -8,6 +8,11 @@
 Changes
 =======
 
+
+Version 5.9.2 (released 2024-05-22)
+
+- isort: fix imports
+
 Version 5.9.1 (released 2024-05-22)
 
 - errors: add error handler for RecordPermissionDeniedError
