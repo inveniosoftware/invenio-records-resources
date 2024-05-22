@@ -8,6 +8,9 @@
 Changes
 =======
 
+Version 5.10.0 (released 2024-05-22)
+
+- uow: add generic DB Model operations
 
 Version 5.9.2 (released 2024-05-22)
 
