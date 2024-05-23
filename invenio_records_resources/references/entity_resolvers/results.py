@@ -46,6 +46,7 @@ class ServiceResultResolver(EntityResolver):
         proxy_cls=ServiceResultProxy,
         item_cls=None,
         record_cls=None,
+        draft_cls=None,
     ):
         """Constructor.
 
@@ -58,6 +59,7 @@ class ServiceResultResolver(EntityResolver):
         self.proxy_cls = proxy_cls
         self._item_cls = item_cls
         self._record_cls = record_cls
+        self._draft_cls = draft_cls
 
     @property
     def item_cls(self):
@@ -69,9 +71,21 @@ class ServiceResultResolver(EntityResolver):
         """Get specified record class or from service."""
         return self._record_cls or self.get_service().record_cls
 
+    @property
+    def draft_cls(self):
+        """Get specified draft class or from service."""
+        return self._draft_cls or self.get_service().draft_cls
+
     def matches_entity(self, entity):
         """Check if the entity is a result item."""
-        return isinstance(entity, (self.item_cls, self.record_cls))
+        is_item_or_record = isinstance(entity, (self.item_cls, self.record_cls))
+        if is_item_or_record:
+            return is_item_or_record
+
+        try:
+            return isinstance(entity, self.draft_cls)
+        except AttributeError:
+            return False
 
     def _reference_entity(self, entity):
         """Create a reference dict for the given result item."""
