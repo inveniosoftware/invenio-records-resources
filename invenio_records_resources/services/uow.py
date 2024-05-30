@@ -104,6 +104,7 @@ class and implementing the desired methods:
 
 from functools import wraps
 
+from celery import current_app
 from invenio_db import db
 
 from ..tasks import send_change_notifications
@@ -261,10 +262,32 @@ class TaskOp(Operation):
         self._celery_task = celery_task
         self._args = args
         self._kwargs = kwargs
+        self.celery_kwargs = {}
 
     def on_post_commit(self, uow):
         """Run the post task operation."""
-        self._celery_task.delay(*self._args, **self._kwargs)
+        self._celery_task.apply_async(
+            args=self._args, kwargs=self._kwargs, **self.celery_kwargs
+        )
+
+    @classmethod
+    def for_async_apply(cls, celery_task, args=None, kwargs=None, **celery_kwargs):
+        """Create TaskOp that supports apply_async args."""
+        temp = cls(celery_task, *(args or tuple()), **(kwargs or {}))
+        temp.celery_kwargs = celery_kwargs
+        return temp
+
+
+class TaskRevokeOp(Operation):
+    """A celery task stopping operation."""
+
+    def __init__(self, task_id: str) -> None:
+        """Initialize the task operation."""
+        self.task_id = task_id
+
+    def on_post_commit(self, uow) -> None:
+        """Run the revoke post commit."""
+        current_app.control.revoke(self.task_id, terminate=True)
 
 
 class ChangeNotificationOp(Operation):
