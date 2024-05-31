@@ -39,12 +39,12 @@ def test_image_meta_extraction(
     file_service.set_file_content(identity_simple, recid, "image.png", image_fp)
 
     # Commit (should send celery task)
-    assert not task.delay.called
+    assert not task.apply_async.called
     file_service.commit_file(identity_simple, recid, "image.png")
-    assert task.delay.called
+    assert task.apply_async.called
 
     # Call task manually
-    extract_file_metadata(*task.delay.call_args[0])
+    extract_file_metadata(*task.apply_async.call_args[1]["args"])
 
     item = file_service.read_file_metadata(identity_simple, recid, "image.png")
     assert item.data["metadata"] == {"width": 1000, "height": 1000}
