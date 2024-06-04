@@ -8,9 +8,10 @@
 Changes
 =======
 
-Version 5.10.0 (released 2024-05-22)
+Version 6.0.0 (released 2024-06-04)
 
-- uow: add generic DB Model operations
+- uow: updated Task Operation to use `apply_async` instead of `delay`
+- uow: added Revoke Task Operation
 
 Version 5.9.2 (released 2024-05-22)
 
