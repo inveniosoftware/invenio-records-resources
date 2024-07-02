@@ -360,7 +360,12 @@ class FilesManager(MutableMapping):
                 if obj_or_key in self:
                     del self[obj_or_key]
             elif operation == "add":
-                self[obj_or_key.key] = obj_or_key
+                f_key = obj_or_key.key
+                rf = src_files[f_key]
+                if rf.metadata is not None:
+                    self[f_key] = obj_or_key, dict(rf)
+                else:
+                    self[f_key] = obj_or_key
 
     @property
     def entries(self):
