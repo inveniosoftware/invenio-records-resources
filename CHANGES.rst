@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 6.1.0 (released 2024-07-05)
+
+- files: sync metadata on file edit
+
 Version 6.0.0 (released 2024-06-04)
 
 - uow: updated Task Operation to use `apply_async` instead of `delay`
