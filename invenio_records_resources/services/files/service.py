@@ -62,7 +62,11 @@ class FileService(Service):
         record = self.record_cls.pid.resolve(id_, registered_only=False)
         self.require_permission(identity, action, record=record, file_key=file_key)
 
-        if file_key and file_key not in record.files:
+        if (
+            file_key
+            and file_key not in record.files
+            and file_key not in record.media_files
+        ):
             raise FileKeyNotFoundError(id_, file_key)
 
         return record
@@ -280,10 +284,18 @@ class FileService(Service):
 
         self.run_components("get_file_content", identity, id_, file_key, record)
 
+        file_record = None
+        if file_key in record.files:
+            file_record = record.files[file_key]
+        elif file_key in record.media_files:
+            file_record = record.media_files[file_key]
+        else:
+            raise FileKeyNotFoundError(id_, file_key)
+
         return self.file_result_item(
             self,
             identity,
-            record.files[file_key],
+            file_record,
             record,
             links_tpl=self.file_links_item_tpl(id_),
         )
