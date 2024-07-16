@@ -89,3 +89,11 @@ def cache():
         yield current_cache
     finally:
         current_cache.clear()
+
+
+@pytest.fixture()
+def invalid_input_data():
+    """Input data (as coming from the view layer)."""
+    return {
+        "metadata": {"title": 10},
+    }
