@@ -183,6 +183,27 @@ class RecordCommitOp(Operation):
             self._indexer.index(self._record, arguments=arguments)
 
 
+class RecordBulkCommitOp(Operation):
+    """Record bulk commit operation with indexing."""
+
+    def __init__(self, records, indexer=None, index_refresh=False):
+        """Initialize the bulk record commit operation."""
+        self._records = records
+        self._indexer = indexer
+        self._index_refresh = index_refresh
+
+    def on_register(self, uow):
+        """Save objects to the session."""
+        for record in self._records:
+            record.commit()
+
+    def on_commit(self, uow):
+        """Run the operation."""
+        if self._indexer is not None:
+            record_ids = [record.id for record in self._records]
+            self._indexer.bulk_index(record_ids)
+
+
 class RecordIndexOp(RecordCommitOp):
     """Record indexing operation."""
 
