@@ -380,7 +380,7 @@ class RecordService(Service, RecordIndexerMixin):
         record = self.record_cls.pid.resolve(id_)
         try:
             self.require_permission(identity, action, record=record)
-        except PermissionDeniedError as e:
+        except PermissionDeniedError:
             raise RecordPermissionDeniedError(action_name=action, record=record)
         # Run components
         for component in self.components:
