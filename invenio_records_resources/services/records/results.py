@@ -14,6 +14,11 @@ from abc import ABC, abstractmethod
 from invenio_access.permissions import system_user_id
 from invenio_records.dictutils import dict_lookup, dict_merge, dict_set
 
+from invenio_records_resources.services.base.results import (
+    ServiceBulkItemResult,
+    ServiceBulkListResult,
+)
+
 from ...pagination import Pagination
 from ..base import ServiceItemResult, ServiceListResult
 
@@ -252,6 +257,62 @@ class RecordList(ServiceListResult):
                 res["links"] = self._links_tpl.expand(self._identity, self.pagination)
 
         return res
+
+
+class RecordBulkItem(ServiceBulkItemResult):
+    """Record bulk item."""
+
+    def __init__(self, op_type, record, errors, exc):
+        """Constructor."""
+        self._op_type = op_type
+        self._record = record
+        self._errors = errors
+        self._exc = exc
+
+    @property
+    def op_type(self):
+        """Get operation type."""
+        return self._op_type
+
+    @property
+    def record(self):
+        """Get record."""
+        return self._record
+
+    @property
+    def errors(self):
+        """Get errors."""
+        return self._errors
+
+    @property
+    def exc(self):
+        """Get exception."""
+        return self._exc
+
+
+class RecordBulkList(ServiceBulkListResult):
+    """List of records result."""
+
+    def __init__(
+        self,
+        service,
+        identity,
+        results,
+    ):
+        """Constructor.
+
+        :params service: a service instance
+        :params identity: an identity that performed the service request
+        :params results: the results of the bulk operation
+        """
+        self._identity = identity
+        self._service = service
+        self._results = [RecordBulkItem(*r) for r in results]
+
+    @property
+    def results(self):
+        """Iterator over the results."""
+        return iter(self._results)
 
 
 class ExpandableField(ABC):
