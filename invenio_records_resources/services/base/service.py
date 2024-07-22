@@ -99,3 +99,21 @@ class Service:
         a Service must provide.
         """
         return self.config.result_list_cls(*args, **kwargs)
+
+    def result_bulk_item(self, *args, **kwargs):
+        """Create a new instance of the bulk resource unit.
+
+        A bulk resource unit is an instantiated object representing one unit
+        of a Resource. It is what a bulk Resource unit methods transact in
+        and therefore what a Service must provide.
+        """
+        return self.config.result_bulk_item_cls(*args, **kwargs)
+
+    def result_bulk_list(self, *args, **kwargs):
+        """Create a new instance of the bulk resource list.
+
+        A bulk resource list is an instantiated object representing a grouping
+        of Resource units. It is what a bulk Resource list methods transact in
+        and therefore what a Service must provide.
+        """
+        return self.config.result_bulk_list_cls(*args, **kwargs)

@@ -20,3 +20,11 @@ class ServiceItemResult(ServiceResult):
 
 class ServiceListResult(ServiceResult):
     """Base class for a service result for a list of items."""
+
+
+class ServiceBulkItemResult(ServiceResult):
+    """Base class for a service result for a single item performed on a bulk operation."""
+
+
+class ServiceBulkListResult(ServiceResult):
+    """Base class for a service result for a list of items performed on a bulk operation."""

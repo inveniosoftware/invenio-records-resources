@@ -12,7 +12,12 @@
 from invenio_base.utils import load_or_import_from_config
 from invenio_records_permissions.policies import BasePermissionPolicy
 
-from .results import ServiceItemResult, ServiceListResult
+from .results import (
+    ServiceBulkItemResult,
+    ServiceBulkListResult,
+    ServiceItemResult,
+    ServiceListResult,
+)
 
 #
 # Service
@@ -27,6 +32,8 @@ class ServiceConfig:
     permission_policy_cls = BasePermissionPolicy
     result_item_cls = ServiceItemResult
     result_list_cls = ServiceListResult
+    result_bulk_item_cls = ServiceBulkItemResult
+    result_bulk_list_cls = ServiceBulkListResult
 
 
 #
