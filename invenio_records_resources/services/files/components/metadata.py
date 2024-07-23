@@ -10,8 +10,14 @@
 
 from copy import deepcopy
 
+import marshmallow as ma
+from flask import current_app
+from flask_babel import gettext as _
+from invenio_files_rest.errors import FileSizeError
+
+from ....proxies import current_transfer_registry
 from ...errors import FilesCountExceededException
-from ..transfer import Transfer
+from ...uow import RecordCommitOp
 from .base import FileServiceComponent
 
 
@@ -20,8 +26,29 @@ class FileMetadataComponent(FileServiceComponent):
 
     def init_files(self, identity, id, record, data):
         """Init files handler."""
-        schema = self.service.file_schema.schema(many=True)
-        validated_data = schema.load(data)
+
+        validated_data = []
+        if not isinstance(data, list):
+            raise ma.ValidationError("Expected a list of files.")
+
+        for idx, file_metadata in enumerate(data):
+            transfer_type = file_metadata.get("transfer_type", None)
+
+            schema_cls = self.get_transfer_type_schema(transfer_type)
+
+            schema = schema_cls()
+
+            try:
+                validated_data.append(schema.load(file_metadata))
+            except ma.ValidationError as e:
+                # add index to the error
+                raise ma.ValidationError(
+                    e.messages_dict,
+                    field_name=idx,
+                    data=e.data,
+                    valid_data=e.valid_data,
+                    **e.kwargs,
+                )
 
         # All brand-new drafts don't allow exceeding files limit (while added via rest API).
         # Old records that already had more files than limited can continue adding files.
@@ -35,13 +62,51 @@ class FileMetadataComponent(FileServiceComponent):
                     max_files=maxFiles, resulting_files_count=resulting_files_count
                 )
 
-        for file_data in validated_data:
-            copy_fdata = deepcopy(file_data)
-            file_type = copy_fdata.pop("storage_class", None)
-            transfer = Transfer.get_transfer(
-                file_type, service=self.service, uow=self.uow
+        for file_metadata in validated_data:
+            temporary_obj = deepcopy(file_metadata)
+            transfer_type = temporary_obj.pop("transfer_type", None)
+
+            transfer = current_transfer_registry.get_transfer(
+                transfer_type=transfer_type,
+                record=record,
+                service=self.service,
+                uow=self.uow,
             )
-            _ = transfer.init_file(record, copy_fdata)
+
+            _ = transfer.init_file(record, temporary_obj)
+
+    def get_transfer_type_schema(self, transfer_type):
+        """
+        Get the transfer type schema. If the transfer type is not provided, the default schema is returned.
+        If the transfer type is provided, the schema is created dynamically as a union of the default schema
+        and the transfer type schema.
+
+        Implementation details:
+        For performance reasons, the schema is cached in the service config under "_file_transfer_schemas" key.
+        """
+        schema_cls = self.service.file_schema.schema
+        if not transfer_type:
+            return schema_cls
+
+        if not hasattr(self.service.config, "_file_transfer_schemas"):
+            self.service.config._file_transfer_schemas = {}
+
+        # have a look in the cache
+        if transfer_type in self.service.config._file_transfer_schemas:
+            return self.service.config._file_transfer_schemas[transfer_type]
+
+        # not there, create a subclass and put to the cache
+        transfer = current_transfer_registry.get_transfer(
+            transfer_type=transfer_type,
+        )
+        if transfer.Schema:
+            schema_cls = type(
+                f"{schema_cls.__name__}Transfer{transfer_type}",
+                (transfer.Schema, schema_cls),
+                {},
+            )
+        self.service.config._file_transfer_schemas[transfer_type] = schema_cls
+        return schema_cls
 
     def update_file_metadata(self, identity, id, file_key, record, data):
         """Update file metadata handler."""
@@ -54,7 +119,33 @@ class FileMetadataComponent(FileServiceComponent):
         validated_data = schema.load(data)
         record.files.update(file_key, data=validated_data)
 
-    # TODO: `commit_file` might vary based on your storage backend (e.g. S3)
+    def update_transfer_metadata(
+        self, identity, id, file_key, record, transfer_metadata
+    ):
+        """Update file transfer metadata handler."""
+        file = record.files[file_key]
+
+        file.transfer.set(transfer_metadata)
+        self.uow.register(RecordCommitOp(file))
+
     def commit_file(self, identity, id, file_key, record):
         """Commit file handler."""
-        Transfer.commit_file(record, file_key)
+
+        transfer = current_transfer_registry.get_transfer(
+            record=record,
+            file_record=record.files.get(file_key),
+            service=self.service,
+            uow=self.uow,
+        )
+
+        transfer.commit_file()
+
+        f_obj = record.files.get(file_key)
+        f_inst = getattr(f_obj, "file", None)
+        file_size = getattr(f_inst, "size", None)
+        if file_size == 0:
+            allow_empty_files = current_app.config.get(
+                "RECORDS_RESOURCES_ALLOW_EMPTY_FILES", True
+            )
+            if not allow_empty_files:
+                raise FileSizeError(description=_("Empty files are not accepted."))

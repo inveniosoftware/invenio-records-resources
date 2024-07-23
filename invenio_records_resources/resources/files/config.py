@@ -24,6 +24,7 @@ class FileResourceConfig(ResourceConfig):
         "list": "/files",
         "item": "/files/<path:key>",
         "item-content": "/files/<path:key>/content",
+        "item-multipart-content": "/files/<path:key>/content/<int:part>",
         "item-commit": "/files/<path:key>/commit",
         "list-archive": "/files-archive",
     }

@@ -153,14 +153,29 @@ class FilesManager(MutableMapping):
 
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
-    def create(self, key, obj=None, stream=None, data=None, **kwargs):
+    def create(
+        self,
+        key,
+        obj=None,
+        stream=None,
+        data=None,
+        transfer_type=None,
+        transfer_metadata=None,
+        **kwargs,
+    ):
         """Create/initialize a file."""
         assert not (obj and stream)
 
         if key in self:
             raise InvalidKeyError(description=f"File with key {key} already exists.")
 
-        rf = self.file_cls.create({}, key=key, record_id=self.record.id)
+        rf = self.file_cls.create(
+            {},
+            key=key,
+            record_id=self.record.id,
+            transfer={**(transfer_metadata or {}), "transfer_type": transfer_type},
+        )
+
         if stream:
             obj = ObjectVersion.create(self.bucket, key, stream=stream, **kwargs)
         if obj:

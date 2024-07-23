@@ -26,6 +26,7 @@ from invenio_records_resources.records.systemfields import (
     PIDRelation,
     PIDStatusCheckField,
 )
+from invenio_records_resources.records.systemfields.files.transfer import TransferField
 
 from . import models
 
@@ -35,6 +36,8 @@ class FileRecord(FileRecordBase):
 
     model_cls = models.FileRecordMetadata
     record_cls = None  # is defined below
+
+    transfer = TransferField()
 
 
 class Record(RecordBase):
