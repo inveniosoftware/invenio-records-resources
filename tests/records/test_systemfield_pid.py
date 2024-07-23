@@ -9,7 +9,6 @@
 
 """PIDField tests."""
 
-from datetime import datetime
 
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from mock_module.api import Record

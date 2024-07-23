@@ -16,10 +16,7 @@ Test to add:
 """
 
 import pytest
-from invenio_cache import current_cache
 from invenio_pidstore.errors import PIDDeletedError
-from invenio_search import current_search, current_search_client
-from marshmallow import ValidationError
 from mock_module.api import Record
 
 

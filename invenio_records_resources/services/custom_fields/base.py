@@ -28,13 +28,11 @@ class BaseCF(ABC):
     @abstractproperty
     def mapping(self):
         """Return the mapping."""
-        pass
 
     @property
     @abstractproperty
     def field(self):
         """Marshmallow field for custom fields."""
-        pass
 
     @property
     def ui_field(self):

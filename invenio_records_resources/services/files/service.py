@@ -287,3 +287,70 @@ class FileService(Service):
             record,
             links_tpl=self.file_links_item_tpl(id_),
         )
+
+    def get_transfer_metadata(self, identity, id_, file_key):
+        record = self._get_record(
+            id_, identity, "get_file_transfer_metadata", file_key=file_key
+        )
+        file = record.files[file_key]
+        transfer_metadata = dict(file.transfer)
+        self.run_components(
+            "get_transfer_metadata", identity, id_, file_key, record, transfer_metadata
+        )
+        return transfer_metadata
+
+    @unit_of_work()
+    def update_transfer_metadata(
+        self, identity, id_, file_key, transfer_metadata, uow=None
+    ):
+        record = self._get_record(
+            id_, identity, "update_file_transfer_metadata", file_key=file_key
+        )
+        self.run_components(
+            "update_transfer_metadata",
+            identity,
+            id_,
+            file_key,
+            record,
+            transfer_metadata,
+            uow=uow,
+        )
+
+    @unit_of_work()
+    def set_multipart_file_content(
+        self, identity, id_, file_key, part, stream, content_length=None, uow=None
+    ):
+        """Save file content of a single part.
+        :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
+        """
+        record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
+        errors = None
+        try:
+            self.run_components(
+                "set_multipart_file_content",
+                identity,
+                id_,
+                file_key,
+                part,
+                stream,
+                content_length,
+                record,
+                uow=uow,
+            )
+            file = record.files[file_key]
+
+        except FailedFileUploadException as e:
+            file = e.file
+            current_app.logger.exception(f"File upload transfer failed.")
+            # we gracefully fail so that uow can commit the cleanup operation in
+            # FileContentComponent
+            errors = "File upload transfer failed."
+
+        return self.file_result_item(
+            self,
+            identity,
+            file,
+            record,
+            errors=errors,
+            links_tpl=self.file_links_item_tpl(id_),
+        )

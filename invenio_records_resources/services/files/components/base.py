@@ -51,4 +51,13 @@ class FileServiceComponent(BaseServiceComponent):
 
     def get_file_content(self, identity, id_, file_key, record):
         """Get file content handler."""
-        pass
+
+    def get_file_transfer_metadata(
+        self, identity, id, file_key, record, transfer_metadata
+    ):
+        """Get file transfer metadata handler."""
+
+    def update_file_transfer_metadata(
+        self, identity, id, file_key, record, transfer_metadata
+    ):
+        """Update file transfer metadata handler."""

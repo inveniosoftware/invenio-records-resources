@@ -8,7 +8,6 @@
 
 """Systemfield for managing referenced entities in request."""
 
-from functools import partial
 
 from invenio_records.systemfields import SystemField
 

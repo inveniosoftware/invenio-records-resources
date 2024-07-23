@@ -8,7 +8,6 @@
 
 """ModelPIDField tests."""
 
-import pytest
 from invenio_records.systemfields import ModelField
 from mock_module.api import Record as RecordBase
 from mock_module.models import RecordMetadataWithPID

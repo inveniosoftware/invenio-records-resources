@@ -195,7 +195,7 @@ def test_external_file_simple_flow(
         {
             "key": "article.txt",
             "uri": "https://inveniordm.test/files/article.txt",
-            "storage_class": "F",
+            "transfer_type": "F",
         }
     ]
 
@@ -255,7 +255,7 @@ def test_external_file_invalid_url(
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch.fetch_file")
 def test_content_and_commit_external_file(
     p_fetch_file,
     p_response_raw,
@@ -279,7 +279,7 @@ def test_content_and_commit_external_file(
         {
             "key": "article.txt",
             "uri": "https://inveniordm.test/files/article.txt",
-            "storage_class": "F",
+            "transfer_type": "F",
         }
     ]
 
@@ -291,7 +291,7 @@ def test_content_and_commit_external_file(
     result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "F"
+    assert result["transfer_type"] == "F"
 
     # Set content as user
     content = BytesIO(b"test file content")
@@ -314,7 +314,7 @@ def test_content_and_commit_external_file(
     )
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "F"  # not commited yet
+    assert result["transfer_type"] == "F"  # not commited yet
     assert "uri" not in result
 
     # Commit as user
@@ -325,12 +325,12 @@ def test_content_and_commit_external_file(
     result = file_service.commit_file(system_identity, recid, "article.txt")
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "L"
+    assert result["transfer_type"] == "L"
     assert "uri" not in result
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch.fetch_file")
 def test_delete_not_committed_external_file(
     p_fetch_file,
     p_response_raw,
@@ -354,7 +354,7 @@ def test_delete_not_committed_external_file(
         {
             "key": "article.txt",
             "uri": "https://inveniordm.test/files/article.txt",
-            "storage_class": "F",
+            "transfer_type": "F",
         }
     ]
 
@@ -366,7 +366,7 @@ def test_delete_not_committed_external_file(
     result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "F"
+    assert result["transfer_type"] == "F"
 
     # Delete file
     file_service.delete_file(identity_simple, recid, "article.txt")
@@ -403,7 +403,7 @@ def test_delete_not_committed_external_file(
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.transfer.providers.fetch.fetch_file")
 def test_read_not_committed_external_file(
     p_fetch_file,
     p_response_raw,
@@ -425,7 +425,7 @@ def test_read_not_committed_external_file(
         {
             "key": "article.txt",
             "uri": "https://inveniordm.test/files/article.txt",
-            "storage_class": "F",
+            "transfer_type": "F",
         }
     ]
     # Initialize file saving
@@ -436,7 +436,7 @@ def test_read_not_committed_external_file(
     result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "F"
+    assert result["transfer_type"] == "F"
 
     # List files
     result = file_service.list_files(identity_simple, recid)
@@ -446,7 +446,7 @@ def test_read_not_committed_external_file(
     result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
     result = result.to_dict()
     assert result["key"] == file_to_initialise[0]["key"]
-    assert result["storage_class"] == "F"  # changed after commit
+    assert result["transfer_type"] == "F"  # changed after commit
 
     # Retrieve file
     with pytest.raises(PermissionDeniedError):
@@ -498,3 +498,75 @@ def test_empty_files(
     else:
         with pytest.raises(FileSizeError):
             result = file_service.commit_file(identity_simple, recid, "article.txt")
+
+
+def test_multipart_file_upload_local_storage(
+    file_service, location, example_file_record, identity_simple
+):
+    """Test the multipart upload to the local storage.
+
+    - Initialize file saving
+    - Save 1 files via multipart upload
+    - Commit the files
+    - List files of the record
+    - Read file metadata
+    - Retrieve a file
+    """
+    recid = example_file_record["id"]
+    key = "article.txt"
+    file_to_initialise = [
+        {
+            "key": key,
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,  # 2kB
+            "metadata": {
+                "description": "Published article PDF.",
+            },
+            "transfer_type": "M",
+            "parts": 2,
+            "part_size": 10,
+        }
+    ]
+    # Initialize file saving
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    result = result.to_dict()
+
+    assert result["entries"][0]["key"] == key
+    assert "parts" in result["entries"][0]["links"]
+
+    def upload_part(part_no, part_content, part_size):
+        # for to_file in to_files:
+        return file_service.set_multipart_file_content(
+            identity_simple,
+            recid,
+            key,
+            part_no,
+            BytesIO(part_content),
+            part_size,
+        )
+
+    content = b"test file content"
+    result = upload_part(1, content[:10], 10)
+    assert result.to_dict()["key"] == key
+
+    result = upload_part(2, content[10:], 7)
+    assert result.to_dict()["key"] == key
+
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+
+    # List files
+    result = file_service.list_files(identity_simple, recid)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["entries"][0]["storage_class"] == "L"
+    assert "uri" not in result.to_dict()["entries"][0]
+
+    # Read file metadata
+    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["transfer_type"] == "L"
+    assert "uri" not in result.to_dict()
+
+    # Retrieve file
+    result = file_service.get_file_content(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"

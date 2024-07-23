@@ -11,7 +11,6 @@
 """Factories test configuration."""
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
 
 

@@ -11,7 +11,7 @@
 from ...errors import QuerystringValidationError
 
 # Here for backward compatibility
-from ..queryparser import QueryParser, SuggestQueryParser
+from ..queryparser import QueryParser, SuggestQueryParser   # noqa
 from .base import ParamInterpreter
 
 

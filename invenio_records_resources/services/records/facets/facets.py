@@ -9,7 +9,6 @@
 
 """Facets types defined."""
 
-from functools import reduce
 
 from invenio_search.engine import dsl
 

@@ -21,3 +21,7 @@ current_notifications_registry = LocalProxy(
     lambda: current_app.extensions["invenio-records-resources"].notification_registry
 )
 """Helper proxy to get the current notifications registry."""
+
+current_transfer_registry = LocalProxy(
+    lambda: current_app.extensions["invenio-records-resources"].transfer_registry
+)

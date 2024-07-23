@@ -7,41 +7,46 @@
 # details.
 
 """File permissions generators."""
+from typing import Dict, List, Union
 
-
-from invenio_access.permissions import any_user, system_process
 from invenio_records_permissions.generators import Generator
-from invenio_search.engine import dsl
-
-from .transfer import TransferType
 
 
-class AnyUserIfFileIsLocal(Generator):
-    """Allows any user."""
+class IfTransferType(Generator):
+    def __init__(
+        self,
+        transfer_type_to_needs: Dict[str, Union[Generator, List[Generator]]],
+        else_: Union[Generator, List[Generator]] = None,
+    ):
+        # convert to dict of lists if not already
+        self._transfer_type_to_needs = {
+            transfer_type: needs if isinstance(needs, (list, tuple)) else [needs]
+            for transfer_type, needs in transfer_type_to_needs.items()
+        }
+
+        if not else_:
+            else_ = []
+        elif not isinstance(else_, (list, tuple)):
+            else_ = [else_]
+
+        self._else = else_
 
     def needs(self, **kwargs):
         """Enabling Needs."""
         record = kwargs["record"]
         file_key = kwargs.get("file_key")
-        is_file_local = True
-        if file_key:
-            file_record = record.files.get(file_key)
-            # file_record __bool__ returns false for `if file_record`
-            file = file_record.file if file_record is not None else None
-            is_file_local = not file or file.storage_class == TransferType.LOCAL
-        else:
-            file_records = record.files.entries
-            for file_record in file_records:
-                file = file_record.file
-                if file and file.storage_class != TransferType.LOCAL:
-                    is_file_local = False
-                    break
+        if not file_key:
+            return []  # no needs if file has not been passed
+        file_record = record.files.get(file_key)
+        if file_record is None:
+            return []
 
-        if is_file_local:
-            return [any_user]
-        else:
-            return [system_process]
+        transfer_type = file_record.transfer.transfer_type
+        assert transfer_type is not None, "Transfer type not set on file record"
 
-    def query_filter(self, **kwargs):
-        """Match all in search."""
-        return dsl.Q("match_all")
+        if transfer_type not in self._transfer_type_to_needs:
+            needs_generators = self._else
+        else:
+            needs_generators = self._transfer_type_to_needs[transfer_type]
+
+        return [need for x in needs_generators for need in x.needs(**kwargs)]

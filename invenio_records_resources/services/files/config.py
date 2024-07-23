@@ -14,6 +14,7 @@ from ..records.links import RecordLink
 from .components import (
     FileContentComponent,
     FileMetadataComponent,
+    FileMultipartContentComponent,
     FileProcessorComponent,
 )
 from .links import FileLink
@@ -53,6 +54,7 @@ class FileServiceConfig(ServiceConfig):
     components = [
         FileMetadataComponent,
         FileContentComponent,
+        FileMultipartContentComponent,
         FileProcessorComponent,
     ]
 
