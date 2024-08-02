@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version v6.2.0 (released 2024-08-02)
+
+- service: add bulk create/update method
+
 Version v6.1.1 (released 2024-07-30)
 
 - services: reraise permission errors for records
