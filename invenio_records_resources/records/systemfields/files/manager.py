@@ -367,6 +367,14 @@ class FilesManager(MutableMapping):
                 else:
                     self[f_key] = obj_or_key
 
+        # Check for metadata changes
+        for key, dest_rf in self.entries.items():
+            if key in src_files:
+                src_rf = src_files[key]
+                if src_rf.metadata != dest_rf.metadata:
+                    obj_or_key = dest_rf.object_version
+                    self[key] = obj_or_key, dict(src_rf)
+
     @property
     def entries(self):
         """Return file entries dictionary."""
