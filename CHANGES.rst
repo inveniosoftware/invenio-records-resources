@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version v6.3.0 (released 2024-08-08)
+
+- files: sync file access status
+- files: syncing metadata changes for uploaded files
+- files: update for retriveing files bucket
+
 Version v6.2.0 (released 2024-08-02)
 
 - service: add bulk create/update method
