@@ -39,6 +39,7 @@ from ..services.errors import (
     PermissionDeniedError,
     QuerystringValidationError,
     RecordPermissionDeniedError,
+    RecordSubmissionClosedCommunityError,
     RevisionIdMismatchError,
 )
 
@@ -205,6 +206,12 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=400,
                 description="Uploading selected files will result in exceeding the max amount per record.",
+            )
+        ),
+        RecordSubmissionClosedCommunityError: create_error_handler(
+            lambda e: HTTPJSONException(
+                code=403,
+                description=e.description,
             )
         ),
     }
