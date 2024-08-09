@@ -110,3 +110,9 @@ class FilesCountExceededException(Exception):
                 )
             )
         )
+
+
+class RecordSubmissionClosedCommunityError(PermissionDenied):
+    """Record submission policy forbids non-members from submitting records to community."""
+
+    description = "Submission to this community is only allowed to community members."
