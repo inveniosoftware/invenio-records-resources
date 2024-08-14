@@ -38,7 +38,7 @@ class QueryStrParam(ParamInterpreter):
                 raise QuerystringValidationError("Invalid 'suggest' parameter.")
 
         if query_str:
-            query = parser_cls(identity).parse(query_str)
+            query = parser_cls(identity).parse(query_str, locale=params.get("locale"))
             search = search.query(query)
 
         return search

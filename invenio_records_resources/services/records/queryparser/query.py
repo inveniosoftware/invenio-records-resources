@@ -80,6 +80,7 @@ class QueryParser:
         # fields is not removed from extra params since if given it must be
         # used in both querystring and multi match
         self._fields = self.extra_params.get("fields") or []
+        self._dynamic_fields = self.extra_params.pop("dynamic_fields", None) or []
 
     @property
     def allow_list(self):
@@ -117,8 +118,12 @@ class QueryParser:
             tree_transformer_cls=tree_transformer_cls,
         )
 
-    def parse(self, query_str):
+    def parse(self, query_str, locale=None):
         """Parse the query."""
+        if locale and self.extra_params.get("fields", None):
+            self.extra_params["fields"] += [
+                field.format(locale=locale) for field in self._dynamic_fields
+            ]
         try:
             # We parse the Lucene query syntax in Python, so we know upfront
             # if the syntax is correct before executing it in the search engine

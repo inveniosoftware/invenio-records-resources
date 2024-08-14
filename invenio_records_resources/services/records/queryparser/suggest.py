@@ -53,6 +53,10 @@ class SuggestQueryParser(QueryParser):
         super().__init__(identity=identity, extra_params=extra_params)
         self.extra_params.setdefault("type", "bool_prefix")
 
-    def parse(self, query_str):
+    def parse(self, query_str, locale=None):
         """Parse the query."""
+        if locale and self.extra_params.get("fields", None):
+            self.extra_params["fields"] += [
+                field.format(locale=locale) for field in self._dynamic_fields
+            ]
         return dsl.Q("multi_match", query=query_str, **self.extra_params)

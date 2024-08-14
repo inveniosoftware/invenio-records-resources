@@ -9,6 +9,8 @@
 
 """Schemas for parameter parsing."""
 
+from invenio_i18n import get_locale
+
 from flask_resources.parsers import MultiDictSchema
 from marshmallow import fields, post_load, validate
 
@@ -28,4 +30,10 @@ class SearchRequestArgsSchema(MultiDictSchema):
         data["facets"] = {}
         for k in set(original_data.keys()) - set(data.keys()):
             data["facets"][k] = original_data.getlist(k)
+        return data
+
+    @post_load
+    def inject_locale(self, data, **kwargs):
+        """Inject locale from request context into the args."""
+        data["locale"] = str(get_locale())
         return data
