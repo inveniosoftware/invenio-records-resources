@@ -279,7 +279,7 @@ def test_links_keep_facets(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?"
+            "https://127.0.0.1:5000/api/mocks?locale=en&"
             "page=1&size=25&sort=newest&type=A%2A%2AB"
         ),
     }
@@ -293,11 +293,11 @@ def test_links_keep_repeated_facets(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?page=1&size=1&sort=newest"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=1&size=1&sort=newest"
             "&type=B&type=A"
         ),
         "next": (
-            "https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest"
             "&type=B&type=A"
         ),
     }

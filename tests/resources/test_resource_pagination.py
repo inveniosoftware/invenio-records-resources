@@ -111,9 +111,9 @@ def test_middle_search_result_has_next_and_prev_links(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest",
-        "prev": "https://127.0.0.1:5000/api/mocks?page=1&size=1&sort=newest",
-        "next": "https://127.0.0.1:5000/api/mocks?page=3&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest",
+        "prev": "https://127.0.0.1:5000/api/mocks?locale=en&page=1&size=1&sort=newest",
+        "next": "https://127.0.0.1:5000/api/mocks?locale=en&page=3&size=1&sort=newest",
     }
 
     # NOTE: This is done so that we only test for pagination links
@@ -129,8 +129,8 @@ def test_first_search_result_has_next_and_no_prev_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://127.0.0.1:5000/api/mocks?page=1&size=1&sort=newest",
-        "next": "https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?locale=en&page=1&size=1&sort=newest",
+        "next": "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -145,8 +145,8 @@ def test_last_search_result_has_prev_link_and_no_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://127.0.0.1:5000/api/mocks?page=3&size=1&sort=newest",
-        "prev": "https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?locale=en&page=3&size=1&sort=newest",
+        "prev": "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -161,8 +161,8 @@ def test_beyond_last_search_has_prev_link_and_no_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://127.0.0.1:5000/api/mocks?page=4&size=1&sort=newest",
-        "prev": "https://127.0.0.1:5000/api/mocks?page=3&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?locale=en&page=4&size=1&sort=newest",
+        "prev": "https://127.0.0.1:5000/api/mocks?locale=en&page=3&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -177,7 +177,7 @@ def test_beyond_beyond_last_search_has_no_prev_or_next_link(
 
     response_links = response.json["links"]
     expected_links = {
-        "self": "https://127.0.0.1:5000/api/mocks?page=5&size=1&sort=newest",
+        "self": "https://127.0.0.1:5000/api/mocks?locale=en&page=5&size=1&sort=newest",
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -192,15 +192,15 @@ def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?page=2&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=2&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
         "prev": (
-            "https://127.0.0.1:5000/api/mocks?page=1&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=1&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
         "next": (
-            "https://127.0.0.1:5000/api/mocks?page=3&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=3&q=test%20foo&size=1"
             "&sort=bestmatch"
         ),
     }

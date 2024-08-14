@@ -102,8 +102,12 @@ def test_sort_in_links_no_matter_if_sort_in_url(client, headers, three_indexed_r
 
     response_links = response.json["links"]
     expected_links = {
-        "self": ("https://127.0.0.1:5000/api/mocks?page=1&size=1&sort=newest"),
-        "next": ("https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest"),
+        "self": (
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=1&size=1&sort=newest"
+        ),
+        "next": (
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest"
+        ),
     }
     # NOTE: This is done so that we only test for pagination links
     for key, url in expected_links.items():
@@ -113,8 +117,12 @@ def test_sort_in_links_no_matter_if_sort_in_url(client, headers, three_indexed_r
 
     response_links = response.json["links"]
     expected_links = {
-        "self": ("https://127.0.0.1:5000/api/mocks?page=1&size=1&sort=newest"),
-        "next": ("https://127.0.0.1:5000/api/mocks?page=2&size=1&sort=newest"),
+        "self": (
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=1&size=1&sort=newest"
+        ),
+        "next": (
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=2&size=1&sort=newest"
+        ),
     }
     for key, url in expected_links.items():
         assert url == response_links[key]
@@ -126,7 +134,7 @@ def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?page=1&q=the%20quick&size=25"
+            "https://127.0.0.1:5000/api/mocks?locale=en&page=1&q=the%20quick&size=25"
             "&sort=newest"
         ),
     }
