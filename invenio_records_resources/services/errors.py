@@ -110,3 +110,7 @@ class FilesCountExceededException(Exception):
                 )
             )
         )
+
+
+class CommunityNotSelectedError(Exception):
+    """Error thrown when a record is being created/updated with less than 1 community."""

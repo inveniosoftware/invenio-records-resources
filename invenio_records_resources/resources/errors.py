@@ -40,6 +40,7 @@ from ..services.errors import (
     QuerystringValidationError,
     RecordPermissionDeniedError,
     RevisionIdMismatchError,
+    CommunityNotSelectedError,
 )
 
 
@@ -205,6 +206,12 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=400,
                 description="Uploading selected files will result in exceeding the max amount per record.",
+            )
+        ),
+        CommunityNotSelectedError: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Cannot publish without selecting a community.",
             )
         ),
     }
