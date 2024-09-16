@@ -114,3 +114,18 @@ class FilesCountExceededException(Exception):
 
 class CommunityNotSelectedError(Exception):
     """Error thrown when a record is being created/updated with less than 1 community."""
+
+    def __init__(self):
+        """Constructor."""
+        super().__init__(
+            _("Cannot publish without selecting a community.")
+        )
+
+class CannotRemoveCommunityError(Exception):
+    """Error thrown when the last community is being removed from the record."""
+
+    def __init__(self):
+        """Constructor."""
+        super().__init__(
+            _("A record should be part of atleast 1 community.")
+        )

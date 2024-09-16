@@ -41,6 +41,7 @@ from ..services.errors import (
     RecordPermissionDeniedError,
     RevisionIdMismatchError,
     CommunityNotSelectedError,
+    CannotRemoveCommunityError,
 )
 
 
@@ -212,6 +213,12 @@ class ErrorHandlersMixin:
             HTTPJSONException(
                 code=400,
                 description="Cannot publish without selecting a community.",
+            )
+        ),
+        CannotRemoveCommunityError: create_error_handler(
+            HTTPJSONException(
+                code=400,
+                description="Cannot remove. A record should be part of atleast 1 community.",
             )
         ),
     }
