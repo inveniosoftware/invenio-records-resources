@@ -17,7 +17,7 @@ task execution.
 Note, this is NOT a clean implementation of the UoW design pattern. The
 main purpose of the Unit of Work in Invenio is to coordinate when the database
 transaction commit is called, and ensure tasks that have to run after the
-transcation are executed (such as indexing and running celery tasks).
+transaction are executed (such as indexing and running celery tasks).
 
 This ensures that we can group multiple service calls into a single database
 transaction and perform the necessary indexing/task execution afterwards.

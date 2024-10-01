@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version v6.3.1 (released 2024-10-01)
+
+- uow: moved Unit of Work pattern and non-record Operations to invenio-db.
+  Added backwards compatible imports.
+
 Version v6.3.0 (released 2024-08-08)
 
 - files: sync file access status
