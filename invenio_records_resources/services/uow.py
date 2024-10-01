@@ -106,7 +106,7 @@ class and implementing the desired methods:
 from celery import current_app
 
 # backwards compatible imports
-from invenio_db.services.uow import (
+from invenio_db.uow import (
     ModelCommitOp,
     ModelDeleteOp,
     Operation,
