@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2022 CERN.
+# Copyright (C) 2024 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,6 +9,7 @@
 
 """Record providers."""
 
+from invenio_db import db
 from invenio_pidstore.errors import PIDAlreadyExists
 
 
@@ -26,7 +28,7 @@ class ModelPIDProvider:
         Checks for duplicates.
         """
         filters = {model_field_name: pid_value}
-        obj = record.model_cls.query.filter_by(**filters).one_or_none()
+        obj = db.session.query(record.model_cls).filter_by(**filters).one_or_none()
         if obj:
             raise PIDAlreadyExists(
                 pid_value=pid_value,

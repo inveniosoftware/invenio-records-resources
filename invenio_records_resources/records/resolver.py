@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2024 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,7 +12,6 @@
 import uuid
 
 from invenio_db import db
-from invenio_pidstore.errors import PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 
@@ -75,7 +75,9 @@ class ModelResolver(object):
         """
         with db.session.no_autoflush:  # avoid flushing the current session
             filters = {self.model_field_name: pid_value}
-            obj = self._record_cls.model_cls.query.filter_by(**filters).one()
+            obj = (
+                db.session.query(self._record_cls.model_cls).filter_by(**filters).one()
+            )
             # get record and pid
             record = self._record_cls(obj.data, model=obj)
             return (record.pid, record)
