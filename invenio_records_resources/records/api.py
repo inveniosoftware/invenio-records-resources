@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2024 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -149,9 +150,11 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     def get_by_key(cls, record_id, key):
         """Get a record file by record ID and filename/key."""
         with db.session.no_autoflush:
-            obj = cls.model_cls.query.filter(
-                cls.record_id == record_id, cls.key == key
-            ).one_or_none()
+            obj = (
+                db.session.query(cls.model_cls)
+                .filter(cls.record_id == record_id, cls.key == key)
+                .one_or_none()
+            )
             if obj:
                 return cls(obj.data, model=obj)
 
@@ -159,7 +162,9 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     def list_by_record(cls, record_id, with_deleted=False):
         """List all record files by record ID."""
         with db.session.no_autoflush:
-            query = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
+            query = db.session.query(cls.model_cls).filter(
+                cls.model_cls.record_id == record_id
+            )
 
             if not with_deleted:
                 query = query.filter(cls.model_cls.is_deleted != True)
@@ -197,7 +202,9 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     @classmethod
     def remove_all(cls, record_id):
         """Hard delete record's file instances."""
-        record_files = cls.model_cls.query.filter(cls.model_cls.record_id == record_id)
+        record_files = db.session.query(cls.model_cls).filter(
+            cls.model_cls.record_id == record_id
+        )
         record_files.delete(synchronize_session=False)
 
     send_signals = False
