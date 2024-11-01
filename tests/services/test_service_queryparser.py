@@ -9,13 +9,18 @@
 """Query parser tests."""
 
 import pytest
-from invenio_access.permissions import system_identity
-from luqum.tree import Phrase
+from flask_principal import ActionNeed
+from invenio_access.permissions import Permission, SystemRoleNeed, system_identity
+from luqum.tree import Phrase, Word
 
 from invenio_records_resources.services.records.queryparser import (
     FieldValueMapper,
     QueryParser,
     SearchFieldTransformer,
+)
+from invenio_records_resources.services.records.queryparser.transformer import (
+    RestrictedTerm,
+    RestrictedTermValue,
 )
 
 
@@ -192,5 +197,87 @@ def test_querystring_valuemapper(query, transformed_query):
         tree_transformer_cls=SearchFieldTransformer,
     )
     assert p(system_identity).parse(query).to_dict() == {
+        "query_string": {"query": transformed_query}
+    }
+
+
+@pytest.mark.parametrize(
+    "query,transformed_query",
+    [
+        # notice the input and the output of the test is the same.
+        # Search field transformer does not rewrite the search query, but raises exception handled in:
+        # https://github.com/inveniosoftware/invenio-records-resources/blob/e297181296eef56bdfb0d1486c3e570fa741a0aa/invenio_records_resources/services/records/queryparser/query.py#L136
+        # but multimatch  will not pick up any results, due to default fields we are allowed to search on
+        # integration test for this behaviour is in invenio-rdm-records
+        ("internal_notes.note:abc", "internal_notes.note:abc"),
+    ],
+)
+def test_querystring_restricted_term(query, transformed_query, identity_simple, app):
+    """Invalid syntax falls back to multi match query."""
+
+    sysadmin_permission = Permission(SystemRoleNeed("system_process"))
+
+    def word_internal_notes(node):
+        """Rewrite internal notes value."""
+        if not node.value.startswith("internal_notes"):
+            return node
+        return Word("")
+
+    p = QueryParser.factory(
+        mapping={
+            "internal_notes.note": RestrictedTerm(sysadmin_permission),
+            "_exists_": RestrictedTermValue(
+                sysadmin_permission, word=word_internal_notes
+            ),
+        },
+        tree_transformer_cls=SearchFieldTransformer,
+    )
+
+    parser = p(system_identity)
+
+    assert parser.parse(query).to_dict() == {"query_string": {"query": query}}
+
+    parser = p(identity_simple)
+
+    assert parser.parse(query).to_dict() == {
+        "multi_match": {"query": transformed_query}
+    }
+
+
+@pytest.mark.parametrize(
+    "query,transformed_query",
+    [
+        ("_exists_:internal_notes", "_exists_:"),
+        ("_exists_:metadata", "_exists_:metadata"),
+    ],
+)
+def test_querystring_restricted_term(query, transformed_query, identity_simple, app):
+    """Invalid syntax falls back to multi match query."""
+
+    sysadmin_permission = Permission(SystemRoleNeed("system_process"))
+
+    def word_internal_notes(node):
+        """Rewrite internal notes value."""
+        if not node.value.startswith("internal_notes"):
+            return node
+        return Word("")
+
+    p = QueryParser.factory(
+        mapping={
+            "internal_notes.note": RestrictedTerm(sysadmin_permission),
+            "_exists_": RestrictedTermValue(
+                sysadmin_permission, word=word_internal_notes
+            ),
+        },
+        tree_transformer_cls=SearchFieldTransformer,
+    )
+
+    parser = p(system_identity)
+
+    assert parser.parse(query).to_dict() == {"query_string": {"query": query}}
+
+    parser = p(identity_simple)
+
+    assert parser.parse(query).to_dict() == {
         "query_string": {"query": transformed_query}
     }
