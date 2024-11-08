@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version v6.4.0 (released 2024-11-08)
+
+- transformer: add new RestrictedTerm and RestrictedTermValue to restrict search for
+  individual fields based on permissions
+
 Version v6.3.1 (released 2024-10-01)
 
 - uow: moved Unit of Work pattern and non-record Operations to invenio-db.
