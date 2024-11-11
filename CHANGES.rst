@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version 5.10.1 (released 2024-11-11)
+
+- i18n: fix translation only applied on app start
+
 Version 5.10.0 (released 2024-05-22)
 
 - uow: add generic DB Model operations
