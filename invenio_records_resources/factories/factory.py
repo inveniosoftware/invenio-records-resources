@@ -52,6 +52,7 @@ class RecordTypeFactory(object):
         record_relations=None,
         schema_path=None,
         index_name=None,
+        search_alias=None,
         search_options=None,
         service_components=None,
         permission_policy_cls=None,
@@ -82,6 +83,7 @@ class RecordTypeFactory(object):
         self.record_relations = record_relations
         self.schema_path = self._build_schema_path(schema_path)
         self.index_name = self._build_index_name(index_name)
+        self.search_alias = search_alias or self.name_plural
         self.model_cls_attrs = model_cls_attrs or {}
         self.record_cls_attrs = record_cls_attrs or {}
         self.resource_cls_attrs = resource_cls_attrs or {}
@@ -153,7 +155,7 @@ class RecordTypeFactory(object):
         record_class_attributes = {
             "model_cls": self.model_cls,
             "schema": ConstantField("$schema", self.schema_path),
-            "index": IndexField(self.index_name),
+            "index": IndexField(self.index_name, search_alias=self.search_alias),
             "pid": pid_field,
             "dumper": self.record_dumper or SearchDumper(),
         }
