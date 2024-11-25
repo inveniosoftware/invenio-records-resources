@@ -8,6 +8,8 @@
 
 """Query parameter interpreter API."""
 
+from functools import partial
+
 from invenio_search.engine import dsl
 
 from .query import QueryParser
@@ -32,7 +34,7 @@ class SuggestQueryParser(QueryParser):
 
         class MySearchOptions(SearchOptions):
             # ...
-            autocomplete_parser_cls = AutocompleteQueryParser.factory(
+            suggest_parser_cls = SuggestQueryParser.factory(
                 fields=[
                     'keywords',
                     'keywords._2gram',
@@ -56,3 +58,61 @@ class SuggestQueryParser(QueryParser):
     def parse(self, query_str):
         """Parse the query."""
         return dsl.Q("multi_match", query=query_str, **self.extra_params)
+
+
+class CompositeSuggestQueryParser(QueryParser):
+    """Composite query parser for suggestion-style queries.
+
+    Allows for multiple multi-match clauses to be combined in a single bool query.
+    See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html for more information on the various types
+    of multi-match queries available, and recommendations on when/how to use each.
+    """
+
+    def __init__(self, identity=None, extra_params=None, clauses=None, **kwargs):
+        """Constructor."""
+        super().__init__(identity=identity, extra_params=extra_params)
+        # Default operator is "and", to make sure we narrow down results
+        self.extra_params.setdefault("operator", "and")
+        self.clauses = clauses or [
+            # "cross_fields" helps when we expect the entire query to be searched across
+            # multiple fields (e.g. full name + affiliation + affiliation acronym).
+            {"type": "cross_fields", "boost": 3},
+            # "bool_prefix" is useful for search-as-you-type/auto completion features.
+            # It works in conjunction with having one or more search_as_you_type fields
+            # or custom ngram-analyzed fields.
+            {"type": "bool_prefix", "boost": 2, "fuzziness": "AUTO"},
+            # "most_fields" is just here to boost results where more fields match the
+            # query. E.g. the query "john doe acme" would match "name:(john doe)" and
+            # "affiliation.acronym:(acme)", instead of a case where only one field
+            # like "name:(john doe acme)" matches.
+            # We also enable fuzziness to allow for small typos.
+            {"type": "most_fields", "boost": 1, "fuzziness": "AUTO"},
+        ]
+
+    @classmethod
+    def factory(cls, tree_transformer_cls=None, clauses=None, **extra_params):
+        """Factory method."""
+        return partial(
+            cls,
+            tree_transformer_cls=tree_transformer_cls,
+            clauses=clauses,
+            extra_params=extra_params,
+        )
+
+    def parse(self, query_str):
+        """Parse and build the query."""
+        should_clauses = []
+
+        for clause in self.clauses:
+            params = {**self.extra_params, **clause}
+
+            # By default strip field boosting from cross_fields (e.g. "name^2") as it's
+            # not recommended in the docs.
+            strip_cross_fields_boost = params.pop("strip_cross_fields_boost", True)
+            is_cross_fields = clause["type"] == "cross_fields"
+            if is_cross_fields and strip_cross_fields_boost and params.get("fields"):
+                params["fields"] = [f.split("^")[0] for f in params["fields"]]
+
+            should_clauses.append(dsl.Q("multi_match", query=query_str, **params))
+
+        return dsl.Q("bool", should=should_clauses)
