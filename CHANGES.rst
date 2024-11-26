@@ -8,6 +8,14 @@
 Changes
 =======
 
+Version v6.5.0 (released 2024-11-26)
+
+- queryparser: add CompositeSuggestQueryParser
+    * Introduces a new query parser focused on better accuracy for
+      mappings that contain search-as-you-type or ngram-analyzed fields but
+      also secondary information fields that helps to
+      disambiquate/narrow-down results.
+
 Version v6.4.0 (released 2024-11-08)
 
 - transformer: add new RestrictedTerm and RestrictedTermValue to restrict search for
