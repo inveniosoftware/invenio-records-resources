@@ -84,7 +84,7 @@ class BaseTransfer(ABC):
             record.files.create_obj(
                 file_key, stream, size=content_length, size_limit=size_limit
             )
-        except (ClientDisconnected, CreateFailed) as e:
+        except (ClientDisconnected, CreateFailed):
             raise TransferException(f'Transfer of File with key "{file_key}" failed.')
 
     def commit_file(self, record, file_key):

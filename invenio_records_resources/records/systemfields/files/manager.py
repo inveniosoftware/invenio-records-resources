@@ -499,7 +499,7 @@ class FilesManager(MutableMapping):
                 stream = obj_or_stream
             else:
                 raise InvalidOperationError(
-                    description=f"Item has to be ObjectVersion or " "file-like object"
+                    description="Item has to be ObjectVersion or " "file-like object"
                 )
 
         return obj, stream, data

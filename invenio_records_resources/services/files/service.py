@@ -257,7 +257,7 @@ class FileService(Service):
 
         except FailedFileUploadException as e:
             file = e.file
-            current_app.logger.exception(f"File upload transfer failed.")
+            current_app.logger.exception("File upload transfer failed.")
             # we gracefully fail so that uow can commit the cleanup operation in
             # FileContentComponent
             errors = "File upload transfer failed."
