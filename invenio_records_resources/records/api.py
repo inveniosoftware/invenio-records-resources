@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -19,6 +20,8 @@ from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import SearchDumper
 from invenio_records.systemfields import DictField, SystemField, SystemFieldsMixin
 from invenio_records.systemfields.model import ModelField
+
+from .transfer import TransferField
 
 
 class Record(RecordBase, SystemFieldsMixin):
@@ -223,6 +226,8 @@ class FileRecord(RecordBase, SystemFieldsMixin):
     object_version = ModelField(dump=False)
     record_id = ModelField()
     _record = ModelField("record", dump=False)
+
+    transfer = TransferField()
 
     def __repr__(
         self,

@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -153,7 +154,16 @@ class FilesManager(MutableMapping):
 
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
-    def create(self, key, obj=None, stream=None, data=None, **kwargs):
+    def create(
+        self,
+        key,
+        *,
+        obj=None,
+        stream=None,
+        data=None,
+        transfer=None,
+        **kwargs,
+    ):
         """Create/initialize a file."""
         assert not (obj and stream)
 
@@ -172,6 +182,8 @@ class FilesManager(MutableMapping):
             rf.object_version = obj
         if data:
             rf.update(data)
+        if transfer:
+            rf.transfer = transfer
         rf.commit()
         self._entries[key] = rf
         return rf
