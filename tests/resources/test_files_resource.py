@@ -9,6 +9,7 @@
 # details.
 
 """Invenio Resources module to create REST APIs."""
+
 import zipfile
 from io import BytesIO
 from unittest.mock import patch
