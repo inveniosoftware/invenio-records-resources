@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version unreleased
+
+- fix: file upload >100MB
+
 Version 7.0.0 (release 2024-12-09)
 
 - setup: change to reusable workflows

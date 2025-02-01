@@ -3,6 +3,7 @@
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2023 TU Wien.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -13,7 +14,7 @@
 from contextlib import ExitStack
 
 import marshmallow as ma
-from flask import Response, abort, current_app, g, stream_with_context
+from flask import Response, abort, current_app, g, request, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
@@ -49,6 +50,25 @@ request_stream = request_body_parser(
     parsers={"application/octet-stream": RequestStreamParser()},
     default_content_type="application/octet-stream",
 )
+
+
+def set_max_content_length(func):
+    """Set max content length."""
+
+    def _wrapper(*args, **kwargs):
+        # flask >= 3.1.0 changed the behavior of MAX_CONTENT_LENGTH
+        # configuration variable. this is applied now to all requests
+        # including file upload. File uploads have much higher file
+        # size as form POST's. To keep request.max_content_length for
+        # form posts on a small value the request.max_content_length
+        # for file uploads is set here to the
+        # FILES_REST_DEFAULT_MAX_FILE_SIZE
+        request.max_content_length = current_app.config.get(
+            "FILES_REST_DEFAULT_MAX_FILE_SIZE", 10**10
+        )
+        return func(*args, **kwargs)
+
+    return _wrapper
 
 
 #
@@ -215,6 +235,7 @@ class FileResource(ErrorHandlersMixin, Resource):
             },
         )
 
+    @set_max_content_length
     @request_view_args
     @request_stream
     @response_handler()
