@@ -9,9 +9,9 @@
 Changes
 =======
 
-Version unreleased
+Version v7.0.1 (released 2025-02-06)
 
-- fix: file upload >100MB
+- fix: file uploads for >100MB
 
 Version 7.0.0 (release 2024-12-09)
 
