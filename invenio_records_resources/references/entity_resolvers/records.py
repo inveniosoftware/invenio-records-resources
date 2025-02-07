@@ -63,11 +63,27 @@ class RecordResolver(EntityResolver):
         :param record_cls: The record class to use.
         :param service_id: The record service id.
         :param type_key: The value to use for the TYPE part of the ref_dicts.
+        :param proxy_cls: The record proxy class to use.
         """
-        self.record_cls = record_cls
-        self.type_key = type_key
-        self.proxy_cls = proxy_cls
+        self._record_cls = record_cls
+        self._type_key = type_key
+        self._proxy_cls = proxy_cls
         super().__init__(service_id)
+
+    @property
+    def record_cls(self):
+        """Return the record class."""
+        return self._record_cls
+
+    @property
+    def type_key(self):
+        """Return the type key for the ref_dicts."""
+        return self._type_key
+
+    @property
+    def proxy_cls(self):
+        """Return the proxy class."""
+        return self._proxy_cls
 
     def matches_entity(self, entity):
         """Check if the entity is a record."""
