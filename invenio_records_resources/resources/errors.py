@@ -9,11 +9,13 @@
 # details.
 
 """Common Errors handling for Resources."""
+
 from json import JSONDecodeError
 
 import marshmallow as ma
 from flask import jsonify, make_response, request, url_for
 from flask_resources import HTTPJSONException, create_error_handler
+from invenio_i18n import gettext
 from invenio_i18n import lazy_gettext as _
 from invenio_pidstore.errors import (
     PIDAlreadyExists,
@@ -116,56 +118,59 @@ class ErrorHandlersMixin:
         QuerystringValidationError: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="Invalid querystring parameters.",
+                description=_("Invalid querystring parameters."),
             )
         ),
         PermissionDeniedError: create_error_handler(
             HTTPJSONException(
                 code=403,
-                description="Permission denied.",
+                description=_("Permission denied."),
             )
         ),
         RecordPermissionDeniedError: create_error_handler(
             HTTPJSONException(
                 code=403,
-                description="Permission denied.",
+                description=_("Permission denied."),
             )
         ),
         PIDDeletedError: create_error_handler(
             HTTPJSONException(
                 code=410,
-                description="The record has been deleted.",
+                description=_("The record has been deleted."),
             )
         ),
         PIDAlreadyExists: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="The persistent identifier is already registered.",
+                description=_("The persistent identifier is already registered."),
             )
         ),
         PIDDoesNotExistError: create_error_handler(
             HTTPJSONException(
                 code=404,
-                description="The persistent identifier does not exist.",
+                description=_("The persistent identifier does not exist."),
             )
         ),
         PIDUnregistered: create_error_handler(
             HTTPJSONException(
                 code=404,
-                description="The persistent identifier is not registered.",
+                description=_("The persistent identifier is not registered."),
             )
         ),
         PIDRedirectedError: create_pid_redirected_error_handler(),
         NoResultFound: create_error_handler(
             HTTPJSONException(
                 code=404,
-                description="Not found.",
+                description=_("Not found."),
             )
         ),
         FacetNotFoundError: create_error_handler(
             lambda e: HTTPJSONException(
                 code=404,
-                description=f"Facet {e.vocabulary_id} not found.",
+                # using gettext here in order to be able to call the format method
+                description=gettext(
+                    "Facet %(vocabulary_id)s not found.", vocabulary_id=e.vocabulary_id
+                ),
             )
         ),
         FileKeyNotFoundError: create_error_handler(
@@ -177,19 +182,19 @@ class ErrorHandlersMixin:
         JSONDecodeError: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="Unable to decode JSON data in request body.",
+                description=_("Unable to decode JSON data in request body."),
             )
         ),
         InvalidRelationValue: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="Not a valid value.",
+                description=_("Not a valid value."),
             )
         ),
         InvalidCheckValue: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="Not a valid value.",
+                description=_("Not a valid value."),
             )
         ),
         search.exceptions.RequestError: create_error_handler(
@@ -198,13 +203,15 @@ class ErrorHandlersMixin:
         FailedFileUploadException: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="The file upload transfer failed, please try again.",
+                description=_("The file upload transfer failed, please try again."),
             )
         ),
         FilesCountExceededException: create_error_handler(
             HTTPJSONException(
                 code=400,
-                description="Uploading selected files will result in exceeding the max amount per record.",
+                description=_(
+                    "Uploading selected files will result in exceeding the max amount per record."
+                ),
             )
         ),
     }

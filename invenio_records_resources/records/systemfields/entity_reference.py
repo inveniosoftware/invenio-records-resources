@@ -8,8 +8,7 @@
 
 """Systemfield for managing referenced entities in request."""
 
-from functools import partial
-
+from invenio_i18n import gettext as _
 from invenio_records.systemfields import SystemField
 
 from ...references.entity_resolvers import EntityProxy
@@ -43,7 +42,9 @@ class ReferencedEntityField(SystemField):
 
         # check if the reference is allowed
         if not self._check_reference(instance, obj):
-            raise ValueError(f"Invalid reference for '{self.key}': {obj}")
+            raise ValueError(
+                _("Invalid reference for '%(key)s': %(obj)s", key=self.key, obj=obj)
+            )
 
         # set dictionary key and reset the cache
         self.set_dictkey(instance, obj)
