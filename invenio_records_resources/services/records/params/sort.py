@@ -10,6 +10,7 @@
 
 from copy import deepcopy
 
+from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
 from .base import ParamInterpreter
@@ -57,5 +58,7 @@ class SortParam(ParamInterpreter):
 
         sort = options.get(params["sort"])
         if sort is None:
-            raise ValidationError(f"Invalid sort option '{params['sort']}'.")
+            raise ValidationError(
+                _("Invalid sort option '%(sort_option)s'.", sort_option=params["sort"])
+            )
         return sort["fields"]

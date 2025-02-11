@@ -8,6 +8,8 @@
 
 """Query parameter interpreter API."""
 
+from invenio_i18n import gettext as _
+
 from ...errors import QuerystringValidationError
 
 # Here for backward compatibility
@@ -25,8 +27,10 @@ class QueryStrParam(ParamInterpreter):
 
         if q_str and suggest_str:
             raise QuerystringValidationError(
-                "You cannot specify both 'q' and 'suggest' parameters at the "
-                "same time."
+                _(
+                    "You cannot specify both 'q' and 'suggest' parameters at the "
+                    "same time."
+                )
             )
 
         query_str = q_str
@@ -35,7 +39,7 @@ class QueryStrParam(ParamInterpreter):
             query_str = suggest_str
             parser_cls = self.config.suggest_parser_cls
             if parser_cls is None:
-                raise QuerystringValidationError("Invalid 'suggest' parameter.")
+                raise QuerystringValidationError(_("Invalid 'suggest' parameter."))
 
         if query_str:
             query = parser_cls(identity).parse(query_str)
