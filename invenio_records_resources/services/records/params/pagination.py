@@ -10,6 +10,8 @@
 
 from copy import deepcopy
 
+from invenio_i18n import gettext as _
+
 from ....pagination import Pagination
 from ...errors import QuerystringValidationError
 from .base import ParamInterpreter
@@ -34,6 +36,6 @@ class PaginationParam(ParamInterpreter):
         )
 
         if not p.valid():
-            raise QuerystringValidationError("Invalid pagination parameters.")
+            raise QuerystringValidationError(_("Invalid pagination parameters."))
 
         return search[p.from_idx : p.to_idx]
