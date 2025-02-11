@@ -10,6 +10,7 @@
 """File Service API."""
 
 from flask import current_app
+from invenio_i18n import gettext as _
 
 from ..base import LinksTemplate, Service
 from ..errors import FailedFileUploadException, FileKeyNotFoundError
@@ -257,10 +258,10 @@ class FileService(Service):
 
         except FailedFileUploadException as e:
             file = e.file
-            current_app.logger.exception(f"File upload transfer failed.")
+            current_app.logger.exception("File upload transfer failed.")
             # we gracefully fail so that uow can commit the cleanup operation in
             # FileContentComponent
-            errors = "File upload transfer failed."
+            errors = _("File upload transfer failed.")
 
         return self.file_result_item(
             self,

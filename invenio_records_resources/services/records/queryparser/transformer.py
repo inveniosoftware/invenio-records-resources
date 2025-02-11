@@ -125,14 +125,12 @@ class SearchFieldTransformer(TreeTransformer):
             # allows, we don't map any query, we allow it "as is"
             if not allows:
                 raise QuerystringValidationError(
-                    _("Invalid search field: {field_name}.").format(
-                        field_name=node.name
-                    )
+                    _("Invalid search field: %(field_name)s.", field_name=node.name)
                 )
         # If a allow list exists, the term must be allowed to be queried.
-        if self._allow_list and not term_name in self._allow_list:
+        if self._allow_list and term_name not in self._allow_list:
             raise QuerystringValidationError(
-                _("Invalid search field: {field_name}.").format(field_name=node.name)
+                _("Invalid search field: %(field_name)s.", field_name=node.name)
             )
 
         if field_value_mapper:
