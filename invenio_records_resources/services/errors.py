@@ -30,7 +30,10 @@ class RecordPermissionDeniedError(PermissionDenied):
 class PermissionDeniedError(PermissionDenied):
     """Permission denied error."""
 
-    description = "Permission denied."
+    @property
+    def description(self):
+        """Description."""
+        return _("Permission denied.")
 
 
 class RevisionIdMismatchError(Exception):
@@ -44,9 +47,10 @@ class RevisionIdMismatchError(Exception):
     @property
     def description(self):
         """Exception's description."""
-        return (
-            f"Revision id provided({self.expected_revision_id}) doesn't match "
-            f"record's one({self.record_revision_id})"
+        return _(
+            "Revision id provided(%(expected_revision_id)s) doesn't match record's one(%(record_revision_id)s)",
+            expected_revision_id=self.expected_revision_id,
+            record_revision_id=self.record_revision_id,
         )
 
 
@@ -66,7 +70,7 @@ class FacetNotFoundError(Exception):
     def __init__(self, vocabulary_id):
         """Initialise error."""
         self.vocabulary_id = vocabulary_id
-        super().__init__(_("Facet {vocab} not found.").format(vocab=vocabulary_id))
+        super().__init__(_("Facet %(vocab)s not found.", vocab=vocabulary_id))
 
 
 class FileKeyNotFoundError(Exception):
@@ -75,8 +79,10 @@ class FileKeyNotFoundError(Exception):
     def __init__(self, recid, file_key):
         """Constructor."""
         super().__init__(
-            _("Record '{recid}' has no file '{file_key}'.").format(
-                recid=recid, file_key=file_key
+            _(
+                "Record '%(recid)s' has no file '%(file_key)s'.",
+                recid=recid,
+                file_key=file_key,
             )
         )
         self.recid = recid
@@ -89,8 +95,10 @@ class FailedFileUploadException(Exception):
     def __init__(self, recid, file, file_key):
         """Constructor."""
         super().__init__(
-            _("Record '{recid}' failed to upload file '{file_key}'.").format(
-                recid=recid, file_key=file_key
+            _(
+                "Record '%(recid)s' failed to upload file '%(file_key)s'.",
+                recid=recid,
+                file_key=file_key,
             )
         )
         self.recid = recid

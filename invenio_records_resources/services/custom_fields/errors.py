@@ -7,8 +7,9 @@
 
 """Custom Fields for InvenioRDM."""
 
-
 from abc import abstractmethod
+
+from invenio_i18n import gettext as _
 
 
 class CustomFieldsException(Exception):
@@ -32,9 +33,10 @@ class InvalidCustomFieldsNamespace(CustomFieldsException):
     @property
     def description(self):
         """Exception's description."""
-        return (
-            f"Namespace {self.given_namespace} is not valid for custom field "
-            f"{self.field_name}."
+        return _(
+            "Namespace %(given_namespace)s is not valid for custom field %(field_name)s.",
+            given_namespace=self.given_namespace,
+            field_name=self.field_name,
         )
 
 
@@ -48,7 +50,10 @@ class CustomFieldsNotConfigured(CustomFieldsException):
     @property
     def description(self):
         """Exception's description."""
-        return f"Custom fields {self.field_names} are not configured."
+        return _(
+            "Custom fields %(field_names)s are not configured.",
+            field_names=self.field_names,
+        )
 
 
 class CustomFieldsInvalidArgument(CustomFieldsException):
@@ -61,6 +66,7 @@ class CustomFieldsInvalidArgument(CustomFieldsException):
     @property
     def description(self):
         """Exception's description."""
-        return (
-            f"Invalid argument {self.arg_name} passed when initializing custom field."
+        return _(
+            "Invalid argument %(arg_name)s passed when initializing custom field.",
+            arg_name=self.arg_name,
         )
