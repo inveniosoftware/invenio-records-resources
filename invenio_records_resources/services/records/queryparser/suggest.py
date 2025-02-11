@@ -78,10 +78,13 @@ class CompositeSuggestQueryParser(QueryParser):
             # multiple fields (e.g. full name + affiliation + affiliation acronym).
             {"type": "cross_fields", "boost": 3},
             # "bool_prefix" is useful for search-as-you-type/auto completion features.
-            # It works in conjunction with having one or more search_as_you_type fields
-            # or custom ngram-analyzed fields.
-            {"type": "bool_prefix", "boost": 2, "fuzziness": "AUTO"},
-            # "most_fields" is just here to boost results where more fields match the
+            # Ref: https://opensearch.org/docs/latest/analyzers/tokenizers/edge-n-gram/
+            # It works in conjunction with having search_as_you_type fields but for custom
+            # edge-ngram-analyzed fields it is not needed because the expansions already
+            # exist in the index, so essentially, bool_prefix is doing the same work
+            # Ref: https://opensearch.org/docs/latest/analyzers/token-filters/edge-ngram/
+            # {"type": "bool_prefix", "boost": 2, "fuzziness": "AUTO"},
+            # "most_fields" is here to boost results where more fields match the
             # query. E.g. the query "john doe acme" would match "name:(john doe)" and
             # "affiliation.acronym:(acme)", instead of a case where only one field
             # like "name:(john doe acme)" matches.
