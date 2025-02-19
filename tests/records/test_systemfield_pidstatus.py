@@ -10,9 +10,9 @@
 """PIDStatusCheckField tests."""
 
 from invenio_pidstore.models import PIDStatus
-from mock_module.api import Record
 
 from invenio_records_resources.records.systemfields import PIDStatusCheckField
+from tests.mock_module.api import Record
 
 
 def test_class_attribute_access():

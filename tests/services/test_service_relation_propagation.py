@@ -13,8 +13,6 @@ from copy import deepcopy
 
 import arrow
 import pytest
-from mock_module.api import Record, RecordWithRelations
-from mock_module.config import ServiceConfig as ServiceConfigBase
 
 from invenio_records_resources.proxies import (
     current_notifications_registry,
@@ -25,6 +23,8 @@ from invenio_records_resources.services.records.components import (
     ChangeNotificationsComponent,
     RelationsComponent,
 )
+from tests.mock_module.api import Record, RecordWithRelations
+from tests.mock_module.config import ServiceConfig as ServiceConfigBase
 
 
 @pytest.fixture(scope="module")

@@ -14,11 +14,11 @@ fixtures are available.
 """
 
 import pytest
-from mock_module.config import ServiceConfig
-from mock_module.resource import CustomRecordResourceConfig
 
 from invenio_records_resources.resources import RecordResource
 from invenio_records_resources.services import RecordService
+from tests.mock_module.config import ServiceConfig
+from tests.mock_module.resource import CustomRecordResourceConfig
 
 
 @pytest.fixture(scope="module")
@@ -31,13 +31,6 @@ def service():
 def record_resource(service):
     """Record Resource."""
     return RecordResource(CustomRecordResourceConfig, service)
-
-
-@pytest.fixture(scope="module")
-def base_app(base_app, record_resource):
-    """Application factory fixture."""
-    base_app.register_blueprint(record_resource.as_blueprint())
-    yield base_app
 
 
 @pytest.fixture(scope="module")

@@ -13,7 +13,8 @@ from datetime import datetime
 
 import pytest
 from invenio_indexer.api import RecordIndexer
-from mock_module.api import Record
+
+from tests.mock_module.api import Record
 
 
 @pytest.fixture()

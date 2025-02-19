@@ -18,7 +18,8 @@ from celery.messaging import establish_connection
 from invenio_cache import current_cache
 from kombu import Queue
 from kombu.compat import Consumer
-from mock_module.api import Record, RecordWithFiles
+
+from tests.mock_module.api import Record, RecordWithFiles
 
 
 @pytest.fixture(scope="function")
