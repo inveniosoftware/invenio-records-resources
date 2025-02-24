@@ -69,5 +69,9 @@ class TransferRegistry:
             raise ValueError("Either file_record or transfer_type must be provided.")
 
         return self._transfers[transfer_type](
-            record=record, key=key, file_service=file_service, uow=uow
+            record=record,
+            key=key,
+            file_service=file_service,
+            file_record=file_record,
+            uow=uow,
         )
