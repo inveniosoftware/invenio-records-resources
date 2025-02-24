@@ -134,12 +134,16 @@ class FileResource(ErrorHandlersMixin, Resource):
                 route("DELETE", routes["item"], self.delete),
                 route("POST", routes["item-commit"], self.create_commit),
                 route("PUT", routes["item-content"], self.update_content),
-                route(
-                    "PUT",
-                    routes["item-multipart-content"],
-                    self.upload_multipart_content,
-                ),
             ]
+            if "item-multipart-content" in routes:
+                # allow multipart upload to local storage if the route is defined
+                url_rules += [
+                    route(
+                        "PUT",
+                        routes["item-multipart-content"],
+                        self.upload_multipart_content,
+                    ),
+                ]
         return url_rules
 
     @request_view_args
