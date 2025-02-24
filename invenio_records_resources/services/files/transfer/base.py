@@ -9,13 +9,14 @@
 """Base transfer class."""
 
 from abc import ABC
+from typing import Union
 
 from flask_babel import lazy_gettext as _
 from fs.errors import CreateFailed
 from invenio_files_rest.errors import FileSizeError
 from werkzeug.exceptions import ClientDisconnected
 
-from invenio_records_resources.records.api import Record
+from invenio_records_resources.records.api import FileRecord, Record
 from invenio_records_resources.services.errors import TransferException
 from invenio_records_resources.services.files.service import FileService
 
@@ -52,12 +53,14 @@ class Transfer(ABC):
         record: Record,
         key: str,
         file_service: FileService,
+        file_record: Union[FileRecord, None] = None,
         uow=None,
     ):
         """Constructor."""
         self.record = record
         self.key = key
         self.file_service = file_service
+        self._file_record = file_record     # need to store it as it might be deleted
         self.uow = uow
 
     def init_file(self, record, file_metadata):
@@ -73,6 +76,8 @@ class Transfer(ABC):
     @property
     def file_record(self):
         """Get the file record."""
+        if self._file_record:
+            return self._file_record
         return self.record.files[self.key]
 
     def set_file_content(self, stream, content_length):
