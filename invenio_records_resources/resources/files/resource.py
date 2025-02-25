@@ -201,7 +201,7 @@ class FileResource(ErrorHandlersMixin, Resource):
         if obj is not None and emitter is not None:
             emitter(current_app, record=item._record, obj=obj, via_api=True)
 
-        return item.send_file(), 200
+        return item.send_file()
 
     @request_view_args
     def read_archive(self):
