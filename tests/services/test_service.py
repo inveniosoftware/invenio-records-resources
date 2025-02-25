@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -16,11 +16,9 @@ Test to add:
 """
 
 import pytest
-from invenio_cache import current_cache
 from invenio_pidstore.errors import PIDDeletedError
-from invenio_search import current_search, current_search_client
-from marshmallow import ValidationError
-from mock_module.api import Record
+
+from tests.mock_module.api import Record
 
 
 def test_simple_flow(app, consumer, service, identity_simple, input_data):
@@ -100,7 +98,11 @@ def test_read_many_pid_values(app, search_clear, service, identity_simple, input
     Record.index.refresh()
 
     records = service.read_many(
-        identity_simple, ids=[item_one.id, item_two.id], fields=["metadata.type.type"]
+        identity_simple,
+        ids=[item_one.id, item_two.id],
+        # NOTE: "id" and "pid" are needed to produce the links in the result
+        #       Previous link generation would silently produce incorrect links
+        fields=["id", "pid", "metadata.type.type"],
     )
 
     assert records.total == 2
