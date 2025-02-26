@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -24,3 +25,16 @@ RECORDS_RESOURCES_IMAGE_FORMATS = [".jpg", ".jpeg", ".jp2", ".png", ".tif", ".ti
 
 RECORDS_RESOURCES_ALLOW_EMPTY_FILES = True
 """Allow empty files to be uploaded."""
+
+RECORDS_RESOURCES_TRANSFERS = [
+    "invenio_records_resources.services.files.transfer.LocalTransfer",
+    "invenio_records_resources.services.files.transfer.FetchTransfer",
+    "invenio_records_resources.services.files.transfer.RemoteTransfer",
+    "invenio_records_resources.services.files.transfer.MultipartTransfer",
+]
+"""List of transfer classes to register."""
+
+
+RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "L"
+"""Default transfer class to use. 
+One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""

@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 European Union.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,95 +11,59 @@
 """File schema."""
 
 from datetime import timezone
-from urllib.parse import urlparse
+from typing import Mapping
 
-from flask import current_app
-from marshmallow import (
-    INCLUDE,
-    RAISE,
-    Schema,
-    ValidationError,
-    pre_dump,
-    validate,
-    validates,
-)
+from marshmallow import RAISE, Schema, ValidationError, pre_load
 from marshmallow.fields import UUID, Boolean, Dict, Integer, Nested, Str
+from marshmallow_oneofschema import OneOfSchema
 from marshmallow_utils.fields import GenMethod, Links, TZDateTime
 
-from .transfer import TransferType
+from ...proxies import current_transfer_registry
 
 
-class InitFileSchema(Schema):
-    """Service (component) schema for file initialization.
+class BaseTransferSchema(Schema):
+    """Base transfer schema.
 
-    The UI only sends a key and the documentation only refers to a key.
-    The tests though pass other fields.
-
-    Option 1: Only key
-    Pros: We limit what we support, we prevent instances from saving data
-          that we will need to support.
-    Cons: Change a few tests, disable PUT endpoint really
-
-    Option 2: Allow extra fields
-    Pros: Everything stays the same.
-    Cons: The same is loose / not quite consistent.
-
-    Given LTS, going for option 2 so that many changes are not introduced.
-    But ideally option 1 seems better: we can add other fields when we do
-    support third-party data hosting (and perhaps become FileSchema).
+    This schema is used to dump transfer metadata during the transfer and when
+    the transfer is finished.
     """
+
+    type_ = Str(attribute="type", data_key="type", required=True)
+    """Transfer type. Required field, the initial transfer type is filled 
+    automatically by the InitFileSchema."""
 
     class Meta:
         """Meta."""
 
-        unknown = INCLUDE
+        unknown = RAISE
 
-    key = Str(required=True)
-    storage_class = Str()
-    uri = Str(load_only=True)
-    checksum = Str()
-    size = Integer()
 
-    @validates("uri")
-    def validate_names(self, value):
-        """Validate the domain of the URI is allowed."""
-        # checking if storage class and uri are compatible is a
-        # business logic concern, not a schema concern.
-        if value:
-            validate.URL(error="Not a valid URL.")(value)
-            domain = urlparse(value).netloc
-            allowed_domains = current_app.config.get(
-                "RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS"
-            )
-            if domain not in allowed_domains:
-                raise ValidationError("Domain not allowed", field_name="uri")
+class TransferTypeSchemas(Mapping):
+    """Mapping of transfer types to their schemas."""
 
-    @pre_dump(pass_many=False)
-    def fields_from_file_obj(self, data, **kwargs):
-        """Fields coming from the FileInstance model."""
-        # this cannot be implemented as fields.Method since those receive the already
-        # dumped data. it could not be access to data.file.
-        # using data_key and attribute from marshmallow did not work as expected.
+    def __getitem__(self, transfer_type):
+        """Get the schema for the given transfer type."""
+        return current_transfer_registry.get_transfer_class(transfer_type).Schema
 
-        # data is a FileRecord instance, might not have a file yet.
-        # data.file is a File wrapper object.
-        if data.file:
-            # mandatory fields
-            data["storage_class"] = data.file.storage_class
-            data["uri"] = data.file.uri
+    def __iter__(self):
+        """Iterate over the transfer types."""
+        return iter(current_transfer_registry.get_transfer_types())
 
-            # If Local -> remove uri as it contains internal file storage info
-            if not TransferType(data["storage_class"]).is_serializable():
-                data.pop("uri")
+    def __len__(self):
+        """Return the number of transfer types."""
+        return len(current_transfer_registry.get_transfer_types())
 
-            # optional fields
-            fields = ["checksum", "size"]
-            for field in fields:
-                value = getattr(data.file, field, None)
-                if value is not None:
-                    data[field] = value
 
-        return data
+class TransferSchema(OneOfSchema):
+    """Transfer schema. A polymorphic schema that can handle different transfer types."""
+
+    type_field = "type"
+    type_field_remove = False
+    type_schemas = TransferTypeSchemas()
+
+    def get_obj_type(self, obj):
+        """Returns name of the schema during dump() calls, given the object being dumped."""
+        return obj["type"]
 
 
 class FileAccessSchema(Schema):
@@ -112,7 +77,7 @@ class FileAccessSchema(Schema):
     hidden = Boolean()
 
 
-class FileSchema(InitFileSchema):
+class FileSchema(Schema):
     """Service schema for files."""
 
     class Meta:
@@ -123,7 +88,6 @@ class FileSchema(InitFileSchema):
     created = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
     updated = TZDateTime(timezone=timezone.utc, format="iso", dump_only=True)
 
-    status = GenMethod("dump_status")
     mimetype = Str(dump_only=True, attribute="file.mimetype")
     version_id = UUID(attribute="file.version_id", dump_only=True)
     file_id = UUID(attribute="file.file_id", dump_only=True)
@@ -134,14 +98,56 @@ class FileSchema(InitFileSchema):
 
     links = Links()
 
+    key = Str(required=True, dump_only=True)
+    storage_class = Str(dump_only=True, attribute="file.file.storage_class")
+    checksum = Str(dump_only=True, attribute="file.file.checksum")
+    size = Integer(dump_only=True, attribute="file.file.size")
+    transfer = Nested(TransferSchema, dump_only=True)
+    status = GenMethod("dump_status")
+    transfer = Nested(TransferSchema, dump_only=True)
+
     def dump_status(self, obj):
         """Dump file status."""
-        # due to time constraints the status check is done here
-        # however, ideally this class should not need knowledge of
-        # the TransferType class, it should be encapsulated at File
-        # wrapper class or lower.
-        has_file = obj.file is not None
-        if has_file and TransferType(obj.file.storage_class).is_completed:
-            return "completed"
+        transfer = current_transfer_registry.get_transfer(
+            file_record=obj,
+            file_service=self.context.get("service"),
+            record=obj.record,
+        )
+        return transfer.status
 
-        return "pending"
+
+class InitFileSchemaMixin(Schema):
+    """Service (component) schema mixin for file initialization.
+
+    During file initialization, this mixin is merged with the FileSchema
+    above.
+
+    """
+
+    class Meta:
+        """Meta."""
+
+        unknown = RAISE
+
+    key = Str(required=True, dump_only=False)
+    storage_class = Str(default="L", dump_only=False)
+    checksum = Str(dump_only=False)
+    size = Integer(dump_only=False)
+    transfer = Nested(TransferSchema, dump_only=False)
+
+    @pre_load
+    def _fill_initial_transfer(self, data, **kwargs):
+        """Fill in the default transfer type."""
+        if not isinstance(data, dict):
+            # should be a dictionary, otherwise there will be validation error later on
+            return data
+
+        data.setdefault("transfer", {})
+        if not isinstance(data["transfer"], dict):
+            raise ValidationError(
+                {"transfer": "Transfer metadata must be a dictionary."}
+            )
+        data["transfer"].setdefault(
+            "type", current_transfer_registry.default_transfer_type
+        )
+        return data
