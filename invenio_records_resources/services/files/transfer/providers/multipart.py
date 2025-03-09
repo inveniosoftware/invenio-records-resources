@@ -10,12 +10,16 @@
 from datetime import datetime, timedelta
 
 import marshmallow as ma
-from invenio_db import db
+from invenio_db.uow import ModelCommitOp
 from invenio_files_rest import current_files_rest
 from invenio_files_rest.models import FileInstance, ObjectVersion
 
 from ....errors import TransferException
+from ....uow import RecordCommitOp
 from ...schema import BaseTransferSchema
+from ...tasks import (
+    recompute_multipart_checksum_task,
+)
 from ..base import Transfer, TransferStatus
 from ..constants import LOCAL_TRANSFER_TYPE, MULTIPART_TRANSFER_TYPE
 
@@ -107,9 +111,10 @@ class MultipartStorageExt:
 
         :param multipart_metadata: The metadata returned by the multipart_initialize_upload
             and the metadata returned by the multipart_set_content for each part.
+        :returns: None or a multipart checksum, if it was computed by the backend.
         """
         if hasattr(self._storage, "multipart_commit_upload"):
-            self._storage.multipart_commit_upload(**multipart_metadata)
+            return self._storage.multipart_commit_upload(**multipart_metadata)
 
     def multipart_abort_upload(self, **multipart_metadata):
         """
@@ -198,12 +203,12 @@ class MultipartTransfer(Transfer):
         file_record.object_version = version
         file_record.object_version_id = version.version_id
 
-        file_record.commit()
+        self.uow.register(RecordCommitOp(file_record))
 
         # create the file instance that will be used to get the storage factory.
         # it might also be used to initialize the file (preallocate its size)
         file_instance = FileInstance.create()
-        db.session.add(file_instance)
+        self.uow.register(ModelCommitOp(file_instance))
         version.set_file(file_instance)
 
         storage = self._get_storage(
@@ -226,12 +231,12 @@ class MultipartTransfer(Transfer):
         file_instance.set_uri(
             storage.fileurl,
             size,
-            checksum or "mutlipart:unknown",
+            checksum,
             storage_class=storage_class,
         )
 
-        db.session.add(file_instance)
-        file_record.commit()  # updated transfer metadata, so need to commit
+        self.uow.register(ModelCommitOp(file_instance))
+        self.uow.register(RecordCommitOp(file_record))
         return file_record
 
     def set_file_content(self, stream, content_length):
@@ -276,11 +281,30 @@ class MultipartTransfer(Transfer):
         super().commit_file()
 
         storage = self._get_storage()
-        storage.multipart_commit_upload(**self.multipart_metadata)
+        checksum = storage.multipart_commit_upload(**self.multipart_metadata)
+
+        recompute_checkum_needed = False
+
+        file_instance = self.file_record.object_version.file
+        if not file_instance.checksum:
+            recompute_checkum_needed = True
+            # get the multipart ETag and set it as the file checksum
+            if checksum is not None:
+                # set the checksum to the multipart checksum. This can later be picked
+                # up by a background job to compute the whole-file checksum reliably.
+                file_instance.checksum = (
+                    f"multipart:{checksum}-{self.multipart_metadata['part_size']}"
+                )
+                self.uow.register(ModelCommitOp(file_instance))
 
         # change the transfer type to local
         self.file_record.transfer.transfer_type = LOCAL_TRANSFER_TYPE
         self.file_record.commit()
+        
+        if recompute_checkum_needed:
+            recompute_multipart_checksum_task.delay(
+                str(file_instance.id)
+            )
 
     def delete_file(self):
         """If this method is called, we are deleting a file with an active multipart upload."""
