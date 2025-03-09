@@ -60,7 +60,7 @@ class Transfer(ABC):
         self.record = record
         self.key = key
         self.file_service = file_service
-        self._file_record = file_record     # need to store it as it might be deleted
+        self._file_record = file_record  # need to store it as it might be deleted
         self.uow = uow
 
     def init_file(self, record, file_metadata):
