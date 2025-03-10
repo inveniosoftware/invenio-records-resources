@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v7.0.2 (released 2025-03-10)
+
+- services: records: CompositeSuggestQueryParser: Filter out stopwords
+
 Version v7.0.1 (released 2025-02-06)
 
 - fix: file uploads for >100MB
