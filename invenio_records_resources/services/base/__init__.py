@@ -10,13 +10,14 @@
 """Base Service API."""
 
 from .config import ServiceConfig
-from .links import ConditionalLink, Link, LinksTemplate, NestedLinks
+from .links import ConditionalLink, Link, Link2, LinksTemplate, NestedLinks
 from .results import ServiceItemResult, ServiceListResult
 from .service import Service
 
 __all__ = (
     "ConditionalLink",
     "Link",
+    "Link2",
     "LinksTemplate",
     "Service",
     "ServiceConfig",

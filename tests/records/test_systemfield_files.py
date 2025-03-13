@@ -13,12 +13,12 @@ from io import BytesIO
 
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from invenio_records.systemfields import ConstantField, ModelField
-from mock_module import models
-from mock_module.api import FileRecord
-from mock_module.api import Record as RecordBase
 
 from invenio_records_resources.records.dumpers import PartialFileDumper
 from invenio_records_resources.records.systemfields.files import FilesField
+from tests.mock_module import models
+from tests.mock_module.api import FileRecord
+from tests.mock_module.api import Record as RecordBase
 
 
 # Define a files-enabled record class

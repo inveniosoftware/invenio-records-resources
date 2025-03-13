@@ -13,10 +13,10 @@ import time
 from copy import deepcopy
 
 import pytest
-from mock_module.api import Record
-from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
+from tests.mock_module.api import Record
+from tests.mock_module.config import ServiceConfig
 
 # 3 things to test
 # 0- search options are configurable (see mock_module)
@@ -126,8 +126,7 @@ def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?page=1&q=the%20quick&size=25"
-            "&sort=newest"
+            "https://127.0.0.1:5000/api/mocks?page=1&q=the+quick&size=25&sort=newest"
         ),
     }
     for key, url in expected_links.items():

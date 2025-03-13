@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,16 +9,14 @@
 
 """PIDField tests."""
 
-from datetime import datetime
-
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
-from mock_module.api import Record
-from mock_module.models import RecordMetadata
 from sqlalchemy import inspect
 
 from invenio_records_resources.records.api import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField
 from invenio_records_resources.records.systemfields.pid import PIDFieldContext
+from tests.mock_module.api import Record
+from tests.mock_module.models import RecordMetadata
 
 
 def test_class_attribute_access():

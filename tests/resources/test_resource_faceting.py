@@ -11,10 +11,10 @@
 
 
 import pytest
-from mock_module.api import Record
-from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
+from tests.mock_module.api import Record
+from tests.mock_module.config import ServiceConfig
 
 # 2 things to test
 # 1- results are aggregated / post_filtered
@@ -279,8 +279,7 @@ def test_links_keep_facets(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?"
-            "page=1&size=25&sort=newest&type=A%2A%2AB"
+            "https://127.0.0.1:5000/api/mocks?page=1&size=25&sort=newest&type=A**B"
         ),
     }
     for key, url in expected_links.items():

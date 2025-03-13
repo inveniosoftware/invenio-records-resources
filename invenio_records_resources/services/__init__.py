@@ -11,6 +11,7 @@
 from .base import (
     ConditionalLink,
     Link,
+    Link2,
     LinksTemplate,
     NestedLinks,
     Service,
@@ -20,11 +21,13 @@ from .files import FileLink, FileService, FileServiceConfig
 from .records import (
     RecordIndexerMixin,
     RecordLink,
+    RecordLink2,
     RecordService,
     RecordServiceConfig,
     SearchOptions,
     ServiceSchemaWrapper,
     pagination_links,
+    pagination_links2,
 )
 
 __all__ = (
@@ -33,9 +36,12 @@ __all__ = (
     "FileService",
     "FileServiceConfig",
     "Link",
+    "Link2",
     "LinksTemplate",
     "pagination_links",
+    "pagination_links2",
     "RecordLink",
+    "RecordLink2",
     "RecordService",
     "RecordServiceConfig",
     "SearchOptions",
