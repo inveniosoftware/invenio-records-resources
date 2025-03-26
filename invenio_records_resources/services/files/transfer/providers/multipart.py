@@ -300,11 +300,9 @@ class MultipartTransfer(Transfer):
         # change the transfer type to local
         self.file_record.transfer.transfer_type = LOCAL_TRANSFER_TYPE
         self.file_record.commit()
-        
+
         if recompute_checkum_needed:
-            recompute_multipart_checksum_task.delay(
-                str(file_instance.id)
-            )
+            recompute_multipart_checksum_task.delay(str(file_instance.id))
 
     def delete_file(self):
         """If this method is called, we are deleting a file with an active multipart upload."""

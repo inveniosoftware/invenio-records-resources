@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 CESNET z.s.p.o.
+#
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+"""Tests for multipart upload using the S3 backend."""
+
 import base64
 import hashlib
 import struct
@@ -12,7 +22,7 @@ def test_multipart_file_upload_s3(
     example_s3_file_record,
     identity_simple,
 ):
-    
+
     recid = example_s3_file_record["id"]
     key = "dataset.bin"
     total_size = 17 * 1024 * 1024  # 17MB
@@ -92,4 +102,4 @@ def test_multipart_file_upload_s3(
 
     # get the content from S3 and make sure it matches the original content
     sent_file = result.send_file()
-    assert content == requests.get(sent_file.headers['Location']).content
+    assert content == requests.get(sent_file.headers["Location"]).content
