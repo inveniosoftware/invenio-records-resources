@@ -12,8 +12,6 @@
 from invenio_search.engine import dsl
 from mock_module.api import Record
 
-from invenio_records_resources.records.systemfields import IndexField
-
 
 def test_class_attribute_access():
     """Test that field is returned."""

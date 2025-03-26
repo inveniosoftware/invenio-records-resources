@@ -11,7 +11,6 @@
 import uuid
 
 from invenio_db import db
-from invenio_pidstore.errors import PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
 
