@@ -15,7 +15,6 @@ from json import JSONDecodeError
 import marshmallow as ma
 from flask import jsonify, make_response, request, url_for
 from flask_resources import HTTPJSONException, create_error_handler
-from invenio_i18n import gettext
 from invenio_i18n import lazy_gettext as _
 from invenio_pidstore.errors import (
     PIDAlreadyExists,
@@ -167,8 +166,7 @@ class ErrorHandlersMixin:
         FacetNotFoundError: create_error_handler(
             lambda e: HTTPJSONException(
                 code=404,
-                # using gettext here in order to be able to call the format method
-                description=gettext(
+                description=_(
                     "Facet %(vocabulary_id)s not found.", vocabulary_id=e.vocabulary_id
                 ),
             )
