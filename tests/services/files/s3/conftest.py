@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 CESNET z.s.p.o.
+#
+# Invenio-Records-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+"""S3 testing configuration."""
 import os
 
 import pytest
@@ -12,7 +21,7 @@ from mock_module.api import RecordWithFiles
 def app_config(app_config):
     """Override pytest-invenio app_config fixture.
 
-    Needed to set the fields on the custom fields schema.
+    Needed to set up S3 configuration.
     """
     app_config["RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS"] = [
         "inveniordm.test",
@@ -40,6 +49,7 @@ def app_config(app_config):
     app_config["S3_SECRET_ACCESS_KEY"] = os.environ["S3_SECRET_ACCESS_KEY"]
 
     return app_config
+
 
 @pytest.fixture()
 def s3_location(app, db):
