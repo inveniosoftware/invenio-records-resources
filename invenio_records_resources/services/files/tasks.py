@@ -92,7 +92,9 @@ def recompute_multipart_checksum_task(file_instance_id):
         # multipart checksum looks like: multipart:<s3 multipart checksum>-part_size
         # s3 multipart checksum is the etag of the multipart object and looks like
         # hex(md5(<md5(part1) + md5(part2) + ...>))-<number of parts>
-        original_checksum_hex, _number_of_parts_str, part_size_str = checksum[10:].rsplit("-")
+        original_checksum_hex, _number_of_parts_str, part_size_str = checksum[
+            10:
+        ].rsplit("-")
         part_size = int(part_size_str)
 
         storage = current_files_rest.storage_factory(fileinstance=file_instance)
