@@ -9,6 +9,15 @@
 Changes
 =======
 
+Version v7.1.0 (released 2025-04-02)
+
+- files: remove HTTP code from read_content
+  * Should resolve file content issues with S3
+- i18n: fix untranslated strings in facet
+- il8n: replaced gettext with lazy gettext completely
+- i18n: removed deprecated messages
+- setup: dashes no longer work in setup.cfg babel options
+
 Version v7.0.2 (released 2025-03-10)
 
 - services: records: CompositeSuggestQueryParser: Filter out stopwords
