@@ -11,7 +11,8 @@
 """Facets tests."""
 
 import pytest
-from mock_module.api import Record
+
+from tests.mock_module.api import Record
 
 
 #

@@ -13,7 +13,8 @@ import time
 
 import pytest
 from marshmallow import ValidationError
-from mock_module.api import Record
+
+from tests.mock_module.api import Record
 
 
 #

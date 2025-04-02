@@ -14,7 +14,7 @@ from invenio_records_resources.services import (
     RecordServiceConfig,
     SearchOptions,
 )
-from invenio_records_resources.services.files.links import FileLink
+from invenio_records_resources.services.files.links import FileLink2
 from invenio_records_resources.services.records.components import FilesComponent
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import (
@@ -23,7 +23,8 @@ from invenio_records_resources.services.records.facets import (
 )
 from invenio_records_resources.services.records.links import (
     RecordLink,
-    pagination_links,
+    RecordLink2,
+    pagination_links2,
 )
 from invenio_records_resources.services.records.params.querystr import (
     SuggestQueryParser,
@@ -70,12 +71,12 @@ class ServiceConfig(RecordServiceConfig):
     search = MockSearchOptions
 
     links_item = {
-        "self": RecordLink("{+api}/mocks/{id}"),
-        "files": RecordLink("{+api}/mocks/{id}/files"),
-        "files-archive": RecordLink("{+api}/mocks/{id}/files-archive"),
+        "self": RecordLink2("mocks.read", params=["pid_value"]),
+        "files": RecordLink2("mocks_files.search", params=["pid_value"]),
+        "files-archive": RecordLink2("mocks_files.read_archive", params=["pid_value"]),
     }
 
-    links_search = pagination_links("{+api}/mocks{?args*}")
+    links_search = pagination_links2("mocks.search")
     nested_links_item = None
 
 
@@ -87,7 +88,7 @@ class ServiceWithFilesConfig(ServiceConfig):
     schema = RecordWithFilesSchema
 
 
-class MockFileServiceConfig(FileServiceConfig):
+class FileServiceConfig(FileServiceConfig):
     """File service configuration."""
 
     service_id = "mock-files"
@@ -95,12 +96,12 @@ class MockFileServiceConfig(FileServiceConfig):
     permission_policy_cls = PermissionPolicy
 
     file_links_list = {
-        "self": RecordLink("{+api}/mocks/{id}/files"),
-        "files-archive": RecordLink("{+api}/mocks/{id}/files-archive"),
+        "self": RecordLink2("mocks_files.search", params=["pid_value"]),
+        "files-archive": RecordLink2("mocks_files.read_archive", params=["pid_value"]),
     }
 
     file_links_item = {
-        "self": FileLink("{+api}/mocks/{id}/files/{key}"),
-        "content": FileLink("{+api}/mocks/{id}/files/{key}/content"),
-        "commit": FileLink("{+api}/mocks/{id}/files/{key}/commit"),
+        "self": FileLink2("mocks_files.read", params=["pid_value", "key"]),
+        "content": FileLink2("mocks_files.read_content", params=["pid_value", "key"]),
+        "commit": FileLink2("mocks_files.create_commit", params=["pid_value", "key"]),
     }
