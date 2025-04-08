@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2021 Northwestern University.
 # Copyright (C) 2021 European Union.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -117,7 +118,6 @@ def test_files_api_flow(client, search_clear, headers, input_data, location):
     assert res.json["key"] == "test.pdf"
     assert res.json["status"] == "completed"
     assert res.json["metadata"] == {"title": "Test file"}
-    file_size = str(res.json["size"])
     assert isinstance(res.json["size"], int), "File size not integer"
 
     # Read a file's content
@@ -299,6 +299,28 @@ def test_file_api_errors(client, search_clear, headers, input_data, location):
     # Pass an object instead of an array
     res = client.post(f"/mocks/{id_}/files", headers=headers, json={"key": "test.pdf"})
     assert res.status_code == 400
+    assert res.json == {
+        "errors": [{"field": "0._schema", "messages": ["Invalid input type."]}],
+        "message": "A validation error occurred.",
+        "status": 400,
+    }
+
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[{"key": "test.pdf", "transfer": "not a dictionary"}],
+    )
+    assert res.status_code == 400
+    assert res.json == {
+        "errors": [
+            {
+                "field": "transfer",
+                "messages": ["Transfer metadata must be a dictionary."],
+            }
+        ],
+        "message": "A validation error occurred.",
+        "status": 400,
+    }
 
     res = client.post(
         f"/mocks/{id_}/files",
@@ -331,10 +353,14 @@ def test_file_api_errors(client, search_clear, headers, input_data, location):
         f"/mocks/{id_}/files",
         headers=headers,
         json=[
-            {"key": "test.pdf", "title": "Test file"},
+            {"key": "test.pdf", "metadata": {"title": "Test file"}},
         ],
     )
     assert res.status_code == 400
+    assert res.json == {
+        "message": "File with key test.pdf already exists.",
+        "status": 400,
+    }
 
 
 def test_disabled_upload_file_resource(
@@ -476,3 +502,85 @@ def test_download_archive(
             files.sort()
             assert files == ["f1.pdf", "f2.pdf", "f3.pdf"]
     assert all(f.closed for f in captured_fps)
+
+
+def test_files_multipart_api_flow(
+    app, client, search_clear, headers, input_data, location
+):
+    """Test record creation."""
+    # Initialize a draft
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Initialize files upload
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {
+                "key": "test.pdf",
+                "metadata": {
+                    "title": "Test file",
+                },
+                "size": 17,
+                "transfer": {
+                    "type": "M",
+                    "parts": 2,
+                    "part_size": 10,
+                },
+            },
+        ],
+    )
+    assert res.status_code == 201
+    res_file = res.json["entries"][0]
+    assert res_file["key"] == "test.pdf"
+    assert res_file["status"] == "pending"
+    assert res_file["metadata"] == {"title": "Test file"}
+    assert res_file["links"]["self"].endswith(f"/api/mocks/{id_}/files/test.pdf")
+    assert "content" not in res_file["links"]
+    assert res_file["links"]["commit"].endswith(
+        f"/api/mocks/{id_}/files/test.pdf/commit"
+    )
+
+    parts_links = {
+        x["part"]: x["url"].split("/api", maxsplit=1)[1]
+        for x in res_file["links"]["parts"]
+    }
+
+    assert len(parts_links) == 2
+
+    def upload_part(part_number, data):
+        res = client.put(
+            parts_links[part_number],
+            headers={
+                "content-type": "application/octet-stream",
+            },
+            data=data,
+        )
+        assert res.status_code == 200
+        assert res.json["status"] == "pending"
+        assert res.json["transfer"]["type"] == "M"
+
+    upload_part(1, b"1234567890")
+    upload_part(2, b"1234567")
+
+    # Commit the uploaded file
+    res = client.post(f"/mocks/{id_}/files/test.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+    assert res.json["transfer"]["type"] == "L"
+
+    # Get the file metadata
+    res = client.get(f"/mocks/{id_}/files/test.pdf", headers=headers)
+    assert res.status_code == 200
+    assert res.json["key"] == "test.pdf"
+    assert res.json["status"] == "completed"
+    assert res.json["metadata"] == {"title": "Test file"}
+    assert isinstance(res.json["size"], int), "File size not integer"
+
+    # Read a file's content
+    res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
+    assert res.status_code == 200
+    assert res.data == b"12345678901234567"

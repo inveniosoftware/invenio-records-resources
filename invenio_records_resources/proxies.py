@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-2022 CERN.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -21,3 +22,7 @@ current_notifications_registry = LocalProxy(
     lambda: current_app.extensions["invenio-records-resources"].notification_registry
 )
 """Helper proxy to get the current notifications registry."""
+
+current_transfer_registry = LocalProxy(
+    lambda: current_app.extensions["invenio-records-resources"].transfer_registry
+)

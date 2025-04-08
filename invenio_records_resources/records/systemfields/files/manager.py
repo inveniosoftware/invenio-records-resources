@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -153,7 +154,16 @@ class FilesManager(MutableMapping):
 
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
-    def create(self, key, obj=None, stream=None, data=None, **kwargs):
+    def create(
+        self,
+        key,
+        *,
+        obj=None,
+        stream=None,
+        data=None,
+        transfer=None,
+        **kwargs,
+    ):
         """Create/initialize a file."""
         assert not (obj and stream)
 
@@ -172,6 +182,8 @@ class FilesManager(MutableMapping):
             rf.object_version = obj
         if data:
             rf.update(data)
+        if transfer:
+            rf.transfer = transfer
         rf.commit()
         self._entries[key] = rf
         return rf
@@ -321,11 +333,9 @@ class FilesManager(MutableMapping):
                 else:
                     dst_obj = rf.object_version
 
-                # Copy file record
-                if rf.metadata is not None:
-                    self[key] = dst_obj, dict(rf)
-                else:
-                    self[key] = dst_obj
+                # Copy file record, including all metadata and transfer info
+                self[key] = dst_obj, dict(rf)
+
         self.default_preview = src_files.default_preview
         self.order = src_files.order
 
@@ -362,10 +372,8 @@ class FilesManager(MutableMapping):
             elif operation == "add":
                 f_key = obj_or_key.key
                 rf = src_files[f_key]
-                if rf.metadata is not None:
-                    self[f_key] = obj_or_key, dict(rf)
-                else:
-                    self[f_key] = obj_or_key
+                # Add file record, including all metadata and transfer info
+                self[f_key] = obj_or_key, dict(rf)
 
         # Check for metadata and access changes
         for key, dest_rf in self.entries.items():
