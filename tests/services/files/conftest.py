@@ -17,7 +17,7 @@ import pytest
 from invenio_cache import current_cache
 
 from invenio_records_resources.services import RecordService
-from tests.mock_module.api import Record, RecordWithFiles
+from tests.mock_module.api import RecordWithFiles
 from tests.mock_module.config import ServiceWithFilesConfig
 
 

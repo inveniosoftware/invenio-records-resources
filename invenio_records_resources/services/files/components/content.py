@@ -7,6 +7,7 @@
 # details.
 
 """Files service components."""
+
 from ...errors import FailedFileUploadException, TransferException
 from ..transfer import Transfer
 from .base import FileServiceComponent
@@ -29,7 +30,7 @@ class FileContentComponent(FileServiceComponent):
             transfer.set_file_content(
                 record, file_record.file, file_key, stream, content_length
             )
-        except TransferException as e:
+        except TransferException:
             failed = record.files.delete(file_key, softdelete_obj=False, remove_rf=True)
             raise FailedFileUploadException(
                 file_key=file_key, recid=record.pid, file=failed

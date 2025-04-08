@@ -8,7 +8,7 @@
 
 """Systemfield for managing referenced entities in request."""
 
-from invenio_i18n import gettext as _
+
 from invenio_records.systemfields import SystemField
 
 from ...references.entity_resolvers import EntityProxy

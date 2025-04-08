@@ -8,7 +8,7 @@
 
 """Schema for entity references."""
 
-from marshmallow import RAISE, Schema, ValidationError, fields, validates_schema
+from marshmallow import Schema, ValidationError, fields, validates_schema
 
 
 #

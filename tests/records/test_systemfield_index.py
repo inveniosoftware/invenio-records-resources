@@ -10,6 +10,7 @@
 """Index field tests."""
 
 from invenio_search.engine import dsl
+from mock_module.api import Record
 
 from tests.mock_module.api import Record
 

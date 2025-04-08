@@ -8,7 +8,6 @@
 
 """File permissions generators."""
 
-
 from invenio_access.permissions import any_user, system_process
 from invenio_records_permissions.generators import Generator
 from invenio_search.engine import dsl
