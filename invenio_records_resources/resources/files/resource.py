@@ -14,7 +14,7 @@
 from contextlib import ExitStack
 
 import marshmallow as ma
-from flask import Response, abort, current_app, g, request, stream_with_context
+from flask import Response, current_app, g, request, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
