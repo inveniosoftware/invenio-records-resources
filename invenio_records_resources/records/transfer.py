@@ -30,6 +30,8 @@ from collections.abc import Mapping
 
 from invenio_records.systemfields import SystemField
 
+from ..proxies import current_transfer_registry
+
 
 class TransferFieldData(Mapping):
     """TransferType field data."""
@@ -41,7 +43,9 @@ class TransferFieldData(Mapping):
     @property
     def transfer_type(self):
         """Get the transfer type."""
-        return self._field.get("type", None)
+        # the get here is for backwards compatibility, if the file record was created
+        # before the transfer was added to the file record
+        return self._field.get("type", current_transfer_registry.default_transfer_type)
 
     @transfer_type.setter
     def transfer_type(self, value):

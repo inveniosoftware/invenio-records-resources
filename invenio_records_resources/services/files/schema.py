@@ -63,7 +63,10 @@ class TransferSchema(OneOfSchema):
 
     def get_obj_type(self, obj):
         """Returns name of the schema during dump() calls, given the object being dumped."""
-        return obj["type"]
+        # obj is either a transfer object (if called on a single file) or a dictionary
+        # if called on a list of files. The "get" here is for backward compatibility
+        # if we have a file record that was created before the transfer was added
+        return obj.get("type", current_transfer_registry.default_transfer_type)
 
 
 class FileAccessSchema(Schema):

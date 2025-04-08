@@ -18,6 +18,7 @@ from invenio_access import any_user
 from invenio_access.permissions import system_identity
 from invenio_files_rest.errors import FileSizeError
 from marshmallow import ValidationError
+from mock_module.models import FileRecordMetadata
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
@@ -706,3 +707,79 @@ def test_remote_file_no_permissions(
 
     with pytest.raises(PermissionDeniedError):
         file_service.init_files(i, recid, file_to_initialise)
+
+
+def test_backward_compatibility(
+    file_service, location, example_file_record, identity_simple, db
+):
+    """Test the backward compatibility to make sure that files without a transfer section still work.
+
+    - Initialize file saving
+    - Save 1 file
+    - Commit the file
+    - Directly in the database, remove the transfer section
+    - List files of the record
+    - Retrieve a file
+    - Delete a file
+    """
+
+    # same code as in the test_file_flow, so skipping the checks to make the test shorter
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,  # 2kB
+            "metadata": {
+                "description": "Published article PDF.",
+            },
+        }
+    ]
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    content = BytesIO(b"test file content")
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        file_to_initialise[0]["key"],
+        content,
+        content.getbuffer().nbytes,
+    )
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
+
+    # remove the transfer section from the database and make sure it is not there
+    file_metadata = FileRecordMetadata.query.all()
+    assert len(file_metadata) == 1
+    file_metadata[0].json = {
+        k: v for k, v in file_metadata[0].json.items() if k != "transfer"
+    }
+    db.session.add(file_metadata[0])
+    db.session.commit()
+    db.session.refresh(file_metadata[0])
+    assert "transfer" not in file_metadata[0].json
+
+    # List files
+    result = file_service.list_files(identity_simple, recid)
+    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["entries"][0]["storage_class"] == "L"
+    assert result.to_dict()["entries"][0]["transfer"] == {"type": "L"}
+    assert "uri" not in result.to_dict()["entries"][0]
+
+    # Read file metadata
+    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == file_to_initialise[0]["key"]
+    assert result.to_dict()["storage_class"] == "L"
+    assert result.to_dict()["transfer"] == {"type": "L"}
+
+    # Retrieve file
+    result = file_service.get_file_content(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"
+    assert result.get_stream("rb").read() == b"test file content"
+
+    # Delete file
+    result = file_service.delete_file(identity_simple, recid, "article.txt")
+    assert result.file_id == "article.txt"
+
+    # Assert deleted
+    result = file_service.list_files(identity_simple, recid)
+    assert result.entries
+    assert len(list(result.entries)) == 0
