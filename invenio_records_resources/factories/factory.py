@@ -9,6 +9,7 @@
 # details.
 
 """Record type factory."""
+
 from invenio_db import db
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.dumpers import SearchDumper
