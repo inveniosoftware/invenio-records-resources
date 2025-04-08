@@ -22,7 +22,12 @@ def test_multipart_file_upload_s3(
     example_s3_file_record,
     identity_simple,
 ):
-
+    try:
+        from invenio_s3.multipart_client import MultipartS3File
+    except ImportError:
+        raise ImportError(
+            "Old version of invenio-s3 is installed, please upgrade to multipart-aware version."
+        )
     recid = example_s3_file_record["id"]
     key = "dataset.bin"
     total_size = 17 * 1024 * 1024  # 17MB
