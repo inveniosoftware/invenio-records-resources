@@ -9,16 +9,13 @@
 """Base transfer class."""
 
 from abc import ABC
-from typing import Union
 
 from flask_babel import lazy_gettext as _
 from fs.errors import CreateFailed
 from invenio_files_rest.errors import FileSizeError
 from werkzeug.exceptions import ClientDisconnected
 
-from invenio_records_resources.records.api import FileRecord, Record
 from invenio_records_resources.services.errors import TransferException
-from invenio_records_resources.services.files.service import FileService
 
 from ..schema import BaseTransferSchema
 
@@ -50,13 +47,20 @@ class Transfer(ABC):
 
     def __init__(
         self,
-        record: Record,
-        key: str,
-        file_service: FileService,
-        file_record: Union[FileRecord, None] = None,
+        record,
+        key,
+        file_service,
+        file_record = None,
         uow=None,
     ):
-        """Constructor."""
+        """Constructor.
+        
+        :param record: The record to which the file belongs.
+        :param key: The key of the file.
+        :param file_service: The file service that is responsible for the file.
+        :param file_record: Optional file record. If not provided, 
+            we are in the process of file initialization.
+        """
         self.record = record
         self.key = key
         self.file_service = file_service

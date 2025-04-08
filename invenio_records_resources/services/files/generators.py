@@ -17,11 +17,14 @@ class IfTransferType(ConditionalGenerator):
 
     def __init__(
         self,
-        transfer_type: str,
+        transfer_type,
         then_,
         else_=None,
     ):
-        """Initializes the generator."""
+        """Initializes the generator.
+        
+        :param: transfer_type: The transfer type to check for.
+        """
 
         def to_list(value):
             if not value:
