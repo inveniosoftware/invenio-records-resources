@@ -14,7 +14,6 @@ from mock_module.api import Record
 
 from tests.mock_module.api import Record
 
-
 def test_class_attribute_access():
     """Test that field is returned."""
     assert isinstance(Record.index, dsl.Index)

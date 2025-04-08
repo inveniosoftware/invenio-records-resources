@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2023 TU Wien.
 # Copyright (C) 2025 Graz University of Technology.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -28,8 +29,6 @@ from flask_resources import (
 from invenio_stats.proxies import current_stats
 from zipstream import ZIP_STORED, ZipStream
 
-from invenio_records_resources.services.errors import FailedFileUploadException
-
 from ..errors import ErrorHandlersMixin
 from .parser import RequestStreamParser
 
@@ -49,6 +48,24 @@ request_data = request_body_parser(
 request_stream = request_body_parser(
     parsers={"application/octet-stream": RequestStreamParser()},
     default_content_type="application/octet-stream",
+)
+
+request_multipart_args = request_parser(
+    {
+        "pid_value": ma.fields.Str(required=True),
+        "key": ma.fields.Str(),
+        "part": ma.fields.Int(),
+    },
+    location="view_args",
+)
+
+request_multipart_args = request_parser(
+    {
+        "pid_value": ma.fields.Str(required=True),
+        "key": ma.fields.Str(),
+        "part": ma.fields.Int(),
+    },
+    location="view_args",
 )
 
 
@@ -117,6 +134,11 @@ class FileResource(ErrorHandlersMixin, Resource):
                 route("DELETE", routes["item"], self.delete),
                 route("POST", routes["item-commit"], self.create_commit),
                 route("PUT", routes["item-content"], self.update_content),
+                route(
+                    "PUT",
+                    routes["item-multipart-content"],
+                    self.upload_multipart_content,
+                ),
             ]
         return url_rules
 
@@ -264,10 +286,20 @@ class FileResource(ErrorHandlersMixin, Resource):
             content_length=resource_requestctx.data["request_content_length"],
         )
 
-        # if errors are set then there was a `TransferException` raised
-        if item.to_dict().get("errors"):
-            raise FailedFileUploadException(
-                file_key=item.file_id, recid=item.id, file=item.to_dict()
-            )
+        return item.to_dict(), 200
+
+    @request_multipart_args
+    @request_stream
+    @response_handler()
+    def upload_multipart_content(self):
+        """Upload multipart file content."""
+        item = self.service.set_multipart_file_content(
+            g.identity,
+            resource_requestctx.view_args["pid_value"],
+            resource_requestctx.view_args["key"],
+            resource_requestctx.view_args["part"],
+            resource_requestctx.data["request_stream"],
+            content_length=resource_requestctx.data["request_content_length"],
+        )
 
         return item.to_dict(), 200

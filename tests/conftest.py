@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -32,7 +33,9 @@ def app_config(app_config):
     app_config["RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS"] = [
         "inveniordm.test",
     ]
-
+    app_config["RECORDS_RESOURCES_FILES_ALLOWED_REMOTE_DOMAINS"] = [
+        "inveniordm.test",
+    ]
     app_config["FILES_REST_STORAGE_CLASS_LIST"] = {
         "L": "Local",
         "F": "Fetch",
@@ -106,4 +109,5 @@ def identity_simple():
     i = Identity(1)
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method="system_role", value="any_user"))
+    i.provides.add(Need(method="system_role", value="authenticated_user"))
     return i

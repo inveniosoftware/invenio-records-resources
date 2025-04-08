@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021 CERN.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -51,4 +52,13 @@ class FileServiceComponent(BaseServiceComponent):
 
     def get_file_content(self, identity, id_, file_key, record):
         """Get file content handler."""
-        pass
+
+    def get_file_transfer_metadata(
+        self, identity, id, file_key, record, transfer_metadata
+    ):
+        """Get file transfer metadata handler."""
+
+    def update_file_transfer_metadata(
+        self, identity, id, file_key, record, transfer_metadata
+    ):
+        """Update file transfer metadata handler."""
