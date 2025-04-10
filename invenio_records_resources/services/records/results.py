@@ -448,11 +448,7 @@ class FieldsResolver:
         The `id` field used to match the resolved record is hardcoded,
         as in the `read_many` method.
         """
-        fields = []
-        for field in self._fields:
-            if field.has(service, value):
-                fields.append(field)
-        return fields
+        return [field for field in self._fields if field.has(service, value)]
 
     def _fetch_referenced(self, grouped_values, identity):
         """Search and fetch referenced recs by ids."""
@@ -473,11 +469,10 @@ class FieldsResolver:
                 _add_dereferenced_record(service, value, hit)
 
             ghost_values = all_values - found_values
-            if ghost_values:
-                for value in ghost_values:
-                    # set dereferenced record to None. That will trigger eventually
-                    # the field.ghost_record() to be called
-                    _add_dereferenced_record(service, value, None)
+            for value in ghost_values:
+                # set dereferenced record to None. That will trigger eventually
+                # the field.ghost_record() to be called
+                _add_dereferenced_record(service, value, None)
 
     def resolve(self, identity, hits):
         """Collect field values and resolve referenced records."""
@@ -508,6 +503,80 @@ class FieldsResolver:
                 d = dict()
                 dict_set(d, field.field_name, output)
                 # merge dict with previous results
+                dict_merge(results, d)
+
+        return results
+
+
+class MultiFieldsResolver(FieldsResolver):
+    """Resolve the reference record for each of the configured fields.
+
+    Given a list of fields referencing other records/objects,
+    it fetches and returns the dereferenced record/obj.
+
+    This class supports resolution of nested fields and efficiently batches
+    resolution requests to services.
+    """
+
+    def _collect_values(self, hits):
+        """Collect all field values to be expanded."""
+        grouped_values = dict()
+
+        for hit in hits:
+            for field in self._fields:
+                try:
+                    value = dict_lookup(hit, field.field_name)
+                    if value is None:
+                        continue
+                except KeyError:
+                    continue
+
+                # Ensure `get_value_service` can return multiple (v, service) tuples
+                values_services = field.get_value_service(value)
+
+                if not isinstance(values_services, list):
+                    values_services = [values_services]  # Ensure list format
+
+                for v, service in values_services:
+                    field.add_service_value(service, v)
+                    grouped_values.setdefault(service, set()).add(v)
+
+        return grouped_values
+
+    def expand(self, identity, hit):
+        """Expand and return the resolved fields for the given hit."""
+        results = {}
+
+        for field in self._fields:
+            try:
+                value = dict_lookup(hit, field.field_name)
+                if value is None:
+                    continue
+            except KeyError:
+                continue
+
+            # Ensure `get_value_service` supports lists of (value, service)
+            values_services = field.get_value_service(value)
+            resolved_recs = {}
+            if isinstance(values_services, list):
+                resolved_recs = []
+                for v, service in values_services:
+                    resolved_rec = field.get_dereferenced_record(service, v)
+                    if resolved_rec:
+                        resolved = field.pick(identity, resolved_rec)
+                        if isinstance(resolved, list):
+                            resolved_recs.extend(resolved)
+                        else:
+                            resolved_recs.append(field.pick(identity, resolved_rec))
+            else:
+                v, service = values_services
+                resolved_rec = field.get_dereferenced_record(service, v)
+                if resolved_rec:
+                    resolved_recs = field.pick(identity, resolved_rec)
+            if resolved_recs:
+                # Maintain nested structure
+                d = dict()
+                dict_set(d, field.field_name, resolved_recs)
                 dict_merge(results, d)
 
         return results
