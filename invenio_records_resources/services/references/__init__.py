@@ -8,6 +8,9 @@
 
 """Service-related things for entity references."""
 
-from .schema import EntityReferenceBaseSchema
+from .schema import EntityReferenceBaseSchema, MultipleEntityReferenceBaseSchema
 
-__all__ = ("EntityReferenceBaseSchema",)
+__all__ = (
+    "EntityReferenceBaseSchema",
+    "MultipleEntityReferenceBaseSchema",
+)
