@@ -8,9 +8,8 @@
 
 """Test expand referenced records Service layer RecordItem."""
 
-from mock_module.api import Record
-
 from invenio_records_resources.services.records.results import ExpandableField
+from tests.mock_module.api import Record
 
 MOCK_USER = {"id": 3, "profile": {"full_name": "John Doe"}}
 MOCK_ENTITY = {"id": "ABC", "metadata": {"title": "My title"}}

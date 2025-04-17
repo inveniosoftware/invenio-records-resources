@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2024 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 # Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -18,7 +18,6 @@ from invenio_search import RecordsSearchV2
 from ...records import Record
 from ..base import ServiceConfig
 from .components import MetadataComponent
-from .links import RecordLink, pagination_links
 from .params import FacetsParam, PaginationParam, QueryParser, QueryStrParam, SortParam
 from .results import RecordBulkItem, RecordBulkList, RecordItem, RecordList
 
@@ -75,11 +74,9 @@ class RecordServiceConfig(ServiceConfig):
     # Service schema
     schema = None  # Needs to be defined on concrete record service config
 
-    links_item = {
-        "self": RecordLink("{+api}/records/{id}"),
-    }
-
-    links_search = pagination_links("{+api}/records{?args*}")
+    # Definition of those is left up to implementations
+    links_item = {}
+    links_search = {}
 
     # Service components
     components = [

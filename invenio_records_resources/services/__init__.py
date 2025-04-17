@@ -10,6 +10,8 @@
 
 from .base import (
     ConditionalLink,
+    EndpointLink,
+    ExternalLink,
     Link,
     LinksTemplate,
     NestedLinks,
@@ -18,23 +20,29 @@ from .base import (
 )
 from .files import FileLink, FileService, FileServiceConfig
 from .records import (
+    RecordEndpointLink,
     RecordIndexerMixin,
     RecordLink,
     RecordService,
     RecordServiceConfig,
     SearchOptions,
     ServiceSchemaWrapper,
+    pagination_endpoint_links,
     pagination_links,
 )
 
 __all__ = (
     "ConditionalLink",
+    "EndpointLink",
+    "ExternalLink",
     "FileLink",
     "FileService",
     "FileServiceConfig",
     "Link",
     "LinksTemplate",
+    "pagination_endpoint_links",
     "pagination_links",
+    "RecordEndpointLink",
     "RecordLink",
     "RecordService",
     "RecordServiceConfig",

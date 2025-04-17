@@ -9,9 +9,11 @@
 """Utility for rendering URI template links."""
 
 import operator
+import warnings
 from copy import deepcopy
 
 from flask import current_app
+from invenio_base import invenio_url_for
 from invenio_records.dictutils import dict_lookup
 from uritemplate import URITemplate
 from werkzeug.datastructures import MultiDict
@@ -95,7 +97,12 @@ class LinksTemplate:
 
 
 class Link:
-    """Utility class for keeping track of and resolve links."""
+    """Encapsulation of the rendering of a NON-Invenio URL.
+
+    Use this for third-party links like
+        - "https://handle.stage.datacite.org/{+pid_doi}"
+        - "https://doi.org/{+pid_doi}"
+    """
 
     def __init__(self, uritemplate, when=None, vars=None):
         """Constructor."""
@@ -123,6 +130,76 @@ class Link:
             self._vars_func(obj, vars)
         vars = preprocess_vars(vars)
         return self._uritemplate.expand(**vars)
+
+
+def _link_w_warning():
+    """Return Link but with deprecation warning."""
+    warnings.warn(
+        "Link is deprecated and will be removed in v14.0. Use `ExternalLink` for "
+        "third-party links and `EndpointLink` for InvenioRDM links.",
+        DeprecationWarning,
+    )
+    return Link
+
+
+ExternalLink = _link_w_warning()
+
+
+class EndpointLink:
+    """Encapsulation of the rendering of an endpoint URL.
+
+    Is interface-compatible with Link for ease of initial adoption.
+    """
+
+    def __init__(self, endpoint, when=None, vars=None, params=None):
+        """Constructor.
+
+        :param endpoint: str. endpoint of the URL
+        :param when: fn(obj, dict) -> bool, when the URL should be rendered
+        :param vars: fn(obj, dict), mutate dict in preparation for expansion
+        :param params: list, parameters (excluding querystrings) used for expansion
+        """
+        self._endpoint = endpoint
+        self._when_func = when
+        self._vars_func = vars
+        self._params = params or []
+
+    def should_render(self, obj, context):
+        """Determine if the link should be rendered."""
+        if self._when_func:
+            return bool(self._when_func(obj, context))
+        return True
+
+    @staticmethod
+    def vars(obj, vars):
+        """Dynamically update vars used to expand the link.
+
+        Subclasses should overwrite this method.
+        """
+        pass
+
+    def expand(self, obj, context):
+        """Expand the endpoint.
+
+        Note: "args" key in generated values for expansion has special meaning.
+              It is used for querystring parameters.
+        """
+        vars = {}
+        vars.update(deepcopy(context))
+        self.vars(obj, vars)
+        if self._vars_func:
+            self._vars_func(obj, vars)
+
+        # Construct final values dict.
+        # Because invenio_url_for renders on the URL all arguments given to it,
+        # filtering for expandable ones must be done.
+        values = {k: v for k, v in vars.items() if k in self._params}
+        # The "args" key in the final values dict is where
+        # querystrings are passed through.
+        # Assumes no clash between URL params and querystrings
+        values.update(vars.get("args", {}))
+        values = dict(sorted(values.items()))  # keep sorted interface
+        return invenio_url_for(self._endpoint, **values)
 
 
 class ConditionalLink:

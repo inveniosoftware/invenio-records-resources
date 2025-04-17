@@ -12,7 +12,8 @@
 import pytest
 from invenio_search import current_search_client
 from jsonschema import ValidationError
-from mock_module.api import Record
+
+from tests.mock_module.api import Record
 
 
 #

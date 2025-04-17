@@ -11,7 +11,6 @@
 """Factories test configuration."""
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
 
 
@@ -21,13 +20,13 @@ def extra_entry_points():
     return {
         # to be verified if needed, since the models are dynamically created
         "invenio_db.model": [
-            "mock_module_factory = mock_module_factory.grant",
+            "mock_module_factory = tests.mock_module_factory.grant",
         ],
         "invenio_jsonschemas.schemas": [
-            "mock_module_factory = mock_module_factory.jsonschemas",
+            "mock_module_factory = tests.mock_module_factory.jsonschemas",
         ],
         "invenio_search.mappings": [
-            "grants = mock_module_factory.mappings",
+            "grants = tests.mock_module_factory.mappings",
         ],
     }
 

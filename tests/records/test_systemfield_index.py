@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,9 +10,8 @@
 """Index field tests."""
 
 from invenio_search.engine import dsl
-from mock_module.api import Record
 
-from invenio_records_resources.records.systemfields import IndexField
+from tests.mock_module.api import Record
 
 
 def test_class_attribute_access():
