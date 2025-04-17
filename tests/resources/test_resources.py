@@ -11,7 +11,7 @@
 
 import json
 
-from mock_module.api import Record
+from tests.mock_module.api import Record
 
 
 def test_simple_flow(app, client, input_data, headers):

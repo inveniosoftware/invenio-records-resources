@@ -10,10 +10,10 @@
 """Test pagination."""
 
 import pytest
-from mock_module.api import Record
-from mock_module.config import ServiceConfig
 
 from invenio_records_resources.services import RecordService
+from tests.mock_module.api import Record
+from tests.mock_module.config import ServiceConfig
 
 # 2 things to test
 # 1- results are paginated
@@ -192,15 +192,15 @@ def test_searchstring_is_preserved(client, headers, three_indexed_records):
     response_links = response.json["links"]
     expected_links = {
         "self": (
-            "https://127.0.0.1:5000/api/mocks?page=2&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=2&q=test+foo&size=1"
             "&sort=bestmatch"
         ),
         "prev": (
-            "https://127.0.0.1:5000/api/mocks?page=1&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=1&q=test+foo&size=1"
             "&sort=bestmatch"
         ),
         "next": (
-            "https://127.0.0.1:5000/api/mocks?page=3&q=test%20foo&size=1"
+            "https://127.0.0.1:5000/api/mocks?page=3&q=test+foo&size=1"
             "&sort=bestmatch"
         ),
     }

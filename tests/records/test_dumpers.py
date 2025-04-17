@@ -11,7 +11,6 @@
 from copy import deepcopy
 
 import pytest
-from mock_module.api import Record
 
 from invenio_records_resources.records.dumpers import CustomFieldsDumperExt
 from invenio_records_resources.services.custom_fields import (
@@ -20,6 +19,7 @@ from invenio_records_resources.services.custom_fields import (
     KeywordCF,
     TextCF,
 )
+from tests.mock_module.api import Record
 
 
 @pytest.fixture(scope="module")

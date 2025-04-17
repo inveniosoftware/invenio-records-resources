@@ -10,13 +10,11 @@
 """Record Service API."""
 
 from ..base import ServiceConfig
-from ..records.links import RecordLink
 from .components import (
     FileContentComponent,
     FileMetadataComponent,
     FileProcessorComponent,
 )
-from .links import FileLink
 from .processors import ImageMetadataExtractor
 from .results import FileItem, FileList
 from .schema import FileSchema
@@ -41,14 +39,9 @@ class FileServiceConfig(ServiceConfig):
 
     max_files_count = 100
 
-    file_links_list = {
-        "self": RecordLink("{+api}/records/{id}/files"),
-    }
-
-    file_links_item = {
-        "self": FileLink("{+api}/records/{id}/files/{+key}"),
-        "content": FileLink("{+api}/records/{id}/files/{+key}/content"),
-    }
+    # Inheriting resource config should define these
+    file_links_list = {}
+    file_links_item = {}
 
     components = [
         FileMetadataComponent,

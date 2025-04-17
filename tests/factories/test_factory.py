@@ -11,13 +11,13 @@
 """Factory tests."""
 
 import pytest
-from mock_module.schemas import RecordSchema
 from sqlalchemy.exc import InvalidRequestError
 
 from invenio_records_resources.factories.factory import RecordTypeFactory
 from invenio_records_resources.services import RecordServiceConfig, SearchOptions
 from invenio_records_resources.services.records.components import ServiceComponent
 from invenio_records_resources.services.records.facets import TermsFacet
+from tests.mock_module.schemas import RecordSchema
 
 
 def test_model_class_create():

@@ -41,11 +41,21 @@ class FileService(Service):
 
     def file_links_list_tpl(self, id_):
         """Return a link template for list results."""
-        return LinksTemplate(self.config.file_links_list, context={"id": id_})
+        return LinksTemplate(
+            # Until all modules have transitioned to using invenio_url_for,
+            # we have to keep `id` in context for URL expansion
+            self.config.file_links_list,
+            context={"id": id_, "pid_value": id_},
+        )
 
     def file_links_item_tpl(self, id_):
         """Return a link template for item results."""
-        return LinksTemplate(self.config.file_links_item, context={"id": id_})
+        return LinksTemplate(
+            # Until all modules have transitioned to using invenio_url_for,
+            # we have to keep `id` in context for URL expansion
+            self.config.file_links_item,
+            context={"id": id_, "pid_value": id_},
+        )
 
     def check_permission(self, identity, action_name, **kwargs):
         """Check a permission against the identity."""

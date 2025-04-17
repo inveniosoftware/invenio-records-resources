@@ -14,51 +14,40 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
-from mock_module.config import ServiceWithFilesConfig
-from mock_module.resource import (
-    CustomDisabledUploadFileResourceConfig,
-    CustomFileResourceConfig,
-    CustomRecordResourceConfig,
-)
 from zipstream import ZipStream
 
-from invenio_records_resources.resources import FileResource, RecordResource
-from invenio_records_resources.services import RecordService
+from tests.mock_module import service_for_files, service_for_records_w_files
 
 
 @pytest.fixture(scope="module")
-def service():
-    return RecordService(ServiceWithFilesConfig)
-
-
-@pytest.fixture(scope="module")
-def record_resource(service):
-    """Record Resource."""
-    return RecordResource(CustomRecordResourceConfig, service)
-
-
-@pytest.fixture(scope="module")
-def file_resource(file_service):
-    """File Resources."""
-    return FileResource(CustomFileResourceConfig, file_service)
-
-
-@pytest.fixture(scope="module")
-def disabled_file_upload_resource(file_service):
-    """Disabled Upload File Resource."""
-    return FileResource(CustomDisabledUploadFileResourceConfig, file_service)
+def extra_entry_points():
+    """Extra entry points to load the mock_module features."""
+    return {
+        "invenio_db.model": [
+            "mock_module = tests.mock_module.models",
+        ],
+        "invenio_jsonschemas.schemas": [
+            "mock_module = tests.mock_module.jsonschemas",
+        ],
+        "invenio_search.mappings": [
+            "records = tests.mock_module.mappings",
+        ],
+        "invenio_base.api_blueprints": [
+            "mock_module_mocks = tests.mock_module:create_mocks_w_files_bp",
+            "mock_module_mocks_files = tests.mock_module:create_mocks_files_bp",
+            "mock_module_mocks_files_disabled_upload = tests.mock_module:create_mocks_files_disabled_upload_bp",
+        ],
+    }
 
 
 @pytest.fixture(scope="module")
 def base_app(
-    base_app, file_resource, disabled_file_upload_resource, service, file_service
+    base_app,
 ):
     """Application factory fixture."""
-    base_app.register_blueprint(file_resource.as_blueprint())
-    base_app.register_blueprint(disabled_file_upload_resource.as_blueprint())
     registry = base_app.extensions["invenio-records-resources"].registry
-    registry.register(service, service_id="mock-records")
-    registry.register(file_service, service_id="mock-files")
+    registry.register(service_for_records_w_files, service_id="mock-records")
+    registry.register(service_for_files, service_id="mock-files")
     yield base_app
 
 

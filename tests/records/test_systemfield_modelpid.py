@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2022 CERN.
+# Copyright (C) 2025 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,13 +9,12 @@
 
 """ModelPIDField tests."""
 
-import pytest
 from invenio_records.systemfields import ModelField
-from mock_module.api import Record as RecordBase
-from mock_module.models import RecordMetadataWithPID
 
 from invenio_records_resources.records.systemfields import ModelPIDField
 from invenio_records_resources.records.systemfields.pid import ModelPIDFieldContext
+from tests.mock_module.api import Record as RecordBase
+from tests.mock_module.models import RecordMetadataWithPID
 
 
 class Record(RecordBase):
