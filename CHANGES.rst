@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v7.2.0 (released 2025-04-22)
+
+- urls: introduce invenio_url_for-compatible links
+
 Version v7.1.0 (released 2025-04-02)
 
 - files: remove HTTP code from read_content
