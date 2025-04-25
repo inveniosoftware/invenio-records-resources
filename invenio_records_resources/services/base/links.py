@@ -96,7 +96,7 @@ class LinksTemplate:
         return links
 
 
-class Link:
+class ExternalLink:
     """Encapsulation of the rendering of a NON-Invenio URL.
 
     Use this for third-party links like
@@ -133,16 +133,16 @@ class Link:
 
 
 def _link_w_warning():
-    """Return Link but with deprecation warning."""
+    """Return ExternalLink but with deprecation warning."""
     warnings.warn(
         "Link is deprecated and will be removed in v14.0. Use `ExternalLink` for "
         "third-party links and `EndpointLink` for InvenioRDM links.",
         DeprecationWarning,
     )
-    return Link
+    return ExternalLink
 
 
-ExternalLink = _link_w_warning()
+Link = _link_w_warning()
 
 
 class EndpointLink:
