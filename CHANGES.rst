@@ -1,6 +1,7 @@
 ..
     Copyright (C) 2020-2024 CERN.
     Copyright (C) 2024 Graz University of Technology.
+    Copyright (C) 2025 Northwestern University.
 
     Invenio-Records-Resources is free software; you can redistribute it and/or
     modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,6 +9,11 @@
 
 Changes
 =======
+
+Version v7.3.0 (released 2025-04-29)
+
+- config: move allow_upload and allow_archive_download to service
+- urls: locate Link warning more appropriately
 
 Version v7.2.0 (released 2025-04-22)
 
