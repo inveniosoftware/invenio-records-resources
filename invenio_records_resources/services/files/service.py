@@ -62,7 +62,7 @@ class FileService(Service):
         action_name = self.config.permission_action_prefix + action_name
         return super().check_permission(identity, action_name, **kwargs)
 
-    def _get_record(self, id_, identity, action, file_key=None):
+    def _get_record(self, id_, identity, action, file_key=None, **kwargs):
         """Get the associated record.
 
         If a ``file_key`` is specified and the record in question doesn't have a file
@@ -71,7 +71,9 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, action, record=record, file_key=file_key)
+        self.require_permission(
+            identity, action, record=record, file_key=file_key, **kwargs
+        )
 
         if file_key and file_key not in record.files:
             raise FileKeyNotFoundError(id_, file_key)
@@ -81,9 +83,9 @@ class FileService(Service):
     #
     # High-level API
     #
-    def list_files(self, identity, id_):
+    def list_files(self, identity, id_, **kwargs):
         """List the files of a record."""
-        record = self._get_record(id_, identity, "read_files")
+        record = self._get_record(id_, identity, "read_files", **kwargs)
 
         self.run_components("list_files", id_, identity, record)
 
@@ -97,9 +99,9 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def init_files(self, identity, id_, data, uow=None):
+    def init_files(self, identity, id_, data, uow=None, **kwargs):
         """Initialize the file upload for the record."""
-        record = self._get_record(id_, identity, "create_files")
+        record = self._get_record(id_, identity, "create_files", data=data, **kwargs)
 
         self.run_components("init_files", identity, id_, record, data, uow=uow)
 
@@ -113,12 +115,14 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def update_file_metadata(self, identity, id_, file_key, data, uow=None):
+    def update_file_metadata(self, identity, id_, file_key, data, uow=None, **kwargs):
         """Update the metadata of a file.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "create_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "create_files", file_key=file_key, data=data, **kwargs
+        )
 
         self.run_components(
             "update_file_metadata", identity, id_, file_key, record, data, uow=uow
@@ -132,12 +136,14 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def read_file_metadata(self, identity, id_, file_key):
+    def read_file_metadata(self, identity, id_, file_key, **kwargs):
         """Read the metadata of a file.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "read_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "read_files", file_key=file_key, **kwargs
+        )
 
         self.run_components("read_file_metadata", identity, id_, file_key, record)
 
@@ -150,12 +156,14 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def extract_file_metadata(self, identity, id_, file_key, uow=None):
+    def extract_file_metadata(self, identity, id_, file_key, uow=None, **kwargs):
         """Extract metadata from a file and update the file metadata file.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "create_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "create_files", file_key=file_key, **kwargs
+        )
         file_record = record.files[file_key]
 
         self.run_components(
@@ -179,12 +187,14 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def commit_file(self, identity, id_, file_key, uow=None):
+    def commit_file(self, identity, id_, file_key, uow=None, **kwargs):
         """Commit a file upload.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "commit_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "commit_files", file_key=file_key, **kwargs
+        )
 
         self.run_components("commit_file", identity, id_, file_key, record, uow=uow)
 
@@ -197,12 +207,14 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def delete_file(self, identity, id_, file_key, uow=None):
+    def delete_file(self, identity, id_, file_key, uow=None, **kwargs):
         """Delete a single file.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "delete_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "delete_files", file_key=file_key, **kwargs
+        )
         deleted_file = record.files.delete(file_key, remove_rf=True)
 
         self.run_components(
@@ -221,9 +233,9 @@ class FileService(Service):
         )
 
     @unit_of_work()
-    def delete_all_files(self, identity, id_, uow=None):
+    def delete_all_files(self, identity, id_, uow=None, **kwargs):
         """Delete all the files of the record."""
-        record = self._get_record(id_, identity, "delete_files")
+        record = self._get_record(id_, identity, "delete_files", **kwargs)
 
         # We have to separate the gathering of the keys from their deletion
         # because of how record.files is implemented.
@@ -245,13 +257,21 @@ class FileService(Service):
 
     @unit_of_work()
     def set_file_content(
-        self, identity, id_, file_key, stream, content_length=None, uow=None
+        self, identity, id_, file_key, stream, content_length=None, uow=None, **kwargs
     ):
         """Save file content.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
+        record = self._get_record(
+            id_,
+            identity,
+            "set_content_files",
+            file_key=file_key,
+            stream=stream,
+            content_length=content_length,
+            **kwargs
+        )
         errors = None
         try:
             self.run_components(
@@ -282,12 +302,14 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    def get_file_content(self, identity, id_, file_key):
+    def get_file_content(self, identity, id_, file_key, **kwargs):
         """Retrieve file content.
 
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
-        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+        record = self._get_record(
+            id_, identity, "get_content_files", file_key=file_key, **kwargs
+        )
 
         self.run_components("get_file_content", identity, id_, file_key, record)
 

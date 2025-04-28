@@ -241,7 +241,7 @@ class RecordService(Service, RecordIndexerMixin):
         self, identity, params=None, search_preference=None, expand=False, **kwargs
     ):
         """Search for records matching the querystring."""
-        self.require_permission(identity, "search")
+        self.require_permission(identity, "search", params=params, **kwargs)
 
         # Prepare and execute the search
         params = params or {}
@@ -263,7 +263,9 @@ class RecordService(Service, RecordIndexerMixin):
         self, identity, params=None, search_preference=None, expand=False, **kwargs
     ):
         """Scan for records matching the querystring."""
-        self.require_permission(identity, "search")
+        self.require_permission(
+            identity, "search", params=params, expand=expand, **kwargs
+        )
 
         # Prepare and execute the search as scan()
         params = params or {}
@@ -292,7 +294,14 @@ class RecordService(Service, RecordIndexerMixin):
         **kwargs,
     ):
         """Reindex records matching the query parameters."""
-        self.require_permission(identity, "search")
+        self.require_permission(
+            identity,
+            "search",
+            params=params,
+            search_query=search_query,
+            extra_filter=extra_filter,
+            **kwargs,
+        )
 
         # prepare and update query
         params = params or {}
@@ -320,17 +329,26 @@ class RecordService(Service, RecordIndexerMixin):
         return True
 
     @unit_of_work()
-    def create(self, identity, data, uow=None, expand=False):
+    def create(self, identity, data, uow=None, expand=False, **kwargs):
         """Create a record.
 
         :param identity: Identity of user creating the record.
         :param data: Input data according to the data schema.
         """
-        return self._create(self.record_cls, identity, data, uow=uow, expand=expand)
+        return self._create(
+            self.record_cls, identity, data, uow=uow, expand=expand, **kwargs
+        )
 
     @unit_of_work()
     def _create(
-        self, record_cls, identity, data, raise_errors=True, uow=None, expand=False
+        self,
+        record_cls,
+        identity,
+        data,
+        raise_errors=True,
+        uow=None,
+        expand=False,
+        **kwargs,
     ):
         """Create a record.
 
@@ -338,7 +356,7 @@ class RecordService(Service, RecordIndexerMixin):
         :param dict data: Input data according to the data schema.
         :param bool raise_errors: raise schema ValidationError or not.
         """
-        self.require_permission(identity, "create")
+        self.require_permission(identity, "create", data=data, expand=expand, **kwargs)
 
         # Validate data and create record with pid
         data, errors = self.schema.load(
@@ -376,18 +394,18 @@ class RecordService(Service, RecordIndexerMixin):
             expand=expand,
         )
 
-    def read(self, identity, id_, expand=False, action="read"):
+    def read(self, identity, id_, expand=False, action="read", **kwargs):
         """Retrieve a record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
         try:
-            self.require_permission(identity, action, record=record)
+            self.require_permission(identity, action, record=record, **kwargs)
         except PermissionDeniedError:
             raise RecordPermissionDeniedError(action_name=action, record=record)
         # Run components
         for component in self.components:
             if hasattr(component, "read"):
-                component.read(identity, record=record)
+                component.read(identity, record=record, **kwargs)
 
         return self.result_item(
             self,
@@ -399,11 +417,11 @@ class RecordService(Service, RecordIndexerMixin):
             expand=expand,
         )
 
-    def exists(self, identity, id_):
+    def exists(self, identity, id_, **kwargs):
         """Check if the record exists and user has permission."""
         try:
             record = self.record_cls.pid.resolve(id_)
-            self.require_permission(identity, "read", record=record)
+            self.require_permission(identity, "read", record=record, **kwargs)
             return True
         except (PIDDoesNotExistError, PermissionDeniedError):
             return False
@@ -476,14 +494,16 @@ class RecordService(Service, RecordIndexerMixin):
         return self.result_list(self, identity, results)
 
     @unit_of_work()
-    def update(self, identity, id_, data, revision_id=None, uow=None, expand=False):
+    def update(
+        self, identity, id_, data, revision_id=None, uow=None, expand=False, **kwargs
+    ):
         """Replace a record."""
         record = self.record_cls.pid.resolve(id_)
 
         self.check_revision_id(record, revision_id)
 
         # Permissions
-        self.require_permission(identity, "update", record=record)
+        self.require_permission(identity, "update", record=record, data=data, **kwargs)
 
         data, _ = self.schema.load(
             data, context=dict(identity=identity, pid=record.pid, record=record)
@@ -505,14 +525,14 @@ class RecordService(Service, RecordIndexerMixin):
         )
 
     @unit_of_work()
-    def delete(self, identity, id_, revision_id=None, uow=None):
+    def delete(self, identity, id_, revision_id=None, uow=None, **kwargs):
         """Delete a record from database and search indexes."""
         record = self.record_cls.pid.resolve(id_)
 
         self.check_revision_id(record, revision_id)
 
         # Permissions
-        self.require_permission(identity, "delete", record=record)
+        self.require_permission(identity, "delete", record=record, **kwargs)
 
         # Run components
         self.run_components("delete", identity, record=record, uow=uow)
