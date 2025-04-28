@@ -91,11 +91,25 @@ class FileResource(ErrorHandlersMixin, Resource):
             route("GET", routes["item"], self.read),
             route("GET", routes["item-content"], self.read_content),
         ]
-        if self.config.allow_archive_download:
+
+        # FileResourceConfig.allow_upload and .allow_archive_download are deprecated
+        # in favor of FileServiceConfig.allow_upload and .allow_archive_download
+        # instead. Fallbacks are used until complete removal and precedence
+        # is given to FileResourceConfig until transition is complete.
+        allow_archive_download = getattr(
+            self.config,
+            "allow_archive_download",
+            self.service.config.allow_archive_download,
+        )
+        allow_upload = getattr(
+            self.config, "allow_upload", self.service.config.allow_upload
+        )
+
+        if allow_archive_download:
             url_rules += [
                 route("GET", routes["list-archive"], self.read_archive),
             ]
-        if self.config.allow_upload:
+        if allow_upload:
             url_rules += [
                 route("POST", routes["list"], self.create),
                 route("DELETE", routes["list"], self.delete_all),

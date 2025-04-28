@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2022 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -39,9 +39,13 @@ class FileServiceConfig(ServiceConfig):
 
     max_files_count = 100
 
-    # Inheriting resource config should define these
+    # Inheriting service config should define these
     file_links_list = {}
     file_links_item = {}
+
+    # At the resource level and link serialization (service) level
+    allow_upload = True
+    allow_archive_download = True
 
     components = [
         FileMetadataComponent,
