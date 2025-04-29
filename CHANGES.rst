@@ -8,6 +8,15 @@
 Changes
 =======
 
+Version 5.11.0 (released 2025-04-29)
+
+- i18n:pulled translations
+- i18n: push translations
+- ci: use reusable workflows
+- fix: dashes no longer work in setup.cfg babel options
+- fix: Replaced gettext with lazy gettext completely
+- i18n: Fix untranslated strings in facet
+
 Version 5.10.1 (released 2024-11-11)
 
 - i18n: fix translation only applied on app start
