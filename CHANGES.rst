@@ -8,6 +8,15 @@
 Changes
 =======
 
+Version 5.11.0 (released 2025-04-25)
+
+- i18n: Pull new translations
+- files: remove HTTP code from read_content
+   * Should resolve file content issues with S3
+- i18n: fix untranslated strings in facet
+- il8n: replaced gettext with lazy gettext completely
+- setup: dashes no longer work in setup.cfg babel options
+
 Version 5.10.1 (released 2024-11-11)
 
 - i18n: fix translation only applied on app start
