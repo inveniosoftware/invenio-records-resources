@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2022 TU Wien.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,6 +12,7 @@
 from copy import deepcopy
 from datetime import timezone
 
+from flask_resources.base import WrapSchemaToPreserveContext
 from marshmallow import Schema, ValidationError, fields, pre_load
 from marshmallow_utils.fields import Links, TZDateTime
 
@@ -20,7 +22,7 @@ from invenio_records_resources.errors import validation_error_to_list_errors
 #
 # The default record schema
 #
-class BaseRecordSchema(Schema):
+class BaseRecordSchema(WrapSchemaToPreserveContext):
     """Schema for records v1 in JSON."""
 
     id = fields.Str()

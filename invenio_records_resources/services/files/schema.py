@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 European Union.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -73,7 +74,7 @@ class InitFileSchema(Schema):
             if domain not in allowed_domains:
                 raise ValidationError("Domain not allowed", field_name="uri")
 
-    @pre_dump(pass_many=False)
+    @pre_dump(pass_collection=False)
     def fields_from_file_obj(self, data, **kwargs):
         """Fields coming from the FileInstance model."""
         # this cannot be implemented as fields.Method since those receive the already
