@@ -60,7 +60,7 @@ class TransferRegistry:
         either the file record or the key together with transfer_type
         must be provided.
         """
-        if file_record:
+        if file_record is not None:
             key = file_record.key
             transfer_type = file_record.transfer.transfer_type
         if key is None:
