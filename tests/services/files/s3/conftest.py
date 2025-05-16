@@ -10,7 +10,8 @@
 import os
 
 import pytest
-from mock_module.api import RecordWithFiles
+
+from tests.mock_module.api import RecordWithFiles
 
 
 #
