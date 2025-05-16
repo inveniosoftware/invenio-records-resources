@@ -44,7 +44,8 @@ class FileItem(RecordItem):
     def links(self):
         """Get links for this result item."""
         _links = self._links_tpl.expand(self._identity, self._file)
-
+        if "self" not in _links:
+            return _links
         transfer = current_transfer_registry.get_transfer(
             file_record=self._file, file_service=self._service, record=self._record
         )
@@ -113,14 +114,17 @@ class FileList(ServiceListResult):
                 links = {}
 
             # add transfer links
-            transfer = current_transfer_registry.get_transfer(
-                file_record=entry, file_service=self._service, record=self._record
-            )
-            for k, v in transfer.expand_links(self._identity, links["self"]).items():
-                if v is not None:
-                    links[k] = v
-                else:
-                    links.pop(k, None)
+            if "self" in links:
+                transfer = current_transfer_registry.get_transfer(
+                    file_record=entry, file_service=self._service, record=self._record
+                )
+                for k, v in transfer.expand_links(
+                    self._identity, links["self"]
+                ).items():
+                    if v is not None:
+                        links[k] = v
+                    else:
+                        links.pop(k, None)
 
             projection["links"] = links
 
