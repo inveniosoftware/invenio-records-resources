@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020-2025 Northwestern University.
+# Copyright (C) 2025 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -13,6 +14,7 @@ from ..base import ServiceConfig
 from .components import (
     FileContentComponent,
     FileMetadataComponent,
+    FileMultipartContentComponent,
     FileProcessorComponent,
 )
 from .processors import ImageMetadataExtractor
@@ -50,6 +52,7 @@ class FileServiceConfig(ServiceConfig):
     components = [
         FileMetadataComponent,
         FileContentComponent,
+        FileMultipartContentComponent,
         FileProcessorComponent,
     ]
 
