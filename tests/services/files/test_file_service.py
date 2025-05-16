@@ -18,12 +18,12 @@ from invenio_access import any_user
 from invenio_access.permissions import system_identity
 from invenio_files_rest.errors import FileSizeError
 from marshmallow import ValidationError
-from mock_module.models import FileRecordMetadata
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
 )
+from tests.mock_module.models import FileRecordMetadata
 
 #
 # Fixtures
