@@ -22,7 +22,7 @@ class IfTransferType(ConditionalGenerator):
         else_=None,
     ):
         """Initializes the generator.
-        
+
         :param: transfer_type: The transfer type to check for.
         """
 

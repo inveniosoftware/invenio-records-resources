@@ -50,15 +50,15 @@ class Transfer(ABC):
         record,
         key,
         file_service,
-        file_record = None,
+        file_record=None,
         uow=None,
     ):
         """Constructor.
-        
+
         :param record: The record to which the file belongs.
         :param key: The key of the file.
         :param file_service: The file service that is responsible for the file.
-        :param file_record: Optional file record. If not provided, 
+        :param file_record: Optional file record. If not provided,
             we are in the process of file initialization.
         """
         self.record = record
