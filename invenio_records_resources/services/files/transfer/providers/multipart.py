@@ -15,7 +15,7 @@ from invenio_files_rest import current_files_rest
 from invenio_files_rest.models import FileInstance, ObjectVersion
 
 from ....errors import TransferException
-from ....uow import RecordCommitOp
+from ....uow import RecordCommitOp, TaskOp
 from ...schema import BaseTransferSchema
 from ...tasks import (
     recompute_multipart_checksum_task,
@@ -302,7 +302,9 @@ class MultipartTransfer(Transfer):
         self.file_record.commit()
 
         if recompute_checkum_needed:
-            recompute_multipart_checksum_task.delay(str(file_instance.id))
+            self.uow.register(
+                TaskOp(recompute_multipart_checksum_task, str(file_instance.id))
+            )
 
     def delete_file(self):
         """If this method is called, we are deleting a file with an active multipart upload."""
