@@ -676,6 +676,7 @@ def test_remote_file(
 
     assert file_result["transfer"]["type"] == "R"
     assert "url" not in file_result["transfer"]
+    assert file_result["status"] == "completed"
 
     sent_file = file_service.get_file_content(
         identity_simple, recid, "article.txt"
