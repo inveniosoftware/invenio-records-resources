@@ -312,9 +312,9 @@ class FilesManager(MutableMapping):
                     "version_id": 1,
                     "json": dict(rf),
                 }
-                # With some transfers the files are not under the management of 
+                # With some transfers the files are not under the management of
                 # the repository, so can not have an object version (we do not know
-                # if they change, for example remotely stored time series data with 
+                # if they change, for example remotely stored time series data with
                 # append). So if there is a local object version, copy it.
                 if key in ovs_by_key:
                     new_rf["object_version_id"] = ovs_by_key[key]["version_id"]
