@@ -112,7 +112,11 @@ def test_file_flow(file_service, location, example_file_record, identity_simple,
     ]
     # Initialize file saving
     result = file_service.init_files(identity_simple, recid, file_to_initialise)
-    assert result.to_dict()["entries"][0]["key"] == file_to_initialise[0]["key"]
+    file_result = result.to_dict()["entries"][0]
+    assert file_result["key"] == file_to_initialise[0]["key"]
+    assert file_result["checksum"] == file_to_initialise[0]["checksum"]
+    assert file_result["size"] == file_to_initialise[0]["size"]
+    assert file_result["metadata"] == file_to_initialise[0]["metadata"]
     # for to_file in to_files:
     content = BytesIO(b"test file content")
     result = file_service.set_file_content(
@@ -677,6 +681,46 @@ def test_remote_file(
     assert file_result["transfer"]["type"] == "R"
     assert "url" not in file_result["transfer"]
     assert file_result["status"] == "completed"
+
+    sent_file = file_service.get_file_content(
+        identity_simple, recid, "article.txt"
+    ).send_file()
+    assert sent_file.status_code == 302
+    assert sent_file.headers["Location"] == "https://inveniordm.test/files/article.txt"
+
+
+def test_remote_file_with_checksum_and_size(
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+):
+    """Test the lifecycle of an external remote file."""
+
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,
+            "transfer": {
+                "url": "https://inveniordm.test/files/article.txt",
+                "type": "R",
+            },
+        }
+    ]
+
+    # Initialize file saving
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    file_result = result.to_dict()["entries"][0]
+    assert file_result["key"] == file_to_initialise[0]["key"]
+
+    assert file_result["transfer"]["type"] == "R"
+    assert "url" not in file_result["transfer"]
+    assert file_result["status"] == "completed"
+
+    assert file_result["checksum"] == "md5:c785060c866796cc2a1708c997154c8e"
+    assert file_result["size"] == 17
 
     sent_file = file_service.get_file_content(
         identity_simple, recid, "article.txt"
