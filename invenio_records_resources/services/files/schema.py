@@ -13,7 +13,7 @@
 from datetime import timezone
 from typing import Mapping
 
-from marshmallow import RAISE, Schema, ValidationError, pre_load
+from marshmallow import RAISE, Schema, ValidationError, post_dump, pre_load
 from marshmallow.fields import UUID, Boolean, Dict, Integer, Nested, Str
 from marshmallow_oneofschema import OneOfSchema
 from marshmallow_utils.fields import GenMethod, Links, TZDateTime
@@ -102,9 +102,9 @@ class FileSchema(Schema):
     links = Links()
 
     key = Str(required=True, dump_only=True)
-    storage_class = Str(dump_only=True, attribute="file.file.storage_class")
-    checksum = Str(dump_only=True, attribute="file.file.checksum")
-    size = Integer(dump_only=True, attribute="file.file.size")
+    storage_class = Str(dump_only=True)
+    checksum = Str(dump_only=True)
+    size = Integer(dump_only=True)
     transfer = Nested(TransferSchema, dump_only=True)
     status = GenMethod("dump_status")
     transfer = Nested(TransferSchema, dump_only=True)
@@ -117,6 +117,24 @@ class FileSchema(Schema):
             record=obj.record,
         )
         return transfer.status
+
+    @post_dump(pass_original=True)
+    def dump_file_fields(self, obj, original, **kwargs):
+        """Dump file fields."""
+        # original is a FileRecord instance, might not have a file yet.
+        # original.file is a file wrapper object
+        # (invenio_records_resources.records.api.File)
+        # We need to access the file attributes from the wrapped FileInstance
+        # as getattr on the wrapper raises AttributeError if the attribute
+        # is set to None.
+        if original.file is not None and original.file.file is not None:
+            obj["checksum"] = original.file.file.checksum
+            obj["size"] = original.file.file.size
+            obj["storage_class"] = original.file.file.storage_class
+        # if the File wrapper is not yet created,  these attributes are taken from the
+        # file record as they might have been set during file initialization. This has
+        # been already handled by marshmallow.
+        return obj
 
 
 class InitFileSchemaMixin(Schema):
