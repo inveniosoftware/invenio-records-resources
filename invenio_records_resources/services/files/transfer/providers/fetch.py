@@ -57,9 +57,9 @@ class FetchTransfer(RemoteTransferBase):
                 if domain not in allowed_domains:
                     raise ValidationError("Domain not allowed", field_name="uri")
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, **kwargs):
         """Initialize a file and return a file record."""
-        file = super().init_file(record, file_metadata)
+        file = super().init_file(record, file_metadata, **kwargs)
 
         self.uow.register(
             TaskOp(
