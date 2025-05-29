@@ -67,14 +67,12 @@ class Transfer(ABC):
         self._file_record = file_record  # need to store it as it might be deleted
         self.uow = uow
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, **kwargs):
         """Initialize a file and return a file record."""
         # duplicate as other file service components might need the key and transfer
         md = {**file_metadata}
         return record.files.create(
-            key=md.pop("key"),
-            transfer=md.pop("transfer"),
-            data=md,
+            key=md.pop("key"), transfer=md.pop("transfer"), data=md, **kwargs
         )
 
     @property

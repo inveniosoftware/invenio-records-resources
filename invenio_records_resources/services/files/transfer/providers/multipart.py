@@ -182,7 +182,7 @@ class MultipartTransfer(Transfer):
         part_size = ma.fields.Int(required=False)
         parts = ma.fields.Int(required=True)
 
-    def init_file(self, record, file_metadata):
+    def init_file(self, record, file_metadata, **kwargs):
         """Initialize a file."""
         parts = file_metadata["transfer"].get("parts", None)
         part_size = file_metadata["transfer"].get("part_size", None)

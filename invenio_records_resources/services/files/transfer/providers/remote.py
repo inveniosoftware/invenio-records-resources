@@ -11,6 +11,7 @@
 from urllib.parse import urlparse
 
 from flask import current_app
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from marshmallow import ValidationError, fields, validate, validates
 
 from ...schema import BaseTransferSchema
@@ -66,3 +67,19 @@ class RemoteTransfer(RemoteTransferBase):
                 "Location": self.file_record.transfer["url"],
             },
         )
+
+    def init_file(self, record, file_metadata, **kwargs):
+        """Initialize a file and return a file record."""
+        url = file_metadata["transfer"]["url"]
+        # all remote file records with the same URL share the same FileInstance
+        fi = FileInstance.get_by_uri(url)
+        if fi is None:
+            fi = FileInstance.create()
+            fi.set_uri(
+                uri=file_metadata.get("transfer", {}).get("url"),
+                size=file_metadata.get("size"),
+                checksum=file_metadata.get("checksum"),
+                readable=False,
+            )
+        obj = ObjectVersion.create(record.files.bucket, file_metadata["key"], fi.id)
+        return super().init_file(record, file_metadata, obj=obj)
