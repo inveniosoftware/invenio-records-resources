@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2022 TU Wien.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -61,33 +62,11 @@ class ServiceSchemaWrapper:
     def __init__(self, service, schema):
         """Constructor."""
         self.schema = schema
-        # TODO: Change constructor to accept a permission_policy_cls directly
-        self._permission_policy_cls = service.config.permission_policy_cls
-
-    def _build_context(self, base_context):
-        context = {**base_context}
-        default_identity = context["identity"]  # identity required in context
-
-        def _permission_check(action, identity=default_identity, **kwargs):
-            return (
-                # TODO: See if context is necessary here
-                self._permission_policy_cls(action, **context, **kwargs).allows(
-                    identity
-                )
-            )
-
-        context.setdefault("field_permission_check", _permission_check)
-
-        return context
 
     def load(self, data, schema_args=None, context=None, raise_errors=True):
         """Load data with dynamic schema_args + context + raise or not."""
-        schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
-
         try:
-            valid_data = self.schema(context=context, **schema_args).load(data)
+            valid_data = self.schema().load(data)
             errors = []
         except ValidationError as e:
             if raise_errors:
@@ -100,6 +79,4 @@ class ServiceSchemaWrapper:
     def dump(self, data, schema_args=None, context=None):
         """Dump data using wrapped schema and dynamic schema_args + context."""
         schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
-        return self.schema(context=context, **schema_args).dump(data)
+        return self.schema(**schema_args).dump(data)
