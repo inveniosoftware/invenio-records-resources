@@ -1,6 +1,6 @@
 ..
     Copyright (C) 2020-2024 CERN.
-    Copyright (C) 2024 Graz University of Technology.
+    Copyright (C) 2024-2025 Graz University of Technology.
     Copyright (C) 2025 Northwestern University.
 
     Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -9,6 +9,14 @@
 
 Changes
 =======
+
+Version v8.0.0 (released 2025-06-03)
+
+- feat: Pluggable transfers and multipart transfer implementation
+  * Implementation of RFC 0072
+  * Pluggable transfer types
+  * Implementation of multipart transfer in the same place
+  * Permission generator for per-transfer-type permissions
 
 Version v7.3.0 (released 2025-04-29)
 
