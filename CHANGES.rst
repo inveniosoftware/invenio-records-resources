@@ -10,6 +10,10 @@
 Changes
 =======
 
+Version v8.1.0 (released 2025-06-04)
+
+- permissions: Raise correct exception if file does not exist
+
 Version v8.0.0 (released 2025-06-03)
 
 - feat: Pluggable transfers and multipart transfer implementation
