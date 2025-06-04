@@ -93,10 +93,16 @@ class FileService(Service):
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
         record = self.record_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, action, record=record, file_key=file_key)
 
+        # note: we check file existence before checking permissions, as permission
+        # checks may require the file to exist (e.g. IfTransferType permission)
+        # and if it does not exist, will return a permission denied, resulting in 403
+        # status code. By reveresing the order, we can return a more specific
+        # 404 status code.
         if file_key and file_key not in record.files:
             raise FileKeyNotFoundError(id_, file_key)
+
+        self.require_permission(identity, action, record=record, file_key=file_key)
 
         return record
 

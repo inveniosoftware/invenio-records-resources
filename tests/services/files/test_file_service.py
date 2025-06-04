@@ -197,6 +197,17 @@ def test_init_files(file_service, location, example_file_record, identity_simple
     assert second_entry["access"]["hidden"] is True
 
 
+def test_retrieve_non_existing_file(
+    file_service, location, example_file_record, identity_simple, db
+):
+    """Test if accessing a non-existing file raises a correct error."""
+    recid = example_file_record["id"]
+
+    # Retrieve file
+    with pytest.raises(FileKeyNotFoundError):
+        file_service.get_file_content(identity_simple, recid, "does_not_exist.txt")
+
+
 #
 # External fetched files
 #
