@@ -584,3 +584,129 @@ def test_files_multipart_api_flow(
     res = client.get(f"/mocks/{id_}/files/test.pdf/content", headers=headers)
     assert res.status_code == 200
     assert res.data == b"12345678901234567"
+
+
+@pytest.fixture
+def record_with_file_for_range_requests_id(
+    app, client, search_clear, headers, input_data, location
+):
+    """Fixture to create a record with a file for range requests testing."""
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Upload a file
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "test.bin", "metadata": {"title": "Test file"}},
+        ],
+    )
+    assert res.status_code == 201
+    res = client.put(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"12345678901234567"),
+    )
+    assert res.status_code == 200
+    res = client.post(f"/mocks/{id_}/files/test.bin/commit", headers=headers)
+    assert res.status_code == 200
+
+    return id_
+
+
+@pytest.fixture
+def enable_range_access(app):
+    """Fixture to temporarily enable range access for testing."""
+    try:
+        app.config["FILES_REST_ALLOW_RANGE_REQUESTS"] = True
+        yield
+    finally:
+        app.config["FILES_REST_ALLOW_RANGE_REQUESTS"] = False
+
+
+def test_ok_range(
+    client, headers, record_with_file_for_range_requests_id, enable_range_access
+):
+    """Test ok range requests for file content."""
+    id_ = record_with_file_for_range_requests_id
+
+    # Test range requests - ok case
+    res = client.head(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={
+            **headers,
+        },
+    )
+    assert res.status_code == 200
+    assert "Accept-Ranges" in res.headers
+    assert res.headers["Accept-Ranges"] == "bytes"
+
+    res = client.get(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={
+            **headers,
+            "Range": "bytes=0-9",
+        },
+    )
+    assert res.status_code == 206
+    assert res.data == b"1234567890"
+    assert res.headers["Content-Range"] == "bytes 0-9/17"
+
+    res = client.get(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={
+            **headers,
+            "Range": "bytes=10-16",
+        },
+    )
+    assert res.status_code == 206
+    assert res.data == b"1234567"
+    assert res.headers["Content-Range"] == "bytes 10-16/17"
+
+
+def test_negative_range(
+    client, headers, record_with_file_for_range_requests_id, enable_range_access
+):
+    """Test range requests starting at the end of the file."""
+    id_ = record_with_file_for_range_requests_id
+
+    res = client.get(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={**headers, "Range": "bytes=-5"},
+    )
+    assert res.status_code == 206
+    assert res.data == b"34567"  # Last 5 bytes of "12345678901234567"
+    assert res.headers["Content-Range"] == "bytes 12-16/17"
+
+
+def test_invalid_range(
+    client, headers, record_with_file_for_range_requests_id, enable_range_access
+):
+    """Test invalid range."""
+    id_ = record_with_file_for_range_requests_id
+    # Test invalid range (out of bounds)
+    res = client.get(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={**headers, "Range": "bytes=100-200"},
+    )
+    assert res.status_code == 416  # Range Not Satisfiable
+
+
+def test_malformed_range(
+    client, headers, record_with_file_for_range_requests_id, enable_range_access
+):
+    """Test malformed range."""
+    id_ = record_with_file_for_range_requests_id
+    # Test malformed range (should fail gracefully)
+    res = client.get(
+        f"/mocks/{id_}/files/test.bin/content",
+        headers={**headers, "Range": "bytes=not-a-range"},
+    )
+    # should probably be 400 but werkzeug reports this as 416
+    assert res.status_code == 416
