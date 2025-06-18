@@ -60,6 +60,20 @@ class QuerystringValidationError(ValidationError):
     pass
 
 
+class ValidationErrorGroup(Exception):
+    """Error containing multiple validation errors."""
+
+    def __init__(self, errors):
+        """Constructor.
+
+        :param errors: list of dicts in the shape
+                       `{"field": "<fieldA>", "messages": ["<msgA1>", ...]}`
+        """
+        if not isinstance(errors, list):
+            raise TypeError(f"'errors' must be a list, got {type(errors)}: {errors}")
+        self.errors = errors
+
+
 class TransferException(Exception):
     """File transfer exception."""
 

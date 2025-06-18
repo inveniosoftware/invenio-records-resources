@@ -41,6 +41,7 @@ from ..services.errors import (
     QuerystringValidationError,
     RecordPermissionDeniedError,
     RevisionIdMismatchError,
+    ValidationErrorGroup,
 )
 
 
@@ -51,7 +52,18 @@ class HTTPJSONValidationException(HTTPJSONException):
 
     def __init__(self, exception):
         """Constructor."""
-        super().__init__(code=400, errors=validation_error_to_list_errors(exception))
+        errors = None
+        if isinstance(exception, ma.ValidationError):
+            errors = validation_error_to_list_errors(exception)
+        elif isinstance(exception, ValidationErrorGroup):
+            errors = exception.errors
+        else:
+            raise TypeError(
+                "Expected a 'marshmallow.ValidationError' or 'ValidationErrorGroup', "
+                f"got {type(exception)}."
+            )
+
+        super().__init__(code=400, errors=errors)
 
 
 class HTTPJSONSearchRequestError(HTTPJSONException):
@@ -106,6 +118,9 @@ class ErrorHandlersMixin:
 
     error_handlers = {
         ma.ValidationError: create_error_handler(
+            lambda e: HTTPJSONValidationException(e)
+        ),
+        ValidationErrorGroup: create_error_handler(
             lambda e: HTTPJSONValidationException(e)
         ),
         RevisionIdMismatchError: create_error_handler(
