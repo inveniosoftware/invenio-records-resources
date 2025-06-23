@@ -10,6 +10,17 @@
 Changes
 =======
 
+Version v8.2.0 (released 2025-06-23)
+
+- errors: add `ValidationErrorGroup`
+    * Adds a new exception class to allow raising multiple validation errors.
+    * This class is actually a variation of the existing
+      `ValidationErrorWithMessageAsList` exception defined in
+      `invenio-rdm-records`.
+
+- tests: HTTP Range tests
+     * Note: needs PR https://github.com/inveniosoftware/invenio-files-rest/pull/329 to work
+
 Version v8.1.0 (released 2025-06-04)
 
 - permissions: Raise correct exception if file does not exist
