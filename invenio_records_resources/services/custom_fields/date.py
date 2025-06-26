@@ -83,8 +83,10 @@ class EDTFDateStringCF(BaseListCF):
         if dates:
             try:
                 if self._multiple:
+                    data[cf_key][self.name] = []
+
                     for date in dates:
-                        data[cf_key][self.name] = self._calculate_date_range(date)
+                        data[cf_key][self.name].append(self._calculate_date_range(date))
                 else:
                     # dates is just one date
                     data[cf_key][self.name] = self._calculate_date_range(dates)
@@ -98,6 +100,9 @@ class EDTFDateStringCF(BaseListCF):
         This supports the case where a field is based on others, both
         custom and non-custom fields.
         """
-        date = record.get(cf_key, {}).pop(self.name, None)
-        if date:
-            record[cf_key][self.name] = date["date"]
+        dates = record.get(cf_key, {}).pop(self.name, None)
+        if dates:
+            if self._multiple:
+                record[cf_key][self.name] = [d["date"] for d in dates]
+            else:
+                record[cf_key][self.name] = dates["date"]
