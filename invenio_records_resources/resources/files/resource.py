@@ -13,6 +13,7 @@
 """Invenio Record File Resources."""
 
 from contextlib import ExitStack
+from functools import wraps
 
 import marshmallow as ma
 from flask import Response, current_app, g, request, stream_with_context
@@ -72,6 +73,7 @@ request_multipart_args = request_parser(
 def set_max_content_length(func):
     """Set max content length."""
 
+    @wraps(func)
     def _wrapper(*args, **kwargs):
         # flask >= 3.1.0 changed the behavior of MAX_CONTENT_LENGTH
         # configuration variable. this is applied now to all requests
@@ -292,6 +294,7 @@ class FileResource(ErrorHandlersMixin, Resource):
 
         return item.to_dict(), 200
 
+    @set_max_content_length
     @request_multipart_args
     @request_stream
     @response_handler()
