@@ -88,3 +88,55 @@ def test_edtfdatestring_custom_field_cls_list():
 
     with pytest.raises(CustomFieldsInvalidArgument):
         _ = EDTFDateStringCF("name", field_cls=MyClass, multiple=True)
+
+
+def test_edtfdatestring_multiple_dump():
+    field_name = "test_multiple_edtf"
+    cf = EDTFDateStringCF(field_name, multiple=True)
+
+    # Test loading multiple valid values
+    data = {"custom_fields": {field_name: ["2020-09/2020-10", "2021-01-01"]}}
+    expected_output = {
+        "custom_fields": {
+            field_name: [
+                {
+                    "date": "2020-09/2020-10",
+                    "date_range": {"gte": "2020-09-01", "lte": "2020-10-31"},
+                },
+                {
+                    "date": "2021-01-01",
+                    "date_range": {"gte": "2021-01-01", "lte": "2021-01-01"},
+                },
+            ]
+        }
+    }
+
+    cf.dump(data)
+
+    assert data == expected_output
+
+
+def test_edtfdatestring_multiple_load():
+    field_name = "test_multiple_edtf"
+    cf = EDTFDateStringCF(field_name, multiple=True)
+
+    # Test loading multiple valid values
+    data = {
+        "custom_fields": {
+            field_name: [
+                {
+                    "date": "2020-09/2020-10",
+                    "date_range": {"gte": "2020-09-01", "lte": "2020-10-31"},
+                },
+                {
+                    "date": "2021-01-01",
+                    "date_range": {"gte": "2021-01-01", "lte": "2021-01-01"},
+                },
+            ]
+        }
+    }
+    expected_output = {"custom_fields": {field_name: ["2020-09/2020-10", "2021-01-01"]}}
+
+    cf.load(data)
+
+    assert data == expected_output
