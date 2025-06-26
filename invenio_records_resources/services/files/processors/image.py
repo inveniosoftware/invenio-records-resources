@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-2024 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,21 +9,17 @@
 
 """Image metadata extractor."""
 
-import pkg_resources
+
 from flask import current_app
 
 from .base import FileProcessor
 
 try:
-    pkg_resources.get_distribution("wand")
     from wand.image import Image
 
     HAS_IMAGEMAGICK = True
-except pkg_resources.DistributionNotFound:
-    # Python module not installed
-    HAS_IMAGEMAGICK = False
 except ImportError:
-    # ImageMagick notinstalled
+    # Python module not installed
     HAS_IMAGEMAGICK = False
 
 try:
