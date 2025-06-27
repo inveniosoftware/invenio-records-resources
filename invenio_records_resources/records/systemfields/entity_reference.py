@@ -79,6 +79,50 @@ class ReferencedEntityField(SystemField):
         return self.obj(record)
 
 
+class MultiReferenceEntityField(ReferencedEntityField):
+    """System field extending ReferencedEntityField to support object lists."""
+
+    def set_obj(self, instance, objs):
+        """Set multiple referenced entities."""
+        references = []
+
+        for obj in objs:
+            if isinstance(obj, dict):
+                ref_dict = obj
+            elif isinstance(obj, EntityProxy):
+                ref_dict = obj.reference_dict
+            elif obj is not None:
+                ref_dict = self._registry.reference_entity(obj, raise_=True)
+            else:
+                continue
+
+            if not self._check_reference(instance, ref_dict):
+                raise ValueError(f"Invalid reference for '{self.key}': {ref_dict}")
+
+            references.append(ref_dict)
+
+        self.set_dictkey(instance, references)
+        self._set_cache(instance, None)
+
+    def obj(self, instance):
+        """Get the referenced entities as a list of `EntityProxy` objects."""
+        cached = self._get_cache(instance)
+        if cached is not None:
+            return cached
+
+        references_list = self.get_dictkey(instance)
+        if references_list is None:
+            return []
+
+        resolved_objects = [
+            self._registry.resolve_entity_proxy(ref_dict)
+            for ref_dict in references_list
+        ]
+
+        self._set_cache(instance, resolved_objects)
+        return resolved_objects
+
+
 def check_allowed_references(get_allows_none, get_allowed_types, request, ref_dict):
     """Check the reference according to rules specific to requests.
 
