@@ -10,6 +10,14 @@
 Changes
 =======
 
+Version v8.3.0 (released 2025-07-02)
+
+- fix: pkg_resources DeprecationWarning
+- tests: Add unit tests
+- fix: EDTFDateStringCF dump/load to support multiple values
+- fix: raise size limit for multipart file parts
+- ci: remove outdated feature CI
+
 Version v8.2.0 (released 2025-06-23)
 
 - errors: add `ValidationErrorGroup`
