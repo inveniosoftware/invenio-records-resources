@@ -73,6 +73,7 @@ class CompositeSuggestQueryParser(QueryParser):
         super().__init__(identity=identity, extra_params=extra_params)
         # Default operator is "and", to make sure we narrow down results
         self.extra_params.setdefault("operator", "and")
+        self.filter_field = kwargs.get("filter_field", None)
         self.clauses = clauses or [
             # "cross_fields" helps when we expect the entire query to be searched across
             # multiple fields (e.g. full name + affiliation + affiliation acronym).
@@ -93,18 +94,20 @@ class CompositeSuggestQueryParser(QueryParser):
         ]
 
     @classmethod
-    def factory(cls, tree_transformer_cls=None, clauses=None, **extra_params):
+    def factory(cls, tree_transformer_cls=None, clauses=None, filter_field=None, **extra_params):
         """Factory method."""
         return partial(
             cls,
             tree_transformer_cls=tree_transformer_cls,
             clauses=clauses,
+            filter_field=filter_field,
             extra_params=extra_params,
         )
 
     def parse(self, query_str):
         """Parse and build the query."""
         should_clauses = []
+        subtypes, query_str = self.extract_subtypes(query_str)
 
         for clause in self.clauses:
             params = {**self.extra_params, **clause}
@@ -117,5 +120,35 @@ class CompositeSuggestQueryParser(QueryParser):
                 params["fields"] = [f.split("^")[0] for f in params["fields"]]
 
             should_clauses.append(dsl.Q("multi_match", query=query_str, **params))
+        multi_match_query = dsl.Q("bool", should=should_clauses)
 
-        return dsl.Q("bool", should=should_clauses)
+        if subtypes:
+            # If subtypes are provided, add a terms filter clause to the query to restrict results to those subtypes.
+            term_query = dsl.Q("terms", **{self.filter_field: subtypes})
+            if query_str:
+                # If a query string is provided, we combine the multi-match query with the term query.
+                multi_match_query = multi_match_query & term_query
+            else:
+                # If no query string is provided, we only filter by subtypes.
+                multi_match_query = term_query
+
+        return multi_match_query
+
+    def extract_subtypes(self, query_str):
+        """Extract the filtering subtype(s) from query_str.
+
+        Returns a tuple (<subtype(s)>, <rest of original query string>).
+        """
+        if self.filter_field is None:
+            # If no filter field is set, we do not extract subtypes.
+            return [], query_str
+        parts = query_str.split(":", 1)
+        # If query is None, it means no subtype was specified.
+        if len(parts) == 1:
+            subtypes = []
+            query_str = parts[0]
+        else:
+            subtypes, query_str = parts[0], parts[1]
+            # Multiple subtypes can be specified, separated by commas.
+            subtypes = subtypes.split(",")
+        return (subtypes, query_str)
