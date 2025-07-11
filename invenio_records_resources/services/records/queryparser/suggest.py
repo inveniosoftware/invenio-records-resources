@@ -94,7 +94,9 @@ class CompositeSuggestQueryParser(QueryParser):
         ]
 
     @classmethod
-    def factory(cls, tree_transformer_cls=None, clauses=None, filter_field=None, **extra_params):
+    def factory(
+        cls, tree_transformer_cls=None, clauses=None, filter_field=None, **extra_params
+    ):
         """Factory method."""
         return partial(
             cls,
