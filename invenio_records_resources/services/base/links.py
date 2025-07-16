@@ -132,17 +132,17 @@ class ExternalLink:
         return self._uritemplate.expand(**vars)
 
 
-def _link_w_warning():
-    """Return ExternalLink but with deprecation warning."""
-    warnings.warn(
-        "Link is deprecated and will be removed in v14.0. Use `ExternalLink` for "
-        "third-party links and `EndpointLink` for InvenioRDM links.",
-        DeprecationWarning,
-    )
-    return ExternalLink
+class Link(ExternalLink):
+    """Return ExternalLink descendant but with deprecation warning."""
 
-
-Link = _link_w_warning()
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        warnings.warn(
+            "Link is deprecated and will be removed in v14.0. Use `ExternalLink` for "
+            "third-party links and `EndpointLink` for InvenioRDM links.",
+            DeprecationWarning,
+        )
+        super().__init__(*args, **kwargs)
 
 
 class EndpointLink:
