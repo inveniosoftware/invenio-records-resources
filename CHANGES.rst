@@ -10,6 +10,13 @@
 Changes
 =======
 
+Version v8.4.0 (released 2025-07-16)
+
+- requests: add support for multi entity resolution
+    * So far all requests were single entity resolution, this adds support for
+      multi entity resolution in the same request. This is useful for example
+      when you want to assign multiple reviewers in a request.
+
 Version v8.3.0 (released 2025-07-02)
 
 - fix: pkg_resources DeprecationWarning
