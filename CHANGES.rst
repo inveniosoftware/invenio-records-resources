@@ -10,6 +10,13 @@
 Changes
 =======
 
+Version v8.5.0 (released 2025-07-17)
+
+- tests: simplify s3 tests and make compatible with uv
+- sphinx: make compatible w/ Python 3.13
+- links: move deprecation warning in object instantiation
+- i18n: pulled translations
+
 Version v8.4.0 (released 2025-07-16)
 
 - requests: add support for multi entity resolution
