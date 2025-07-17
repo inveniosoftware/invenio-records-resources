@@ -35,12 +35,6 @@ python -m setup extract_messages --output-file /dev/null
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
 eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-opensearch} --cache ${CACHE:-redis} --s3 ${S3BACKEND:-minio} --env)"
 
-# run without invenio-s3
-pip uninstall -y invenio-s3 || true
-python -m pytest --ignore tests/services/files/s3 $@
-
-# install optional dependency to s3 and run the s3 tests
-pip install invenio-s3
-python -m pytest tests/services/files/s3 $@
+python -m pytest $@
 
 python -m sphinx.cmd.build -qnNW -b doctest docs docs/_build/doctest
