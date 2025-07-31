@@ -10,6 +10,14 @@
 Changes
 =======
 
+Version v8.6.0 (released 2025-07-31)
+
+- services: CompositeSuggestQueryParser: Add term filter clause
+    * Adds support for filtering suggest query results by subtypes extracted
+      from the query string using a colon-separated format (e.g., "subtype1,subtype2:query").
+    * When subtypes are specified, results are restricted to those subtypes using
+      a terms filter clause combined with the multi-match query.
+
 Version v8.5.0 (released 2025-07-17)
 
 - tests: simplify s3 tests and make compatible with uv
