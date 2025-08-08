@@ -428,7 +428,7 @@ class RecordService(Service, RecordIndexerMixin):
             identity=identity,
             record_cls=record_cls or self.record_cls,
             search_opts=search_opts or self.config.search,
-            permission_action="search",
+            permission_action="read",
             preference=preference,
             extra_filter=extra_filter,
             versioning=True,
