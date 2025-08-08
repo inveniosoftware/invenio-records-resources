@@ -17,7 +17,6 @@ from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from kombu import Queue
-from marshmallow import ValidationError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
@@ -428,7 +427,7 @@ class RecordService(Service, RecordIndexerMixin):
             identity=identity,
             record_cls=record_cls or self.record_cls,
             search_opts=search_opts or self.config.search,
-            permission_action="search",
+            permission_action="read",
             preference=preference,
             extra_filter=extra_filter,
             versioning=True,
