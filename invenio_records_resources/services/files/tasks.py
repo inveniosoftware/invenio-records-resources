@@ -87,8 +87,14 @@ def recompute_multipart_checksum_task(file_instance_id):
     try:
         file_instance = FileInstance.query.filter_by(id=file_instance_id).one()
         checksum = file_instance.checksum
-        if not checksum.startswith("multipart:"):
+        if not checksum:
+            file_instance.update_checksum()
+            db.session.add(file_instance)
+            db.session.commit()
             return
+        elif not checksum.startswith("multipart:"):
+            return
+
         # multipart checksum looks like: multipart:<s3 multipart checksum>-part_size
         # s3 multipart checksum is the etag of the multipart object and looks like
         # hex(md5(<md5(part1) + md5(part2) + ...>))-<number of parts>
