@@ -2,17 +2,21 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2022 TU Wien.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Record schema."""
+
 from copy import deepcopy
 from datetime import timezone
 
+from invenio_access.context import context_identity
 from marshmallow import Schema, ValidationError, fields, pre_load
 from marshmallow_utils.fields import Links, TZDateTime
+from marshmallow_utils.permissions import context_field_permission_check
 
 from invenio_records_resources.errors import validation_error_to_list_errors
 
@@ -64,30 +68,23 @@ class ServiceSchemaWrapper:
         # TODO: Change constructor to accept a permission_policy_cls directly
         self._permission_policy_cls = service.config.permission_policy_cls
 
-    def _build_context(self, base_context):
-        context = {**base_context}
-        default_identity = context["identity"]  # identity required in context
+    def set_field_permission_check(self, context):
+        default_identity = context_identity.get()
 
         def _permission_check(action, identity=default_identity, **kwargs):
-            return (
-                # TODO: See if context is necessary here
-                self._permission_policy_cls(action, **context, **kwargs).allows(
-                    identity
-                )
+            return self._permission_policy_cls(action, **context, **kwargs).allows(
+                identity
             )
 
-        context.setdefault("field_permission_check", _permission_check)
-
-        return context
+        context_field_permission_check.set(_permission_check)
 
     def load(self, data, schema_args=None, context=None, raise_errors=True):
         """Load data with dynamic schema_args + context + raise or not."""
         schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
+        self.set_field_permission_check(context)
 
         try:
-            valid_data = self.schema(context=context, **schema_args).load(data)
+            valid_data = self.schema(**schema_args).load(data)
             errors = []
         except ValidationError as e:
             if raise_errors:
@@ -100,6 +97,5 @@ class ServiceSchemaWrapper:
     def dump(self, data, schema_args=None, context=None):
         """Dump data using wrapped schema and dynamic schema_args + context."""
         schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
-        return self.schema(context=context, **schema_args).dump(data)
+        self.set_field_permission_check(context)
+        return self.schema(**schema_args).dump(data)
