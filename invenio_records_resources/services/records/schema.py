@@ -13,11 +13,10 @@
 from copy import deepcopy
 from datetime import timezone
 
-from invenio_access.context import context_identity
 from invenio_access.permissions import system_identity
 from marshmallow import Schema, ValidationError, fields, pre_load
+from marshmallow_utils.context import context_schema
 from marshmallow_utils.fields import Links, TZDateTime
-from marshmallow_utils.permissions import context_field_permission_check
 
 from invenio_records_resources.errors import validation_error_to_list_errors
 
@@ -69,23 +68,31 @@ class ServiceSchemaWrapper:
         # TODO: Change constructor to accept a permission_policy_cls directly
         self._permission_policy_cls = service.config.permission_policy_cls
 
-    def set_field_permission_check(self, context):
-        default_identity = context_identity.get(context["identity"])
+    def _build_context(self, base_context):
+        context = {**base_context}
+
+        if "identity" not in context:
+            context["identity"] = system_identity
+
+        default_identity = context["identity"]
 
         def _permission_check(action, identity=default_identity, **kwargs):
             return self._permission_policy_cls(action, **context, **kwargs).allows(
                 identity
             )
 
-        context_field_permission_check.set(_permission_check)
+        context.setdefault("field_permission_check", _permission_check)
+
+        return context
 
     def load(self, data, schema_args=None, context=None, raise_errors=True):
         """Load data with dynamic schema_args + context + raise or not."""
         schema_args = schema_args or {}
-        context = context or {"identity": system_identity}
-        self.set_field_permission_check(context)
+        context = context or {}
 
-        token = context_identity.set(context["identity"])
+        local_context = self._build_context(context)
+
+        token = context_schema.set(local_context)
         try:
             valid_data = self.schema(**schema_args).load(data)
             errors = []
@@ -95,17 +102,19 @@ class ServiceSchemaWrapper:
             valid_data = e.valid_data
             errors = validation_error_to_list_errors(e)
         finally:
-            context_identity.reset(token)
+            context_schema.reset(token)
 
         return valid_data, errors
 
     def dump(self, data, schema_args=None, context=None):
         """Dump data using wrapped schema and dynamic schema_args + context."""
         schema_args = schema_args or {}
-        context = context or {"identity": system_identity}
-        token = context_identity.set(context["identity"])
+        context = context or {}
+
+        local_context = self._build_context(context)
+
+        token = context_schema.set(local_context)
         try:
-            self.set_field_permission_check(context)
             return self.schema(**schema_args).dump(data)
         finally:
-            context_identity.reset(token)
+            context_schema.reset(token)
