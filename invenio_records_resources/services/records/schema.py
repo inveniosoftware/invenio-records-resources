@@ -2,16 +2,20 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2022 TU Wien.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
 """Record schema."""
+
 from copy import deepcopy
 from datetime import timezone
 
+from invenio_access.permissions import system_identity
 from marshmallow import Schema, ValidationError, fields, pre_load
+from marshmallow_utils.context import context_schema
 from marshmallow_utils.fields import Links, TZDateTime
 
 from invenio_records_resources.errors import validation_error_to_list_errors
@@ -66,14 +70,15 @@ class ServiceSchemaWrapper:
 
     def _build_context(self, base_context):
         context = {**base_context}
-        default_identity = context["identity"]  # identity required in context
+
+        if "identity" not in context:
+            context["identity"] = system_identity
+
+        default_identity = context["identity"]
 
         def _permission_check(action, identity=default_identity, **kwargs):
-            return (
-                # TODO: See if context is necessary here
-                self._permission_policy_cls(action, **context, **kwargs).allows(
-                    identity
-                )
+            return self._permission_policy_cls(action, **context, **kwargs).allows(
+                identity
             )
 
         context.setdefault("field_permission_check", _permission_check)
@@ -83,23 +88,33 @@ class ServiceSchemaWrapper:
     def load(self, data, schema_args=None, context=None, raise_errors=True):
         """Load data with dynamic schema_args + context + raise or not."""
         schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
+        context = context or {}
 
+        local_context = self._build_context(context)
+
+        token = context_schema.set(local_context)
         try:
-            valid_data = self.schema(context=context, **schema_args).load(data)
+            valid_data = self.schema(**schema_args).load(data)
             errors = []
         except ValidationError as e:
             if raise_errors:
                 raise
             valid_data = e.valid_data
             errors = validation_error_to_list_errors(e)
+        finally:
+            context_schema.reset(token)
 
         return valid_data, errors
 
     def dump(self, data, schema_args=None, context=None):
         """Dump data using wrapped schema and dynamic schema_args + context."""
         schema_args = schema_args or {}
-        base_context = context or {}
-        context = self._build_context(base_context)
-        return self.schema(context=context, **schema_args).dump(data)
+        context = context or {}
+
+        local_context = self._build_context(context)
+
+        token = context_schema.set(local_context)
+        try:
+            return self.schema(**schema_args).dump(data)
+        finally:
+            context_schema.reset(token)
