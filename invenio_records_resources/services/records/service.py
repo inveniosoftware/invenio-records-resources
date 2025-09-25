@@ -13,11 +13,11 @@
 from flask import current_app
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_records.systemfields.relations.errors import RelationError
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from kombu import Queue
-from marshmallow import ValidationError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
@@ -28,7 +28,7 @@ from invenio_records_resources.services.errors import (
 
 from ..base import LinksTemplate, Service
 from ..errors import RevisionIdMismatchError
-from ..uow import RecordBulkCommitOp, RecordCommitOp, RecordDeleteOp, unit_of_work
+from ..uow import RecordBulkIndexOp, RecordCommitOp, RecordDeleteOp, unit_of_work
 from .schema import ServiceSchemaWrapper
 
 
@@ -651,13 +651,21 @@ class RecordService(Service, RecordIndexerMixin):
                 _create_record(record_dict)
             except Exception as exc:
                 records_processed.append(("create", record_dict, None, exc))
+        valid_records = []
 
-        # We only commit records that have no errors
-        records = [
-            record
-            for _, record, errors, exc in records_processed
-            if errors == [] and exc is None
-        ]
-        uow.register(RecordBulkCommitOp(records, self.indexer))
+        for i, (action, record, errors, exc_) in enumerate(records_processed):
+            if errors == [] and exc_ is None:
+                try:
+                    # Ideally the commit should be done in the uow,
+                    # but since we need to keep track of the errors
+                    # that might happen during the commit (e.g. relation errors)
+                    # we keep it here.
+                    record.commit()
+                    valid_records.append(record)
+                except RelationError as exc:
+                    # If commit fails we register the error for this record
+                    records_processed[i] = (action, record, errors, exc)
+
+        uow.register(RecordBulkIndexOp((r.id for r in valid_records), self.indexer))
 
         return self.result_bulk_list(self, identity, records_processed)
