@@ -13,7 +13,7 @@
 from flask import current_app
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_records.systemfields.relations.errors import RelationError
+from invenio_records.errors import RecordsError
 from invenio_records_permissions.api import permission_filter
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
@@ -662,7 +662,7 @@ class RecordService(Service, RecordIndexerMixin):
                     # we keep it here.
                     record.commit()
                     valid_records.append(record)
-                except RelationError as exc:
+                except RecordsError as exc:
                     # If commit fails we register the error for this record
                     records_processed[i] = (action, record, errors, exc)
 
