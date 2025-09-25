@@ -10,6 +10,11 @@
 Changes
 =======
 
+Version v8.6.1 (released 2025-09-25)
+
+- fix(multipart): recompute full file checksum if no parts are set
+- fix(service): track errors on commit for create_update_many
+
 Version v8.6.0 (released 2025-07-31)
 
 - services: CompositeSuggestQueryParser: Add term filter clause
