@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 # Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -53,7 +54,7 @@ necessarily persisted in the metadata.
 
 import uuid
 from collections.abc import MutableMapping
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 
 from invenio_db import db
@@ -305,8 +306,8 @@ class FilesManager(MutableMapping):
             for key, rf in src_files.items():
                 new_rf = {
                     "id": uuid.uuid4(),
-                    "created": datetime.utcnow(),
-                    "updated": datetime.utcnow(),
+                    "created": datetime.now(timezone.utc),
+                    "updated": datetime.now(timezone.utc),
                     "key": key,
                     "record_id": record_id,
                     "version_id": 1,
