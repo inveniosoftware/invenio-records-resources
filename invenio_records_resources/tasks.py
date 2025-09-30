@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-2024 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,7 +9,8 @@
 
 """Celery tasks for async processing."""
 
-import arrow
+from datetime import datetime, timezone
+
 from celery import current_app as current_celery_app
 from celery import shared_task
 from flask import current_app
@@ -32,7 +34,7 @@ def extract_file_metadata(service_id, record_id, file_key):
 @shared_task(ignore_result=True)
 def send_change_notifications(record_type, records_info):
     """Execute the handlers set up for a record_type update."""
-    task_start = arrow.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
+    task_start = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
 
     handlers = current_notifications_registry.get(record_type)
     for notif_handler in handlers:
