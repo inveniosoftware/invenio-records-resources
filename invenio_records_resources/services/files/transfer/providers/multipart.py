@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 """Multipart file transfer provider."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import marshmallow as ma
 from invenio_db.uow import ModelCommitOp
@@ -152,7 +153,9 @@ class MultipartStorageExt:
                 {
                     "part": part_no + 1,
                     "url": f"{base_url}/content/{part_no+1}",
-                    "expiration": (datetime.utcnow() + timedelta(days=14)).isoformat(),
+                    "expiration": (
+                        datetime.now(timezone.utc) + timedelta(days=14)
+                    ).isoformat(),
                 }
                 for part_no in range(parts)
             ]
