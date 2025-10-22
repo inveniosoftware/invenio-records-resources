@@ -254,6 +254,7 @@ class RecordList(ServiceListResult):
 
         if self._params:
             res["sortBy"] = self._params["sort"]
+            res["page"] = self.pagination.page
             if self._links_tpl:
                 res["links"] = self._links_tpl.expand(self._identity, self.pagination)
 
