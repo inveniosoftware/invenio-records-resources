@@ -11,7 +11,6 @@
 from abc import ABC
 
 from flask_babel import lazy_gettext as _
-from fs.errors import CreateFailed
 from invenio_files_rest.errors import FileSizeError
 from werkzeug.exceptions import ClientDisconnected
 
@@ -99,7 +98,7 @@ class Transfer(ABC):
             self.record.files.create_obj(
                 self.file_record.key, stream, size=content_length, size_limit=size_limit
             )
-        except (ClientDisconnected, CreateFailed):
+        except (ClientDisconnected, OSError):
             raise TransferException(
                 f'Transfer of File with key "{self.file_record.key}" failed.'
             )
