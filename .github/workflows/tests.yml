@@ -7,7 +7,7 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-name: CI
+name: CI - tests
 
 on:
   push:
@@ -30,3 +30,5 @@ on:
 jobs:
   Tests:
     uses: inveniosoftware/workflows/.github/workflows/tests-python.yml@master
+    with:
+      python-version: '["3.9", "3.11", "3.14"]'
