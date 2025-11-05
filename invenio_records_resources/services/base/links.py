@@ -141,6 +141,7 @@ class Link(ExternalLink):
             "Link is deprecated and will be removed in v14.0. Use `ExternalLink` for "
             "third-party links and `EndpointLink` for InvenioRDM links.",
             DeprecationWarning,
+            stacklevel=2,
         )
         super().__init__(*args, **kwargs)
 
