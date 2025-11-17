@@ -11,6 +11,10 @@
 Changes
 =======
 
+Version v8.7.0 (released 2025-11-17)
+
+- feat(records): return page number in RecordList
+
 Version v8.6.2 (released 2025-10-22)
 
 - i18n: pulled translations
