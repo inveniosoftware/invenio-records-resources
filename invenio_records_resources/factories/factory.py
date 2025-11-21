@@ -22,11 +22,11 @@ from invenio_records_resources.records.systemfields import IndexField, PIDField
 from invenio_records_resources.records.systemfields.pid import PIDFieldContext
 from invenio_records_resources.resources import RecordResource, RecordResourceConfig
 from invenio_records_resources.services import RecordService, RecordServiceConfig
-from invenio_records_resources.services.records.config import SearchOptions
-from invenio_records_resources.services.records.links import (
-    RecordLink,
-    pagination_links,
+from invenio_records_resources.services.records import (
+    RecordEndpointLink,
+    pagination_endpoint_links,
 )
+from invenio_records_resources.services.records.config import SearchOptions
 
 
 class RecordTypeFactory(object):
@@ -206,9 +206,13 @@ class RecordTypeFactory(object):
             "search": self.search_options,
             "schema": self.service_schema,
             "links_item": {
-                "self": RecordLink("{+api}" + route + "/{id}"),
+                # Because self.record_name_lower set as blueprint name in
+                # self.create_resource_class
+                "self": RecordEndpointLink(f"{self.record_name_lower}.read"),
             },
-            "links_search": pagination_links("{+api}" + route + "{?args*}"),
+            "links_search": pagination_endpoint_links(
+                f"{self.record_name_lower}.search"
+            ),
             "nested_links_item": None,
         }
         if self.service_components:

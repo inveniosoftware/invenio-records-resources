@@ -9,25 +9,13 @@
 # details.
 
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import AnyUser, Disable
+from invenio_records_permissions.generators import Disable
 
-from invenio_records_resources.factories.factory import RecordTypeFactory
-from tests.mock_module.schemas import RecordSchema
+from tests.mock_module_factory.grants import grant_type
 
 
 def test_simple_flow(app, identity_simple, db):
     """Create a record."""
-
-    class PermissionPolicy(RecordPermissionPolicy):
-        """Mock permission policy. All actions allowed."""
-
-        can_search = [AnyUser()]
-        can_create = [AnyUser()]
-        can_read = [AnyUser()]
-        can_update = [AnyUser()]
-        can_delete = [AnyUser()]
-        can_read_files = [AnyUser()]
-        can_update_files = [AnyUser()]
 
     class DenyAllPermissionPolicy(RecordPermissionPolicy):
         """Mock permission policy. All actions denied."""
@@ -40,13 +28,6 @@ def test_simple_flow(app, identity_simple, db):
         can_read_files = [Disable()]
         can_update_files = [Disable()]
 
-    # factory use
-    grant_type = RecordTypeFactory(
-        "Grant",
-        RecordSchema,
-        permission_policy_cls=PermissionPolicy,
-        service_id="grants",
-    )
     db.create_all()
 
     input_data = {
