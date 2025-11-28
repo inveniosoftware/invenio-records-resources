@@ -35,6 +35,13 @@ class FileContentComponent(FileServiceComponent):
             transfer.set_file_content(stream, content_length)
         except TransferException:
             failed = record.files.delete(file_key, softdelete_obj=False, remove_rf=True)
+
+            # Clean up the FileInstance if it's broken (as expected), since that's
+            # separate from the ObjectVersion cleanup
+            if failed.object_version and (file_instance := failed.object_version.file):
+                if not file_instance.uri:
+                    file_instance.delete()
+
             raise FailedFileUploadException(
                 file_key=file_key, recid=record.pid, file=failed
             )
