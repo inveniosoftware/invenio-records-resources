@@ -3,6 +3,7 @@
 # This file is part of Invenio.
 # Copyright (C) 2021-2025 CERN.
 # Copyright (C) 2021-2023 Northwestern University.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -101,7 +102,7 @@ class RecordSchema(BaseRecordSchema):
 class FilesSchema(Schema):
     """Basic files schema class."""
 
-    enabled = fields.Bool(missing=True)
+    enabled = fields.Bool(load_default=True)
     # allow unsetting
     default_preview = SanitizedUnicode(allow_none=True)
 
