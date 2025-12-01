@@ -152,7 +152,7 @@ class EndpointLink:
     Is interface-compatible with Link for ease of initial adoption.
     """
 
-    def __init__(self, endpoint, when=None, vars=None, params=None):
+    def __init__(self, endpoint, when=None, vars=None, params=None, anchor=None):
         """Constructor.
 
         :param endpoint: str. endpoint of the URL
@@ -164,6 +164,7 @@ class EndpointLink:
         self._when_func = when
         self._vars_func = vars
         self._params = params or []
+        self._anchor_func = anchor or (lambda obj, vars: None)
 
     def should_render(self, obj, context):
         """Determine if the link should be rendered."""
@@ -200,7 +201,11 @@ class EndpointLink:
         # Assumes no clash between URL params and querystrings
         values.update(vars.get("args", {}))
         values = dict(sorted(values.items()))  # keep sorted interface
-        return invenio_url_for(self._endpoint, **values)
+        return invenio_url_for(
+            self._endpoint,
+            _anchor=self._anchor_func(obj, vars),
+            **values,
+        )
 
 
 class ConditionalLink:
