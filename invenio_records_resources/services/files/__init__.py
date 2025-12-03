@@ -11,10 +11,11 @@
 
 from .components import FileServiceComponent
 from .config import FileServiceConfig
-from .links import FileLink
+from .links import FileEndpointLink, FileLink
 from .service import FileService
 
 __all__ = (
+    "FileEndpointLink",
     "FileLink",
     "FileService",
     "FileServiceComponent",
