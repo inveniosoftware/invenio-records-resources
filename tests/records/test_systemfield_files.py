@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -64,7 +65,7 @@ def test_record_files_deletion(base_app, db, location):
     bucket_id = record.bucket_id
     db.session.commit()
     assert Bucket.query.count() == 1
-    assert Bucket.query.get(bucket_id)
+    assert db.session.get(Bucket, bucket_id)
 
     record.delete()
     db.session.commit()
