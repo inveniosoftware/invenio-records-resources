@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2021 CERN.
 # Copyright (C) 2023 Northwestern University.
+# Copyright (C) 2025 KTH Royal Institute of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -224,7 +225,7 @@ class NestedTermsFacet(TermsFacet):
             bucket_out = {
                 "key": key,
                 "doc_count": self.get_metric(bucket),
-                "label": label_map[key],
+                "label": label_map.get(key),
                 "is_selected": self.is_filtered(full_key, filter_values),
             }
             if "inner" in bucket:
