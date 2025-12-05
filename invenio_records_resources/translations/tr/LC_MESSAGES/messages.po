@@ -8,6 +8,7 @@
 # Berat Aldemir <berataldemir@gmail.com>, 2024
 # BEN TERCÜME, 2025
 # Ben Translation and Interpreting Services <info@bentercume.com>, 2025
+# Eylül-1 -, 2025
 # 
 #, fuzzy
 msgid ""
@@ -16,7 +17,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2025-07-08 19:50+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: Ben Translation and Interpreting Services <info@bentercume.com>, 2025\n"
+"Last-Translator: Eylül-1 -, 2025\n"
 "Language-Team: Turkish (https://app.transifex.com/inveniosoftware/teams/23537/tr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -28,7 +29,7 @@ msgstr ""
 #: invenio_records_resources/records/systemfields/entity_reference.py:46
 #, python-format
 msgid "Invalid reference for '%(key)s': %(obj)s"
-msgstr ""
+msgstr "'%(key)s' için geçersiz referans: %(obj)s"
 
 #: invenio_records_resources/resources/errors.py:73
 #: invenio_records_resources/resources/errors.py:74
@@ -45,7 +46,7 @@ msgstr "İç sunucu hatası"
 
 #: invenio_records_resources/resources/errors.py:135
 msgid "Invalid querystring parameters."
-msgstr ""
+msgstr "Geçersiz sorgu dizesi parametreleri."
 
 #: invenio_records_resources/resources/errors.py:141
 #: invenio_records_resources/resources/errors.py:147
@@ -59,42 +60,44 @@ msgstr "Kayıt silindi."
 
 #: invenio_records_resources/resources/errors.py:159
 msgid "The persistent identifier is already registered."
-msgstr ""
+msgstr "Kalıcı tanımlayıcı zaten kayıtlıdır."
 
 #: invenio_records_resources/resources/errors.py:165
 msgid "The persistent identifier does not exist."
-msgstr ""
+msgstr "Kalıcı tanımlayıcı mevcut değil."
 
 #: invenio_records_resources/resources/errors.py:171
 msgid "The persistent identifier is not registered."
-msgstr ""
+msgstr "Kalıcı tanımlayıcı kayıtlı değil."
 
 #: invenio_records_resources/resources/errors.py:178
 msgid "Not found."
-msgstr ""
+msgstr "Bulunamadı."
 
 #: invenio_records_resources/resources/errors.py:185
 #, python-format
 msgid "Facet %(vocabulary_id)s not found."
-msgstr ""
+msgstr "%(vocabulary_id)s yönü bulunamadı."
 
 #: invenio_records_resources/resources/errors.py:198
 msgid "Unable to decode JSON data in request body."
-msgstr ""
+msgstr "İstek gövdesindeki JSON verileri çözümlenemedi."
 
 #: invenio_records_resources/resources/errors.py:204
 #: invenio_records_resources/resources/errors.py:210
 msgid "Not a valid value."
-msgstr ""
+msgstr "Geçerli bir değer değil."
 
 #: invenio_records_resources/resources/errors.py:219
 msgid "The file upload transfer failed, please try again."
-msgstr ""
+msgstr "Dosya yükleme işlemi başarısız oldu, lütfen tekrar deneyin."
 
 #: invenio_records_resources/resources/errors.py:226
 msgid ""
 "Uploading selected files will result in exceeding the max amount per record."
 msgstr ""
+"Seçilen dosyaların yüklenmesi, kayıt başına maksimum miktarın aşılmasına "
+"neden olacaktır."
 
 #: invenio_records_resources/services/errors.py:51
 #, python-format
@@ -102,21 +105,23 @@ msgid ""
 "Revision id provided(%(expected_revision_id)s) doesn't match record's "
 "one(%(record_revision_id)s)"
 msgstr ""
+"Verilen revizyon kimliği (%(expected_revision_id)s) kaydınkiyle "
+"(%(record_revision_id)s) eşleşmiyor."
 
 #: invenio_records_resources/services/errors.py:87
 #, python-format
 msgid "Facet %(vocab)s not found."
-msgstr ""
+msgstr "%(vocab)s yönü bulunamadı."
 
 #: invenio_records_resources/services/errors.py:97
 #, python-format
 msgid "Record '%(recid)s' has no file '%(file_key)s'."
-msgstr ""
+msgstr "'%(recid)s' kaydı, '%(file_key)s' dosyasına sahip değil."
 
 #: invenio_records_resources/services/errors.py:113
 #, python-format
 msgid "Record '%(recid)s' failed to upload file '%(file_key)s'."
-msgstr ""
+msgstr "'%(recid)s' kaydı, '%(file_key)s' dosyasını yükleyemedi."
 
 #: invenio_records_resources/services/errors.py:130
 #, python-brace-format
@@ -132,20 +137,22 @@ msgstr ""
 msgid ""
 "Namespace %(given_namespace)s is not valid for custom field %(field_name)s."
 msgstr ""
+"%(given_namespace)s ad alanı, %(field_name)s özel alanı için geçerli "
+"değildir."
 
 #: invenio_records_resources/services/custom_fields/errors.py:54
 #, python-format
 msgid "Custom fields %(field_names)s are not configured."
-msgstr ""
+msgstr "%(field_names)s özel alanları yapılandırılmamış."
 
 #: invenio_records_resources/services/custom_fields/errors.py:70
 #, python-format
 msgid "Invalid argument %(arg_name)s passed when initializing custom field."
-msgstr ""
+msgstr "Özel alanı başlatırken geçersiz %(arg_name)s argümanı iletildi."
 
 #: invenio_records_resources/services/files/service.py:318
 msgid "File upload transfer failed."
-msgstr ""
+msgstr "Dosya yükleme aktarımı başarısız."
 
 #: invenio_records_resources/services/files/components/metadata.py:83
 msgid "Empty files are not accepted."
@@ -170,28 +177,27 @@ msgstr "Eskiden yeniye"
 #: invenio_records_resources/services/records/components/files.py:89
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
-"Kaydı yalnızca-üstveri olarak ayarlamak için önce tüm dosyaları "
-"silmelisiniz."
+"Kaydı Sadece Üst Veri olarak ayarlamak için önce tüm dosyaları silmelisiniz."
 
 #: invenio_records_resources/services/records/params/pagination.py:39
 msgid "Invalid pagination parameters."
-msgstr ""
+msgstr "Geçersiz sayfalandırma parametreleri."
 
 #: invenio_records_resources/services/records/params/querystr.py:30
 msgid "You cannot specify both 'q' and 'suggest' parameters at the same time."
-msgstr ""
+msgstr "'q' ve ‘suggest’ parametrelerini aynı anda belirleyemezsiniz."
 
 #: invenio_records_resources/services/records/params/querystr.py:41
 msgid "Invalid 'suggest' parameter."
-msgstr ""
+msgstr "Geçersiz 'suggest' parametresi."
 
 #: invenio_records_resources/services/records/params/sort.py:62
 #, python-format
 msgid "Invalid sort option '%(sort_option)s'."
-msgstr ""
+msgstr "Geçersiz '%(sort_option)s' sıralama seçeneği."
 
 #: invenio_records_resources/services/records/queryparser/transformer.py:128
 #: invenio_records_resources/services/records/queryparser/transformer.py:133
 #, python-format
 msgid "Invalid search field: %(field_name)s."
-msgstr ""
+msgstr "Geçersiz arama alanı: %(field_name)s."
