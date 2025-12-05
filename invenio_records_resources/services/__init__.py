@@ -18,7 +18,7 @@ from .base import (
     Service,
     ServiceConfig,
 )
-from .files import FileLink, FileService, FileServiceConfig
+from .files import FileEndpointLink, FileLink, FileService, FileServiceConfig
 from .records import (
     RecordEndpointLink,
     RecordIndexerMixin,
@@ -35,6 +35,7 @@ __all__ = (
     "ConditionalLink",
     "EndpointLink",
     "ExternalLink",
+    "FileEndpointLink",
     "FileLink",
     "FileService",
     "FileServiceConfig",

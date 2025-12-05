@@ -8,6 +8,8 @@
 
 """Utility for rendering URI template links."""
 
+import warnings
+
 from ..base import EndpointLink, Link
 
 
@@ -44,6 +46,13 @@ class RecordEndpointLink(EndpointLink):
 
 def pagination_links(tpl):
     """Create pagination links (prev/self/next) from the same template."""
+    warnings.warn(
+        "`pagination_links` is deprecated and will be removed in v14.0. "
+        "Use `pagination_endpoint_links` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     return {
         "prev": Link(
             tpl,
