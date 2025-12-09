@@ -51,6 +51,7 @@ necessarily persisted in the metadata.
 }
 """
 
+import inspect
 import uuid
 from collections.abc import MutableMapping
 from datetime import datetime
@@ -102,6 +103,12 @@ class FilesManager(MutableMapping):
         self._order = order or []
         self._default_preview = default_preview
         self._entries = entries
+        self._wip_ov_cache = {}
+
+    def _strip_ov_create_args(self, **kwargs):
+        """Strip the values for parameters expected by ``ObjectVersion.create()``."""
+        create_params = inspect.signature(ObjectVersion.create).parameters
+        return {k: v for k, v in kwargs.items() if k not in create_params}
 
     def create_bucket(self):
         """Create a bucket."""
@@ -172,7 +179,9 @@ class FilesManager(MutableMapping):
 
         rf = self.file_cls.create({}, key=key, record_id=self.record.id)
         if stream:
-            obj = ObjectVersion.create(self.bucket, key, stream=stream, **kwargs)
+            obj = ObjectVersion.create(self.bucket, key, **kwargs)
+            self._wip_ov_cache[key] = obj
+            obj.set_contents(stream, **self._strip_ov_create_args(**kwargs))
         if obj:
             if isinstance(obj, dict):
                 fi = FileInstance.create()
@@ -196,7 +205,10 @@ class FilesManager(MutableMapping):
         if rf is None:
             raise InvalidKeyError(description=f"File with {key} does not exist.")
 
-        return ObjectVersion.create(self.bucket, key, stream=stream, **kwargs)
+        obj = ObjectVersion.create(self.bucket, key, **kwargs)
+        self._wip_ov_cache[key] = obj
+        obj.set_contents(stream=stream, **self._strip_ov_create_args(**kwargs))
+        return obj
 
     @ensure_enabled
     def update(self, key, obj=None, stream=None, data=None, **kwargs):
@@ -237,15 +249,20 @@ class FilesManager(MutableMapping):
         :returns: The updated file record.
         """
         rf = self[key]
-        ov = rf.object_version
+        cached_ov = self._wip_ov_cache.pop(key, None)
+        ov = rf.object_version or cached_ov
 
         # Remove or softdelete the entire row
         rf.delete(force=remove_rf)
         if ov and remove_obj:
+            # Set information for later, in case the removed object was still WIP
+            rf.object_version = ov
+
             if softdelete_obj:
-                ObjectVersion.delete(rf.object_version.bucket, rf.object_version.key)
+                ObjectVersion.delete(ov.bucket, ov.key)
             else:
-                rf.object_version.remove()
+                ov.remove()
+
         del self._entries[key]
 
         # Unset the default preview if the file is removed
@@ -281,6 +298,7 @@ class FilesManager(MutableMapping):
         self.default_preview = None
         self._entries = None
         self._order = []
+        self._wip_ov_cache.clear()
 
     def copy(self, src_files, copy_obj=True):
         """Copy from another file manager.
