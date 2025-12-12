@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020-2023 Northwestern University.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -14,7 +15,10 @@ from invenio_records_resources.services import (
     RecordServiceConfig,
     SearchOptions,
 )
-from invenio_records_resources.services.files.links import FileEndpointLink
+from invenio_records_resources.services.files.links import (
+    EndpointLink,
+    FileEndpointLink,
+)
 from invenio_records_resources.services.records.components import FilesComponent
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import (
@@ -30,6 +34,7 @@ from invenio_records_resources.services.records.params.querystr import (
 )
 
 from .api import Record, RecordWithFiles
+from .extractor import DummyFileExtractor
 from .permissions import PermissionPolicy
 from .schemas import RecordSchema, RecordWithFilesSchema
 
@@ -110,5 +115,17 @@ class FileServiceConfig(FileServiceConfig):
         ),
         "commit": FileEndpointLink(
             "mocks_files.create_commit", params=["pid_value", "key"]
+        ),
+    }
+
+    file_extractors = FileServiceConfig.file_extractors + [DummyFileExtractor()]
+
+    container_item_links_item = {
+        "content": EndpointLink(
+            "mocks_files.extract_container_item",
+            params=["pid_value", "key", "path"],
+            vars=lambda container_item_metadata, variables: variables.update(
+                {"path": container_item_metadata["key"]}
+            ),
         ),
     }

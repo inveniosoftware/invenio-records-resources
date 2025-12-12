@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020-2025 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -17,8 +17,10 @@ from .components import (
     FileMultipartContentComponent,
     FileProcessorComponent,
 )
-from .processors import ImageMetadataExtractor
-from .results import FileItem, FileList
+from .extractors import ZipExtractor
+from .processors import ImageMetadataExtractor, ZipProcessor
+from .processors.zip import ZipProcessor
+from .results import ContainerItemResult, ContainerListResult, FileItem, FileList
 from .schema import FileSchema
 
 
@@ -36,6 +38,8 @@ class FileServiceConfig(ServiceConfig):
 
     file_result_item_cls = FileItem
     file_result_list_cls = FileList
+    file_result_container_list_cls = ContainerListResult
+    file_result_container_item_cls = ContainerItemResult
 
     file_schema = FileSchema
 
@@ -44,6 +48,7 @@ class FileServiceConfig(ServiceConfig):
     # Inheriting service config should define these
     file_links_list = {}
     file_links_item = {}
+    container_item_links_item = {}
 
     # At the resource level and link serialization (service) level
     allow_upload = True
@@ -58,4 +63,7 @@ class FileServiceConfig(ServiceConfig):
 
     file_processors = [
         ImageMetadataExtractor(),
+        ZipProcessor(),
     ]
+
+    file_extractors = [ZipExtractor()]
