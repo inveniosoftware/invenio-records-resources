@@ -48,3 +48,29 @@ def test_image_meta_extraction(
 
     item = file_service.read_file_metadata(identity_simple, recid, "image.png")
     assert item.data["metadata"] == {"width": 1000, "height": 1000}
+
+
+def test_zip_meta_extraction(
+    file_service, location, example_record, identity_simple, zip_fp, monkeypatch
+):
+    """Image metadata extraction."""
+    # Patch celery task
+    task = MagicMock()
+    monkeypatch.setattr(processor, "extract_file_metadata", task)
+
+    recid = example_record["id"]
+
+    # Upload file
+    file_service.init_files(identity_simple, recid, [{"key": "testzip.zip"}])
+    file_service.set_file_content(identity_simple, recid, "testzip.zip", zip_fp)
+
+    # Commit (should send celery task)
+    assert not task.apply_async.called
+    file_service.commit_file(identity_simple, recid, "testzip.zip")
+    assert task.apply_async.called
+
+    # Call task manually
+    extract_file_metadata(*task.apply_async.call_args[1]["args"])
+
+    item = file_service.read_file_metadata(identity_simple, recid, "testzip.zip")
+    assert item.data["metadata"] == {"zip_toc_position": 236}
