@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2023 Graz University of Technology.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -132,3 +133,33 @@ class FilesCountExceededException(Exception):
                 )
             )
         )
+
+
+class NoExtractorFoundError(Exception):
+    """No extractor found for the given file exception."""
+
+    def __init__(self, file_key):
+        """Constructor."""
+        super().__init__(
+            _(
+                "No extractor found for the file '%(file_key)s'.",
+                file_key=file_key,
+            )
+        )
+        self.file_key = file_key
+
+
+class InvalidFileContentError(Exception):
+    """Exception raised if stored file has invalid content."""
+
+    def __init__(self, file_key, msg):
+        """Constructor."""
+        super().__init__(
+            _(
+                "Invalid file content for file '%(file_key)s': %(msg)s.",
+                file_key=file_key,
+                msg=msg,
+            )
+        )
+        self.file_key = file_key
+        self.msg = msg
