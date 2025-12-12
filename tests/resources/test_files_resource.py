@@ -11,6 +11,7 @@
 
 """Invenio Resources module to create REST APIs."""
 
+import io
 import zipfile
 from io import BytesIO
 from unittest.mock import patch
@@ -361,6 +362,48 @@ def test_file_api_errors(client, search_clear, headers, input_data, location):
         "message": "File with key test.pdf already exists.",
         "status": 400,
     }
+
+    # Upload ZIP file with suspicious compression ratio
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {"key": "huge_test.zip", "metadata": {"title": "Test file"}},
+        ],
+    )
+    assert res.status_code == 201
+
+    # Create a large zip in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        zipf.writestr("huge_test/", "")
+        # Add a few large files
+        for i in range(10):
+            zipf.writestr(f"huge_test/largefile_{i}.bin", b"x" * 50_000_000)
+    zip_buffer.seek(0)
+
+    # Upload the ZIP file
+    res = client.put(
+        f"/mocks/{id_}/files/huge_test.zip/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=zip_buffer,
+    )
+    assert res.status_code == 200
+    assert res.json["status"] == "pending"
+
+    # Commit the uploaded file
+    res = client.post(f"/mocks/{id_}/files/huge_test.zip/commit", headers=headers)
+
+    # Commit doesn't fail, because it calls a background celery task without waiting for it finish
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+
+    # Next request will return a response with error in metadata
+    res = client.get(f"/mocks/{id_}/files/huge_test.zip", headers=headers)
+    assert "Suspicious compression ratio" in res.json["metadata"]["error"]
 
 
 def test_disabled_upload_file_resource(
