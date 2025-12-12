@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020-2025 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -27,6 +27,8 @@ class FileResourceConfig(ResourceConfig):
         "item-multipart-content": "/files/<path:key>/content/<int:part>",
         "item-commit": "/files/<path:key>/commit",
         "list-archive": "/files-archive",
+        "list-container": "/files/<path:key>/container",
+        "container-item-extract": "/files/<path:key>/container/<path:path>",
     }
     error_handlers = {
         **ResourceConfig.error_handlers,
