@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2023 TU Wien.
 # Copyright (C) 2025 Graz University of Technology.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -38,6 +38,13 @@ from .parser import RequestStreamParser
 #
 request_view_args = request_parser(
     {"pid_value": ma.fields.Str(required=True), "key": ma.fields.Str()},
+    location="view_args",
+)
+
+request_extract_args = request_parser(
+    {
+        "path": ma.fields.Str(required=True),
+    },
     location="view_args",
 )
 
@@ -146,6 +153,17 @@ class FileResource(ErrorHandlersMixin, Resource):
                         self.upload_multipart_content,
                     ),
                 ]
+        if routes.get("list-container") and routes.get("container-item-extract"):
+            # allow listing and extracting from container files if the routes are defined
+            # media files blueprint is initalized by using same original file resource
+
+            url_rules += [
+                route("GET", routes["list-container"], self.list_container),
+                route(
+                    "GET", routes["container-item-extract"], self.extract_container_item
+                ),
+            ]
+
         return url_rules
 
     @request_view_args
@@ -310,3 +328,26 @@ class FileResource(ErrorHandlersMixin, Resource):
         )
 
         return item.to_dict(), 200
+
+    @request_view_args
+    @response_handler()
+    def list_container(self):
+        """List files in a container file."""
+        listing = self.service.list_container(
+            g.identity,
+            resource_requestctx.view_args["pid_value"],
+            resource_requestctx.view_args.get("key"),
+        )
+        return listing.to_dict(), 200
+
+    @request_view_args
+    @request_extract_args
+    def extract_container_item(self):
+        """Extract a specific file or directory from the container of a record."""
+        extracted = self.service.extract_container_item(
+            g.identity,
+            resource_requestctx.view_args["pid_value"],
+            resource_requestctx.view_args.get("key"),
+            resource_requestctx.view_args.get("path"),
+        )
+        return extracted.send_file()

@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020-2021 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -14,8 +14,15 @@ from flask import current_app
 from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
+from invenio_records_resources.proxies import current_transfer_registry
+from invenio_records_resources.services.files.transfer import TransferStatus
+
 from ..base import LinksTemplate, Service
-from ..errors import FailedFileUploadException, FileKeyNotFoundError
+from ..errors import (
+    FailedFileUploadException,
+    FileKeyNotFoundError,
+    NoExtractorFoundError,
+)
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 from .schema import InitFileSchemaMixin
@@ -61,6 +68,14 @@ class FileService(Service):
         """Create a new instance of the resource list."""
         return self.config.file_result_list_cls(*args, **kwargs)
 
+    def file_result_container_list(self, *args, **kwargs):
+        """Create a new instance of the resource listing."""
+        return self.config.file_result_container_list_cls(*args, **kwargs)
+
+    def file_result_container_item(self, *args, **kwargs):
+        """Create a new instance of the resource listing."""
+        return self.config.file_result_container_item_cls(*args, **kwargs)
+
     def file_links_list_tpl(self, id_):
         """Return a link template for list results."""
         return LinksTemplate(
@@ -68,6 +83,15 @@ class FileService(Service):
             # we have to keep `id` in context for URL expansion
             self.config.file_links_list,
             context={"id": id_, "pid_value": id_},
+        )
+
+    def container_item_links_list_tpl(self, id_, key):
+        """Return a link template for list results."""
+        return LinksTemplate(
+            # Until all modules have transitioned to using invenio_url_for,
+            # we have to keep `id` in context for URL expansion
+            self.config.container_item_links_item,
+            context={"id": id_, "pid_value": id_, "key": key},
         )
 
     def file_links_item_tpl(self, id_):
@@ -412,3 +436,73 @@ class FileService(Service):
             errors=errors,
             links_tpl=self.file_links_item_tpl(id_),
         )
+
+    def list_container(self, identity, id_, file_key):
+        """List the files in the container of a record."""
+        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+        file_record = record.files[file_key]
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
+
+        for e in self.config.file_extractors:
+            if e.can_process(file_record):
+                listing = e.list(file_record)
+                return self.file_result_container_list(
+                    self,
+                    identity,
+                    listing,
+                    self.container_item_links_list_tpl(id_, file_key),
+                )
+        else:
+            raise NoExtractorFoundError(file_key)
+
+    def extract_container_item(self, identity, id_, file_key, path):
+        """Extract a specific file or directory from the container of a record."""
+        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+        file_record = record.files[file_key]
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
+
+        for e in self.config.file_extractors:
+            if e.can_process(file_record):
+                container_stream = e.open(file_record, path)
+                return self.file_result_container_item(
+                    self,
+                    identity,
+                    record,
+                    file_record,
+                    container_stream,
+                    path,
+                    mimetype=getattr(container_stream, "mimetype", None),
+                    size=getattr(container_stream, "size", None),
+                )
+        else:
+            raise NoExtractorFoundError(file_key)
+
+    def open_container_item(self, identity, id_, file_key, path):
+        """Open a specific file from the container of a record."""
+        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
+        file_record = record.files[file_key]
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
+
+        for e in self.config.file_extractors:
+            if e.can_process(file_record):
+                return e.open(file_record, path)
+        else:
+            raise NoExtractorFoundError(file_key)
