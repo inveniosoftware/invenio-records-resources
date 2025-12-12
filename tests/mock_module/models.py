@@ -3,6 +3,7 @@
 # This file is part of Invenio.
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -24,7 +25,7 @@ class RecordMetadata(db.Model, RecordMetadataBase):
 
     __tablename__ = "mock_metadata"
 
-    expires_at = db.Column(db.DateTime(), nullable=True)
+    expires_at = db.Column(db.UTCDateTime(), nullable=True)
 
     bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id))
     bucket = db.relationship(Bucket)
