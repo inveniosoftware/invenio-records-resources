@@ -11,6 +11,12 @@
 Changes
 =======
 
+Version v8.8.0 (released 2026-01-08)
+
+- fix(files-svc): clean up broken FileInstances when an upload fails
+- fix(files-mgr): remember file information before write operations
+- feat(search): allow enforcing a max page size
+
 Version v8.7.1 (released 2025-12-09)
 
 - i18n: pulled translations
