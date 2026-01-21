@@ -9,7 +9,6 @@
 
 """Test faceting."""
 
-
 import pytest
 
 from invenio_records_resources.services import RecordService

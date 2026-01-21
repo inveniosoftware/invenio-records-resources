@@ -7,6 +7,7 @@
 # details.
 
 """S3 testing configuration."""
+
 import os
 
 import pytest
