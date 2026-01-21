@@ -87,7 +87,14 @@ class LinksTemplate:
     def expand(self, identity, obj):
         """Expand all the link templates."""
         links = {}
-        ctx = deepcopy(self.context)
+        # A shallow copy is used to insulate the original context from
+        # addition/deletion instead of a deepcopy because some of the objects stored in
+        # the context exhibit degenerate deepcopying behaviors (e.g., objects using
+        # RelationsMapping raise RecursionError). self.context already insulates
+        # self._context, but we are being more careful given that self.context pretends
+        # to be like a regular attribute. Each `link` below should further insulate
+        # the ctx however.
+        ctx = self.context.copy()
         # pass identity to context
         ctx["identity"] = identity
         for key, link in self._links.items():
@@ -186,8 +193,15 @@ class EndpointLink:
         Note: "args" key in generated values for expansion has special meaning.
               It is used for querystring parameters.
         """
-        vars = {}
-        vars.update(deepcopy(context))
+        # A `vars`` dict is created here to insulate `context` from
+        # additions/deletions. A deepcopy cannot be used
+        # on context unfortunately as some of the objects stored in the context exhibit
+        # degenerate copying behaviors (i.e., RelationsMapping raising RecursionError)
+        # The "args" subdict (if any) also needs to be insulated.
+        vars = context.copy()
+        if context.get("args"):
+            vars["args"] = context["args"].copy()
+
         self.vars(obj, vars)
         if self._vars_func:
             self._vars_func(obj, vars)
