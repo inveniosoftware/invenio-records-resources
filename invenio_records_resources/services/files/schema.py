@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2020 European Union.
 # Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -151,7 +152,7 @@ class InitFileSchemaMixin(Schema):
         unknown = RAISE
 
     key = Str(required=True, dump_only=False)
-    storage_class = Str(default="L", dump_only=False)
+    storage_class = Str(dump_default="L", dump_only=False)
     checksum = Str(dump_only=False)
     size = Integer(dump_only=False)
     transfer = Nested(TransferSchema, dump_only=False)
