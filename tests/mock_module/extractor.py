@@ -7,6 +7,8 @@
 # details.
 """File service dummy extractors."""
 
+from io import StringIO
+
 from invenio_records_resources.services.files.extractors.base import FileExtractor
 
 
@@ -20,33 +22,21 @@ class DummyFileExtractor(FileExtractor):
     def list(self, file_record):
         """List the contents of a given file record."""
         return {
-            "items": {
-                "dummy.txt": {
+            "entries": [
+                {
                     "key": "dummy.txt",
-                    "type": "file",
-                    "size": "123456790",
-                    "id": "dummy.txt",
+                    "size": 123456790,
                 }
-            },
+            ],
             "total": 1,
             "truncated": False,
         }
 
-    def extract(self, file_record, path):
-        """Extract a specific file or directory from the file record."""
-
-        class DummySendFile:
-            """A dummy send file protocol implementation."""
-
-            def send_file(self):
-                """Simulate sending a file."""
-                return f"Sending {path} from {file_record.key}"
-
-        return DummySendFile()
-
     def open(self, file_record, path):
         """Open a specific file from the file record."""
-        from io import StringIO
-
         # Simulate opening a file by returning a StringIO object
-        return StringIO(f"Contents of {path} from {file_record.key}")
+
+        io_contents = StringIO(f"Contents of {path} from {file_record.key}")
+        io_contents.mimetype = "text/plain"
+
+        return io_contents

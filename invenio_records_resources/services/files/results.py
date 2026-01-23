@@ -13,6 +13,8 @@
 from ...proxies import current_transfer_registry
 from ..base import ServiceItemResult, ServiceListResult
 from ..records.results import RecordItem
+from pathlib import Path
+from flask import Response, current_app
 
 
 class FileItem(RecordItem):
@@ -164,30 +166,21 @@ class ContainerListResult(ServiceListResult):
     def _expand_links(self, container_item_metadata):
         """Expand links in entry."""
         # Add links only to files
-        if self._item_template and container_item_metadata.get("type") == "file":
+        if self._item_template:
             container_item_metadata["links"] = self._item_template.expand(
                 self._identity, container_item_metadata
             )
 
     @property
-    def items(self):
+    def entries(self):
         """Iterator over the hits."""
-        if not self._listing:
-            return []
-
-        for entry in self._listing["items"].values():
+        for entry in self._listing["entries"]:
             self._expand_links(entry)
             yield entry
 
     def to_dict(self):
         """Return result as a dictionary."""
-        if not self._listing:
-            return {}
-
-        for entry in self._listing.get("items", {}).values():
-            self._expand_links(entry)
-
-        return self._listing
+        return {**self._listing, "entries": list(self.entries)}
 
 
 class ContainerItemResult(ServiceItemResult):
@@ -197,34 +190,45 @@ class ContainerItemResult(ServiceItemResult):
         self,
         service,
         identity,
-        file_,
-        extracted_container_item,
-        record,
+        extracted_stream,
+        extracted_path,
         size=None,
-        mime_type=None,
+        mimetype=None,
     ):
         """Constructor."""
         self._service = service
         self._identity = identity
-        self._file_record = file_
-        self._extracted_container_item = extracted_container_item
-        self._record = record
+        self._extracted_stream = extracted_stream
+        self._extracted_path = extracted_path
         self.size = size
-        self.mime_type = mime_type
+        self.mimetype = mimetype
 
     @property
     def file_id(self):
         """Get the record id."""
-        return self._file_record.key
-
-    @property
-    def _obj(self):
-        """Return the object to dump."""
-        return self._file_record
+        return Path(self._extracted_path).name
 
     def send_file(self, restricted=True, as_attachment=False):
         """Return file stream."""
-        if not self._extracted_container_item:
-            return None
 
-        return self._extracted_container_item.send_file()
+        def generate():
+            chunk_size = current_app.config["RECORDS_RESOURCES_CHUNK_SIZE"]
+            while True:
+                chunk = self._extracted_stream.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+
+            self._extracted_stream.close()
+
+        headers = {
+            "Content-Disposition": f'attachment; filename="{self.file_id}"',
+        }
+        if self.size is not None:
+            headers["Content-Length"] = str(self.size)
+
+        return Response(
+            generate(),
+            mimetype=self.mimetype or "application/octet-stream",
+            headers=headers,
+        )

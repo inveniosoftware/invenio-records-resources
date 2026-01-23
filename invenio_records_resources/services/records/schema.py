@@ -8,6 +8,7 @@
 # details.
 
 """Record schema."""
+
 from copy import deepcopy
 from datetime import timezone
 

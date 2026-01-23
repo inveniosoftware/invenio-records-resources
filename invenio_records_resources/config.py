@@ -36,5 +36,9 @@ RECORDS_RESOURCES_TRANSFERS = [
 
 
 RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "L"
-"""Default transfer class to use. 
+"""Default transfer class to use.
 One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""
+
+RECORDS_RESOURCES_CHUNK_SIZE = 64 * 1024
+RECORDS_RESOURCES_ZIP_FORMATS = [".zip"]
+RECORDS_RESOURCES_ZIP_MAX_ENTRIES = 1000

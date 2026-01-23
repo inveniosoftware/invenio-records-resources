@@ -436,14 +436,19 @@ class FileService(Service):
 
     def list_container(self, identity, id_, file_key):
         """List the files in the container of a record."""
+        print(self.config.file_extractors)
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
+        print(file_record.metadata)
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):
                 listing = e.list(file_record)
                 return self.file_result_container_list(
-                    self, identity, listing, self.container_item_links_list_tpl(id_, file_key)
+                    self,
+                    identity,
+                    listing,
+                    self.container_item_links_list_tpl(id_, file_key),
                 )
         else:
             raise NoExtractorFoundError(file_key)
@@ -455,13 +460,17 @@ class FileService(Service):
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):
-                protocol_with_send_file = e.extract(file_record, path)
+                container_stream = e.open(file_record, path)
                 return self.file_result_container_item(
-                    self, identity, file_record, protocol_with_send_file, record
+                    self,
+                    identity,
+                    container_stream,
+                    path,
+                    mimetype=getattr(container_stream, "mimetype", None),
+                    size=getattr(container_stream, "size", None),
                 )
         else:
             raise NoExtractorFoundError(file_key)
-
 
     def open_from_container(self, identity, id_, file_key, path):
         """Open a specific file from the container of a record."""
@@ -473,4 +482,3 @@ class FileService(Service):
                 return e.open(file_record, path)
         else:
             raise NoExtractorFoundError(file_key)
-

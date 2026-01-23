@@ -9,7 +9,7 @@
 # details.
 
 """Record Service API."""
-
+from .processors.zip import ZipProcessor
 from ..base import ServiceConfig
 from .components import (
     FileContentComponent,
@@ -17,7 +17,8 @@ from .components import (
     FileMultipartContentComponent,
     FileProcessorComponent,
 )
-from .processors import ImageMetadataExtractor
+from .processors import ImageMetadataExtractor, ZipProcessor
+from .extractors import ZipExtractor
 from .results import ContainerItemResult, ContainerListResult, FileItem, FileList
 from .schema import FileSchema
 
@@ -61,6 +62,7 @@ class FileServiceConfig(ServiceConfig):
 
     file_processors = [
         ImageMetadataExtractor(),
+        ZipProcessor(),
     ]
 
-    file_extractors = []
+    file_extractors = [ZipExtractor()]

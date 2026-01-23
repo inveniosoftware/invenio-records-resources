@@ -9,7 +9,6 @@
 
 """Image metadata extractor."""
 
-
 from flask import current_app
 
 from .base import FileProcessor

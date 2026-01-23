@@ -8,7 +8,6 @@
 
 """Systemfield for calculated properties of records."""
 
-
 import abc
 
 from invenio_records.systemfields import SystemField

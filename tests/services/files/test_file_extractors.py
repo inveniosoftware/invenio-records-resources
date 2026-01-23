@@ -34,17 +34,15 @@ def test_extractors_listing_extract_service(
 
     listing = file_service.list_container(identity_simple, recid, "dummy.txt")
     assert listing.to_dict() == {
-        "items": {
-            "dummy.txt": {
+        "entries": [
+            {
                 "key": "dummy.txt",
-                "type": "file",
-                "size": "123456790",
-                "id": "dummy.txt",
+                "size": 123456790,
                 "links": {
                     "content": f"https://127.0.0.1:5000/api/mocks/{recid}/files/dummy.txt/container/dummy.txt"
                 },
             }
-        },
+        ],
         "total": 1,
         "truncated": False,
     }
@@ -53,7 +51,9 @@ def test_extractors_listing_extract_service(
     )
 
     extracted_data = extracted.send_file()
-    assert extracted_data == "Sending dummy.txt from dummy.txt"
+    assert (
+        extracted_data.get_data(as_text=True) == "Contents of dummy.txt from dummy.txt"
+    )
 
     opened = file_service.open_from_container(
         identity_simple, recid, "dummy.txt", "dummy.txt"
@@ -76,12 +76,10 @@ def test_extractors_listing_service_with_links_template(
     file_service.commit_file(identity_simple, recid, "dummy.txt")
 
     listing = file_service.list_container(identity_simple, recid, "dummy.txt")
-    assert list(listing.items) == [
+    assert list(listing.entries) == [
         {
             "key": "dummy.txt",
-            "size": "123456790",
-            "type": "file",
-            "id": "dummy.txt",
+            "size": 123456790,
             "links": {
                 "content": f"https://127.0.0.1:5000/api/mocks/{recid}/files/dummy.txt/container/dummy.txt",
             },
@@ -116,17 +114,15 @@ def test_extractors_listing_extract_resource(
     assert res.status_code == 200
     listing = res.json
     assert listing == {
-        "items": {
-            "dummy.txt": {
+        "entries": [
+            {
                 "key": "dummy.txt",
-                "size": "123456790",
-                "type": "file",
-                "id": "dummy.txt",
+                "size": 123456790,
                 "links": {
                     "content": f"https://127.0.0.1:5000/api/mocks/{recid}/files/dummy.txt/container/dummy.txt",
                 },
             }
-        },
+        ],
         "total": 1,
         "truncated": False,
     }
@@ -139,4 +135,6 @@ def test_extractors_listing_extract_resource(
         },
     )
     assert res.status_code == 200
-    assert res.data == b"Sending dummy.txt from dummy.txt"
+    assert res.data == b"Contents of dummy.txt from dummy.txt"
+
+

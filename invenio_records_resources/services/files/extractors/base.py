@@ -10,35 +10,41 @@
 import io
 import os
 from typing import Protocol
-
-from invenio_records_resources.records.api import FileRecord
-
-
-class SendFileProtocol(Protocol):
-    """Protocol for send_file method."""
-
-    def send_file(self) -> None:
-        """Protocol for send_file method."""
-        ...
+from abc import ABC, abstractmethod
 
 
-class FileExtractor:
+class FileExtractor(ABC):
     """Base class for file extractors."""
 
-    @staticmethod
-    def file_extension(file_record):
-        """Return the extension of the file."""
-        return os.path.splitext(file_record.key)[-1].lower()
+    @abstractmethod
+    def can_process(self, file_record):
+        """Determine if this extractor can process a given file record.
 
-    def can_process(self, file_record: FileRecord) -> bool:
-        """Determine if this extractor can process a given file record."""
+        :param file_record: FileRecord object to be processed"""
 
-    def list(self, file_record: FileRecord) -> list[dict]:
-        """Return a listing of the file."""
+    @abstractmethod
+    def list(self, file_record):
+        """Return a listing of the file.
 
-    def extract(self, file_record: FileRecord, path: str) -> SendFileProtocol:
-        """Extract a specific file or directory from the file record."""
+        :param file_record: FileRecord object to be listed
+        :returns: dict
 
+        example: {
+            "entries": [
+                {
+                    "key": "test_zip/test1.txt",
+                    "size": 12,
+                    "compressed_size": 14,
+                    "mimetype": "text/plain",
+                    "checksum": "crc:2962613731",
+                }
+            ],
+            "total": 1,  // total number of entries
+            "truncated": false, // true if the listing was truncated (e.g., too many entries)
+        }
+        """
+
+    @abstractmethod
     def open(self, file_record, path) -> io.IOBase:
         """Open a specific file from the file record."""
         pass
