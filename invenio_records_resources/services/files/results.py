@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025 CESNET i.a.l.e.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,7 +11,7 @@
 """File service results."""
 
 from ...proxies import current_transfer_registry
-from ..base import ServiceListResult
+from ..base import ServiceItemResult, ServiceListResult
 from ..records.results import RecordItem
 
 
@@ -149,3 +149,82 @@ class FileList(ServiceListResult):
                 }
             )
         return result
+
+
+class ContainerListResult(ServiceListResult):
+    """Listing result for an archived file."""
+
+    def __init__(self, service, identity, listing, item_template=None):
+        """Init the listing result."""
+        self._service = service
+        self._identity = identity
+        self._listing = listing
+        self._item_template = item_template
+
+    def _expand_links(self, container_item_metadata):
+        """Expand links in entry."""
+        # Add links only to files
+        if self._item_template and container_item_metadata.get("type") == "file":
+            container_item_metadata["links"] = self._item_template.expand(
+                self._identity, container_item_metadata
+            )
+
+    @property
+    def items(self):
+        """Iterator over the hits."""
+        if not self._listing:
+            return []
+
+        for entry in self._listing["items"].values():
+            self._expand_links(entry)
+            yield entry
+
+    def to_dict(self):
+        """Return result as a dictionary."""
+        if not self._listing:
+            return {}
+
+        for entry in self._listing.get("items", {}).values():
+            self._expand_links(entry)
+
+        return self._listing
+
+
+class ContainerItemResult(ServiceItemResult):
+    """Extracted archived file item(s) with a send_file defined function."""
+
+    def __init__(
+        self,
+        service,
+        identity,
+        file_,
+        extracted_container_item,
+        record,
+        size=None,
+        mime_type=None,
+    ):
+        """Constructor."""
+        self._service = service
+        self._identity = identity
+        self._file_record = file_
+        self._extracted_container_item = extracted_container_item
+        self._record = record
+        self.size = size
+        self.mime_type = mime_type
+
+    @property
+    def file_id(self):
+        """Get the record id."""
+        return self._file_record.key
+
+    @property
+    def _obj(self):
+        """Return the object to dump."""
+        return self._file_record
+
+    def send_file(self, restricted=True, as_attachment=False):
+        """Return file stream."""
+        if not self._extracted_container_item:
+            return None
+
+        return self._extracted_container_item.send_file()
