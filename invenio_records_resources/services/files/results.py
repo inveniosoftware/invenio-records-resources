@@ -161,33 +161,22 @@ class ContainerListResult(ServiceListResult):
         self._listing = listing
         self._item_template = item_template
 
-    def _expand_links_recursive(self, container_item_metadata):
-        """Recursively expand links in entry and nested entries."""
+    def _expand_links(self, container_item_metadata):
+        """Expand links in entry."""
         # Add links only to files
         if self._item_template and container_item_metadata.get("type") == "file":
             container_item_metadata["links"] = self._item_template.expand(
                 self._identity, container_item_metadata
             )
 
-        # Recurse into directories
-        if (
-            container_item_metadata.get("type") == "folder"
-            and "children" in container_item_metadata
-        ):
-            for subentry in container_item_metadata["children"].values():
-                container_item_metadata["links"] = self._item_template.expand(
-                    self._identity, container_item_metadata
-                )
-                self._expand_links_recursive(subentry)
-
     @property
-    def children(self):
+    def items(self):
         """Iterator over the hits."""
         if not self._listing:
             return []
 
-        for entry in self._listing["children"].values():
-            self._expand_links_recursive(entry)
+        for entry in self._listing["items"].values():
+            self._expand_links(entry)
             yield entry
 
     def to_dict(self):
@@ -195,8 +184,8 @@ class ContainerListResult(ServiceListResult):
         if not self._listing:
             return {}
 
-        for entry in self._listing.get("children", {}).values():
-            self._expand_links_recursive(entry)
+        for entry in self._listing.get("items", {}).values():
+            self._expand_links(entry)
 
         return self._listing
 

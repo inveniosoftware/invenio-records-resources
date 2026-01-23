@@ -20,7 +20,7 @@ class DummyFileExtractor(FileExtractor):
     def list(self, file_record):
         """List the contents of a given file record."""
         return {
-            "children": {
+            "items": {
                 "dummy.txt": {
                     "key": "dummy.txt",
                     "type": "file",

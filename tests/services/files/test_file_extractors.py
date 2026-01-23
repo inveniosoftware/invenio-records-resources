@@ -34,7 +34,7 @@ def test_extractors_listing_extract_service(
 
     listing = file_service.list_container(identity_simple, recid, "dummy.txt")
     assert listing.to_dict() == {
-        "children": {
+        "items": {
             "dummy.txt": {
                 "key": "dummy.txt",
                 "type": "file",
@@ -76,7 +76,7 @@ def test_extractors_listing_service_with_links_template(
     file_service.commit_file(identity_simple, recid, "dummy.txt")
 
     listing = file_service.list_container(identity_simple, recid, "dummy.txt")
-    assert list(listing.children) == [
+    assert list(listing.items) == [
         {
             "key": "dummy.txt",
             "size": "123456790",
@@ -116,7 +116,7 @@ def test_extractors_listing_extract_resource(
     assert res.status_code == 200
     listing = res.json
     assert listing == {
-        "children": {
+        "items": {
             "dummy.txt": {
                 "key": "dummy.txt",
                 "size": "123456790",

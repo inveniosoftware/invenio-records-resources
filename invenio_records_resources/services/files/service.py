@@ -442,12 +442,11 @@ class FileService(Service):
         for e in self.config.file_extractors:
             if e.can_process(file_record):
                 listing = e.list(file_record)
-                break
+                return self.file_result_container_list(
+                    self, identity, listing, self.container_item_links_list_tpl(id_, file_key)
+                )
         else:
             raise NoExtractorFoundError(file_key)
-        return self.file_result_container_list(
-            self, identity, listing, self.container_item_links_list_tpl(id_, file_key)
-        )
 
     def extract_from_container(self, identity, id_, file_key, path):
         """Extract a specific file or directory from the container of a record."""
@@ -457,13 +456,12 @@ class FileService(Service):
         for e in self.config.file_extractors:
             if e.can_process(file_record):
                 protocol_with_send_file = e.extract(file_record, path)
-                break
+                return self.file_result_container_item(
+                    self, identity, file_record, protocol_with_send_file, record
+                )
         else:
             raise NoExtractorFoundError(file_key)
 
-        return self.file_result_container_item(
-            self, identity, file_record, protocol_with_send_file, record
-        )
 
     def open_from_container(self, identity, id_, file_key, path):
         """Open a specific file from the container of a record."""
@@ -472,9 +470,7 @@ class FileService(Service):
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):
-                file_stream = e.open(file_record, path)
-                break
+                return e.open(file_record, path)
         else:
             raise NoExtractorFoundError(file_key)
 
-        return file_stream
