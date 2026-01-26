@@ -9,6 +9,10 @@
 
 """Facets types defined."""
 
+import re
+from datetime import date
+
+from dateutil.parser import isoparse
 from invenio_search.engine import dsl
 
 
@@ -475,3 +479,213 @@ class CFNestedTermsFacet(CFFacetMixin, NestedTermsFacet):
         """Constructor."""
         kwargs["field"] = self.field(field)
         super().__init__(label, value_labels, **kwargs)
+
+
+class DateFacet(LabelledFacetMixin, dsl.Facet):
+    """Date-based facet using date_histogram aggregation.
+
+    Supports:
+    - YYYY
+    - YYYY-MM
+    - YYYY-MM-DD
+    - Ranges: 2014..2020, ..2020, 2014..
+    - Explicit bounds: (2014..2020], [2014..2020)
+
+    The facet values are normalized to full date ranges before being sent to
+    OpenSearch. Inclusive and exclusive bounds are controlled with brackets: "["/"]" include and
+    "("/")" exclude the boundary.
+
+    OpenSearch range operators:
+    - gte: greater than or equal (inclusive lower bound)
+    - gt: greater than (exclusive lower bound)
+    - lte: less than or equal (inclusive upper bound)
+    - lt: less than (exclusive upper bound)
+    - relation=INTERSECTS: the indexed range overlaps the query range (for
+      range fields; here it is included for consistency with range queries)
+
+    Example filter JSON sent to OpenSearch for a filter value `2014-08..2020-03`:
+    {
+        "range": {
+            "metadata.field": {
+                "gte": "2014-08-01",
+                "lte": "2020-03-31",
+                "relation": "INTERSECTS"
+            }
+        }
+    }
+    """
+
+    def __init__(
+        self,
+        field,
+        label=None,
+        interval="year",
+        format="yyyy",
+        separator="..",
+        **kwargs,
+    ):
+        """Constructor."""
+        self._field = field
+        self._label = label or ""
+        self._interval = interval
+        self._format = format
+        self._separator = separator
+        self._range_re = re.compile(
+            rf"""
+            (?P<open>[\(\[])?          # optional opening bracket
+            (?P<start>[^\.]*)          # start value
+            {re.escape(separator)}     # range separator
+            (?P<end>[^\]\)]*)          # end value
+            (?P<close>[\)\]])?         # optional closing bracket
+            """,
+            re.VERBOSE,
+        )
+        super().__init__(label=label, **kwargs)
+
+    def get_aggregation(self):
+        """Get the aggregation."""
+        return dsl.A(
+            "date_histogram",
+            field=self._field,
+            calendar_interval=self._interval,
+            format=self._format,
+            min_doc_count=0,
+        )
+
+    def add_filter(self, filter_values):
+        """Construct a filter query for the facet."""
+        if not filter_values:
+            return
+
+        q = None
+        for value in filter_values:
+            rq = self._build_range_query(value)
+            if rq is None:
+                continue
+            q = rq if q is None else q | rq
+
+        return q
+
+    def _build_range_query(self, value):
+        """Build an Opensearch range query from a value."""
+        r = self._normalize_value(value)
+        if r is None:
+            return None
+
+        es_range = {}
+
+        if r["start"]:
+            es_range["gte" if r["start_inclusive"] else "gt"] = r["start"]
+
+        if r["end"]:
+            es_range["lte" if r["end_inclusive"] else "lt"] = r["end"]
+
+        return dsl.Q(
+            "range",
+            **{
+                self._field: {
+                    **es_range,
+                    "relation": "INTERSECTS",
+                }
+            },
+        )
+
+    def is_filtered(self, key, filter_values):
+        """Check if a histogram bucket year is selected by any range."""
+        try:
+            year = int(key)
+        except ValueError:
+            return False
+
+        for value in filter_values:
+            r = self._normalize_value(value)
+            if r is None:
+                continue
+
+            if r["start"]:
+                start_year = int(r["start"][:4])
+                if year < start_year:
+                    continue
+                if year == start_year and not r["start_inclusive"]:
+                    continue
+
+            if r["end"]:
+                end_year = int(r["end"][:4])
+                if year > end_year:
+                    continue
+                if year == end_year and not r["end_inclusive"]:
+                    continue
+
+            return True
+
+        return False
+
+    def _normalize_value(self, value):
+        """Normalize a value into a range dict."""
+        value = value.strip()
+
+        def build_result(start, end, start_inc=True, end_inc=True):
+            if start is None and end is None:
+                return None
+            return {
+                "start": start,
+                "end": end,
+                "start_inclusive": start_inc,
+                "end_inclusive": end_inc,
+            }
+
+        # Single value (no separator)
+        if self._separator not in value:
+            return build_result(
+                self._normalize_date(value, is_start=True),
+                self._normalize_date(value, is_start=False),
+            )
+
+        # Range value
+        match = self._range_re.fullmatch(value)
+        if not match:
+            return None
+
+        start_raw = match.group("start").strip() or None
+        end_raw = match.group("end").strip() or None
+
+        return build_result(
+            self._normalize_date(start_raw, is_start=True) if start_raw else None,
+            self._normalize_date(end_raw, is_start=False) if end_raw else None,
+            start_inc=match.group("open") != "(",
+            end_inc=match.group("close") != ")",
+        )
+
+    def _normalize_date(self, value, is_start):
+        """Normalize a date value into YYYY-MM-DD format."""
+        value = value.strip()
+
+        try:
+            dt = isoparse(value)
+        except (ValueError, TypeError):
+            return None
+
+        # YYYY
+        if re.fullmatch(r"\d{4}", value):
+            year = dt.year
+            return f"{year}-01-01" if is_start else f"{year}-12-31"
+
+        # YYYY-MM
+        if re.fullmatch(r"\d{4}-\d{2}", value):
+            year, month = dt.year, dt.month
+            if is_start:
+                return f"{year:04d}-{month:02d}-01"
+            return f"{year:04d}-{month:02d}-{self._last_day_of_month(year, month):02d}"
+
+        # YYYY-MM-DD
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            return dt.date().isoformat()
+
+        return None
+
+    @staticmethod
+    def _last_day_of_month(year, month):
+        """Return the last day of a month."""
+        if month == 12:
+            return 31
+        return (date(year, month + 1, 1) - date(year, month, 1)).days
