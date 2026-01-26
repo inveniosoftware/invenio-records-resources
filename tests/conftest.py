@@ -13,6 +13,7 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
+from pathlib import Path
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -112,9 +113,9 @@ def identity_simple():
     i.provides.add(Need(method="system_role", value="authenticated_user"))
     return i
 
-
+FIXTURES_DIR = Path(__file__).resolve().parent / "data"
 @pytest.fixture()
 def zip_fp():
     """A test zip."""
-    with open("data/testzip.zip", "rb") as fp:
+    with open(f"{FIXTURES_DIR}/testzip.zip", "rb") as fp:
         yield fp
