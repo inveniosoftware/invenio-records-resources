@@ -102,7 +102,6 @@ class ZipExtractor(FileExtractor):
 
     def can_process(self, file_record):
         """Determine if this extractor can process a given file record."""
-        print("can_process", os.path.splitext(file_record.key)[-1].lower(), current_app.config["RECORDS_RESOURCES_ZIP_FORMATS"])
         return (
                 os.path.splitext(file_record.key)[-1].lower()
                 in current_app.config["RECORDS_RESOURCES_ZIP_FORMATS"]

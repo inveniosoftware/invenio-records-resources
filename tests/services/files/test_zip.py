@@ -6,11 +6,6 @@ from invenio_records_resources.services.files.components import processor
 from invenio_records_resources.tasks import extract_file_metadata
 
 
-@pytest.fixture()
-def zip_fp():
-    """A test zip."""
-    with open(join(dirname(__file__), "testzip.zip"), "rb") as fp:
-        yield fp
 
 
 @pytest.fixture()
@@ -43,7 +38,6 @@ def test_zip_listing(identity_simple, file_service, record_with_zip):
     recid = record_with_zip["id"]
     listing = file_service.list_container(identity_simple, recid, "testzip.zip")
     entries = list(listing.entries)
-    print(entries)
     assert entries == [{'key': 'a.txt', 'size': 24, 'compressed_size': 24, 'mimetype': 'text/plain', 'crc': 3057564182,
                         'links': {
                             'content': f"https://127.0.0.1:5000/api/mocks/{recid}/files/testzip.zip/container/a.txt"}},

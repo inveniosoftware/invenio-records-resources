@@ -23,12 +23,6 @@ def image_fp():
     with open(join(dirname(__file__), "testimage.png"), "rb") as fp:
         yield fp
 
-@pytest.fixture()
-def zip_fp():
-    """A test zip."""
-    with open(join(dirname(__file__), "testzip.zip"), "rb") as fp:
-        yield fp
-
 
 def test_image_meta_extraction(
     file_service, location, example_record, identity_simple, image_fp, monkeypatch

@@ -111,3 +111,10 @@ def identity_simple():
     i.provides.add(Need(method="system_role", value="any_user"))
     i.provides.add(Need(method="system_role", value="authenticated_user"))
     return i
+
+
+@pytest.fixture()
+def zip_fp():
+    """A test zip."""
+    with open("data/testzip.zip", "rb") as fp:
+        yield fp
