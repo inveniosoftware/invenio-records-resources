@@ -23,6 +23,8 @@ from ..errors import (
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 from .schema import InitFileSchemaMixin
+from invenio_records_resources.proxies import current_transfer_registry
+from invenio_records_resources.services.files.transfer import TransferStatus
 
 
 class FileService(Service):
@@ -436,10 +438,16 @@ class FileService(Service):
 
     def list_container(self, identity, id_, file_key):
         """List the files in the container of a record."""
-        print(self.config.file_extractors)
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
-        print(file_record.metadata)
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
+
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):
@@ -457,6 +465,13 @@ class FileService(Service):
         """Extract a specific file or directory from the container of a record."""
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):
@@ -476,6 +491,13 @@ class FileService(Service):
         """Open a specific file from the container of a record."""
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
+        status = current_transfer_registry.get_transfer(
+            file_record=file_record,
+            file_service=self,
+            record=record,
+        ).status
+        if status != TransferStatus.COMPLETED:
+            raise FileKeyNotFoundError(id_, file_key)
 
         for e in self.config.file_extractors:
             if e.can_process(file_record):

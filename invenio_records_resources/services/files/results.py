@@ -210,9 +210,9 @@ class ContainerItemResult(ServiceItemResult):
 
     def send_file(self, restricted=True, as_attachment=False):
         """Return file stream."""
+        chunk_size = current_app.config["RECORDS_RESOURCES_CHUNK_SIZE"]
 
         def generate():
-            chunk_size = current_app.config["RECORDS_RESOURCES_CHUNK_SIZE"]
             while True:
                 chunk = self._extracted_stream.read(chunk_size)
                 if not chunk:

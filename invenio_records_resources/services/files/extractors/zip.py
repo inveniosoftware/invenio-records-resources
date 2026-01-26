@@ -50,6 +50,12 @@ class ZipFileProxy(RawIOBase):
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
+    def seek(self, *args):
+        return self._zip_file.seek(*args)
+
+    def tell(self):
+        return self._zip_file.tell()
+
 
 class ZipProxy:
 
@@ -57,7 +63,9 @@ class ZipProxy:
         f = file_record.file.storage().open("rb")
         metadata = file_record.metadata or {}
         toc_position = metadata.get("zip_toc_position", None)
-        if toc_position:
+        file_size = file_record.file.file.size
+        # Make sure that malicious toc position doesn't exhaust memory.
+        if toc_position and file_size - toc_position < current_app.config["RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE"]:
             reply_stream = ReplyStream(f, buffer_pos=toc_position, file_size=file_record.file.file.size)
         else:
             reply_stream = f
