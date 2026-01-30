@@ -1,6 +1,6 @@
 ..
     Copyright (C) 2020-2024 CERN.
-    Copyright (C) 2024-2025 Graz University of Technology.
+    Copyright (C) 2024-2026 Graz University of Technology.
     Copyright (C) 2025 Northwestern University.
     Copyright (C) 2025 KTH Royal Institute of Technology.
 
@@ -10,6 +10,22 @@
 
 Changes
 =======
+
+Version v9.0.0 (released 2026-01-30)
+
+- chore(setup): bump dependencies
+- fix: DeprecationWarning from invenio-indexer
+- chore: remove warnings
+- fix: RemovedInMarshmallow4Warning
+- fix(chore): DeprecationWarning stdlib
+- fix: removed dependency on PyFilesystem2
+- refactor: remove context usage
+- fix: avoid deepcopy in EndpointLink bc of possible problematic context content
+- fix: black formatting
+- fix: re-add removed import
+- feat: expose FileEndpointLink at services import level
+- feat: add support for anchor in EndpointLink
+- refactor: use EndpointLink in RecordTypeFactory [+]
 
 Version v8.8.0 (released 2026-01-08)
 
