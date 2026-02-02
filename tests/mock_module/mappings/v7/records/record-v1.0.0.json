@@ -40,6 +40,9 @@
           "combined_subjects": {
             "type": "keyword"
           },
+          "publication_date_range": {
+            "type": "date_range"
+          },
           "inner_record": {
             "type": "object",
             "properties": {

@@ -59,6 +59,7 @@ class MetadataSchema(Schema):
     type = fields.Nested(TypeSchema)
     subjects = fields.List(fields.Nested(SubjectSchema))
     combined_subjects = fields.List(fields.Str)
+    publication_date_range = fields.Dict()
     inner_record = fields.Dict()
     # referenced records
     referenced_created_by = fields.Nested(ReferencedCreatedBySchema)
