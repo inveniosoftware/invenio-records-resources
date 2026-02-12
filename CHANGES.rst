@@ -11,6 +11,10 @@
 Changes
 =======
 
+Version v9.1.0 (released 2026-02-12)
+
+- feat(facets): add DateFacet for date histogram ranges
+
 Version v9.0.0 (released 2026-01-30)
 
 - chore(setup): bump dependencies
