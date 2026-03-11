@@ -16,6 +16,7 @@ import pytest
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_access.permissions import system_identity
+from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from marshmallow import ValidationError
 
@@ -666,10 +667,7 @@ def test_multipart_file_upload_local_storage(
 
 
 def test_remote_file(
-    file_service,
-    example_file_record,
-    identity_simple,
-    location,
+    file_service, example_file_record, identity_simple, location, monkey_remote_file
 ):
     """Test the lifecycle of an external remote file."""
 
@@ -692,6 +690,14 @@ def test_remote_file(
     assert file_result["transfer"]["type"] == "R"
     assert "url" not in file_result["transfer"]
     assert file_result["status"] == "completed"
+
+    file_rec = example_file_record.files["article.txt"]
+    object_version = file_rec.object_version
+    file_instance = object_version.file
+    assert file_instance.storage_class == "R"
+
+    # compute the checksum of the file
+    assert file_instance.storage().checksum() == "md5:0278379568c79fd509640d1b9eb082b7"
 
     sent_file = file_service.get_file_content(
         identity_simple, recid, "article.txt"

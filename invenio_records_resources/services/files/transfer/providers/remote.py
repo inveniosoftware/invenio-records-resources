@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-2024 CERN.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -16,7 +16,7 @@ from marshmallow import ValidationError, fields, validate, validates
 
 from ...schema import BaseTransferSchema
 from ..base import Transfer, TransferStatus
-from ..constants import REMOTE_TRANSFER_TYPE
+from ..constants import REMOTE_STORAGE_CLASS, REMOTE_TRANSFER_TYPE
 
 
 class RemoteTransferBase(Transfer):
@@ -27,9 +27,9 @@ class RemoteTransferBase(Transfer):
 
         url = fields.Str(required=True, load_only=True)
         """URL that points to the remote file.
-        
+
         It is not dumped to the client as it would make download statistics impossible.
-        The file is accessed by using the /content url and then a 302 redirect 
+        The file is accessed by using the /content url and then a 302 redirect
         is sent to the client with the actual URI.
         """
 
@@ -81,5 +81,6 @@ class RemoteTransfer(RemoteTransferBase):
                 checksum=file_metadata.get("checksum"),
                 readable=False,
             )
+            fi.storage_class = REMOTE_STORAGE_CLASS
         obj = ObjectVersion.create(record.files.bucket, file_metadata["key"], fi.id)
         return super().init_file(record, file_metadata, obj=obj)
