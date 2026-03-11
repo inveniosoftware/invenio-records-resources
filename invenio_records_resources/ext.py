@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2022 CERN.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -51,3 +51,13 @@ class InvenioRecordsResources(object):
         for k in dir(config):
             if k.startswith("RECORDS_RESOURCES_") or k.startswith("SITE_"):
                 app.config.setdefault(k, getattr(config, k))
+
+        rest_storage_factories = app.config.setdefault(
+            "FILES_REST_STORAGE_FACTORIES", {}
+        )
+        for (
+            storage_class,
+            storage_factory,
+        ) in config.FILES_REST_STORAGE_FACTORIES.items():
+            if storage_class not in rest_storage_factories:
+                rest_storage_factories[storage_class] = storage_factory
