@@ -155,7 +155,7 @@ class FileResource(ErrorHandlersMixin, Resource):
                 ]
         if routes.get("list-container") and routes.get("container-item-extract"):
             # allow listing and extracting from container files if the routes are defined
-            # media files blueprint is initalized by using same original file resource
+            # media files blueprint is initialized by using same original file resource
 
             url_rules += [
                 route("GET", routes["list-container"], self.list_container),

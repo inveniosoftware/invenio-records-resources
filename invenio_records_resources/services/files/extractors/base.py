@@ -32,40 +32,40 @@ class FileExtractor(ABC):
         example: {
             "entries": [ // all entries inside the container
                 {
-                    "key": "texts_folder/test1.txt",
+                    "key": "texts_directory/test1.txt",
                     "size": 12,
                     "compressed_size": 14,
                     "mimetype": "text/plain",
                     "checksum": "crc:2962613731",
-                    "links" {"content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_folder/test1.txt"} // links are added automatically by service and not returned by the extractor itself
+                    "links" {"content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_directory/test1.txt"} // links are added automatically by service and not returned by the extractor itself
                 },
                 {
-                    "key": "texts_folder/texts_subfolder/test2.txt",
+                    "key": "texts_directory/texts_subdirectory/test2.txt",
                     "size": 12,
                     "compressed_size": 14,
                     "mimetype": "text/plain",
                     "checksum": "crc:2962613731",
-                    "links" {"content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_folder/texts_subfolder/test2.txt"} // links are added automatically by service and not returned by the extractor itself
+                    "links" {"content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_directory/texts_subdirectory/test2.txt"} // links are added automatically by service and not returned by the extractor itself
                 }
             ],
-            "folders": [ // all folders inside the container
+            "directories": [ // all directories inside the container
                 {
-                  "key": "texts_folder",
+                  "key": "texts_directory",
                   "links": { // links are added automatically by service and not returned by the extractor itself
-                    "content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_folder"
+                    "content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_directory"
                   },
-                  "entries": [ // paths of direct children (files or folders) of the container folder
-                    "texts_folder/test1.txt",
-                    "texts_folder/texts_subfolder"
+                  "entries": [ // paths of direct children (files or directories) of the container directory
+                    "texts_directory/test1.txt",
+                    "texts_directory/texts_subdirectory"
                   ]
                 },
                 {
-                  "key": "texts_folder/texts_subfolder"
+                  "key": "texts_directory/texts_subdirectory"
                   "links": {
-                    "content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_folder/texts_subfolder"
+                    "content": ".../api/records/abc123-yz89/files/demo.zip/container/texts_directory/texts_subdirectory"
                   },
-                  "entries": [ // paths of direct children (files or folders) of the container folder
-                    "texts_subfolder/test2.txt"]
+                  "entries": [ // paths of direct children (files or directories) of the container directory
+                    "texts_subdirectory/test2.txt"]
                 }
             ],
             "total": 2,  // total number of entries

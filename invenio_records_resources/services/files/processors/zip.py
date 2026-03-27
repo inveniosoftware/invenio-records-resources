@@ -11,13 +11,8 @@ import zipfile
 
 from flask import current_app
 
-from invenio_records_resources.services.files.processors.base import FileProcessor
-
-
-class InvalidZipException(ValueError):
-    """Exception raised for invalid ZIP file."""
-
-    pass
+from .base import FileProcessor
+from ...errors import InvalidZipException
 
 
 class ZipProcessor(FileProcessor):

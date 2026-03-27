@@ -43,7 +43,7 @@ def test_extractors_listing_extract_service(
                 },
             }
         ],
-        "folders": [],
+        "directories": [],
         "total": 1,
         "truncated": False,
     }

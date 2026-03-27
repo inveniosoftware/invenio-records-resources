@@ -12,7 +12,7 @@
 
 from flask_resources import HTTPJSONException, ResourceConfig, create_error_handler
 
-from invenio_records_resources.services.errors import (
+from ...services.errors import (
     InvalidFileContentError,
     NoExtractorFoundError,
     TransferException,

@@ -146,7 +146,7 @@ def test_extractors_listing_extract_resource(
                 "size": 24,
             },
         ],
-        "folders": [],
+        "directories": [],
         "total": 4,
         "truncated": False,
     }

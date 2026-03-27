@@ -15,7 +15,7 @@ from pathlib import PurePosixPath
 from flask import current_app
 from zipstream import ZIP_DEFLATED, ZipStream
 
-from invenio_records_resources.services.files.extractors.base import FileExtractor
+from .base import FileExtractor
 
 from ...errors import FileKeyNotFoundError, InvalidFileContentError
 from .reply_stream import ReplyStream
@@ -282,7 +282,7 @@ class ZipExtractor(FileExtractor):
             {
                 "entries": [
                     {
-                      'key': 'folder1/txtfile.txt',
+                      'key': 'directory1/txtfile.txt',
                       'size': 27,
                       'compressed_size': 27,
                       'mimetype': 'text/plain',
@@ -291,9 +291,9 @@ class ZipExtractor(FileExtractor):
                 ],
                 "truncated": False,
                 "total": 1,
-                "folders": [
+                "directories": [
                     {
-                      'key': 'folder1'
+                      'key': 'directory1'
                     }
                 ],
             }
@@ -303,7 +303,7 @@ class ZipExtractor(FileExtractor):
         self._require_zip_correct(file_record)
         truncated = False
         entries = []
-        folders = []
+        directories = []
         max_entries = current_app.config["RECORDS_RESOURCES_ZIP_MAX_LISTING_ENTRIES"]
         total_uncompressed = 0
         with ZipProxy(file_record) as zip_file:
@@ -312,7 +312,7 @@ class ZipExtractor(FileExtractor):
             for info in zip_file.infolist:
                 file_key = str(PurePosixPath(info.filename))
                 if info.is_dir():
-                    folders.append({"key": file_key})
+                    directories.append({"key": file_key})
                 else:
                     entries.append(
                         {
@@ -323,14 +323,14 @@ class ZipExtractor(FileExtractor):
                             "crc": info.CRC,
                         }
                     )
-                if max_entries and len(entries) + len(folders) >= max_entries:
+                if max_entries and len(entries) + len(directories) >= max_entries:
                     truncated = True
                     break
         return {
             "entries": entries,
             "truncated": truncated,
             "total": len(entries),
-            "folders": folders,
+            "directories": directories,
         }
 
     def open(self, file_record, path):
@@ -360,9 +360,9 @@ class ZipExtractor(FileExtractor):
         if not found_item.is_dir():
             return zip_proxy.open(path)
         else:
-            return self._zip_folder(zip_proxy, found_item.filename)
+            return self._zip_directory(zip_proxy, found_item.filename)
 
-    def _zip_folder(self, zip_proxy, container_folder_key):
+    def _zip_directory(self, zip_proxy, container_directory_key):
         """
         Stream an entire directory as a newly created ZIP file.
 
@@ -372,7 +372,7 @@ class ZipExtractor(FileExtractor):
 
         Args:
             zip_proxy: ZipProxy instance with file_record containing the requested directory.
-            container_folder_key: name of the directory, for which the ZIP should be created.
+            container_directory_key: name of the directory, for which the ZIP should be created.
 
         Returns:
             A readable stream (`GeneratorReader`) with the generated ZIP file.
@@ -380,7 +380,7 @@ class ZipExtractor(FileExtractor):
         Notes:
              The returned stream is passed to `ServiceItemResult`, which expects the stream to be readable and iterable.
         """
-        folder_prefix = PurePosixPath(container_folder_key)
+        directory_prefix = PurePosixPath(container_directory_key)
 
         def generate_zip():
             zs = ZipStream(compress_type=ZIP_DEFLATED)
@@ -388,8 +388,8 @@ class ZipExtractor(FileExtractor):
             # Recording Stream will capture byte range accessed
             for info in zip_proxy.infolist:
                 file_key = PurePosixPath(info.filename)
-                if file_key.is_relative_to(folder_prefix) and file_key != folder_prefix:
-                    relative_file_key = str(file_key.relative_to(folder_prefix))
+                if file_key.is_relative_to(directory_prefix) and file_key != directory_prefix:
+                    relative_file_key = str(file_key.relative_to(directory_prefix))
                     if info.is_dir():
                         zs.mkdir(relative_file_key)
                     else:
@@ -401,4 +401,4 @@ class ZipExtractor(FileExtractor):
             yield from zs
             zip_proxy.close()
 
-        return GeneratorReader(generate_zip(), f"{folder_prefix.name}.zip")
+        return GeneratorReader(generate_zip(), f"{directory_prefix.name}.zip")

@@ -183,22 +183,22 @@ class ContainerListResult(ServiceListResult):
             yield entry
 
     @cached_property
-    def folders(self):
-        """Iterator over the hits, expanding links for each folder entry."""
-        folder_entries = defaultdict(list)
+    def directories(self):
+        """Iterator over the hits, expanding links for each directory entry."""
+        directory_entries = defaultdict(list)
         for entry in self._listing.get("entries", []):
-            folder_entries[str(Path(entry["key"]).parent)].append(entry["key"])
-        for folder in self._listing.get("folders", []):
-            self._expand_links(folder)
-            folder["entries"] = folder_entries.get(folder["key"])
-            yield folder
+            directory_entries[str(Path(entry["key"]).parent)].append(entry["key"])
+        for directory in self._listing.get("directories", []):
+            self._expand_links(directory)
+            directory["entries"] = directory_entries.get(directory["key"])
+            yield directory
 
     def to_dict(self):
         """Return result as a dictionary."""
         return {
             **self._listing,
             "entries": list(self.entries),
-            "folders": list(self.folders),
+            "directories": list(self.directories),
         }
 
 

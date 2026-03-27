@@ -163,3 +163,9 @@ class InvalidFileContentError(Exception):
         )
         self.file_key = file_key
         self.msg = msg
+
+
+class InvalidZipException(ValueError):
+    """Exception raised for invalid ZIP file."""
+
+    pass
