@@ -136,7 +136,7 @@ class ZipProxy:
             < current_app.config["RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE"]
         ):
             reply_stream = ReplyStream(
-                f, buffer_pos=toc_position, file_size=file_record.file.file.size
+                f, buffer_pos=toc_position, buffer_size=file_record.file.file.size
             )
         else:
             reply_stream = f
@@ -268,7 +268,7 @@ class ZipExtractor(FileExtractor):
         toc_position = metadata.get("zip_toc_position", None)
         if toc_position:
             reply_stream = ReplyStream(
-                f, buffer_pos=toc_position, file_size=file_record.size
+                f, buffer_pos=toc_position, buffer_size=file_record.size
             )
         else:
             reply_stream = f

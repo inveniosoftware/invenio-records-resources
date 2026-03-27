@@ -17,7 +17,7 @@ class ReplyStream(RawIOBase):
     2) A *pre-cached* region loaded into memory up front.
 
     The cached region starts at ``buffer_pos`` and extends to EOF (size
-    ``file_size - buffer_pos``). Reads that fall within this region are served
+    ``buffer_size - buffer_pos``). Reads that fall within this region are served
     from memory; reads before ``buffer_pos`` are delegated to the underlying
     stream.
 
@@ -26,7 +26,7 @@ class ReplyStream(RawIOBase):
     index, or any region you expect to reread frequently).
     """
 
-    def __init__(self, underlying_stream, buffer_pos, file_size):
+    def __init__(self, underlying_stream, buffer_pos, buffer_size):
         """Initialize the ReplyStream and pre-cache the header region.
 
         Args:
@@ -35,7 +35,7 @@ class ReplyStream(RawIOBase):
             buffer_pos:
                 Absolute byte offset where the in-memory cached region begins.
                 Bytes in the range ``[buffer_pos, file_size)`` are cached.
-            file_size:
+            buffer_size:
                 Total size of the logical file/stream in bytes. This is used to
                 compute cache size and to support ``SEEK_END``.
 
@@ -46,10 +46,10 @@ class ReplyStream(RawIOBase):
         """
         self.underlying_stream = underlying_stream
         self.current_pos = 0
-        self.file_size = file_size
+        self.file_size = buffer_size
 
         self.buffer_pos = buffer_pos
-        self.buffer_size = file_size - buffer_pos
+        self.buffer_size = buffer_size - buffer_pos
         self.buffer = self.read_buffer(
             buffer_pos=self.buffer_pos, size=self.buffer_size
         )
