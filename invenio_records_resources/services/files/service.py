@@ -12,6 +12,7 @@
 
 from flask import current_app
 from invenio_i18n import gettext as _
+from marshmallow import ValidationError
 
 from ..base import LinksTemplate, Service
 from ..errors import FailedFileUploadException, FileKeyNotFoundError
