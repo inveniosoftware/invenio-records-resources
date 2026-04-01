@@ -11,6 +11,10 @@
 Changes
 =======
 
+Version v9.2.0 (released 2026-04-01)
+
+- feat: set anchor for EndpointLink dynamically
+
 Version v9.1.0 (released 2026-02-12)
 
 - feat(facets): add DateFacet for date histogram ranges

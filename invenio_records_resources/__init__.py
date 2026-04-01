@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2024-2026 Graz University of Technology.
 # Copyright (C) 2025 KTH Royal Institute of Technology.
+# Copyright (C) 2026 Northwestern University.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,6 +13,6 @@
 
 from .ext import InvenioRecordsResources
 
-__version__ = "9.1.0"
+__version__ = "9.2.0"
 
 __all__ = ("__version__", "InvenioRecordsResources")
