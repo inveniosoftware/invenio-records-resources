@@ -48,7 +48,7 @@ from ..services.errors import (
 class HTTPJSONValidationException(HTTPJSONException):
     """HTTP exception serializing to JSON and reflecting Marshmallow errors."""
 
-    description = "A validation error occurred."
+    description = _("A validation error occurred.")
 
     def __init__(self, exception):
         """Constructor."""
