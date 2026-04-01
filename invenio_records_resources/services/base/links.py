@@ -221,6 +221,13 @@ class EndpointLink:
             **values,
         )
 
+    def set_anchor(self, anchor):
+        """Dynamically set the anchor function.
+
+        :param anchor: fn(obj, dict) -> string, generate anchor part of URL
+        """
+        self._anchor_func = anchor
+
 
 class ConditionalLink:
     """Conditional link."""
