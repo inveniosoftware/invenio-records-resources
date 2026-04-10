@@ -13,6 +13,7 @@ from .facets import (
     CFTermsFacet,
     CombinedTermsFacet,
     DateFacet,
+    Facet,
     NestedTermsFacet,
     TermsFacet,
 )
@@ -21,6 +22,7 @@ from .response import FacetsResponse
 
 __all__ = (
     "CFTermsFacet",
+    "Facet",
     "FacetsResponse",
     "NestedTermsFacet",
     "RecordRelationLabels",

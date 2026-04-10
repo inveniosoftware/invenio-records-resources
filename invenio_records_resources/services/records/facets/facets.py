@@ -16,6 +16,30 @@ from dateutil.parser import isoparse
 from invenio_search.engine import dsl
 
 
+class Facet(dsl.Facet):
+    """Base facet with filtering behavior defaults.
+
+    Subclasses can override ``post_filter`` to control whether their filter is
+    applied as a post_filter (preserves aggregation counts from the full result
+    set) or as a direct query filter (aggregations reflect filtered results).
+
+    ``post_filter`` can be set as a class attribute, passed to the constructor,
+    or set on an instance after construction.
+    """
+
+    post_filter = True
+
+    def __init__(self, post_filter=None, **kwargs):
+        """Constructor."""
+        if post_filter is not None:
+            self.post_filter = post_filter
+        super().__init__(**kwargs)
+
+    def prepare_aggregation(self, filter_values):
+        """Prepare the aggregation based on active filter values. No-op by default."""
+        pass
+
+
 class LabelledFacetMixin:
     """Mixin class for overwriting the default get_values() method."""
 
@@ -73,7 +97,7 @@ class LabelledFacetMixin:
         return {"buckets": out, "label": str(self._label)}
 
 
-class TermsFacet(LabelledFacetMixin, dsl.TermsFacet):
+class TermsFacet(LabelledFacetMixin, Facet, dsl.TermsFacet):
     """Terms facet.
 
     .. code-block:: python
@@ -481,7 +505,7 @@ class CFNestedTermsFacet(CFFacetMixin, NestedTermsFacet):
         super().__init__(label, value_labels, **kwargs)
 
 
-class DateFacet(LabelledFacetMixin, dsl.Facet):
+class DateFacet(LabelledFacetMixin, Facet):
     """Date-based facet using date_histogram aggregation.
 
     Supports:

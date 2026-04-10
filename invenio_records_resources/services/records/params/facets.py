@@ -31,31 +31,45 @@ class FacetsParam(ParamInterpreter):
 
     def add_filter(self, name, values):
         """Add a filter for a facet."""
-        # Store selected facet values for later usage
         self.selected_values[name] = values
-        # Create a filter for a single facet
         f = self.facets[name].add_filter(values)
-        if f is None:
-            return
-        # Store filter.
-        self._filters[name] = f
+        if f is not None:
+            self._filters[name] = f
+
+    @staticmethod
+    def _combine(filters):
+        """Combine filters with AND."""
+        combined = filters[0]
+        for f in filters[1:]:
+            combined &= f
+        return combined
 
     def filter(self, search):
-        """Apply a post filter on the search."""
+        """Apply filters on the search."""
         if not self._filters:
             return search
 
-        filters = list(self._filters.values())
+        facets = self.facets
+        post_filters, direct_filters = [], []
+        for name, f in self._filters.items():
+            if getattr(facets[name], "post_filter", True):
+                post_filters.append(f)
+            else:
+                direct_filters.append(f)
 
-        post_filter = filters[0]
-        for f in filters[1:]:
-            post_filter &= f
+        if direct_filters:
+            search = search.filter(self._combine(direct_filters))
+        if post_filters:
+            search = search.post_filter(self._combine(post_filters))
 
-        return search.post_filter(post_filter)
+        return search
 
     def aggregate(self, search):
         """Add aggregations representing the facets."""
-        for name, facet in self.facets.items():
+        facets = self.facets
+        for name, facet in facets.items():
+            if name in self.selected_values and hasattr(facet, "prepare_aggregation"):
+                facet.prepare_aggregation(list(self.selected_values[name]))
             agg = facet.get_aggregation()
             search.aggs.bucket(name, agg)
         return search
