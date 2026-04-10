@@ -38,7 +38,9 @@ class FacetsParam(ParamInterpreter):
 
     @staticmethod
     def _combine(filters):
-        """Combine filters with AND."""
+        """Combine filters with AND. Returns None if no filters."""
+        if not filters:
+            return None
         combined = filters[0]
         for f in filters[1:]:
             combined &= f
@@ -57,10 +59,12 @@ class FacetsParam(ParamInterpreter):
             else:
                 direct_filters.append(f)
 
-        if direct_filters:
-            search = search.filter(self._combine(direct_filters))
-        if post_filters:
-            search = search.post_filter(self._combine(post_filters))
+        direct = self._combine(direct_filters)
+        if direct is not None:
+            search = search.filter(direct)
+        post = self._combine(post_filters)
+        if post is not None:
+            search = search.post_filter(post)
 
         return search
 

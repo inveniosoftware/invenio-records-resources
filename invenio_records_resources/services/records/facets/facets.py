@@ -516,8 +516,8 @@ class DateFacet(LabelledFacetMixin, Facet):
     - Explicit bounds: (2014..2020], [2014..2020)
 
     The facet values are normalized to full date ranges before being sent to
-    OpenSearch. Inclusive and exclusive bounds are controlled with brackets: "["/"]" include and
-    "("/")" exclude the boundary.
+    OpenSearch. Inclusive and exclusive bounds are controlled with brackets:
+    "["/"]" include and "("/")" exclude the boundary.
 
     OpenSearch range operators:
     - gte: greater than or equal (inclusive lower bound)
@@ -537,6 +537,10 @@ class DateFacet(LabelledFacetMixin, Facet):
             }
         }
     }
+
+    Supports optional ``hard_bounds`` to limit the histogram range, with
+    automatic bounds adjustment when the active filter extends outside the
+    configured bounds (see ``_effective_bounds``).
     """
 
     def __init__(
@@ -546,6 +550,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         interval="year",
         format="yyyy",
         separator="..",
+        hard_bounds=None,
         **kwargs,
     ):
         """Constructor."""
@@ -554,6 +559,8 @@ class DateFacet(LabelledFacetMixin, Facet):
         self._interval = interval
         self._format = format
         self._separator = separator
+        self._active_filter_values = None
+        self._hard_bounds = hard_bounds
         self._range_re = re.compile(
             rf"""
             (?P<open>[\(\[])?          # optional opening bracket
@@ -566,15 +573,100 @@ class DateFacet(LabelledFacetMixin, Facet):
         )
         super().__init__(label=label, **kwargs)
 
+    def prepare_aggregation(self, filter_values):
+        """Prepare the aggregation by storing active filter values.
+
+        Called before ``get_aggregation`` so that ``_effective_bounds`` can
+        adjust ``hard_bounds`` when the filter range extends outside the
+        configured bounds.
+        """
+        self._active_filter_values = filter_values
+
     def get_aggregation(self):
-        """Get the aggregation."""
-        return dsl.A(
-            "date_histogram",
-            field=self._field,
-            calendar_interval=self._interval,
-            format=self._format,
-            min_doc_count=0,
-        )
+        """Get the date_histogram aggregation."""
+        agg_params = {
+            "field": self._field,
+            "calendar_interval": self._interval,
+            "format": self._format,
+            "min_doc_count": 0,
+        }
+        bounds = self._effective_bounds()
+        if bounds:
+            agg_params["hard_bounds"] = bounds
+        return dsl.A("date_histogram", **agg_params)
+
+    def _effective_bounds(self):
+        """Compute effective hard_bounds for the aggregation.
+
+        When a filter range extends outside the configured ``hard_bounds``,
+        the bounds are replaced with the filter range. This keeps the
+        histogram focused on the range the user is looking at.
+
+        Examples (with default hard_bounds ``{"min": "1800", "max": "now/y"}``):
+
+        - Filter ``1500..1700`` → bounds become ``{"min": "1500-01-01",
+          "max": "1700-12-31"}`` (filter is entirely below min).
+        - Filter ``1500..2020`` → bounds become ``{"min": "1500-01-01",
+          "max": "2020-12-31"}`` (filter starts below min).
+        - Filter ``2020..2025`` → bounds stay ``{"min": "1800",
+          "max": "now/y"}`` (filter is within bounds).
+        - Filter ``2020..3000`` → bounds stay as-is because ``"now/y"``
+          is treated as unbounded (never exceeded).
+
+        Date values are compared as normalized ``YYYY-MM-DD`` strings, which
+        sort correctly regardless of the calendar interval.
+        """
+        if not self._hard_bounds or not self._active_filter_values:
+            return self._hard_bounds
+
+        for value in self._active_filter_values:
+            r = self._normalize_value(value)
+            if r is None:
+                continue
+
+            bounds_min = self._resolve_bound(self._hard_bounds.get("min"), True)
+            bounds_max = self._resolve_bound(self._hard_bounds.get("max"), False)
+
+            outside = (r["start"] and bounds_min and r["start"] < bounds_min) or (
+                r["end"] and bounds_max and r["end"] > bounds_max
+            )
+
+            if outside:
+                new_bounds = {}
+                if r["start"]:
+                    new_bounds["min"] = self._format_bound(r["start"])
+                if r["end"]:
+                    new_bounds["max"] = self._format_bound(r["end"])
+                return new_bounds
+
+        return self._hard_bounds
+
+    _FORMAT_SLICE = {
+        "yyyy": 4,
+        "yyyy-MM": 7,
+        "yyyy-MM-dd": 10,
+    }
+
+    def _format_bound(self, normalized_date):
+        """Format a normalized YYYY-MM-DD date to match the aggregation format."""
+        length = self._FORMAT_SLICE.get(self._format, 4)
+        return normalized_date[:length]
+
+    def _resolve_bound(self, value, is_start):
+        """Resolve a bounds value to a comparable YYYY-MM-DD string.
+
+        Returns None for dynamic expressions like ``"now/y"`` (never exceeded
+        by a filter) and for unsupported types.
+        """
+        if not value:
+            return None
+        if isinstance(value, int):
+            value = str(value)
+        if not isinstance(value, str):
+            return None
+        if value.startswith("now"):
+            return None
+        return self._normalize_date(value, is_start)
 
     def add_filter(self, filter_values):
         """Construct a filter query for the facet."""
@@ -591,7 +683,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         return q
 
     def _build_range_query(self, value):
-        """Build an Opensearch range query from a value."""
+        """Build an OpenSearch range query from a value."""
         r = self._normalize_value(value)
         if r is None:
             return None
