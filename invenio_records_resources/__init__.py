@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2025 CERN.
+# Copyright (C) 2020-2026 CERN.
 # Copyright (C) 2024-2026 Graz University of Technology.
 # Copyright (C) 2025 KTH Royal Institute of Technology.
 # Copyright (C) 2026 Northwestern University.
@@ -13,6 +13,6 @@
 
 from .ext import InvenioRecordsResources
 
-__version__ = "9.2.0"
+__version__ = "9.3.0"
 
 __all__ = ("__version__", "InvenioRecordsResources")

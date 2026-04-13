@@ -11,6 +11,16 @@
 Changes
 =======
 
+Version v9.3.0 (released 2026-04-13)
+
+- feat(facets): add hard_bounds and dynamic bounds to DateFacet
+    * Add optional ``hard_bounds`` param to DateFacet for date_histogram
+      aggregations (e.g. ``hard_bounds={"min": "1800", "max": "now/y"}``)
+- feat(facets): add Facet base class with post_filter and prepare_aggregation
+    * Add Facet base class (subclassing dsl.Facet) with:
+      - ``post_filter`` attribute controlling filter application strategy
+      - ``prepare_aggregation()`` hook called before ``get_aggregation()``
+
 Version v9.2.0 (released 2026-04-01)
 
 - feat: set anchor for EndpointLink dynamically
