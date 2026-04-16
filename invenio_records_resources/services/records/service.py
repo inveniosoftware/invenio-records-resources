@@ -128,6 +128,7 @@ class RecordService(Service, RecordIndexerMixin):
         preference=None,
         extra_filter=None,
         versioning=True,
+        scroll=None,
     ):
         """Instantiate a search class."""
         if permission_action:
@@ -160,6 +161,9 @@ class RecordService(Service, RecordIndexerMixin):
                 .params(version=True)
             )
 
+        if scroll:
+            search = search.params(scroll=scroll)
+
         # Extras
         extras = {}
         extras["track_total_hits"] = True
@@ -177,6 +181,7 @@ class RecordService(Service, RecordIndexerMixin):
         extra_filter=None,
         permission_action="read",
         versioning=True,
+        scroll=None,
     ):
         """Factory for creating a Search DSL instance."""
         search = self.create_search(
@@ -187,6 +192,7 @@ class RecordService(Service, RecordIndexerMixin):
             preference=preference,
             extra_filter=extra_filter,
             versioning=versioning,
+            scroll=scroll,
         )
 
         # Run search args evaluator
@@ -206,6 +212,7 @@ class RecordService(Service, RecordIndexerMixin):
         extra_filter=None,
         permission_action="read",
         versioning=True,
+        scroll=None,
         **kwargs,
     ):
         """Create the search engine DSL."""
@@ -226,6 +233,7 @@ class RecordService(Service, RecordIndexerMixin):
             extra_filter=extra_filter,
             permission_action=permission_action,
             versioning=versioning,
+            scroll=scroll,
         )
 
         # Run components
