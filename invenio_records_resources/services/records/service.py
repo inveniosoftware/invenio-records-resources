@@ -128,6 +128,7 @@ class RecordService(Service, RecordIndexerMixin):
         preference=None,
         extra_filter=None,
         versioning=True,
+        size=None,
         scroll=None,
     ):
         """Instantiate a search class."""
@@ -161,6 +162,9 @@ class RecordService(Service, RecordIndexerMixin):
                 .params(version=True)
             )
 
+        if size:
+            search = search.params(size=size)
+
         if scroll:
             search = search.params(scroll=scroll)
 
@@ -181,6 +185,7 @@ class RecordService(Service, RecordIndexerMixin):
         extra_filter=None,
         permission_action="read",
         versioning=True,
+        size=None,
         scroll=None,
     ):
         """Factory for creating a Search DSL instance."""
@@ -192,6 +197,7 @@ class RecordService(Service, RecordIndexerMixin):
             preference=preference,
             extra_filter=extra_filter,
             versioning=versioning,
+            size=size,
             scroll=scroll,
         )
 
@@ -212,6 +218,7 @@ class RecordService(Service, RecordIndexerMixin):
         extra_filter=None,
         permission_action="read",
         versioning=True,
+        size=None,
         scroll=None,
         **kwargs,
     ):
@@ -233,6 +240,7 @@ class RecordService(Service, RecordIndexerMixin):
             extra_filter=extra_filter,
             permission_action=permission_action,
             versioning=versioning,
+            size=size,
             scroll=scroll,
         )
 
