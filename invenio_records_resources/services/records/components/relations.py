@@ -17,7 +17,7 @@ from .base import ServiceComponent
 class RelationsComponent(ServiceComponent):
     """Relations service component."""
 
-    def read(self, identity, record=None):
+    def read(self, identity, record=None, **kwargs):
         """Read record handler."""
         record.relations.dereference()
 
