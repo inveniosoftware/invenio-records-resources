@@ -3,6 +3,7 @@
 # This file is part of Invenio.
 # Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2026 CESNET z.s.p.o.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -41,7 +42,7 @@ class Record(RecordBase):
     """Example record API."""
 
     # Configuration
-    model_cls = models.RecordMetadata
+    model_cls = models.MockRecordMetadata
 
     # Model fields
     expires_at = ModelField()

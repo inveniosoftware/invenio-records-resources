@@ -4,6 +4,7 @@
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2025 Graz University of Technology.
+# Copyright (C) 2026 CESNET z.s.p.o.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -20,7 +21,12 @@ from sqlalchemy_utils.types import ChoiceType, UUIDType
 from invenio_records_resources.records.models import FileRecordModelMixin
 
 
-class RecordMetadata(db.Model, RecordMetadataBase):
+#
+# Note: as we test alembic together with sqlalchemy-continuum, they get confused
+# if classes have the same name. Because RecordMetadata is already used in invenio-records
+# we call this class MockRecordMetadata to differentiate.
+#
+class MockRecordMetadata(db.Model, RecordMetadataBase):
     """Model for mock module metadata."""
 
     __tablename__ = "mock_metadata"
@@ -43,6 +49,6 @@ class RecordMetadataWithPID(db.Model, RecordMetadataBase):
 class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """Model for mock module record files."""
 
-    __record_model_cls__ = RecordMetadata
+    __record_model_cls__ = MockRecordMetadata
 
     __tablename__ = "mock_record_files"
