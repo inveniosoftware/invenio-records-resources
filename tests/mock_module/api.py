@@ -41,7 +41,7 @@ class Record(RecordBase):
     """Example record API."""
 
     # Configuration
-    model_cls = models.RecordMetadata
+    model_cls = models.MockRecordMetadata
 
     # Model fields
     expires_at = ModelField()

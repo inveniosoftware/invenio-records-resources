@@ -16,7 +16,7 @@ from invenio_records_resources.records.api import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField
 from invenio_records_resources.records.systemfields.pid import PIDFieldContext
 from tests.mock_module.api import Record
-from tests.mock_module.models import RecordMetadata
+from tests.mock_module.models import MockRecordMetadata
 
 
 def test_class_attribute_access():
@@ -39,7 +39,7 @@ def test_create_no_provider(base_app, db):
     """Test creation without a provider."""
 
     class Record(RecordBase):
-        model_cls = RecordMetadata
+        model_cls = MockRecordMetadata
         pid = PIDField()
 
     record = Record.create({})
@@ -59,7 +59,7 @@ def test_create_different_key(base_app, db):
     """Test creation with different key."""
 
     class Record(RecordBase):
-        model_cls = RecordMetadata
+        model_cls = MockRecordMetadata
         pid = PIDField("pid.id", provider=RecordIdProviderV2)
 
     record = Record.create({})
