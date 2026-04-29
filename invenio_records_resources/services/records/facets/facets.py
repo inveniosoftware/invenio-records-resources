@@ -784,7 +784,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         # YYYY
         if re.fullmatch(r"\d{4}", value):
             year = dt.year
-            return f"{year}-01-01" if is_start else f"{year}-12-31"
+            return f"{year:04d}-01-01" if is_start else f"{year:04d}-12-31"
 
         # YYYY-MM
         if re.fullmatch(r"\d{4}-\d{2}", value):
