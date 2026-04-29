@@ -10,7 +10,7 @@
 """Facets types defined."""
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from dateutil.parser import isoparse
 from invenio_search.engine import dsl
@@ -538,9 +538,9 @@ class DateFacet(LabelledFacetMixin, Facet):
         }
     }
 
-    Supports optional ``hard_bounds`` to limit the histogram range, with
-    automatic bounds adjustment when the active filter extends outside the
-    configured bounds (see ``_effective_bounds``).
+    Supports optional ``hard_bounds`` to limit the histogram range, and
+    ``match_filter_bounds`` to control how those bounds interact with the
+    active filter (see ``_effective_bounds``).
     """
 
     def __init__(
@@ -551,6 +551,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         format="yyyy",
         separator="..",
         hard_bounds=None,
+        match_filter_bounds=False,
         **kwargs,
     ):
         """Constructor."""
@@ -559,8 +560,9 @@ class DateFacet(LabelledFacetMixin, Facet):
         self._interval = interval
         self._format = format
         self._separator = separator
-        self._active_filter_values = None
         self._hard_bounds = hard_bounds
+        self._match_filter_bounds = match_filter_bounds
+        self._active_filter_values = None
         self._range_re = re.compile(
             rf"""
             (?P<open>[\(\[])?          # optional opening bracket
@@ -598,25 +600,28 @@ class DateFacet(LabelledFacetMixin, Facet):
     def _effective_bounds(self):
         """Compute effective hard_bounds for the aggregation.
 
-        When a filter range extends outside the configured ``hard_bounds``,
-        the bounds are replaced with the filter range. This keeps the
-        histogram focused on the range the user is looking at.
+        When ``match_filter_bounds`` is False (default), the configured
+        ``hard_bounds`` is used while the filter is within them, and replaced
+        with the filter range when the filter extends outside. This keeps the
+        histogram showing context around the filter selection.
 
-        Examples (with default hard_bounds ``{"min": "1800", "max": "now/y"}``):
+        When ``match_filter_bounds`` is True, the bounds always match the
+        filter range when a filter is active. The histogram focuses strictly
+        on the user's selection.
 
-        - Filter ``1500..1700`` → bounds become ``{"min": "1500-01-01",
-          "max": "1700-12-31"}`` (filter is entirely below min).
-        - Filter ``1500..2020`` → bounds become ``{"min": "1500-01-01",
-          "max": "2020-12-31"}`` (filter starts below min).
-        - Filter ``2020..2025`` → bounds stay ``{"min": "1800",
-          "max": "now/y"}`` (filter is within bounds).
-        - Filter ``2020..3000`` → bounds stay as-is because ``"now/y"``
-          is treated as unbounded (never exceeded).
+        Examples (with configured ``{"min": "1970", "max": "now/y"}``):
 
-        Date values are compared as normalized ``YYYY-MM-DD`` strings, which
-        sort correctly regardless of the calendar interval.
+        +----------------+----------------------------+-----------------+
+        | Filter         | match_filter_bounds=False  | =True           |
+        +================+============================+=================+
+        | none           | ``1970..now/y``            | ``1970..now/y`` |
+        +----------------+----------------------------+-----------------+
+        | ``2000..2026`` | ``1970..now/y``            | ``2000..2026``  |
+        +----------------+----------------------------+-----------------+
+        | ``1500..1700`` | ``1500..1700``             | ``1500..1700``  |
+        +----------------+----------------------------+-----------------+
         """
-        if not self._hard_bounds or not self._active_filter_values:
+        if not self._active_filter_values:
             return self._hard_bounds
 
         for value in self._active_filter_values:
@@ -624,33 +629,83 @@ class DateFacet(LabelledFacetMixin, Facet):
             if r is None:
                 continue
 
-            bounds_min = self._resolve_bound(self._hard_bounds.get("min"), True)
-            bounds_max = self._resolve_bound(self._hard_bounds.get("max"), False)
-
-            outside = (r["start"] and bounds_min and r["start"] < bounds_min) or (
-                r["end"] and bounds_max and r["end"] > bounds_max
-            )
-
-            if outside:
+            if self._match_filter_bounds or self._is_outside_bounds(r):
                 new_bounds = {}
                 if r["start"]:
                     new_bounds["min"] = self._format_bound(r["start"])
                 if r["end"]:
                     new_bounds["max"] = self._format_bound(r["end"])
-                return new_bounds
+                return new_bounds or self._hard_bounds
 
         return self._hard_bounds
 
-    _FORMAT_SLICE = {
-        "yyyy": 4,
-        "yyyy-MM": 7,
-        "yyyy-MM-dd": 10,
-    }
+    def _is_outside_bounds(self, normalized_filter):
+        """Check if a normalized filter range extends outside hard_bounds."""
+        if not self._hard_bounds:
+            return False
+
+        bounds_min = self._resolve_bound(self._hard_bounds.get("min"), True)
+        bounds_max = self._resolve_bound(self._hard_bounds.get("max"), False)
+        start = self._effective_date(normalized_filter, is_start=True)
+        end = self._effective_date(normalized_filter, is_start=False)
+
+        starts_before = bool(start and bounds_min and start < bounds_min)
+        ends_after = bool(end and bounds_max and end > bounds_max)
+        return starts_before or ends_after
+
+    def _effective_date(self, normalized_filter, is_start):
+        """Compute the actual first/last matching date, mirroring date math rounding."""
+        raw = normalized_filter["start_raw" if is_start else "end_raw"]
+        normalized = normalized_filter["start" if is_start else "end"]
+        inclusive = normalized_filter[
+            "start_inclusive" if is_start else "end_inclusive"
+        ]
+        if not raw or not normalized:
+            return None
+        if inclusive:
+            return normalized
+        return self._next_period(raw, is_start)
+
+    @staticmethod
+    def _next_period(raw, is_start):
+        """Shift a raw date by one period (year/month/day) based on its precision."""
+        try:
+            dt = isoparse(raw).date()
+        except (ValueError, TypeError):
+            return None
+        length = len(raw)
+        if length == len("YYYY"):
+            # Year precision: e.g. "1970" → 1971-01-01 (start) or 1969-12-31 (end)
+            shifted = date(
+                dt.year + (1 if is_start else -1),
+                1 if is_start else 12,
+                1 if is_start else 31,
+            )
+        elif length == len("YYYY-MM"):
+            # Month precision: shift by one month, handling year wrap
+            year, month = dt.year, dt.month
+            if is_start:
+                year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+                shifted = date(year, month, 1)
+            else:
+                year, month = (year - 1, 12) if month == 1 else (year, month - 1)
+                shifted = date(year, month, DateFacet._last_day_of_month(year, month))
+        elif length == len("YYYY-MM-DD"):
+            # Day precision: simply ±1 day
+            shifted = dt + (timedelta(days=1) if is_start else timedelta(days=-1))
+        else:
+            return None
+        return f"{shifted.year:04d}-{shifted.month:02d}-{shifted.day:02d}"
 
     def _format_bound(self, normalized_date):
         """Format a normalized YYYY-MM-DD date to match the aggregation format."""
-        length = self._FORMAT_SLICE.get(self._format, 4)
-        return normalized_date[:length]
+        if self._format == "yyyy":
+            return normalized_date[: len("YYYY")]
+        if self._format == "yyyy-MM":
+            return normalized_date[: len("YYYY-MM")]
+        if self._format == "yyyy-MM-dd":
+            return normalized_date[: len("YYYY-MM-DD")]
+        return normalized_date[: len("YYYY")]
 
     def _resolve_bound(self, value, is_start):
         """Resolve a bounds value to a comparable YYYY-MM-DD string.
@@ -690,11 +745,13 @@ class DateFacet(LabelledFacetMixin, Facet):
 
         es_range = {}
 
-        if r["start"]:
-            es_range["gte" if r["start_inclusive"] else "gt"] = r["start"]
+        if r["start_raw"]:
+            op = "gte" if r["start_inclusive"] else "gt"
+            es_range[op] = self._with_rounding(r["start_raw"])
 
-        if r["end"]:
-            es_range["lte" if r["end_inclusive"] else "lt"] = r["end"]
+        if r["end_raw"]:
+            op = "lte" if r["end_inclusive"] else "lt"
+            es_range[op] = self._with_rounding(r["end_raw"])
 
         return dsl.Q(
             "range",
@@ -705,6 +762,24 @@ class DateFacet(LabelledFacetMixin, Facet):
                 }
             },
         )
+
+    @staticmethod
+    def _with_rounding(raw):
+        """Append OpenSearch date math rounding based on input precision.
+
+        Without rounding, ``(1970..]`` would match dates strictly after
+        ``1970-01-01T00:00:00`` (e.g., 1970-06-15). With ``||/y`` rounding,
+        ``gt: "1970||/y"`` matches dates after the end of 1970, i.e. starting
+        from 1971-01-01 — which is what users expect.
+        """
+        length = len(raw)
+        if length == len("YYYY"):
+            return f"{raw}||/y"
+        if length == len("YYYY-MM"):
+            return f"{raw}||/M"
+        if length == len("YYYY-MM-DD"):
+            return f"{raw}||/d"
+        return raw
 
     def is_filtered(self, key, filter_values):
         """Check if a histogram bucket year is selected by any range."""
@@ -718,20 +793,12 @@ class DateFacet(LabelledFacetMixin, Facet):
             if r is None:
                 continue
 
-            if r["start"]:
-                start_year = int(r["start"][:4])
-                if year < start_year:
-                    continue
-                if year == start_year and not r["start_inclusive"]:
-                    continue
-
-            if r["end"]:
-                end_year = int(r["end"][:4])
-                if year > end_year:
-                    continue
-                if year == end_year and not r["end_inclusive"]:
-                    continue
-
+            start = self._effective_date(r, is_start=True)
+            end = self._effective_date(r, is_start=False)
+            if start and year < int(start[:4]):
+                continue
+            if end and year > int(end[:4]):
+                continue
             return True
 
         return False
@@ -740,22 +807,25 @@ class DateFacet(LabelledFacetMixin, Facet):
         """Normalize a value into a range dict."""
         value = value.strip()
 
-        def build_result(start, end, start_inc=True, end_inc=True):
+        def build_result(start_raw, end_raw, start_inc=True, end_inc=True):
+            start = (
+                self._normalize_date(start_raw, is_start=True) if start_raw else None
+            )
+            end = self._normalize_date(end_raw, is_start=False) if end_raw else None
             if start is None and end is None:
                 return None
             return {
                 "start": start,
                 "end": end,
+                "start_raw": start_raw,
+                "end_raw": end_raw,
                 "start_inclusive": start_inc,
                 "end_inclusive": end_inc,
             }
 
         # Single value (no separator)
         if self._separator not in value:
-            return build_result(
-                self._normalize_date(value, is_start=True),
-                self._normalize_date(value, is_start=False),
-            )
+            return build_result(value, value)
 
         # Range value
         match = self._range_re.fullmatch(value)
@@ -766,8 +836,8 @@ class DateFacet(LabelledFacetMixin, Facet):
         end_raw = match.group("end").strip() or None
 
         return build_result(
-            self._normalize_date(start_raw, is_start=True) if start_raw else None,
-            self._normalize_date(end_raw, is_start=False) if end_raw else None,
+            start_raw,
+            end_raw,
             start_inc=match.group("open") != "(",
             end_inc=match.group("close") != ")",
         )
@@ -784,7 +854,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         # YYYY
         if re.fullmatch(r"\d{4}", value):
             year = dt.year
-            return f"{year}-01-01" if is_start else f"{year}-12-31"
+            return f"{year:04d}-01-01" if is_start else f"{year:04d}-12-31"
 
         # YYYY-MM
         if re.fullmatch(r"\d{4}-\d{2}", value):
