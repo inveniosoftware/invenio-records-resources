@@ -345,6 +345,8 @@ def test_date_facet_normalize_value():
     assert {
         "start": "2020-01-01",
         "end": "2020-12-31",
+        "start_raw": "2020",
+        "end_raw": "2020",
         "start_inclusive": True,
         "end_inclusive": True,
     } == normalized
@@ -352,6 +354,8 @@ def test_date_facet_normalize_value():
     assert {
         "start": None,
         "end": "2020-12-31",
+        "start_raw": None,
+        "end_raw": "2020",
         "start_inclusive": True,
         "end_inclusive": True,
     } == normalized
@@ -360,6 +364,8 @@ def test_date_facet_normalize_value():
     assert {
         "start": "2019-01-01",
         "end": None,
+        "start_raw": "2019",
+        "end_raw": None,
         "start_inclusive": True,
         "end_inclusive": True,
     } == normalized
@@ -385,6 +391,70 @@ def test_date_facet_last_day_of_month():
     assert 29 == DateFacet._last_day_of_month(2020, 2)
     assert 28 == DateFacet._last_day_of_month(2019, 2)
     assert 31 == DateFacet._last_day_of_month(2021, 12)
+
+
+def test_date_facet_range_query_uses_date_math():
+    """Range queries use ||/y, ||/M, ||/d rounding so exclusive bounds work."""
+    facet = DateFacet(field="date", label="Date")
+
+    # Inclusive year: gte rounds down to start of year
+    q = facet._build_range_query("[2020..2025]").to_dict()["range"]["date"]
+    assert q["gte"] == "2020||/y"
+    assert q["lte"] == "2025||/y"
+
+    # Exclusive year: gt rounds up to next year, lt rounds down to previous
+    q = facet._build_range_query("(2020..2025)").to_dict()["range"]["date"]
+    assert q["gt"] == "2020||/y"
+    assert q["lt"] == "2025||/y"
+
+    # Mixed precision
+    q = facet._build_range_query("2020-03..2020-03-15").to_dict()["range"]["date"]
+    assert q["gte"] == "2020-03||/M"
+    assert q["lte"] == "2020-03-15||/d"
+
+
+def test_date_facet_effective_date_respects_inclusivity():
+    """Effective dates shift by one period for exclusive bounds."""
+    facet = DateFacet(field="date", label="Date")
+
+    # (1970..]: exclusive year start → effective start is 1971-01-01
+    r = facet._normalize_value("(1970..]")
+    assert facet._effective_date(r, is_start=True) == "1971-01-01"
+
+    # [1970..]: inclusive year start → effective start is 1970-01-01
+    r = facet._normalize_value("[1970..]")
+    assert facet._effective_date(r, is_start=True) == "1970-01-01"
+
+    # [..1970): exclusive year end → effective end is 1969-12-31
+    r = facet._normalize_value("[..1970)")
+    assert facet._effective_date(r, is_start=False) == "1969-12-31"
+
+    # Month-precision exclusive end (2020-03 excluded → end is Feb 2020)
+    r = facet._normalize_value("[..2020-03)")
+    assert facet._effective_date(r, is_start=False) == "2020-02-29"
+
+    # Day-precision exclusive start (2020-03-15 excluded → starts 2020-03-16)
+    r = facet._normalize_value("(2020-03-15..]")
+    assert facet._effective_date(r, is_start=True) == "2020-03-16"
+
+
+def test_date_facet_outside_bounds_with_exclusive():
+    """Exclusive bounds at the edge of hard_bounds are NOT outside."""
+    bounds = {"min": "1970", "max": "now/y"}
+
+    def is_outside(filter_value):
+        f = DateFacet(field="date", label="Date", hard_bounds=bounds.copy())
+        f.prepare_aggregation([filter_value])
+        return f._is_outside_bounds(f._normalize_value(filter_value))
+
+    # (1969..]: exclusive of 1969 → effective start 1970 → at boundary, NOT outside
+    assert not is_outside("(1969..]")
+    # [1969..]: inclusive → effective start 1969 → before boundary, outside
+    assert is_outside("[1969..]")
+    # [1970..]: at boundary, NOT outside
+    assert not is_outside("[1970..]")
+    # (1968..]: exclusive of 1968 → effective start 1969 → still outside
+    assert is_outside("(1968..]")
 
 
 def test_date_facet_post_filter():
