@@ -538,9 +538,9 @@ class DateFacet(LabelledFacetMixin, Facet):
         }
     }
 
-    Supports optional ``hard_bounds`` to limit the histogram range, with
-    automatic bounds adjustment when the active filter extends outside the
-    configured bounds (see ``_effective_bounds``).
+    Supports optional ``hard_bounds`` to limit the histogram range, and
+    ``match_filter_bounds`` to control how those bounds interact with the
+    active filter (see ``_effective_bounds``).
     """
 
     def __init__(
@@ -551,6 +551,7 @@ class DateFacet(LabelledFacetMixin, Facet):
         format="yyyy",
         separator="..",
         hard_bounds=None,
+        match_filter_bounds=False,
         **kwargs,
     ):
         """Constructor."""
@@ -559,8 +560,9 @@ class DateFacet(LabelledFacetMixin, Facet):
         self._interval = interval
         self._format = format
         self._separator = separator
-        self._active_filter_values = None
         self._hard_bounds = hard_bounds
+        self._match_filter_bounds = match_filter_bounds
+        self._active_filter_values = None
         self._range_re = re.compile(
             rf"""
             (?P<open>[\(\[])?          # optional opening bracket
@@ -598,25 +600,28 @@ class DateFacet(LabelledFacetMixin, Facet):
     def _effective_bounds(self):
         """Compute effective hard_bounds for the aggregation.
 
-        When a filter range extends outside the configured ``hard_bounds``,
-        the bounds are replaced with the filter range. This keeps the
-        histogram focused on the range the user is looking at.
+        When ``match_filter_bounds`` is False (default), the configured
+        ``hard_bounds`` is used while the filter is within them, and replaced
+        with the filter range when the filter extends outside. This keeps the
+        histogram showing context around the filter selection.
 
-        Examples (with default hard_bounds ``{"min": "1800", "max": "now/y"}``):
+        When ``match_filter_bounds`` is True, the bounds always match the
+        filter range when a filter is active. The histogram focuses strictly
+        on the user's selection.
 
-        - Filter ``1500..1700`` → bounds become ``{"min": "1500-01-01",
-          "max": "1700-12-31"}`` (filter is entirely below min).
-        - Filter ``1500..2020`` → bounds become ``{"min": "1500-01-01",
-          "max": "2020-12-31"}`` (filter starts below min).
-        - Filter ``2020..2025`` → bounds stay ``{"min": "1800",
-          "max": "now/y"}`` (filter is within bounds).
-        - Filter ``2020..3000`` → bounds stay as-is because ``"now/y"``
-          is treated as unbounded (never exceeded).
+        Examples (with configured ``{"min": "1970", "max": "now/y"}``):
 
-        Date values are compared as normalized ``YYYY-MM-DD`` strings, which
-        sort correctly regardless of the calendar interval.
+        +----------------+----------------------------+-----------------+
+        | Filter         | match_filter_bounds=False  | =True           |
+        +================+============================+=================+
+        | none           | ``1970..now/y``            | ``1970..now/y`` |
+        +----------------+----------------------------+-----------------+
+        | ``2000..2026`` | ``1970..now/y``            | ``2000..2026``  |
+        +----------------+----------------------------+-----------------+
+        | ``1500..1700`` | ``1500..1700``             | ``1500..1700``  |
+        +----------------+----------------------------+-----------------+
         """
-        if not self._hard_bounds or not self._active_filter_values:
+        if not self._active_filter_values:
             return self._hard_bounds
 
         for value in self._active_filter_values:
@@ -624,22 +629,26 @@ class DateFacet(LabelledFacetMixin, Facet):
             if r is None:
                 continue
 
-            bounds_min = self._resolve_bound(self._hard_bounds.get("min"), True)
-            bounds_max = self._resolve_bound(self._hard_bounds.get("max"), False)
-
-            outside = (r["start"] and bounds_min and r["start"] < bounds_min) or (
-                r["end"] and bounds_max and r["end"] > bounds_max
-            )
-
-            if outside:
+            if self._match_filter_bounds or self._is_outside_bounds(r):
                 new_bounds = {}
                 if r["start"]:
                     new_bounds["min"] = self._format_bound(r["start"])
                 if r["end"]:
                     new_bounds["max"] = self._format_bound(r["end"])
-                return new_bounds
+                return new_bounds or self._hard_bounds
 
         return self._hard_bounds
+
+    def _is_outside_bounds(self, normalized_filter):
+        """Check if a normalized filter range extends outside hard_bounds."""
+        if not self._hard_bounds:
+            return False
+        bounds_min = self._resolve_bound(self._hard_bounds.get("min"), True)
+        bounds_max = self._resolve_bound(self._hard_bounds.get("max"), False)
+        start, end = normalized_filter["start"], normalized_filter["end"]
+        return (start and bounds_min and start < bounds_min) or (
+            end and bounds_max and end > bounds_max
+        )
 
     _FORMAT_SLICE = {
         "yyyy": 4,

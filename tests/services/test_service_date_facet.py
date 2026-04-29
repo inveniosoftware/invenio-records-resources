@@ -419,34 +419,45 @@ def test_date_facet_hard_bounds_aggregation():
 
 
 def test_date_facet_effective_bounds():
-    """Effective bounds adjust when filter extends outside configured bounds."""
-    bounds = {"min": "1800", "max": "now/y"}
+    """Effective bounds depend on match_filter_bounds and the active filter."""
+    bounds = {"min": "1970", "max": "now/y"}
 
-    def make_facet(filter_value):
-        f = DateFacet(field="date", label="Date", hard_bounds=bounds.copy())
+    def make_facet(filter_value, match=False):
+        f = DateFacet(
+            field="date",
+            label="Date",
+            hard_bounds=bounds.copy(),
+            match_filter_bounds=match,
+        )
         f.prepare_aggregation([filter_value])
         return f._effective_bounds()
 
-    # Within bounds — unchanged
-    assert make_facet("2020..2025") == {"min": "1800", "max": "now/y"}
+    # No filter — configured bounds preserved
+    for match in (False, True):
+        facet = DateFacet(
+            field="date",
+            label="Date",
+            hard_bounds=bounds.copy(),
+            match_filter_bounds=match,
+        )
+        assert facet._effective_bounds() == bounds
 
-    # Entirely below min — replaced with filter range
+    # Default (match_filter_bounds=False): inside-bound filter keeps configured bounds
+    assert make_facet("2000..2025") == {"min": "1970", "max": "now/y"}
+    # Default: outside-bound filter replaces with filter range
     assert make_facet("1500..1700") == {"min": "1500", "max": "1700"}
-
-    # Crossing min — replaced with filter range
     assert make_facet("1500..2020") == {"min": "1500", "max": "2020"}
 
-    # Above max but "now/y" is never exceeded
-    assert make_facet("2020..3000") == {"min": "1800", "max": "now/y"}
-
-    # Open-ended range below min
-    assert make_facet("1500..") == {"min": "1500"}
+    # match_filter_bounds=True: filter range always used
+    assert make_facet("2000..2025", match=True) == {"min": "2000", "max": "2025"}
+    assert make_facet("1500..1700", match=True) == {"min": "1500", "max": "1700"}
+    assert make_facet("1500..", match=True) == {"min": "1500"}
 
     # No mutation of original _hard_bounds
     facet = DateFacet(field="date", label="Date", hard_bounds=bounds.copy())
     facet.prepare_aggregation(["1500..1700"])
     facet._effective_bounds()
-    assert facet._hard_bounds == {"min": "1800", "max": "now/y"}
+    assert facet._hard_bounds == bounds
 
 
 def test_date_facet_format_bound():
