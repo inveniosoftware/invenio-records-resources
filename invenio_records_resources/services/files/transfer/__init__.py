@@ -12,18 +12,21 @@
 from .base import Transfer, TransferStatus
 from .constants import (
     FETCH_TRANSFER_TYPE,
+    LOCAL_STAGED_TRANSFER_TYPE,
     LOCAL_TRANSFER_TYPE,
     MULTIPART_TRANSFER_TYPE,
     REMOTE_TRANSFER_TYPE,
 )
+from .content import StagedContentHandle
 from .providers.fetch import FetchTransfer
-from .providers.local import LocalTransfer
+from .providers.local import LocalTransfer, StagedLocalTransfer
 from .providers.multipart import MultipartTransfer
 from .providers.remote import RemoteTransfer
 
 __all__ = (
     "Transfer",
     "FETCH_TRANSFER_TYPE",
+    "LOCAL_STAGED_TRANSFER_TYPE",
     "LOCAL_TRANSFER_TYPE",
     "MULTIPART_TRANSFER_TYPE",
     "REMOTE_TRANSFER_TYPE",
@@ -32,4 +35,6 @@ __all__ = (
     "LocalTransfer",
     "MultipartTransfer",
     "RemoteTransfer",
+    "StagedContentHandle",
+    "StagedLocalTransfer",
 )

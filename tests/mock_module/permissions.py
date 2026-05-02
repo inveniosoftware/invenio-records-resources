@@ -21,6 +21,7 @@ from invenio_records_permissions.generators import (
 from invenio_records_resources.services.files.generators import IfTransferType
 from invenio_records_resources.services.files.transfer import (
     FETCH_TRANSFER_TYPE,
+    LOCAL_STAGED_TRANSFER_TYPE,
     LOCAL_TRANSFER_TYPE,
     MULTIPART_TRANSFER_TYPE,
     REMOTE_TRANSFER_TYPE,
@@ -37,11 +38,13 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_delete = [AnyUser(), SystemProcess()]
     can_set_content_files = [
         IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(LOCAL_STAGED_TRANSFER_TYPE, AnyUser()),
         IfTransferType(MULTIPART_TRANSFER_TYPE, AnyUser()),
         SystemProcess(),
     ]
     can_create_files = [
         IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(LOCAL_STAGED_TRANSFER_TYPE, AnyUser()),
         IfTransferType(FETCH_TRANSFER_TYPE, AuthenticatedUser()),
         IfTransferType(REMOTE_TRANSFER_TYPE, AuthenticatedUser()),
         IfTransferType(MULTIPART_TRANSFER_TYPE, AnyUser()),
@@ -49,11 +52,13 @@ class PermissionPolicy(RecordPermissionPolicy):
     ]
     can_get_content_files = [
         IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(LOCAL_STAGED_TRANSFER_TYPE, AnyUser()),
         IfTransferType(REMOTE_TRANSFER_TYPE, AnyUser()),
         SystemProcess(),
     ]
     can_commit_files = [
         IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(LOCAL_STAGED_TRANSFER_TYPE, AnyUser()),
         IfTransferType(FETCH_TRANSFER_TYPE, SystemProcess()),
         IfTransferType(MULTIPART_TRANSFER_TYPE, AnyUser()),
         SystemProcess(),

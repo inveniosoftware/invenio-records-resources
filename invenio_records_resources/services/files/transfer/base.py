@@ -44,6 +44,9 @@ class Transfer(ABC):
     their own schema with additional fields.
     """
 
+    supports_staged_content: bool = False
+    """Whether the file service should dispatch the staged-content path for this transfer."""
+
     def __init__(
         self,
         record,

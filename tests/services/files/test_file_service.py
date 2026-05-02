@@ -16,12 +16,14 @@ import pytest
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_access.permissions import system_identity
+from invenio_db.uow import UnitOfWork
 from invenio_files_rest.errors import FileSizeError
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
+    TransferException,
 )
 from tests.mock_module.models import FileRecordMetadata
 
@@ -839,3 +841,129 @@ def test_backward_compatibility(
     result = file_service.list_files(identity_simple, recid)
     assert result.entries
     assert len(list(result.entries)) == 0
+
+
+def test_staged_file_flow(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """End-to-end staged-local upload (init -> content -> commit)."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,
+            "metadata": {"description": "Published article PDF."},
+        }
+    ]
+
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    entry = result.to_dict()["entries"][0]
+    assert entry["key"] == "article.txt"
+    assert entry["transfer"]["type"] == "SL"
+    assert entry["status"] == "pending"
+
+    content = BytesIO(b"test file content")
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "article.txt",
+        content,
+        content.getbuffer().nbytes,
+    )
+    assert result.to_dict()["key"] == "article.txt"
+    assert result.to_dict()["status"] == "completed"
+
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == "article.txt"
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "SL"
+    fi = db_record.files["article.txt"].object_version.file
+    assert fi.readable is True
+    assert fi.size == 17
+    assert db_record.bucket.size == 17
+
+    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == "article.txt"
+    assert result.to_dict()["storage_class"] == "L"
+    assert result.to_dict()["size"] == 17
+
+    result = file_service.get_file_content(identity_simple, recid, "article.txt")
+    with result.get_stream("rb") as stream:
+        assert stream.read() == b"test file content"
+
+
+def test_staged_flag_off_keeps_local(
+    file_service, location, example_file_record, identity_simple, db
+):
+    """With the flag off, ``L`` stays ``L``."""
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,
+        }
+    ]
+
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    assert result.to_dict()["entries"][0]["transfer"]["type"] == "L"
+
+    content = BytesIO(b"test file content")
+    file_service.set_file_content(
+        identity_simple,
+        recid,
+        "article.txt",
+        content,
+        content.getbuffer().nbytes,
+    )
+    file_service.commit_file(identity_simple, recid, "article.txt")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "L"
+
+
+def test_staged_set_file_content_rejects_external_uow(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Passing an external uow with a staged transfer raises TransferException."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "article.txt", "size": 17}],
+    )
+
+    content = BytesIO(b"test file content")
+    with UnitOfWork(db.session) as group_uow:
+        with pytest.raises(TransferException, match="external unit of work"):
+            file_service.set_file_content(
+                identity_simple,
+                recid,
+                "article.txt",
+                content,
+                content.getbuffer().nbytes,
+                uow=group_uow,
+            )
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["article.txt"]
+    assert fr.transfer.transfer_type == "SL"
+    assert fr.object_version is not None
+    assert fr.object_version.file is not None
+    assert fr.object_version.file.readable is False

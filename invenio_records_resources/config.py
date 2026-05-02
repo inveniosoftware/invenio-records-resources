@@ -31,10 +31,15 @@ RECORDS_RESOURCES_TRANSFERS = [
     "invenio_records_resources.services.files.transfer.FetchTransfer",
     "invenio_records_resources.services.files.transfer.RemoteTransfer",
     "invenio_records_resources.services.files.transfer.MultipartTransfer",
+    "invenio_records_resources.services.files.transfer.StagedLocalTransfer",
 ]
 """List of transfer classes to register."""
 
 
 RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "L"
-"""Default transfer class to use. 
+"""Default transfer class to use.
 One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""
+
+
+RECORDS_RESOURCES_USE_STAGED_TRANSFER = False
+"""Use the staged transfer for newly initialised local uploads."""

@@ -15,6 +15,7 @@ from invenio_files_rest.errors import FileSizeError
 from ....proxies import current_transfer_registry
 from ...errors import FilesCountExceededException
 from ...uow import RecordCommitOp
+from ..transfer import LOCAL_STAGED_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
 from .base import FileServiceComponent
 
 
@@ -35,12 +36,18 @@ class FileMetadataComponent(FileServiceComponent):
                     max_files=maxFiles, resulting_files_count=resulting_files_count
                 )
 
+        use_staged = current_app.config.get("RECORDS_RESOURCES_USE_STAGED_TRANSFER")
+
         for file_metadata in data:
+            transfer_data = file_metadata["transfer"]
+            if use_staged and transfer_data["type"] == LOCAL_TRANSFER_TYPE:
+                transfer_data["type"] = LOCAL_STAGED_TRANSFER_TYPE
+
             transfer = current_transfer_registry.get_transfer(
                 record=record,
                 file_service=self.service,
                 key=file_metadata["key"],
-                transfer_type=file_metadata["transfer"]["type"],
+                transfer_type=transfer_data["type"],
                 uow=self.uow,
             )
 
