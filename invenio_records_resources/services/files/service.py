@@ -463,31 +463,17 @@ class FileService(Service):
 
     def extract_container_item(self, identity, id_, file_key, path):
         """Extract a specific file or directory from the container of a record."""
-        record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
-        file_record = record.files[file_key]
-        status = current_transfer_registry.get_transfer(
-            file_record=file_record,
-            file_service=self,
-            record=record,
-        ).status
-        if status != TransferStatus.COMPLETED:
-            raise FileKeyNotFoundError(id_, file_key)
-
-        for e in self.config.file_extractors:
-            if e.can_process(file_record):
-                container_stream = e.open(file_record, path)
-                return self.file_result_container_item(
-                    self,
-                    identity,
-                    record,
-                    file_record,
-                    container_stream,
-                    path,
-                    mimetype=getattr(container_stream, "mimetype", None),
-                    size=getattr(container_stream, "size", None),
-                )
-        else:
-            raise NoExtractorFoundError(file_key)
+        container_stream = self.open_container_item( identity, id_, file_key, path)
+        return self.file_result_container_item(
+            self,
+            identity,
+            record,
+            file_record,
+            container_stream,
+            path,
+            mimetype=getattr(container_stream, "mimetype", None),
+            size=getattr(container_stream, "size", None),
+        )
 
     def open_container_item(self, identity, id_, file_key, path):
         """Open a specific file from the container of a record."""
