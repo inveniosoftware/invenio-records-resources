@@ -967,3 +967,53 @@ def test_staged_set_file_content_rejects_external_uow(
     assert fr.object_version is not None
     assert fr.object_version.file is not None
     assert fr.object_version.file.readable is False
+
+
+def test_pending_staged_file_skipped_by_dumper_and_manager(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Pending staged files are skipped by the partial dumper and FilesManager properties.
+
+    Staged init pre-allocates the OV/FI before bytes land. Code paths that
+    check ``file_record.file is not None`` would otherwise observe a not-yet-
+    readable FileInstance and either crash or emit misleading data.
+    """
+    from invenio_records_resources.records.dumpers import PartialFileDumper
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "done.txt"}, {"key": "pending.txt"}],
+    )
+
+    content = BytesIO(b"finalised-bytes")
+    file_service.set_file_content(
+        identity_simple, recid, "done.txt", content, content.getbuffer().nbytes
+    )
+    file_service.commit_file(identity_simple, recid, "done.txt")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    finalised = db_record.files["done.txt"]
+    pending = db_record.files["pending.txt"]
+    assert finalised.object_version.file.readable is True
+    assert pending.object_version.file.readable is False
+
+    # FilesManager properties only count finalised entries.
+    assert db_record.files.total_bytes == len(b"finalised-bytes")
+    mimetypes = db_record.files.mimetypes
+    assert None not in mimetypes
+    assert len(mimetypes) == 1
+
+    # PartialFileDumper omits file fields for pending entries.
+    dumped_done = PartialFileDumper().dump(finalised, {})
+    dumped_pending = PartialFileDumper().dump(pending, {})
+    assert "file_id" in dumped_done
+    assert "file_id" not in dumped_pending
