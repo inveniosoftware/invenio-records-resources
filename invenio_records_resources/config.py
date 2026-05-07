@@ -36,5 +36,8 @@ RECORDS_RESOURCES_TRANSFERS = [
 
 
 RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "L"
-"""Default transfer class to use. 
+"""Default transfer class to use.
 One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""
+
+RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE = None
+"""Max total file size (bytes) for archive download. ``None`` disables the cap."""

@@ -249,7 +249,7 @@ class FileResource(ErrorHandlersMixin, Resource):
     def read_archive(self):
         """Read a zipped version of all files."""
         id_ = resource_requestctx.view_args["pid_value"]
-        files = self.service.list_files(g.identity, id_)
+        files = self.service.read_archive(g.identity, id_)
 
         # emit file download stats events for each file
         emitter = current_stats.get_event_emitter("file-download")
