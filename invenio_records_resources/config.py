@@ -60,3 +60,6 @@ RECORDS_RESOURCES_ZIP_MAX_RATIO = 200.0
 
 RECORDS_RESOURCES_ZIP_MAX_ENTRIES = 10000
 """Max allowed entries inside ZIP file."""
+
+RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE = None
+"""Max total file size (bytes) for archive download. ``None`` disables the cap."""

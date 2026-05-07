@@ -33,6 +33,7 @@ from werkzeug.routing import BuildError
 
 from ..errors import validation_error_to_list_errors
 from ..services.errors import (
+    ArchiveDownloadTooLargeException,
     FacetNotFoundError,
     FailedFileUploadException,
     FileKeyNotFoundError,
@@ -189,6 +190,12 @@ class ErrorHandlersMixin:
         FileKeyNotFoundError: create_error_handler(
             lambda e: HTTPJSONException(
                 code=404,
+                description=str(e),
+            )
+        ),
+        ArchiveDownloadTooLargeException: create_error_handler(
+            lambda e: HTTPJSONException(
+                code=400,
                 description=str(e),
             )
         ),

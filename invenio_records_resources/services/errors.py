@@ -79,6 +79,21 @@ class TransferException(Exception):
     """File transfer exception."""
 
 
+class ArchiveDownloadTooLargeException(Exception):
+    """Raised when a record's files exceed the archive download size cap."""
+
+    def __init__(self, max_size):
+        """Constructor."""
+        self.max_size = max_size
+        super().__init__(
+            _(
+                "Archive download is only available for records with total "
+                "file size up to %(max_size)s bytes.",
+                max_size=max_size,
+            )
+        )
+
+
 class FacetNotFoundError(Exception):
     """Facet not found exception."""
 

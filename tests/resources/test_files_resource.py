@@ -547,6 +547,41 @@ def test_download_archive(
     assert all(f.closed for f in captured_fps)
 
 
+def test_download_archive_size_cap(
+    app,
+    client,
+    search_clear,
+    headers,
+    input_data,
+    location,
+):
+    # Upload a single small file
+    res = client.post("/mocks", headers=headers, json=input_data)
+    id_ = res.json["id"]
+    client.post(f"/mocks/{id_}/files", headers=headers, json=[{"key": "f1.pdf"}])
+    client.put(
+        f"/mocks/{id_}/files/f1.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"testfile"),
+    )
+    client.post(f"/mocks/{id_}/files/f1.pdf/commit", headers=headers)
+
+    # Set a cap smaller than the uploaded file and expect a 400.
+    app.config["RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE"] = 1
+    try:
+        res = client.get(f"/mocks/{id_}/files-archive")
+        assert res.status_code == 400
+        assert res.json["message"] == (
+            "Archive download is only available for records with total "
+            "file size up to 1 bytes."
+        )
+    finally:
+        app.config["RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE"] = None
+
+
 def test_files_multipart_api_flow(
     app, client, search_clear, headers, input_data, location
 ):
