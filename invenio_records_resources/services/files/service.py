@@ -15,7 +15,11 @@ from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
 from ..base import LinksTemplate, Service
-from ..errors import FailedFileUploadException, FileKeyNotFoundError
+from ..errors import (
+    ArchiveDownloadTooLargeException,
+    FailedFileUploadException,
+    FileKeyNotFoundError,
+)
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 from .schema import InitFileSchemaMixin
@@ -113,6 +117,25 @@ class FileService(Service):
         """List the files of a record."""
         record = self._get_record(id_, identity, "read_files")
 
+        return self._list_files_result(identity, id_, record)
+
+    def read_archive(self, identity, id_):
+        """List a record's files for the archive download endpoint.
+
+        Same as ``list_files`` but rejects records whose total file size
+        exceeds ``RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE``.
+        """
+        record = self._get_record(id_, identity, "read_files")
+        max_size = current_app.config.get("RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE")
+        if (
+            max_size is not None
+            and record.files.enabled
+            and record.files.total_bytes > max_size
+        ):
+            raise ArchiveDownloadTooLargeException(max_size)
+        return self._list_files_result(identity, id_, record)
+
+    def _list_files_result(self, identity, id_, record):
         self.run_components("list_files", id_, identity, record)
 
         return self.file_result_list(
