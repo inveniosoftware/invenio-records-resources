@@ -15,7 +15,12 @@ from invenio_files_rest.errors import FileSizeError
 from ....proxies import current_transfer_registry
 from ...errors import FilesCountExceededException
 from ...uow import RecordCommitOp
-from ..transfer import LOCAL_STAGED_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
+from ..transfer import (
+    FETCH_STAGED_TRANSFER_TYPE,
+    FETCH_TRANSFER_TYPE,
+    LOCAL_STAGED_TRANSFER_TYPE,
+    LOCAL_TRANSFER_TYPE,
+)
 from .base import FileServiceComponent
 
 
@@ -40,8 +45,11 @@ class FileMetadataComponent(FileServiceComponent):
 
         for file_metadata in data:
             transfer_data = file_metadata["transfer"]
-            if use_staged and transfer_data["type"] == LOCAL_TRANSFER_TYPE:
-                transfer_data["type"] = LOCAL_STAGED_TRANSFER_TYPE
+            if use_staged:
+                if transfer_data["type"] == LOCAL_TRANSFER_TYPE:
+                    transfer_data["type"] = LOCAL_STAGED_TRANSFER_TYPE
+                elif transfer_data["type"] == FETCH_TRANSFER_TYPE:
+                    transfer_data["type"] = FETCH_STAGED_TRANSFER_TYPE
 
             transfer = current_transfer_registry.get_transfer(
                 record=record,

@@ -32,6 +32,7 @@ RECORDS_RESOURCES_TRANSFERS = [
     "invenio_records_resources.services.files.transfer.RemoteTransfer",
     "invenio_records_resources.services.files.transfer.MultipartTransfer",
     "invenio_records_resources.services.files.transfer.StagedLocalTransfer",
+    "invenio_records_resources.services.files.transfer.StagedFetchTransfer",
 ]
 """List of transfer classes to register."""
 

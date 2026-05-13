@@ -1086,3 +1086,102 @@ def test_staged_failure_cleanup_and_retry(
     fi = db_record.files["retry.bin"].object_version.file
     assert fi.readable is True
     assert fi.size == len(b"happy path bytes")
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_staged_fetch_simple_flow(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+    set_app_config_fn_scoped,
+):
+    """With the flag on, ``F`` is rewritten to ``SF`` and ends as ``SL``."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    # Inline mock — the module-scoped ``mock_request`` fixture has a
+    # single ``BytesIO`` that's drained by whichever fetch test runs
+    # first.
+    class _Response:
+        raw = BytesIO(b"test file content")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+    result = file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "article.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/article.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+    # The fetch celery task runs eagerly during the init UoW commit, so
+    # by the time we get here the file is already fetched and finalized.
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["article.txt"]
+    assert fr.transfer.transfer_type == "SL"
+    fi = fr.object_version.file
+    assert fi.readable is True
+    assert fi.size == len(b"test file content")
+
+    # Bytes are reachable through the regular content endpoint.
+    content = file_service.get_file_content(identity_simple, recid, "article.txt")
+    with content.get_stream("rb") as stream:
+        assert stream.read() == b"test file content"
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_staged_fetch_flag_off_keeps_fetch(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+):
+    """With the flag off, ``F`` stays the legacy fetch flow ending in ``L``."""
+
+    class _Response:
+        raw = BytesIO(b"test file content")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "article.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/article.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "L"

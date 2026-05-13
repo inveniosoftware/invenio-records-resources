@@ -5,14 +5,19 @@
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
-"""Staged content handle."""
+"""Staged transfer content handle and shared transfer-class behaviour."""
 
+from flask_babel import gettext as _
 from invenio_db.uow import ModelCommitOp
-from invenio_files_rest.models import Bucket, FileInstance
+from invenio_files_rest import current_files_rest
+from invenio_files_rest.errors import FileSizeError
+from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from sqlalchemy import update
 from werkzeug.exceptions import ClientDisconnected
 
 from ...errors import TransferException
+from ...uow import RecordCommitOp
+from .base import TransferStatus
 
 
 class StagedContentHandle:
@@ -75,3 +80,90 @@ class StagedContentHandle:
             .values(size=Bucket.size + self.size)
         )
         self._finalized = True
+
+
+class StagedTransferMixin:
+    """Shared behaviour for staged transfer classes.
+
+    Subclasses must also inherit a concrete ``Transfer`` (e.g. ``LocalTransfer``
+    or ``FetchTransfer``) and set ``transfer_type`` and
+    ``supports_staged_content = True``.
+    """
+
+    supports_staged_content = True
+
+    def init_file(self, record, file_metadata, **kwargs):
+        """Pre-allocate FI + OV, then chain to the parent transfer's init."""
+        file_instance = FileInstance.create()
+        self.uow.register(ModelCommitOp(file_instance))
+
+        version = ObjectVersion.create(
+            record.bucket, file_metadata["key"], _file_id=file_instance
+        )
+
+        file_record = super().init_file(record, file_metadata, obj=version, **kwargs)
+        self.uow.register(RecordCommitOp(file_record))
+        return file_record
+
+    def begin_content(self, content_length):
+        """Validate state and return a ready-to-write StagedContentHandle."""
+        ov = self.file_record.object_version
+        if ov is None or ov.file is None:
+            raise TransferException(
+                _(
+                    f'Staged file "{self.file_record.key}" is missing'
+                    " pre-allocated state."
+                )
+            )
+        if ov.file.readable:
+            raise TransferException(
+                _(f'File with key "{self.file_record.key}" is already committed.')
+            )
+
+        bucket = self.record.bucket
+        size_limit = bucket.size_limit
+        if content_length and size_limit and content_length > size_limit:
+            desc = (
+                _("File size limit exceeded.")
+                if isinstance(size_limit, int)
+                else size_limit.reason
+            )
+            raise FileSizeError(description=desc)
+
+        fi = ov.file
+        storage = current_files_rest.storage_factory(
+            fileinstance=fi,
+            default_location=bucket.location.uri,
+            default_storage_class=bucket.default_storage_class,
+        )
+        # Plain values only — no ORM references survive the begin/finalize
+        # boundary, so the surrounding txn can commit before bytes flow.
+        return StagedContentHandle(
+            file_instance_id=fi.id,
+            bucket_id=bucket.id,
+            storage=storage,
+            size_limit=size_limit,
+            file_key=self.file_record.key,
+        )
+
+    def _ensure_staged_finalized(self):
+        """Raise if finalize hasn't marked the FileInstance readable."""
+        ov = self.file_record.object_version
+        fi = ov.file if ov is not None else None
+        if fi is None or not fi.readable:
+            raise TransferException(
+                _(
+                    f'Staged upload for file "{self.file_record.key}"'
+                    " has not finalized."
+                )
+            )
+
+    @property
+    def status(self):
+        """Pending until the FileInstance is readable."""
+        if self.file_record is None:
+            return TransferStatus.PENDING
+        ov = self.file_record.object_version
+        if ov is None or ov.file is None or not ov.file.readable:
+            return TransferStatus.PENDING
+        return TransferStatus.COMPLETED
