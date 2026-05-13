@@ -379,11 +379,29 @@ class FileService(Service):
                 transfer.uow = setup_uow
                 handle = transfer.begin_content(content_length)
                 setup_uow.commit()
-            with handle:
-                handle.write(stream, content_length)
-                with UnitOfWork(db.session) as finalize_uow:
-                    handle.finalize(uow=finalize_uow)
-                    finalize_uow.commit()
+            try:
+                with handle:
+                    handle.write(stream, content_length)
+                    with UnitOfWork(db.session) as finalize_uow:
+                        handle.finalize(uow=finalize_uow)
+                        finalize_uow.commit()
+            except TransferException as exc:
+                # Mirror the atomic path's cleanup (FileContentComponent):
+                # drop the FileRecord, hard-remove the ObjectVersion, and
+                # delete the pre-allocated FileInstance when no URI was
+                # written. Runs in a fresh short UoW so the connection is
+                # only re-acquired briefly.
+                with UnitOfWork(db.session) as cleanup_uow:
+                    failed = record.files.delete(
+                        file_key, softdelete_obj=False, remove_rf=True
+                    )
+                    if failed.object_version and (fi := failed.object_version.file):
+                        if not fi.uri:
+                            fi.delete()
+                    cleanup_uow.commit()
+                raise FailedFileUploadException(
+                    file_key=file_key, recid=record.pid, file=failed
+                ) from exc
             file = record.files[file_key]
         except FailedFileUploadException as e:
             file = e.file

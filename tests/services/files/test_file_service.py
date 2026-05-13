@@ -18,6 +18,7 @@ from invenio_access import any_user
 from invenio_access.permissions import system_identity
 from invenio_db.uow import UnitOfWork
 from invenio_files_rest.errors import FileSizeError
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
@@ -1017,3 +1018,71 @@ def test_pending_staged_file_skipped_by_dumper_and_manager(
     dumped_pending = PartialFileDumper().dump(pending, {})
     assert "file_id" in dumped_done
     assert "file_id" not in dumped_pending
+
+
+class _RaisingStream:
+    """File-like that yields one chunk then raises ``OSError``."""
+
+    def __init__(self, first_chunk):
+        self._first_chunk = first_chunk
+        self._yielded = False
+
+    def read(self, n=-1):
+        if not self._yielded:
+            self._yielded = True
+            return self._first_chunk
+        raise OSError("simulated mid-stream failure")
+
+
+def test_staged_failure_cleanup_and_retry(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Mid-stream failure clears the pre-allocated rows so a retry works."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "retry.bin"}])
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["retry.bin"]
+    fr_id = fr.id
+    ov_id = fr.object_version.version_id
+    fi_id = fr.object_version.file_id
+
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "retry.bin",
+        _RaisingStream(b"some-bytes"),
+        16,
+    )
+    assert result.errors
+
+    # All three pre-allocated rows are gone.
+    assert FileRecordMetadata.query.filter_by(id=fr_id).first() is None
+    assert ObjectVersion.query.filter_by(version_id=ov_id).first() is None
+    assert FileInstance.query.filter_by(id=fi_id).first() is None
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert "retry.bin" not in db_record.files
+
+    # Retrying the same key works end-to-end.
+    file_service.init_files(identity_simple, recid, [{"key": "retry.bin"}])
+    content = BytesIO(b"happy path bytes")
+    file_service.set_file_content(
+        identity_simple,
+        recid,
+        "retry.bin",
+        content,
+        content.getbuffer().nbytes,
+    )
+    file_service.commit_file(identity_simple, recid, "retry.bin")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fi = db_record.files["retry.bin"].object_version.file
+    assert fi.readable is True
+    assert fi.size == len(b"happy path bytes")
