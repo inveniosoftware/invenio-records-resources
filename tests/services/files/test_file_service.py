@@ -1185,3 +1185,131 @@ def test_staged_fetch_flag_off_keeps_fetch(
 
     db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert db_record.files["article.txt"].transfer.transfer_type == "L"
+
+
+def test_staged_sl_completes_after_flag_flip(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """An SL upload init'd with the flag on completes after the flag is off."""
+    recid = example_file_record["id"]
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    file_service.init_files(identity_simple, recid, [{"key": "rolled.txt"}])
+    assert (
+        file_service.record_cls.pid.resolve(recid, registered_only=False)
+        .files["rolled.txt"]
+        .transfer.transfer_type
+        == "SL"
+    )
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": False})
+
+    content = BytesIO(b"after-flip-bytes")
+    file_service.set_file_content(
+        identity_simple, recid, "rolled.txt", content, content.getbuffer().nbytes
+    )
+    file_service.commit_file(identity_simple, recid, "rolled.txt")
+
+    fr = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "rolled.txt"
+    ]
+    assert fr.transfer.transfer_type == "SL"
+    assert fr.object_version.file.readable is True
+    assert fr.object_version.file.size == len(b"after-flip-bytes")
+
+    # New init with the flag off produces ``L``.
+    file_service.init_files(identity_simple, recid, [{"key": "fresh.txt"}])
+    fresh = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "fresh.txt"
+    ]
+    assert fresh.transfer.transfer_type == "L"
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_staged_sf_completes_after_flag_flip(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+    set_app_config_fn_scoped,
+):
+    """An SF upload init'd with the flag on completes after the flag is off."""
+
+    class _Response:
+        raw = BytesIO(b"after-flip-bytes")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "rolled.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/rolled.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": False})
+
+    fr = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "rolled.txt"
+    ]
+    # Fetch ran eagerly during init_files; commit flipped SF -> SL.
+    assert fr.transfer.transfer_type == "SL"
+    assert fr.object_version.file.readable is True
+    assert fr.object_version.file.size == len(b"after-flip-bytes")
+
+    class _Response2:
+        raw = BytesIO(b"fresh-bytes")
+        status_code = 200
+
+    class _Request2:
+        def __enter__(self):
+            return _Response2()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request2()
+
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "fresh.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/fresh.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    fresh = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "fresh.txt"
+    ]
+    # Legacy fetch ran and flipped F -> L.
+    assert fresh.transfer.transfer_type == "L"
