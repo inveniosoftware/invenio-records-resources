@@ -11,11 +11,14 @@
 """File Service API."""
 
 from flask import current_app
+from invenio_db import db
+from invenio_db.uow import UnitOfWork
 from invenio_i18n import gettext as _
 from marshmallow import ValidationError
 
+from ...proxies import current_transfer_registry
 from ..base import LinksTemplate, Service
-from ..errors import FailedFileUploadException, FileKeyNotFoundError
+from ..errors import FailedFileUploadException, FileKeyNotFoundError, TransferException
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 from .schema import InitFileSchemaMixin
@@ -287,7 +290,6 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    @unit_of_work()
     def set_file_content(
         self, identity, id_, file_key, stream, content_length=None, uow=None
     ):
@@ -296,7 +298,49 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
-        errors = None
+
+        file_record = record.files.get(file_key)
+        transfer = (
+            current_transfer_registry.get_transfer(
+                record=record,
+                file_record=file_record,
+                file_service=self,
+            )
+            if file_record is not None
+            else None
+        )
+
+        # Staged transfers run prepare/write/finalize in separate transactions
+        # and cannot honor an external unit of work.
+        if transfer is not None and transfer.supports_staged_content:
+            if uow is not None:
+                raise TransferException(
+                    f'Staged transfer for file "{file_key}" does not support '
+                    "an external unit of work."
+                )
+            return self._set_file_content_staged(
+                identity, id_, file_key, record, transfer, stream, content_length
+            )
+
+        # A unit of work was supplied: run atomically inside it.
+        if uow is not None:
+            return self._set_file_content_atomic(
+                identity, id_, file_key, record, stream, content_length, uow=uow
+            )
+
+        # No external unit of work and not staged: run atomically in a new one.
+        with UnitOfWork(db.session) as managed_uow:
+            result = self._set_file_content_atomic(
+                identity, id_, file_key, record, stream, content_length, uow=managed_uow
+            )
+            managed_uow.commit()
+            return result
+
+    def _set_file_content_atomic(
+        self, identity, id_, file_key, record, stream, content_length, *, uow
+    ):
+        """Run the set_file_content components inside a single UoW."""
+        errors = []
         try:
             self.run_components(
                 "set_file_content",
@@ -309,20 +353,67 @@ class FileService(Service):
                 uow=uow,
             )
             file = record.files[file_key]
-
         except FailedFileUploadException as e:
             file = e.file
             current_app.logger.exception("File upload transfer failed.")
             # we gracefully fail so that uow can commit the cleanup operation in
             # FileContentComponent
-            errors = _("File upload transfer failed.")
+            errors.append(_("File upload transfer failed."))
 
         return self.file_result_item(
             self,
             identity,
             file,
             record,
-            errors=errors,
+            errors=errors or None,
+            links_tpl=self.file_links_item_tpl(id_),
+        )
+
+    def _set_file_content_staged(
+        self, identity, id_, file_key, record, transfer, stream, content_length
+    ):
+        """Run the prepare/transfer/finalize phases each in their own UoW."""
+        errors = []
+        try:
+            with UnitOfWork(db.session) as setup_uow:
+                transfer.uow = setup_uow
+                handle = transfer.begin_content(content_length)
+                setup_uow.commit()
+            try:
+                with handle:
+                    handle.write(stream, content_length)
+                    with UnitOfWork(db.session) as finalize_uow:
+                        handle.finalize(uow=finalize_uow)
+                        finalize_uow.commit()
+            except TransferException as exc:
+                # Mirror the atomic path's cleanup (FileContentComponent):
+                # drop the FileRecord, hard-remove the ObjectVersion, and
+                # delete the pre-allocated FileInstance when no URI was
+                # written. Runs in a fresh short UoW so the connection is
+                # only re-acquired briefly.
+                with UnitOfWork(db.session) as cleanup_uow:
+                    failed = record.files.delete(
+                        file_key, softdelete_obj=False, remove_rf=True
+                    )
+                    if failed.object_version and (fi := failed.object_version.file):
+                        if not fi.uri:
+                            fi.delete()
+                    cleanup_uow.commit()
+                raise FailedFileUploadException(
+                    file_key=file_key, recid=record.pid, file=failed
+                ) from exc
+            file = record.files[file_key]
+        except FailedFileUploadException as e:
+            file = e.file
+            current_app.logger.exception("File upload transfer failed.")
+            errors.append(_("File upload transfer failed."))
+
+        return self.file_result_item(
+            self,
+            identity,
+            file,
+            record,
+            errors=errors or None,
             links_tpl=self.file_links_item_tpl(id_),
         )
 
@@ -382,7 +473,7 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
-        errors = None
+        errors = []
         try:
             self.run_components(
                 "set_multipart_file_content",
@@ -402,13 +493,13 @@ class FileService(Service):
             current_app.logger.exception("File upload transfer failed.")
             # we gracefully fail so that uow can commit the cleanup operation in
             # FileContentComponent
-            errors = "File upload transfer failed."
+            errors.append(_("File upload transfer failed."))
 
         return self.file_result_item(
             self,
             identity,
             file,
             record,
-            errors=errors,
+            errors=errors or None,
             links_tpl=self.file_links_item_tpl(id_),
         )

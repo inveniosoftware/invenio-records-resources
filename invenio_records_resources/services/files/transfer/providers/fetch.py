@@ -18,7 +18,13 @@ from invenio_records_resources.services.files.transfer.base import TransferStatu
 from ....uow import RecordCommitOp, TaskOp
 from ...schema import BaseTransferSchema
 from ...tasks import fetch_file
-from ..constants import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
+from ..constants import (
+    FETCH_STAGED_TRANSFER_TYPE,
+    FETCH_TRANSFER_TYPE,
+    LOCAL_STAGED_TRANSFER_TYPE,
+    LOCAL_TRANSFER_TYPE,
+)
+from ..content import StagedTransferMixin
 from .remote import RemoteTransferBase
 
 
@@ -36,8 +42,8 @@ class FetchTransfer(RemoteTransferBase):
         """Schema for fetch transfer."""
 
         url = fields.Url(required=True, load_only=True)
-        """URL to fetch the file from. 
-        
+        """URL to fetch the file from.
+
         Note: the url is never dumped to the client as it can contain credentials (
         basic http authentication, pre-signed request, ...) and should not be exposed.
         """
@@ -88,3 +94,17 @@ class FetchTransfer(RemoteTransferBase):
         if self.file_record.transfer.get("error"):
             return TransferStatus.FAILED
         return super().status
+
+
+class StagedFetchTransfer(StagedTransferMixin, FetchTransfer):
+    """Fetch transfer that completes via the staged content flow."""
+
+    transfer_type = FETCH_STAGED_TRANSFER_TYPE
+
+    def commit_file(self):
+        """Commit; flip the persisted type to ``SL`` (not ``L``)."""
+        self._ensure_staged_finalized()
+        # Skip ``FetchTransfer.commit_file`` (which flips to ``L``).
+        self.record.files.commit(self.file_record.key)
+        self.file_record.transfer.transfer_type = LOCAL_STAGED_TRANSFER_TYPE
+        self.uow.register(RecordCommitOp(self.file_record))

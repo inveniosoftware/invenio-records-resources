@@ -176,6 +176,12 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         if self.object_version:
             return File(object_model=self.object_version)
 
+    @property
+    def has_content(self):
+        """Whether the file's bytes are on storage and the FileInstance is readable."""
+        ov = self.object_version
+        return ov is not None and ov.file is not None and ov.file.readable
+
     @contextmanager
     def open_stream(self, mode):
         """Get a file stream for a given file record."""
@@ -251,6 +257,13 @@ class File:
             id=data["file_id"],
             size=data.get("size"),
             checksum=data.get("checksum"),
+            # Dumped data is only produced for committed files, so the
+            # in-memory FileInstance is readable. Without this, the column
+            # default (True) only applies on flush, leaving the attribute
+            # None until then; readability checks in the dumpers / files
+            # manager would treat the loaded entry like a staged-pending
+            # upload and skip it.
+            readable=True,
         )
         fi = FileInstance(**file_args)
         obj = ObjectVersion(

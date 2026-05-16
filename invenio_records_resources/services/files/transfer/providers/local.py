@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2021-2024 CERN.
 # Copyright (C) 2025 CESNET.
+# Copyright (C) 2026 CERN.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,7 +13,8 @@ from flask_babel import gettext as _
 
 from ....errors import TransferException
 from ..base import Transfer
-from ..constants import LOCAL_TRANSFER_TYPE
+from ..constants import LOCAL_STAGED_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
+from ..content import StagedTransferMixin
 
 
 class LocalTransfer(Transfer):
@@ -32,3 +34,14 @@ class LocalTransfer(Transfer):
             )
 
         super().set_file_content(stream, content_length)
+
+
+class StagedLocalTransfer(StagedTransferMixin, LocalTransfer):
+    """Local transfer with prepare/transfer/finalize phases."""
+
+    transfer_type = LOCAL_STAGED_TRANSFER_TYPE
+
+    def commit_file(self):
+        """Commit once finalize has marked the FileInstance readable."""
+        self._ensure_staged_finalized()
+        super().commit_file()

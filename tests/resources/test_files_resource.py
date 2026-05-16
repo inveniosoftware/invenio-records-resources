@@ -504,6 +504,54 @@ def test_download_archive(
     assert all(f.closed for f in captured_fps)
 
 
+def test_download_archive_skips_pending_staged_file(
+    client,
+    search_clear,
+    headers,
+    input_data,
+    location,
+    set_app_config_fn_scoped,
+):
+    """Archive download omits in-flight staged uploads.
+
+    Staged init pre-allocates the OV+FI for a file before its bytes are
+    written. The archive iterator must skip such files instead of opening
+    a stream against a not-yet-readable FileInstance (which would 500).
+    """
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[{"key": "done.pdf"}, {"key": "pending.pdf"}],
+    )
+    assert res.status_code == 201
+    assert {e["transfer"]["type"] for e in res.json["entries"]} == {"SL"}
+
+    res = client.put(
+        f"/mocks/{id_}/files/done.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"finalised-bytes"),
+    )
+    assert res.status_code == 200
+    res = client.post(f"/mocks/{id_}/files/done.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+
+    res = client.get(f"/mocks/{id_}/files-archive")
+    assert res.status_code == 200
+    with zipfile.ZipFile(BytesIO(res.data), "r") as zf:
+        assert zf.namelist() == ["done.pdf"]
+        assert zf.read("done.pdf") == b"finalised-bytes"
+
+
 def test_files_multipart_api_flow(
     app, client, search_clear, headers, input_data, location
 ):
