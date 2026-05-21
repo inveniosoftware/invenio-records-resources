@@ -126,7 +126,7 @@ def test_file_flow(file_service, location, example_file_record, identity_simple,
         content,
         content.getbuffer().nbytes,
     )
-    # TODO figure response for succesfully saved file
+    # TODO figure response for successfully saved file
     assert result.to_dict()["key"] == file_to_initialise[0]["key"]
 
     result = file_service.commit_file(identity_simple, recid, "article.txt")

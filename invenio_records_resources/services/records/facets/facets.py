@@ -90,7 +90,7 @@ class LabelledFacetMixin:
                 {
                     "key": key,
                     "doc_count": self.get_metric(bucket),
-                    "label": label_map[key],
+                    "label": label_map[key] if key in label_map else key,
                     "is_selected": self.is_filtered(key, filter_values),
                 }
             )
@@ -251,7 +251,7 @@ class NestedTermsFacet(TermsFacet):
             bucket_out = {
                 "key": key,
                 "doc_count": self.get_metric(bucket),
-                "label": label_map[key],
+                "label": label_map[key] if key in label_map else key,
                 "is_selected": self.is_filtered(full_key, filter_values),
             }
             if "inner" in bucket:
