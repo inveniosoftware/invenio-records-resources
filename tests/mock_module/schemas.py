@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of Invenio.
-# Copyright (C) 2021-2025 CERN.
-# Copyright (C) 2021-2023 Northwestern University.
-# Copyright (C) 2025 Graz University of Technology.
-#
-# Invenio-Records-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2021-2025 CERN.
+# SPDX-FileCopyrightText: 2021-2023 Northwestern University.
+# SPDX-FileCopyrightText: 2025 Graz University of Technology.
+# SPDX-License-Identifier: MIT
 
 """Mock module schemas."""
 

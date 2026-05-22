@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2021-2024 CERN.
-# Copyright (C) 2025 CESNET.
-#
-# Invenio-Records-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2021-2024 CERN.
+# SPDX-FileCopyrightText: 2025 CESNET.
+# SPDX-License-Identifier: MIT
+
 """Fetch transfer provider."""
 
 from urllib.parse import urlparse
@@ -36,8 +32,8 @@ class FetchTransfer(RemoteTransferBase):
         """Schema for fetch transfer."""
 
         url = fields.Url(required=True, load_only=True)
-        """URL to fetch the file from. 
-        
+        """URL to fetch the file from.
+
         Note: the url is never dumped to the client as it can contain credentials (
         basic http authentication, pre-signed request, ...) and should not be exposed.
         """

@@ -1,8 +1,5 @@
-# Translations template for invenio-records-resources.
-# Copyright (C) 2025 CERN
-# This file is distributed under the same license as the
-# invenio-records-resources project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: MIT
 # 
 # Translators:
 # Ivan Masár <helix84@centrum.sk>, 2024

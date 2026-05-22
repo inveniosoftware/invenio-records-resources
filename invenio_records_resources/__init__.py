@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2020-2026 CERN.
-# Copyright (C) 2024-2026 Graz University of Technology.
-# Copyright (C) 2025 KTH Royal Institute of Technology.
-# Copyright (C) 2026 Northwestern University.
-#
-# Invenio-Records-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2020-2026 CERN.
+# SPDX-FileCopyrightText: 2024-2026 Graz University of Technology.
+# SPDX-FileCopyrightText: 2025 KTH Royal Institute of Technology.
+# SPDX-FileCopyrightText: 2026 Northwestern University.
+# SPDX-License-Identifier: MIT
 
 """Invenio Resources module to create REST APIs."""
 
