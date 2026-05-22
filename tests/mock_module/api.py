@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of Invenio.
-# Copyright (C) 2020-2023 CERN.
-# Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2026 CESNET z.s.p.o.
-#
-# Invenio-Records-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2020-2023 CERN.
+# SPDX-FileCopyrightText: 2020 Northwestern University.
+# SPDX-FileCopyrightText: 2026 CESNET z.s.p.o.
+# SPDX-License-Identifier: MIT
 
 """Example of a record API."""
 

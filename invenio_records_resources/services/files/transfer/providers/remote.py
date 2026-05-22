@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2021-2024 CERN.
-# Copyright (C) 2025 CESNET.
-#
-# Invenio-Records-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2021-2024 CERN.
+# SPDX-FileCopyrightText: 2025 CESNET.
+# SPDX-License-Identifier: MIT
+
 """Remote file transfer provider."""
 
 from urllib.parse import urlparse
@@ -27,9 +23,9 @@ class RemoteTransferBase(Transfer):
 
         url = fields.Str(required=True, load_only=True)
         """URL that points to the remote file.
-        
+
         It is not dumped to the client as it would make download statistics impossible.
-        The file is accessed by using the /content url and then a 302 redirect 
+        The file is accessed by using the /content url and then a 302 redirect
         is sent to the client with the actual URI.
         """
 
