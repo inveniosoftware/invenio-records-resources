@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020-2022 CERN.
 # Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -34,7 +34,11 @@ RECORDS_RESOURCES_TRANSFERS = [
 ]
 """List of transfer classes to register."""
 
+FILES_REST_STORAGE_FACTORIES = {
+    "R": "invenio_records_resources.records.storage.remote_storage_factory",
+}
+"""Storage factories for files provided by this package."""
 
 RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "L"
-"""Default transfer class to use. 
+"""Default transfer class to use.
 One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""

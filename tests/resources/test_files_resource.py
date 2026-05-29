@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2024 CERN.
 # Copyright (C) 2021 Northwestern University.
 # Copyright (C) 2021 European Union.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -16,6 +16,9 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from flask_security import login_user
+from flask_security.utils import hash_password
+from invenio_accounts.testutils import login_user_via_session
 from zipstream import ZipStream
 
 from tests.mock_module import service_for_files, service_for_records_w_files
@@ -57,6 +60,35 @@ def base_app(
 def input_data(input_data):
     input_data["files"] = {"enabled": True}
     return input_data
+
+
+@pytest.fixture()
+def users(app, db):
+    """Create example user."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        user1 = datastore.create_user(
+            email="info@inveniosoftware.org",
+            password=hash_password("password"),
+            active=True,
+        )
+        user2 = datastore.create_user(
+            email="ser-testalot@inveniosoftware.org",
+            password=hash_password("beetlesmasher"),
+            active=True,
+        )
+
+    db.session.commit()
+    return [user1, user2]
+
+
+@pytest.fixture()
+def client_with_login(client, users):
+    """Log in a user to the client."""
+    user = users[0]
+    login_user(user)
+    login_user_via_session(client, email=user.email)
+    return client
 
 
 def test_files_api_flow(client, search_clear, headers, input_data, location):
@@ -422,8 +454,7 @@ def test_disable_files_when_files_already_present_should_error(
         {
             "field": "files.enabled",
             "messages": [
-                "You must first delete all files to set the record to be "
-                "metadata-only."
+                "You must first delete all files to set the record to be metadata-only."
             ],
         }
     ]
@@ -710,3 +741,41 @@ def test_malformed_range(
     )
     # should probably be 400 but werkzeug reports this as 416
     assert res.status_code == 416
+
+
+def test_remote_files_flow(
+    client_with_login, search_clear, headers, input_data, location, monkey_remote_file
+):
+    """Test record creation."""
+
+    # Initialize a draft
+    res = client_with_login.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+    assert res.json["links"]["files"].endswith(f"/api/mocks/{id_}/files")
+
+    # Initialize files upload
+    res = client_with_login.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[
+            {
+                "key": "article.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/article.txt",
+                    "type": "R",
+                },
+            },
+        ],
+    )
+    assert res.status_code == 201
+    print(res.json)
+
+    # Commit the uploaded file
+    res = client_with_login.get(f"/mocks/{id_}/files-archive", headers=headers)
+    assert res.status_code == 200
+    # res.content is a zip file, test it
+    zip_data = res.data
+    with zipfile.ZipFile(BytesIO(zip_data)) as zip_file:
+        assert set(zip_file.namelist()) == {"article.txt"}
+        assert zip_file.open("article.txt").read() == b"There is a monkey here!"

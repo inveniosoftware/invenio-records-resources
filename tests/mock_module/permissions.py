@@ -3,7 +3,7 @@
 # This file is part of Invenio.
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -55,7 +55,8 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_commit_files = [
         IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
         IfTransferType(FETCH_TRANSFER_TYPE, SystemProcess()),
-        IfTransferType(MULTIPART_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(MULTIPART_TRANSFER_TYPE, AuthenticatedUser()),
+        IfTransferType(REMOTE_TRANSFER_TYPE, AuthenticatedUser()),
         SystemProcess(),
     ]
     can_read_files = [AnyUser(), SystemProcess()]

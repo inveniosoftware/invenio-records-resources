@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2025 CESNET.
+# Copyright (C) 2025-2026 CESNET.
 # Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
@@ -15,7 +15,10 @@ See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 
+from io import BytesIO
+
 import pytest
+import requests
 from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
 
@@ -113,3 +116,18 @@ def identity_simple():
     i.provides.add(Need(method="system_role", value="any_user"))
     i.provides.add(Need(method="system_role", value="authenticated_user"))
     return i
+
+
+@pytest.fixture()
+def monkey_remote_file(monkeypatch):
+
+    class MockResponse:
+        def __init__(self):
+            self.status_code = 200
+            self.raw = BytesIO(b"There is a monkey here!")
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    # apply the monkeypatch for requests.get to mock_get
+    monkeypatch.setattr(requests, "get", mock_get)
