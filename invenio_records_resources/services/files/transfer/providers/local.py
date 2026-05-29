@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2021-2024 CERN.
 # Copyright (C) 2025 CESNET.
+# Copyright (C) 2026 KTH Royal Institute of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -28,7 +29,10 @@ class LocalTransfer(Transfer):
         """Set file content."""
         if self.file_record.file is not None:
             raise TransferException(
-                _(f'File with key "{self.file_record.key}" is already committed.')
+                _(
+                    'File with key "%(file_key)s" is already committed.',
+                    file_key=self.file_record.key,
+                )
             )
 
         super().set_file_content(stream, content_length)

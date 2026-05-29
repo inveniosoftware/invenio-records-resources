@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2020 Northwestern University.
 # Copyright (C) 2023 Graz University of Technology.
+# Copyright (C) 2026 KTH Royal Institute of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -127,8 +128,8 @@ class FilesCountExceededException(Exception):
         """Constructor."""
         super().__init__(
             _(
-                "Uploading the selected files would result in {files_count} files (max is {max_files}).".format(
-                    max_files=max_files, files_count=resulting_files_count
-                )
+                "Uploading the selected files would result in %(files_count)s files (max is %(max_files)s).",
+                max_files=max_files,
+                files_count=resulting_files_count,
             )
         )
