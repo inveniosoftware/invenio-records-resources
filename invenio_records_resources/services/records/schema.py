@@ -14,6 +14,7 @@ from marshmallow_utils.context import context_schema
 from marshmallow_utils.fields import Links, TZDateTime
 
 from invenio_records_resources.errors import validation_error_to_list_errors
+from invenio_records_resources.proxies import current_global_schema_registry
 
 
 #
@@ -59,7 +60,8 @@ class ServiceSchemaWrapper:
 
     def __init__(self, service, schema):
         """Constructor."""
-        self.schema = schema
+        self._schema_cls = schema
+        self._schema = current_global_schema_registry.get(schema)
         # TODO: Change constructor to accept a permission_policy_cls directly
         self._permission_policy_cls = service.config.permission_policy_cls
 
@@ -89,7 +91,7 @@ class ServiceSchemaWrapper:
 
         token = context_schema.set(local_context)
         try:
-            valid_data = self.schema(**schema_args).load(data)
+            valid_data = self._schema.load(data, **schema_args)
             errors = []
         except ValidationError as e:
             if raise_errors:
@@ -110,6 +112,15 @@ class ServiceSchemaWrapper:
 
         token = context_schema.set(local_context)
         try:
-            return self.schema(**schema_args).dump(data)
+            return self._schema.dump(data, **schema_args)
         finally:
             context_schema.reset(token)
+
+    def schema(self, **schema_args):
+        """
+        Return the schema for the service.
+
+        The schema_args are (and should be) passed to the load and dump methods directly so the schema is not instantiated again.
+        It is passed here for backwards compatibility.
+        """
+        return self._schema

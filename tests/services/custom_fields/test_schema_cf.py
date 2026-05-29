@@ -30,7 +30,7 @@ def app_config(app_config):
 
 
 def test_cf_schema(app):
-    schema = CustomFieldsSchema("RECORDS_RESOURCES_CUSTOM_CONFIG")
+    schema = CustomFieldsSchema(app.config["RECORDS_RESOURCES_CUSTOM_CONFIG"])
     assert schema.load(
         {
             "myorg:txt": "some",

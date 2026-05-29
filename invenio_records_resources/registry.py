@@ -3,6 +3,8 @@
 
 """Invenio-Records-Resources registry."""
 
+from .services.custom_fields.schema import CustomFieldsSchema, CustomFieldsSchemaUI
+
 
 class ServiceRegistry:
     """A simple class to register services."""
@@ -53,3 +55,36 @@ class NotificationRegistry:
         Returns an empty list if not found.
         """
         return self._handlers.get(record_type, [])
+
+
+class GlobalSchemaRegistry:
+    """A global registry for cached schemas."""
+
+    def __init__(self):
+        """Initialize the registry."""
+        self._schemas = {}
+
+    def get(self, schema_cls):
+        """Get a cached schema."""
+        if schema_cls not in self._schemas:
+            self._schemas[schema_cls] = schema_cls()
+        return self._schemas[schema_cls]
+
+
+class CustomFieldsSchemaRegistry:
+    """A registry for custom fields schemas."""
+
+    def __init__(self):
+        """Initialize the registry."""
+        self._schemas = {}
+
+    def register(self, app, fields_var, schema_cls):
+        """Register a new custom fields schema."""
+        field_property_name = schema_cls.field_property_name
+        config = app.config.get(fields_var, [])
+        self._schemas.setdefault(fields_var, {})
+        self._schemas[fields_var].setdefault(field_property_name, schema_cls(config))
+
+    def get(self, fields_var, field_property_name):
+        """Get a custom fields schema by fields variable and field property name."""
+        return self._schemas[fields_var][field_property_name]

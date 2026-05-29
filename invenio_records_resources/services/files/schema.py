@@ -12,6 +12,7 @@ from typing import Mapping
 from marshmallow import RAISE, Schema, ValidationError, post_dump, pre_load
 from marshmallow.fields import UUID, Boolean, Dict, Integer, Nested, Str
 from marshmallow_oneofschema import OneOfSchema
+from marshmallow_utils.context import context_schema
 from marshmallow_utils.fields import GenMethod, Links, TZDateTime
 
 from ...proxies import current_transfer_registry
@@ -103,13 +104,13 @@ class FileSchema(Schema):
     size = Integer(dump_only=True)
     transfer = Nested(TransferSchema, dump_only=True)
     status = GenMethod("dump_status")
-    transfer = Nested(TransferSchema, dump_only=True)
 
     def dump_status(self, obj):
         """Dump file status."""
+        ctx = context_schema.get()
         transfer = current_transfer_registry.get_transfer(
             file_record=obj,
-            file_service=self.context.get("service"),
+            file_service=ctx.get("service"),
             record=obj.record,
         )
         return transfer.status

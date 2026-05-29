@@ -21,3 +21,15 @@ current_notifications_registry = LocalProxy(
 current_transfer_registry = LocalProxy(
     lambda: current_app.extensions["invenio-records-resources"].transfer_registry
 )
+
+current_custom_fields_schema_registry = LocalProxy(
+    lambda: current_app.extensions[
+        "invenio-records-resources"
+    ].custom_fields_schema_registry
+)
+"""Helper proxy to get the current custom fields schema registry."""
+
+current_global_schema_registry = LocalProxy(
+    lambda: current_app.extensions["invenio-records-resources"].global_schema_registry
+)
+"""Helper proxy to get the current global schema registry."""

@@ -172,8 +172,9 @@ class FileService(Service):
         # if user has permission for the transfer type that is on
         # each of the uploaded files. This is done in the IfTransferType
         # permission generator.
-        schema = self.initial_file_schema.schema(many=True)
-        data = schema.load(data)
+        data, _ = self.initial_file_schema.load(
+            data, schema_args={"many": True}, raise_errors=True
+        )
 
         if not data:
             raise ValidationError("No files to upload.")

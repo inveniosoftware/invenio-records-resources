@@ -9,7 +9,12 @@ from functools import cached_property
 from invenio_base.utils import obj_or_import_string
 
 from . import config
-from .registry import NotificationRegistry, ServiceRegistry
+from .registry import (
+    CustomFieldsSchemaRegistry,
+    GlobalSchemaRegistry,
+    NotificationRegistry,
+    ServiceRegistry,
+)
 
 
 class InvenioRecordsResources(object):
@@ -26,6 +31,8 @@ class InvenioRecordsResources(object):
         self.init_config(app)
         self.registry = ServiceRegistry()
         self.notification_registry = NotificationRegistry()
+        self.custom_fields_schema_registry = CustomFieldsSchemaRegistry()
+        self.global_schema_registry = GlobalSchemaRegistry()
         app.extensions["invenio-records-resources"] = self
 
     @cached_property

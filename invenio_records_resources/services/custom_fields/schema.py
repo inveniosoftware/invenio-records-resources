@@ -3,7 +3,6 @@
 
 """Custom Fields schema for InvenioRDM."""
 
-from flask import current_app
 from marshmallow import Schema
 
 
@@ -15,10 +14,9 @@ class CustomFieldsSchema(Schema):
 
     field_property_name = "field"
 
-    def __init__(self, fields_var, *args, **kwargs):
+    def __init__(self, config, *args, **kwargs):
         """constructor."""
         super().__init__(*args, **kwargs)
-        config = current_app.config.get(fields_var, [])
         self.fields = {
             field.name: getattr(field, self.field_property_name) for field in config
         }
