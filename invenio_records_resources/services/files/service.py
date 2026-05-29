@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020-2021 Northwestern University.
 # SPDX-FileCopyrightText: 2025 CESNET i.a.l.e.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """File Service API."""
@@ -172,8 +173,9 @@ class FileService(Service):
         # if user has permission for the transfer type that is on
         # each of the uploaded files. This is done in the IfTransferType
         # permission generator.
-        schema = self.initial_file_schema.schema(many=True)
-        data = schema.load(data)
+        data, _ = self.initial_file_schema.load(
+            data, schema_args={"many": True}, raise_errors=True
+        )
 
         if not data:
             raise ValidationError("No files to upload.")
