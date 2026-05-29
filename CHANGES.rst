@@ -11,6 +11,13 @@
 Changes
 =======
 
+Version v10.0.0 (released 2026-05-29)
+
+- chore(setup): bump dependencies
+- feat: add suport for listing and extracing items from containers
+- fix(tests): Added alembic test
+- feat: Passing more context to permissions and components
+
 Version v9.3.0 (released 2026-04-13)
 
 - feat(facets): add hard_bounds and dynamic bounds to DateFacet
