@@ -55,7 +55,10 @@ class ImageMetadataExtractor(FileProcessor):
         """
         width = height = -1
         with file_record.open_stream("rb") as fp:
-            with Image.ping(file=fp) as img:
+            with Image(file=fp) as img:
+                # must orient image correctly before getting width/height
+                img.auto_orient()
+
                 # Get image or first frame of sequence
                 img_or_seq = img if not len(img.sequence) else img.sequence[0]
                 width = img_or_seq.width
