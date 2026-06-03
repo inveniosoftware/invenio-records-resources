@@ -11,6 +11,10 @@
 Changes
 =======
 
+Version v10.1.0 (released 2026-06-03)
+
+- files: allow limiting archive download by total file size
+
 Version v10.0.0 (released 2026-05-29)
 
 - chore(setup): bump dependencies
