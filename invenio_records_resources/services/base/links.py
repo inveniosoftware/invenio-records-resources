@@ -6,7 +6,6 @@
 
 import operator
 import warnings
-from copy import deepcopy
 
 from flask import current_app
 from invenio_base import invenio_url_for
@@ -126,8 +125,7 @@ class ExternalLink:
 
     def expand(self, obj, context):
         """Expand the URI Template."""
-        vars = {}
-        vars.update(deepcopy(context))
+        vars = context.copy()
         self.vars(obj, vars)
         if self._vars_func:
             self._vars_func(obj, vars)
