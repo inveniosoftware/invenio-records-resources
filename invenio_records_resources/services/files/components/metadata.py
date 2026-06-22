@@ -44,8 +44,7 @@ class FileMetadataComponent(FileServiceComponent):
 
     def update_file_metadata(self, identity, id_, file_key, record, data):
         """Update file metadata handler."""
-        schema = self.service.file_schema.schema(many=False)
-        validated_data = schema.load(data)
+        validated_data, errors = self.service.file_schema.load(data, raise_errors=True)
         record.files.update(file_key, data=validated_data)
 
     def update_transfer_metadata(

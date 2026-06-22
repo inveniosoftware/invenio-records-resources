@@ -5,6 +5,8 @@
 
 """Record Service API."""
 
+from functools import cached_property
+
 from flask import current_app
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -69,7 +71,7 @@ class RecordService(Service, RecordIndexerMixin):
     # Low-level API
     #
 
-    @property
+    @cached_property
     def schema(self):
         """Returns the data schema instance."""
         return ServiceSchemaWrapper(self, schema=self.config.schema)
