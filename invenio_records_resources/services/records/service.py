@@ -121,6 +121,7 @@ class RecordService(Service, RecordIndexerMixin):
         search_opts,
         permission_action="read",
         preference=None,
+        search_params=None,
         extra_filter=None,
         versioning=True,
     ):
@@ -155,6 +156,10 @@ class RecordService(Service, RecordIndexerMixin):
                 .params(version=True)
             )
 
+        # This can be used to pass search parameters like `size`, `scroll`, etc.
+        if search_params:
+            search = search.params(**search_params)
+
         # Extras
         extras = {}
         extras["track_total_hits"] = True
@@ -169,6 +174,7 @@ class RecordService(Service, RecordIndexerMixin):
         record_cls,
         search_opts,
         preference=None,
+        search_params=None,
         extra_filter=None,
         permission_action="read",
         versioning=True,
@@ -180,6 +186,7 @@ class RecordService(Service, RecordIndexerMixin):
             search_opts,
             permission_action=permission_action,
             preference=preference,
+            search_params=search_params,
             extra_filter=extra_filter,
             versioning=versioning,
         )
@@ -196,6 +203,7 @@ class RecordService(Service, RecordIndexerMixin):
         identity,
         params,
         search_preference,
+        search_params=None,
         record_cls=None,
         search_opts=None,
         extra_filter=None,
@@ -218,6 +226,7 @@ class RecordService(Service, RecordIndexerMixin):
             record_cls or self.record_cls,
             search_opts or self.config.search,
             preference=search_preference,
+            search_params=search_params,
             extra_filter=extra_filter,
             permission_action=permission_action,
             versioning=versioning,
@@ -255,7 +264,13 @@ class RecordService(Service, RecordIndexerMixin):
         )
 
     def scan(
-        self, identity, params=None, search_preference=None, expand=False, **kwargs
+        self,
+        identity,
+        params=None,
+        search_preference=None,
+        search_params=None,
+        expand=False,
+        **kwargs,
     ):
         """Scan for records matching the querystring."""
         self.require_permission(
@@ -265,7 +280,7 @@ class RecordService(Service, RecordIndexerMixin):
         # Prepare and execute the search as scan()
         params = params or {}
         search_result = self._search(
-            "scan", identity, params, search_preference, **kwargs
+            "scan", identity, params, search_preference, search_params, **kwargs
         ).scan()
 
         return self.result_list(
