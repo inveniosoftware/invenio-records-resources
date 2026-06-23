@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2024 CERN.
 # SPDX-FileCopyrightText: 2020 Northwestern University.
 # SPDX-FileCopyrightText: 2020 European Union.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """Record Service API."""
@@ -65,14 +66,22 @@ class RecordIndexerMixin:
 class RecordService(Service, RecordIndexerMixin):
     """Record Service."""
 
+    def __init__(self, config):
+        """Constructor."""
+        super().__init__(config)
+        if schema := getattr(config, "schema", None):
+            self._schema = ServiceSchemaWrapper(self, schema=schema)
+        else:
+            self._schema = None
+
     #
     # Low-level API
     #
 
     @property
     def schema(self):
-        """Returns the data schema instance."""
-        return ServiceSchemaWrapper(self, schema=self.config.schema)
+        """Return the data schema instance."""
+        return self._schema
 
     @property
     def components(self):

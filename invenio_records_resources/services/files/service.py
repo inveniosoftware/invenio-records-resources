@@ -28,6 +28,23 @@ from .schema import InitFileSchemaMixin
 class FileService(Service):
     """A service for adding files support to records."""
 
+    def __init__(self, config):
+        """Constructor."""
+        super().__init__(config)
+        self._file_schema = ServiceSchemaWrapper(self, schema=self.config.file_schema)
+        if not hasattr(self.config, "initial_file_schema"):
+            self.config.initial_file_schema = type(
+                self.config.file_schema.__name__ + "Initial",
+                (
+                    InitFileSchemaMixin,
+                    self.config.file_schema,
+                ),
+                {},
+            )
+        self._initial_file_schema = ServiceSchemaWrapper(
+            self, schema=self.config.initial_file_schema
+        )
+
     @property
     def record_cls(self):
         """Get the record class."""
@@ -41,21 +58,12 @@ class FileService(Service):
         For the creation of a new file, use the `initial_file_schema` property
         as it will include the necessary fields for initiating the file upload.
         """
-        return ServiceSchemaWrapper(self, schema=self.config.file_schema)
+        return self._file_schema
 
     @property
     def initial_file_schema(self):
         """Returns the data schema instance for initiating the file upload."""
-        if not hasattr(self.config, "initial_file_schema"):
-            self.config.initial_file_schema = type(
-                self.config.file_schema.__name__ + "Initial",
-                (
-                    InitFileSchemaMixin,
-                    self.config.file_schema,
-                ),
-                {},
-            )
-        return ServiceSchemaWrapper(self, schema=self.config.initial_file_schema)
+        return self._initial_file_schema
 
     def file_result_item(self, *args, **kwargs):
         """Create a new instance of the resource unit."""
