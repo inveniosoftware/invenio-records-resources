@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020-2021 Northwestern University.
 # SPDX-FileCopyrightText: 2025 CESNET i.a.l.e.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """File Service API."""
@@ -27,6 +28,23 @@ from .schema import InitFileSchemaMixin
 class FileService(Service):
     """A service for adding files support to records."""
 
+    def __init__(self, config):
+        """Constructor."""
+        super().__init__(config)
+        self._file_schema = ServiceSchemaWrapper(self, schema=self.config.file_schema)
+        if not hasattr(self.config, "initial_file_schema"):
+            self.config.initial_file_schema = type(
+                self.config.file_schema.__name__ + "Initial",
+                (
+                    InitFileSchemaMixin,
+                    self.config.file_schema,
+                ),
+                {},
+            )
+        self._initial_file_schema = ServiceSchemaWrapper(
+            self, schema=self.config.initial_file_schema
+        )
+
     @property
     def record_cls(self):
         """Get the record class."""
@@ -40,21 +58,12 @@ class FileService(Service):
         For the creation of a new file, use the `initial_file_schema` property
         as it will include the necessary fields for initiating the file upload.
         """
-        return ServiceSchemaWrapper(self, schema=self.config.file_schema)
+        return self._file_schema
 
     @property
     def initial_file_schema(self):
         """Returns the data schema instance for initiating the file upload."""
-        if not hasattr(self.config, "initial_file_schema"):
-            self.config.initial_file_schema = type(
-                self.config.file_schema.__name__ + "Initial",
-                (
-                    InitFileSchemaMixin,
-                    self.config.file_schema,
-                ),
-                {},
-            )
-        return ServiceSchemaWrapper(self, schema=self.config.initial_file_schema)
+        return self._initial_file_schema
 
     def file_result_item(self, *args, **kwargs):
         """Create a new instance of the resource unit."""
@@ -172,8 +181,9 @@ class FileService(Service):
         # if user has permission for the transfer type that is on
         # each of the uploaded files. This is done in the IfTransferType
         # permission generator.
-        schema = self.initial_file_schema.schema(many=True)
-        data = schema.load(data)
+        data, _ = self.initial_file_schema.load(
+            data, schema_args={"many": True}, raise_errors=True
+        )
 
         if not data:
             raise ValidationError("No files to upload.")
