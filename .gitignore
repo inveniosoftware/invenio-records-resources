@@ -91,6 +91,7 @@ ipython_config.py
 #   for applications. However this is a library, so we ignore all pipenv files.
 Pipfile
 Pipfile.lock
+uv.lock
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
