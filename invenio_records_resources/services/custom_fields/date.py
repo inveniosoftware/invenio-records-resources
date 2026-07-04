@@ -5,7 +5,7 @@
 
 import calendar
 
-from arrow import Arrow
+import pendulum
 from babel_edtf import parse_edtf
 from edtf.parser.edtf_exceptions import EDTFParseException
 from marshmallow import fields
@@ -54,8 +54,8 @@ class EDTFDateStringCF(BaseListCF):
     @classmethod
     def _format_date(cls, date):
         """Format the given date into ISO format."""
-        arrow = Arrow.fromtimestamp(calendar.timegm(date), tzinfo=utc)
-        return arrow.date().isoformat()
+        datetime = pendulum.from_timestamp(calendar.timegm(date), tz=utc)
+        return datetime.date().isoformat()
 
     @classmethod
     def _calculate_date_range(cls, date):
