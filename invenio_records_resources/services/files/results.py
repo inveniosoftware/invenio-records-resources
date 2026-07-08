@@ -5,6 +5,7 @@
 
 """File service results."""
 
+import urllib.parse
 from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
@@ -250,8 +251,25 @@ class ContainerItemResult(ServiceItemResult):
 
             chunk_iterator = generator()
 
+        # Use RFC 5987 encoding for UTF-8 filenames in Content-Disposition header
+        # This allows non-ASCII characters (like Czech č,ř,í, etc.) to be properly handled
+        try:
+            filename_ascii = filename.encode("ascii").decode("ascii")
+            # Filename is ASCII-only, use simple format
+            content_disposition = f'attachment; filename="{filename_ascii}"'
+        except UnicodeEncodeError:
+            # Filename contains non-ASCII characters, use RFC 5987 encoding
+            filename_encoded = urllib.parse.quote(filename, safe="", encoding="utf-8")
+            # Fallback filename with underscores for non-ASCII chars
+            filename_fallback = "".join(c if ord(c) < 128 else "_" for c in filename)
+
+            filename_fallback = urllib.parse.quote(
+                filename_fallback, safe="", encoding="utf-8"
+            )
+            content_disposition = f"attachment; filename=\"{filename_fallback}\"; filename*=UTF-8''{filename_encoded}"
+
         headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Disposition": content_disposition,
         }
         if self.size is not None:
             headers["Content-Length"] = str(self.size)
