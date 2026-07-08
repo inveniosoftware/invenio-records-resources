@@ -76,18 +76,30 @@ def fetch_file(service_id, record_id, file_key):
         raise
 
 
-@shared_task(ignore_result=True)
+@shared_task(
+    ignore_result=True,
+    acks_late=True,
+    retry_backoff=True,
+    max_retries=10,
+    autoretry_for=(Exception,),
+)
 def recompute_multipart_checksum_task(file_instance_id):
     """Create checksum for a single object from multipart upload."""
     try:
-        file_instance = FileInstance.query.filter_by(id=file_instance_id).one()
+        file_instance = FileInstance.query.filter_by(id=file_instance_id).one_or_none()
+        if not file_instance:
+            # the file instance has been already deleted, for example user has deleted the draft
+            # or removed the file from the draft
+            return
         checksum = file_instance.checksum
         if not checksum:
+            # multipart checksum not present -> compute normal checksum
             file_instance.update_checksum()
             db.session.add(file_instance)
             db.session.commit()
             return
         elif not checksum.startswith("multipart:"):
+            # checksum has already been computed, nothing to do
             return
 
         # multipart checksum looks like: multipart:<s3 multipart checksum>-part_size
