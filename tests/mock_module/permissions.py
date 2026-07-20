@@ -55,6 +55,7 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_read_files = [AnyUser(), SystemProcess()]
     can_update_files = [AnyUser(), SystemProcess()]
     can_delete_files = [AnyUser(), SystemProcess()]
+    can_extract_file_metadata = [SystemProcess()]
 
     # who can get/set transfer metadata (currently service-level only, not exposed via REST API)
     can_get_file_transfer_metadata = [SystemProcess()]
