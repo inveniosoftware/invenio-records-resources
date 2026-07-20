@@ -249,7 +249,11 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(
-            id_, identity, "create_files", file_key=file_key, **kwargs
+            id_,
+            identity,
+            "extract_file_metadata",
+            file_key=file_key,
+            **kwargs,
         )
         file_record = record.files[file_key]
 
