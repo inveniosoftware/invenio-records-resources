@@ -8,6 +8,13 @@
 Changes
 =======
 
+Version v10.1.1 (released 2026-07-21)
+
+- chore(setup): migrate from setuptools to hatchling
+- chore(cleanup): remove outdated and unnecessary files
+- fix(performance): replace deepcopy with shallow copy for link expansion
+- chore(licenses): update license headers to use SPDX
+
 Version v10.1.0 (released 2026-06-03)
 
 - files: allow limiting archive download by total file size
