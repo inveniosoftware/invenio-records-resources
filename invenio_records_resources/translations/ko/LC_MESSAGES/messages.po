@@ -1,188 +1,214 @@
-# SPDX-FileCopyrightText: 2025 CERN
-# SPDX-License-Identifier: MIT
+# Translations template for invenio-records-resources.
+# Copyright (C) 2026 CERN
+# This file is distributed under the same license as the
+# invenio-records-resources project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 # 
 # Translators:
-# Minjae Kwon, 2024
+# Minjae Kwon, 2026
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-records-resources 8.3.0\n"
+"Project-Id-Version: invenio-records-resources 10.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-07-08 19:50+0000\n"
+"POT-Creation-Date: 2026-06-22 20:43+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: Minjae Kwon, 2024\n"
+"Last-Translator: Minjae Kwon, 2026\n"
 "Language-Team: Korean (https://app.transifex.com/inveniosoftware/teams/23537/ko/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: invenio_records_resources/records/systemfields/entity_reference.py:46
+#: invenio_records_resources/records/systemfields/entity_reference.py:41
 #, python-format
 msgid "Invalid reference for '%(key)s': %(obj)s"
-msgstr ""
+msgstr "'%(key)s'에 대한 잘못된 참조입니다: %(obj)s"
 
-#: invenio_records_resources/resources/errors.py:73
-#: invenio_records_resources/resources/errors.py:74
+#: invenio_records_resources/resources/errors.py:47
+msgid "A validation error occurred."
+msgstr "검증 오류가 발생했습니다."
+
+#: invenio_records_resources/resources/errors.py:69
+#: invenio_records_resources/resources/errors.py:70
 msgid "Invalid query string syntax."
-msgstr ""
+msgstr "잘못된 쿼리 문자열 구문입니다."
 
-#: invenio_records_resources/resources/errors.py:75
+#: invenio_records_resources/resources/errors.py:71
 msgid "Misconfigured search."
-msgstr ""
+msgstr "검색 구성이 잘못되었습니다."
 
-#: invenio_records_resources/resources/errors.py:86
+#: invenio_records_resources/resources/errors.py:82
 msgid "Internal server error"
-msgstr ""
+msgstr "내부 서버 오류"
 
-#: invenio_records_resources/resources/errors.py:135
+#: invenio_records_resources/resources/errors.py:131
 msgid "Invalid querystring parameters."
-msgstr ""
+msgstr "잘못된 쿼리 문자열 매개변수입니다."
 
-#: invenio_records_resources/resources/errors.py:141
-#: invenio_records_resources/resources/errors.py:147
-#: invenio_records_resources/services/errors.py:36
+#: invenio_records_resources/resources/errors.py:137
+#: invenio_records_resources/resources/errors.py:143
+#: invenio_records_resources/services/errors.py:32
 msgid "Permission denied."
-msgstr ""
+msgstr "권한이 거부되었습니다."
 
-#: invenio_records_resources/resources/errors.py:153
+#: invenio_records_resources/resources/errors.py:149
 msgid "The record has been deleted."
-msgstr ""
+msgstr "레코드가 제거되었습니다."
 
-#: invenio_records_resources/resources/errors.py:159
+#: invenio_records_resources/resources/errors.py:155
 msgid "The persistent identifier is already registered."
-msgstr ""
+msgstr "영구 식별자가 이미 등록되어 있습니다."
 
-#: invenio_records_resources/resources/errors.py:165
+#: invenio_records_resources/resources/errors.py:161
 msgid "The persistent identifier does not exist."
-msgstr ""
+msgstr "영구 식별자가 존재하지 않습니다."
 
-#: invenio_records_resources/resources/errors.py:171
+#: invenio_records_resources/resources/errors.py:167
 msgid "The persistent identifier is not registered."
-msgstr ""
+msgstr "영구 식별자가 등록되어 있지 않습니다."
 
-#: invenio_records_resources/resources/errors.py:178
+#: invenio_records_resources/resources/errors.py:174
 msgid "Not found."
-msgstr ""
+msgstr "찾을 수 없습니다."
 
-#: invenio_records_resources/resources/errors.py:185
+#: invenio_records_resources/resources/errors.py:181
 #, python-format
 msgid "Facet %(vocabulary_id)s not found."
-msgstr ""
+msgstr "패싯 %(vocabulary_id)s을(를) 찾을 수 없습니다."
 
-#: invenio_records_resources/resources/errors.py:198
+#: invenio_records_resources/resources/errors.py:200
 msgid "Unable to decode JSON data in request body."
-msgstr ""
+msgstr "요청 본문의 JSON 데이터를 디코딩할 수 없습니다."
 
-#: invenio_records_resources/resources/errors.py:204
-#: invenio_records_resources/resources/errors.py:210
+#: invenio_records_resources/resources/errors.py:206
+#: invenio_records_resources/resources/errors.py:212
 msgid "Not a valid value."
-msgstr ""
+msgstr "올바른 값이 아닙니다."
 
-#: invenio_records_resources/resources/errors.py:219
+#: invenio_records_resources/resources/errors.py:221
 msgid "The file upload transfer failed, please try again."
-msgstr ""
+msgstr "파일 업로드 전송에 실패했습니다. 다시 시도하십시오."
 
-#: invenio_records_resources/resources/errors.py:226
+#: invenio_records_resources/resources/errors.py:228
 msgid ""
 "Uploading selected files will result in exceeding the max amount per record."
-msgstr ""
+msgstr "선택한 파일을 업로드하면 레코드당 최대 개수를 초과하게 됩니다."
 
-#: invenio_records_resources/services/errors.py:51
+#: invenio_records_resources/services/errors.py:47
 #, python-format
 msgid ""
 "Revision id provided(%(expected_revision_id)s) doesn't match record's "
 "one(%(record_revision_id)s)"
 msgstr ""
+"제공된 리비전 ID(%(expected_revision_id)s)가 레코드의 리비전 ID(%(record_revision_id)s)와 "
+"일치하지 않습니다"
 
-#: invenio_records_resources/services/errors.py:87
+#: invenio_records_resources/services/errors.py:85
+#, python-format
+msgid ""
+"Archive download is only available for records with total file size up to "
+"%(max_size)s bytes."
+msgstr "압축파일 다운로드는 전체 파일 크기가 %(max_size)s바이트 이하인 레코드에서만 가능합니다."
+
+#: invenio_records_resources/services/errors.py:98
 #, python-format
 msgid "Facet %(vocab)s not found."
-msgstr ""
+msgstr "패싯 %(vocab)s을(를) 찾을 수 없습니다."
 
-#: invenio_records_resources/services/errors.py:97
+#: invenio_records_resources/services/errors.py:108
 #, python-format
 msgid "Record '%(recid)s' has no file '%(file_key)s'."
-msgstr ""
+msgstr "레코드 '%(recid)s'에 파일 '%(file_key)s'이(가) 없습니다."
 
-#: invenio_records_resources/services/errors.py:113
+#: invenio_records_resources/services/errors.py:124
 #, python-format
 msgid "Record '%(recid)s' failed to upload file '%(file_key)s'."
-msgstr ""
+msgstr "레코드 '%(recid)s'이(가) 파일 '%(file_key)s'을(를) 업로드하지 못했습니다."
 
-#: invenio_records_resources/services/errors.py:130
+#: invenio_records_resources/services/errors.py:141
 #, python-brace-format
 msgid ""
 "Uploading the selected files would result in {files_count} files (max is "
 "{max_files})."
-msgstr ""
+msgstr "선택한 파일을 업로드하면 파일이 {files_count}개가 됩니다(최대 {max_files}개)."
 
-#: invenio_records_resources/services/custom_fields/errors.py:37
+#: invenio_records_resources/services/errors.py:155
+#, python-format
+msgid "No extractor found for the file '%(file_key)s'."
+msgstr "파일 '%(file_key)s'에 대한 추출기를 찾을 수 없습니다."
+
+#: invenio_records_resources/services/errors.py:169
+#, python-format
+msgid "Invalid file content for file '%(file_key)s': %(msg)s."
+msgstr "파일 '%(file_key)s'의 파일 내용이 잘못되었습니다: %(msg)s."
+
+#: invenio_records_resources/services/custom_fields/errors.py:33
 #, python-format
 msgid ""
 "Namespace %(given_namespace)s is not valid for custom field %(field_name)s."
-msgstr ""
+msgstr "네임스페이스 %(given_namespace)s은(는) 사용자 지정 필드 %(field_name)s에 유효하지 않습니다."
 
-#: invenio_records_resources/services/custom_fields/errors.py:54
+#: invenio_records_resources/services/custom_fields/errors.py:50
 #, python-format
 msgid "Custom fields %(field_names)s are not configured."
-msgstr ""
+msgstr "사용자 지정 필드 %(field_names)s이(가) 설정되어 있지 않습니다."
 
-#: invenio_records_resources/services/custom_fields/errors.py:70
+#: invenio_records_resources/services/custom_fields/errors.py:66
 #, python-format
 msgid "Invalid argument %(arg_name)s passed when initializing custom field."
-msgstr ""
+msgstr "사용자 지정 필드를 초기화할 때 잘못된 인수 %(arg_name)s이(가) 전달되었습니다."
 
-#: invenio_records_resources/services/files/service.py:318
+#: invenio_records_resources/services/files/service.py:381
 msgid "File upload transfer failed."
-msgstr ""
+msgstr "파일 업로드 전송에 실패했습니다."
 
-#: invenio_records_resources/services/files/components/metadata.py:83
+#: invenio_records_resources/services/files/components/metadata.py:79
 msgid "Empty files are not accepted."
-msgstr ""
+msgstr "빈 파일은 허용되지 않습니다."
 
-#: invenio_records_resources/services/files/transfer/base.py:92
+#: invenio_records_resources/services/files/transfer/base.py:87
 msgid "File size limit exceeded."
-msgstr ""
+msgstr "파일 크기 제한을 초과했습니다."
 
-#: invenio_records_resources/services/records/config.py:35
+#: invenio_records_resources/services/records/config.py:30
 msgid "Best match"
 msgstr "가장 적절함"
 
-#: invenio_records_resources/services/records/config.py:39
+#: invenio_records_resources/services/records/config.py:34
 msgid "Newest"
-msgstr ""
+msgstr "최신순"
 
-#: invenio_records_resources/services/records/config.py:43
+#: invenio_records_resources/services/records/config.py:38
 msgid "Oldest"
-msgstr ""
+msgstr "오래된순"
 
-#: invenio_records_resources/services/records/components/files.py:89
+#: invenio_records_resources/services/records/components/files.py:84
 msgid "You must first delete all files to set the record to be metadata-only."
-msgstr ""
+msgstr "레코드를 메타데이터 전용으로 설정하려면 먼저 모든 파일을 제거해야 합니다."
 
-#: invenio_records_resources/services/records/params/pagination.py:39
+#: invenio_records_resources/services/records/params/pagination.py:34
 msgid "Invalid pagination parameters."
-msgstr ""
+msgstr "잘못된 페이지네이션 매개변수입니다."
 
-#: invenio_records_resources/services/records/params/querystr.py:30
+#: invenio_records_resources/services/records/params/querystr.py:25
 msgid "You cannot specify both 'q' and 'suggest' parameters at the same time."
-msgstr ""
+msgstr "'q'와 'suggest' 매개변수를 동시에 지정할 수 없습니다."
 
-#: invenio_records_resources/services/records/params/querystr.py:41
+#: invenio_records_resources/services/records/params/querystr.py:36
 msgid "Invalid 'suggest' parameter."
-msgstr ""
+msgstr "잘못된 'suggest' 매개변수입니다."
 
-#: invenio_records_resources/services/records/params/sort.py:62
+#: invenio_records_resources/services/records/params/sort.py:57
 #, python-format
 msgid "Invalid sort option '%(sort_option)s'."
-msgstr ""
+msgstr "잘못된 정렬 옵션 '%(sort_option)s'입니다."
 
+#: invenio_records_resources/services/records/queryparser/transformer.py:123
 #: invenio_records_resources/services/records/queryparser/transformer.py:128
-#: invenio_records_resources/services/records/queryparser/transformer.py:133
 #, python-format
 msgid "Invalid search field: %(field_name)s."
-msgstr ""
+msgstr "잘못된 검색 필드: %(field_name)s."

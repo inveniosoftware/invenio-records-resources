@@ -1,102 +1,111 @@
-# SPDX-FileCopyrightText: 2025 CERN
-# SPDX-License-Identifier: MIT
+# Translations template for invenio-records-resources.
+# Copyright (C) 2026 CERN
+# This file is distributed under the same license as the
+# invenio-records-resources project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 # 
 # Translators:
 # Berat Aldemir <berataldemir@gmail.com>, 2024
 # BEN TERCÜME, 2025
 # Ben Translation and Interpreting Services <info@bentercume.com>, 2025
 # Eylül-1 -, 2025
+# Cansu SAZOĞLU, 2026
+# Furkan Kalkan <furkan.kalkan3@gmail.com>, 2026
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-records-resources 8.3.0\n"
+"Project-Id-Version: invenio-records-resources 10.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-07-08 19:50+0000\n"
+"POT-Creation-Date: 2026-06-22 20:43+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: Eylül-1 -, 2025\n"
+"Last-Translator: Furkan Kalkan <furkan.kalkan3@gmail.com>, 2026\n"
 "Language-Team: Turkish (https://app.transifex.com/inveniosoftware/teams/23537/tr/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 "Language: tr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: invenio_records_resources/records/systemfields/entity_reference.py:46
+#: invenio_records_resources/records/systemfields/entity_reference.py:41
 #, python-format
 msgid "Invalid reference for '%(key)s': %(obj)s"
 msgstr "'%(key)s' için geçersiz referans: %(obj)s"
 
-#: invenio_records_resources/resources/errors.py:73
-#: invenio_records_resources/resources/errors.py:74
+#: invenio_records_resources/resources/errors.py:47
+msgid "A validation error occurred."
+msgstr "Doğrulama hatası oluştu."
+
+#: invenio_records_resources/resources/errors.py:69
+#: invenio_records_resources/resources/errors.py:70
 msgid "Invalid query string syntax."
 msgstr "Geçersiz sorgu dizesi sözdizimi."
 
-#: invenio_records_resources/resources/errors.py:75
+#: invenio_records_resources/resources/errors.py:71
 msgid "Misconfigured search."
 msgstr "Hatalı yapılandırılmış arama."
 
-#: invenio_records_resources/resources/errors.py:86
+#: invenio_records_resources/resources/errors.py:82
 msgid "Internal server error"
 msgstr "İç sunucu hatası"
 
-#: invenio_records_resources/resources/errors.py:135
+#: invenio_records_resources/resources/errors.py:131
 msgid "Invalid querystring parameters."
 msgstr "Geçersiz sorgu dizesi parametreleri."
 
-#: invenio_records_resources/resources/errors.py:141
-#: invenio_records_resources/resources/errors.py:147
-#: invenio_records_resources/services/errors.py:36
+#: invenio_records_resources/resources/errors.py:137
+#: invenio_records_resources/resources/errors.py:143
+#: invenio_records_resources/services/errors.py:32
 msgid "Permission denied."
 msgstr "İzin reddedildi."
 
-#: invenio_records_resources/resources/errors.py:153
+#: invenio_records_resources/resources/errors.py:149
 msgid "The record has been deleted."
 msgstr "Kayıt silindi."
 
-#: invenio_records_resources/resources/errors.py:159
+#: invenio_records_resources/resources/errors.py:155
 msgid "The persistent identifier is already registered."
 msgstr "Kalıcı tanımlayıcı zaten kayıtlıdır."
 
-#: invenio_records_resources/resources/errors.py:165
+#: invenio_records_resources/resources/errors.py:161
 msgid "The persistent identifier does not exist."
 msgstr "Kalıcı tanımlayıcı mevcut değil."
 
-#: invenio_records_resources/resources/errors.py:171
+#: invenio_records_resources/resources/errors.py:167
 msgid "The persistent identifier is not registered."
 msgstr "Kalıcı tanımlayıcı kayıtlı değil."
 
-#: invenio_records_resources/resources/errors.py:178
+#: invenio_records_resources/resources/errors.py:174
 msgid "Not found."
 msgstr "Bulunamadı."
 
-#: invenio_records_resources/resources/errors.py:185
+#: invenio_records_resources/resources/errors.py:181
 #, python-format
 msgid "Facet %(vocabulary_id)s not found."
 msgstr "%(vocabulary_id)s yönü bulunamadı."
 
-#: invenio_records_resources/resources/errors.py:198
+#: invenio_records_resources/resources/errors.py:200
 msgid "Unable to decode JSON data in request body."
 msgstr "İstek gövdesindeki JSON verileri çözümlenemedi."
 
-#: invenio_records_resources/resources/errors.py:204
-#: invenio_records_resources/resources/errors.py:210
+#: invenio_records_resources/resources/errors.py:206
+#: invenio_records_resources/resources/errors.py:212
 msgid "Not a valid value."
 msgstr "Geçerli bir değer değil."
 
-#: invenio_records_resources/resources/errors.py:219
+#: invenio_records_resources/resources/errors.py:221
 msgid "The file upload transfer failed, please try again."
 msgstr "Dosya yükleme işlemi başarısız oldu, lütfen tekrar deneyin."
 
-#: invenio_records_resources/resources/errors.py:226
+#: invenio_records_resources/resources/errors.py:228
 msgid ""
 "Uploading selected files will result in exceeding the max amount per record."
 msgstr ""
 "Seçilen dosyaların yüklenmesi, kayıt başına maksimum miktarın aşılmasına "
 "neden olacaktır."
 
-#: invenio_records_resources/services/errors.py:51
+#: invenio_records_resources/services/errors.py:47
 #, python-format
 msgid ""
 "Revision id provided(%(expected_revision_id)s) doesn't match record's "
@@ -105,22 +114,31 @@ msgstr ""
 "Verilen revizyon kimliği (%(expected_revision_id)s) kaydınkiyle "
 "(%(record_revision_id)s) eşleşmiyor."
 
-#: invenio_records_resources/services/errors.py:87
+#: invenio_records_resources/services/errors.py:85
+#, python-format
+msgid ""
+"Archive download is only available for records with total file size up to "
+"%(max_size)s bytes."
+msgstr ""
+"Arşiv indirme işlemi yalnızca toplam dosya boyutu %(max_size)s bayta kadar "
+"olan kayıtlar için geçerlidir."
+
+#: invenio_records_resources/services/errors.py:98
 #, python-format
 msgid "Facet %(vocab)s not found."
 msgstr "%(vocab)s yönü bulunamadı."
 
-#: invenio_records_resources/services/errors.py:97
+#: invenio_records_resources/services/errors.py:108
 #, python-format
 msgid "Record '%(recid)s' has no file '%(file_key)s'."
 msgstr "'%(recid)s' kaydı, '%(file_key)s' dosyasına sahip değil."
 
-#: invenio_records_resources/services/errors.py:113
+#: invenio_records_resources/services/errors.py:124
 #, python-format
 msgid "Record '%(recid)s' failed to upload file '%(file_key)s'."
 msgstr "'%(recid)s' kaydı, '%(file_key)s' dosyasını yükleyemedi."
 
-#: invenio_records_resources/services/errors.py:130
+#: invenio_records_resources/services/errors.py:141
 #, python-brace-format
 msgid ""
 "Uploading the selected files would result in {files_count} files (max is "
@@ -129,7 +147,17 @@ msgstr ""
 "Seçili dosyaların yüklenmesi {files_count} dosya ile sonuçlanacaktır "
 "(maksimum {max_files} dosya)."
 
-#: invenio_records_resources/services/custom_fields/errors.py:37
+#: invenio_records_resources/services/errors.py:155
+#, python-format
+msgid "No extractor found for the file '%(file_key)s'."
+msgstr "'%(file_key)s' dosyası için çıkarıcı bulunamadı."
+
+#: invenio_records_resources/services/errors.py:169
+#, python-format
+msgid "Invalid file content for file '%(file_key)s': %(msg)s."
+msgstr "'%(file_key)s' dosyası için geçersiz dosya içeriği: %(msg)s. "
+
+#: invenio_records_resources/services/custom_fields/errors.py:33
 #, python-format
 msgid ""
 "Namespace %(given_namespace)s is not valid for custom field %(field_name)s."
@@ -137,64 +165,64 @@ msgstr ""
 "%(given_namespace)s ad alanı, %(field_name)s özel alanı için geçerli "
 "değildir."
 
-#: invenio_records_resources/services/custom_fields/errors.py:54
+#: invenio_records_resources/services/custom_fields/errors.py:50
 #, python-format
 msgid "Custom fields %(field_names)s are not configured."
 msgstr "%(field_names)s özel alanları yapılandırılmamış."
 
-#: invenio_records_resources/services/custom_fields/errors.py:70
+#: invenio_records_resources/services/custom_fields/errors.py:66
 #, python-format
 msgid "Invalid argument %(arg_name)s passed when initializing custom field."
 msgstr "Özel alanı başlatırken geçersiz %(arg_name)s argümanı iletildi."
 
-#: invenio_records_resources/services/files/service.py:318
+#: invenio_records_resources/services/files/service.py:381
 msgid "File upload transfer failed."
 msgstr "Dosya yükleme aktarımı başarısız."
 
-#: invenio_records_resources/services/files/components/metadata.py:83
+#: invenio_records_resources/services/files/components/metadata.py:79
 msgid "Empty files are not accepted."
 msgstr "Boş dosyalar kabul edilmemektedir."
 
-#: invenio_records_resources/services/files/transfer/base.py:92
+#: invenio_records_resources/services/files/transfer/base.py:87
 msgid "File size limit exceeded."
 msgstr "Dosya boyutu sınırı aşıldı."
 
-#: invenio_records_resources/services/records/config.py:35
+#: invenio_records_resources/services/records/config.py:30
 msgid "Best match"
 msgstr "En iyi eşleşme"
 
-#: invenio_records_resources/services/records/config.py:39
+#: invenio_records_resources/services/records/config.py:34
 msgid "Newest"
 msgstr "Yeniden eskiye"
 
-#: invenio_records_resources/services/records/config.py:43
+#: invenio_records_resources/services/records/config.py:38
 msgid "Oldest"
 msgstr "Eskiden yeniye"
 
-#: invenio_records_resources/services/records/components/files.py:89
+#: invenio_records_resources/services/records/components/files.py:84
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
 "Kaydı Sadece Üst Veri olarak ayarlamak için önce tüm dosyaları silmelisiniz."
 
-#: invenio_records_resources/services/records/params/pagination.py:39
+#: invenio_records_resources/services/records/params/pagination.py:34
 msgid "Invalid pagination parameters."
 msgstr "Geçersiz sayfalandırma parametreleri."
 
-#: invenio_records_resources/services/records/params/querystr.py:30
+#: invenio_records_resources/services/records/params/querystr.py:25
 msgid "You cannot specify both 'q' and 'suggest' parameters at the same time."
 msgstr "'q' ve ‘suggest’ parametrelerini aynı anda belirleyemezsiniz."
 
-#: invenio_records_resources/services/records/params/querystr.py:41
+#: invenio_records_resources/services/records/params/querystr.py:36
 msgid "Invalid 'suggest' parameter."
 msgstr "Geçersiz 'suggest' parametresi."
 
-#: invenio_records_resources/services/records/params/sort.py:62
+#: invenio_records_resources/services/records/params/sort.py:57
 #, python-format
 msgid "Invalid sort option '%(sort_option)s'."
 msgstr "Geçersiz '%(sort_option)s' sıralama seçeneği."
 
+#: invenio_records_resources/services/records/queryparser/transformer.py:123
 #: invenio_records_resources/services/records/queryparser/transformer.py:128
-#: invenio_records_resources/services/records/queryparser/transformer.py:133
 #, python-format
 msgid "Invalid search field: %(field_name)s."
 msgstr "Geçersiz arama alanı: %(field_name)s."
