@@ -1,101 +1,108 @@
-# SPDX-FileCopyrightText: 2025 CERN
-# SPDX-License-Identifier: MIT
+# Translations template for invenio-records-resources.
+# Copyright (C) 2026 CERN
+# This file is distributed under the same license as the
+# invenio-records-resources project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 # 
 # Translators:
 # Ivan Masár <helix84@centrum.sk>, 2024
-# Mirek Simek <miroslav.simek@gmail.com>, 2025
 # Tibor Simko <tibor.simko@cern.ch>, 2025
-# daniela.hornickova, 2025
+# daniela.hornickova, 2026
+# Mirek Simek <miroslav.simek@gmail.com>, 2026
 # 
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-records-resources 8.3.0\n"
+"Project-Id-Version: invenio-records-resources 10.1.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-07-08 19:50+0000\n"
+"POT-Creation-Date: 2026-06-22 20:43+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: daniela.hornickova, 2025\n"
+"Last-Translator: Mirek Simek <miroslav.simek@gmail.com>, 2026\n"
 "Language-Team: Czech (https://app.transifex.com/inveniosoftware/teams/23537/cs/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 "Language: cs\n"
 "Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n <= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;\n"
 
-#: invenio_records_resources/records/systemfields/entity_reference.py:46
+#: invenio_records_resources/records/systemfields/entity_reference.py:41
 #, python-format
 msgid "Invalid reference for '%(key)s': %(obj)s"
 msgstr "Neplatná reference pro '%(key)s': %(obj)s"
 
-#: invenio_records_resources/resources/errors.py:73
-#: invenio_records_resources/resources/errors.py:74
+#: invenio_records_resources/resources/errors.py:47
+msgid "A validation error occurred."
+msgstr "Objevila se chyba validace."
+
+#: invenio_records_resources/resources/errors.py:69
+#: invenio_records_resources/resources/errors.py:70
 msgid "Invalid query string syntax."
 msgstr "Neplatný formát vyhledávacího výrazu."
 
-#: invenio_records_resources/resources/errors.py:75
+#: invenio_records_resources/resources/errors.py:71
 msgid "Misconfigured search."
 msgstr "Špatně nastavené vyhledávání."
 
-#: invenio_records_resources/resources/errors.py:86
+#: invenio_records_resources/resources/errors.py:82
 msgid "Internal server error"
 msgstr "Vnitřní chyba serveru"
 
-#: invenio_records_resources/resources/errors.py:135
+#: invenio_records_resources/resources/errors.py:131
 msgid "Invalid querystring parameters."
 msgstr "Neplatné parametry vyhledávacího výrazu."
 
-#: invenio_records_resources/resources/errors.py:141
-#: invenio_records_resources/resources/errors.py:147
-#: invenio_records_resources/services/errors.py:36
+#: invenio_records_resources/resources/errors.py:137
+#: invenio_records_resources/resources/errors.py:143
+#: invenio_records_resources/services/errors.py:32
 msgid "Permission denied."
 msgstr "Přístup odepřen."
 
-#: invenio_records_resources/resources/errors.py:153
+#: invenio_records_resources/resources/errors.py:149
 msgid "The record has been deleted."
 msgstr "Záznam byl vymazán."
 
-#: invenio_records_resources/resources/errors.py:159
+#: invenio_records_resources/resources/errors.py:155
 msgid "The persistent identifier is already registered."
 msgstr "Persistentní identifikátor je již zaregistrován."
 
-#: invenio_records_resources/resources/errors.py:165
+#: invenio_records_resources/resources/errors.py:161
 msgid "The persistent identifier does not exist."
 msgstr "Persistentní identifikátor neexistuje."
 
-#: invenio_records_resources/resources/errors.py:171
+#: invenio_records_resources/resources/errors.py:167
 msgid "The persistent identifier is not registered."
 msgstr "Persistentní identifikátor není zaregistrován."
 
-#: invenio_records_resources/resources/errors.py:178
+#: invenio_records_resources/resources/errors.py:174
 msgid "Not found."
 msgstr "Nenalezeno"
 
-#: invenio_records_resources/resources/errors.py:185
+#: invenio_records_resources/resources/errors.py:181
 #, python-format
 msgid "Facet %(vocabulary_id)s not found."
 msgstr "Faceta %(vocabulary_id)s nebyla nalezena."
 
-#: invenio_records_resources/resources/errors.py:198
+#: invenio_records_resources/resources/errors.py:200
 msgid "Unable to decode JSON data in request body."
 msgstr "Nelze dekódovat JSON data v těle požadavku."
 
-#: invenio_records_resources/resources/errors.py:204
-#: invenio_records_resources/resources/errors.py:210
+#: invenio_records_resources/resources/errors.py:206
+#: invenio_records_resources/resources/errors.py:212
 msgid "Not a valid value."
 msgstr "Nejde o platnou hodnotu."
 
-#: invenio_records_resources/resources/errors.py:219
+#: invenio_records_resources/resources/errors.py:221
 msgid "The file upload transfer failed, please try again."
 msgstr "Nahrávání souboru selhalo, prosím zkuste to znovu."
 
-#: invenio_records_resources/resources/errors.py:226
+#: invenio_records_resources/resources/errors.py:228
 msgid ""
 "Uploading selected files will result in exceeding the max amount per record."
 msgstr ""
 "Nahrání vybraných souborů způsobí překročení maximálního limitu na záznam."
 
-#: invenio_records_resources/services/errors.py:51
+#: invenio_records_resources/services/errors.py:47
 #, python-format
 msgid ""
 "Revision id provided(%(expected_revision_id)s) doesn't match record's "
@@ -104,22 +111,31 @@ msgstr ""
 "Poskytnuté ID revize (%(expected_revision_id)s) neodpovídá ID revize záznamu"
 " (%(record_revision_id)s)."
 
-#: invenio_records_resources/services/errors.py:87
+#: invenio_records_resources/services/errors.py:85
+#, python-format
+msgid ""
+"Archive download is only available for records with total file size up to "
+"%(max_size)s bytes."
+msgstr ""
+"Stažení archivu je možné pouze pro záznamy s celkovou velikostí souborů do "
+"%(max_size)s bajtů."
+
+#: invenio_records_resources/services/errors.py:98
 #, python-format
 msgid "Facet %(vocab)s not found."
 msgstr "Faceta %(vocab)s nebyla nalezena."
 
-#: invenio_records_resources/services/errors.py:97
+#: invenio_records_resources/services/errors.py:108
 #, python-format
 msgid "Record '%(recid)s' has no file '%(file_key)s'."
 msgstr "Záznam '%(recid)s' nemá soubor '%(file_key)s'."
 
-#: invenio_records_resources/services/errors.py:113
+#: invenio_records_resources/services/errors.py:124
 #, python-format
 msgid "Record '%(recid)s' failed to upload file '%(file_key)s'."
 msgstr "Chyba nahrání souboru '%(file_key)s' do záznamu '%(recid)s'."
 
-#: invenio_records_resources/services/errors.py:130
+#: invenio_records_resources/services/errors.py:141
 #, python-brace-format
 msgid ""
 "Uploading the selected files would result in {files_count} files (max is "
@@ -128,7 +144,17 @@ msgstr ""
 "Aktualizace vybraných souborů by znamenala změnu {files_count} souborů (max "
 "je {max_files})."
 
-#: invenio_records_resources/services/custom_fields/errors.py:37
+#: invenio_records_resources/services/errors.py:155
+#, python-format
+msgid "No extractor found for the file '%(file_key)s'."
+msgstr "Pro soubor  '%(file_key)s' nebyl nalezen žádný extraktor."
+
+#: invenio_records_resources/services/errors.py:169
+#, python-format
+msgid "Invalid file content for file '%(file_key)s': %(msg)s."
+msgstr "Neplatný obsah souboru pro soubor '%(file_key)s': %(msg)s."
+
+#: invenio_records_resources/services/custom_fields/errors.py:33
 #, python-format
 msgid ""
 "Namespace %(given_namespace)s is not valid for custom field %(field_name)s."
@@ -136,66 +162,66 @@ msgstr ""
 "Pro vlastní pole %(field_name)s není jmenný prostor %(given_namespace)s "
 "platný."
 
-#: invenio_records_resources/services/custom_fields/errors.py:54
+#: invenio_records_resources/services/custom_fields/errors.py:50
 #, python-format
 msgid "Custom fields %(field_names)s are not configured."
 msgstr "Vlastní pole %(field_names)s nejsou nakonfigurována."
 
-#: invenio_records_resources/services/custom_fields/errors.py:70
+#: invenio_records_resources/services/custom_fields/errors.py:66
 #, python-format
 msgid "Invalid argument %(arg_name)s passed when initializing custom field."
 msgstr ""
 "Neplatný argument %(arg_name)s předán při inicializaci vlastního pole."
 
-#: invenio_records_resources/services/files/service.py:318
+#: invenio_records_resources/services/files/service.py:381
 msgid "File upload transfer failed."
 msgstr "Nahrávání souboru selhalo."
 
-#: invenio_records_resources/services/files/components/metadata.py:83
+#: invenio_records_resources/services/files/components/metadata.py:79
 msgid "Empty files are not accepted."
 msgstr "Prázdné soubory nejsou povoleny."
 
-#: invenio_records_resources/services/files/transfer/base.py:92
+#: invenio_records_resources/services/files/transfer/base.py:87
 msgid "File size limit exceeded."
 msgstr "Překročen limit velikosti souborů."
 
-#: invenio_records_resources/services/records/config.py:35
+#: invenio_records_resources/services/records/config.py:30
 msgid "Best match"
 msgstr "Dle nejlepší shody"
 
-#: invenio_records_resources/services/records/config.py:39
+#: invenio_records_resources/services/records/config.py:34
 msgid "Newest"
 msgstr "Od nejnovějšího"
 
-#: invenio_records_resources/services/records/config.py:43
+#: invenio_records_resources/services/records/config.py:38
 msgid "Oldest"
 msgstr "Od nejstaršího"
 
-#: invenio_records_resources/services/records/components/files.py:89
+#: invenio_records_resources/services/records/components/files.py:84
 msgid "You must first delete all files to set the record to be metadata-only."
 msgstr ""
 "Musíte smazat všechny soubory před tím, než nastavíte záznam jako čistě "
 "metadatový."
 
-#: invenio_records_resources/services/records/params/pagination.py:39
+#: invenio_records_resources/services/records/params/pagination.py:34
 msgid "Invalid pagination parameters."
 msgstr "Neplatné parametry stránkování."
 
-#: invenio_records_resources/services/records/params/querystr.py:30
+#: invenio_records_resources/services/records/params/querystr.py:25
 msgid "You cannot specify both 'q' and 'suggest' parameters at the same time."
 msgstr "Nemůžete současně zadat parametry 'q' a 'suggest'."
 
-#: invenio_records_resources/services/records/params/querystr.py:41
+#: invenio_records_resources/services/records/params/querystr.py:36
 msgid "Invalid 'suggest' parameter."
 msgstr "Neplatný parametr 'suggest'."
 
-#: invenio_records_resources/services/records/params/sort.py:62
+#: invenio_records_resources/services/records/params/sort.py:57
 #, python-format
 msgid "Invalid sort option '%(sort_option)s'."
 msgstr "Neplatná možnost řazení '%(sort_option)s'."
 
+#: invenio_records_resources/services/records/queryparser/transformer.py:123
 #: invenio_records_resources/services/records/queryparser/transformer.py:128
-#: invenio_records_resources/services/records/queryparser/transformer.py:133
 #, python-format
 msgid "Invalid search field: %(field_name)s."
 msgstr "Špatné vyhledávací pole: %(field_name)s."
