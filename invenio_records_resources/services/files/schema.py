@@ -9,10 +9,10 @@
 from datetime import timezone
 from typing import Mapping
 
-from marshmallow import RAISE, Schema, ValidationError, post_dump, pre_load
+from marshmallow import RAISE, Schema, ValidationError, post_dump, pre_load, validate
 from marshmallow.fields import UUID, Boolean, Dict, Integer, Nested, Str
 from marshmallow_oneofschema import OneOfSchema
-from marshmallow_utils.fields import GenMethod, Links, TZDateTime
+from marshmallow_utils.fields import GenMethod, Links, SanitizedUnicode, TZDateTime
 
 from ...proxies import current_transfer_registry
 
@@ -146,7 +146,9 @@ class InitFileSchemaMixin(Schema):
 
         unknown = RAISE
 
-    key = Str(required=True, dump_only=False)
+    key = SanitizedUnicode(
+        required=True, validate=validate.Length(min=1), dump_only=False
+    )
     storage_class = Str(dump_default="L", dump_only=False)
     checksum = Str(dump_only=False)
     size = Integer(dump_only=False)
