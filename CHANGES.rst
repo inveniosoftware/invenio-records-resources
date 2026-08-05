@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version v10.2.1 (released 2026-08-05)
+
+- fix: retry multipart checksum computation
+
 Version v10.2.0 (released 2026-07-28)
 
 - fix(ci): run tests on maint-*
