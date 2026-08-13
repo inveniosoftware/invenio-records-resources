@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.0.3 (released 2026-08-13)
+
+- fix(files): retry metadata extraction after publication
+
 Version v11.0.2 (released 2026-08-04)
 
 - fix(build): include mo files
