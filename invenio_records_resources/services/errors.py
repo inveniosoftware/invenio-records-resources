@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2020 Northwestern University.
 # SPDX-FileCopyrightText: 2023 Graz University of Technology.
 # SPDX-FileCopyrightText: 2025 CESNET i.a.l.e.
+# SPDX-FileCopyrightText: 2026 KTH Royal Institute of Technology.
 # SPDX-License-Identifier: MIT
 
 """Errors."""
@@ -138,9 +139,9 @@ class FilesCountExceededException(Exception):
         """Constructor."""
         super().__init__(
             _(
-                "Uploading the selected files would result in {files_count} files (max is {max_files}).".format(
-                    max_files=max_files, files_count=resulting_files_count
-                )
+                "Uploading the selected files would result in %(files_count)s files (max is %(max_files)s).",
+                max_files=max_files,
+                files_count=resulting_files_count,
             )
         )
 
