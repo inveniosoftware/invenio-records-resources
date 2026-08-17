@@ -14,7 +14,7 @@ from flask_resources import (
 )
 
 from .args import SearchRequestArgsSchema
-from .headers import etag_headers
+from .headers import ETagInteger, etag_headers
 
 
 class RecordResourceConfig(ResourceConfig):
@@ -36,7 +36,7 @@ class RecordResourceConfig(ResourceConfig):
         "expand": ma.fields.Boolean(),
         "refresh": ma.fields.Boolean(),
     }
-    request_headers = {"if_match": ma.fields.Int()}
+    request_headers = {"if_match": ETagInteger()}
     request_body_parsers = {"application/json": RequestBodyParser(JSONDeserializer())}
     default_content_type = "application/json"
 
