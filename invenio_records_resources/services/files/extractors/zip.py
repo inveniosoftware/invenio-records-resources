@@ -217,6 +217,22 @@ def make_generator(zip_ref, path):
     return generator()
 
 
+def _sanitize_filename(filename):
+    """Sanitize a filename by normalizing its encoding.
+
+    Converts the filename to UTF-8, ignoring any invalid byte sequences.
+    This handles cases where ZIP entries may have been encoded with
+    different character encodings (e.g., CP1252, ISO-8859-1).
+
+    Args:
+        filename: The filename to sanitize, potentially with non-UTF-8 bytes.
+
+    Returns:
+        A sanitized UTF-8 string with invalid characters removed.
+    """
+    return filename.encode("utf-8", errors="ignore").decode("utf-8")
+
+
 class ZipExtractor(FileExtractor):
     """
     Extractor for ZIP files that uses the cached position of table of contents for efficient extraction.
@@ -306,7 +322,7 @@ class ZipExtractor(FileExtractor):
             # Iterate through all entries in the ZIP's central directory
             # Recording Stream will capture byte range accessed
             for info in zip_file.infolist:
-                file_key = str(PurePosixPath(info.filename))
+                file_key = str(PurePosixPath(_sanitize_filename(info.filename)))
                 if info.is_dir():
                     directories.append({"key": file_key})
                 else:
@@ -352,9 +368,18 @@ class ZipExtractor(FileExtractor):
             None,
         )
         if not found_item:
-            raise FileKeyNotFoundError(file_record.record["id"], path)
+            found_item = next(
+                (
+                    item
+                    for item in zip_proxy.infolist
+                    if _sanitize_filename(item.filename.rstrip("/")) == path
+                ),
+                None,
+            )
+            if not found_item:
+                raise FileKeyNotFoundError(file_record.record["id"], path)
         if not found_item.is_dir():
-            return zip_proxy.open(path)
+            return zip_proxy.open(found_item.filename)
         else:
             return self._zip_directory(zip_proxy, found_item.filename)
 
