@@ -61,6 +61,7 @@ class ZipFileProxy(RawIOBase):
         self._zip_file.close()
         if not self._keep_open:
             self._zip_proxy.close()
+        super().close()
 
     @property
     def mimetype(self):

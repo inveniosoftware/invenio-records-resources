@@ -4,6 +4,7 @@ from os.path import dirname, join
 from unittest.mock import MagicMock
 
 import pytest
+from werkzeug.exceptions import RequestedRangeNotSatisfiable
 
 from invenio_records_resources.services.errors import InvalidFileContentError
 from invenio_records_resources.services.files.components import processor
@@ -100,7 +101,9 @@ def test_zip_extraction(identity_simple, file_service, record_with_zip):
         identity_simple, recid, "testzip.zip", "a.txt"
     )
     extracted_data = extracted.send_file()
-    assert extracted_data.get_data() == b"Hello world from a.txt.\n"
+    # For direct_passthrough responses, consume the iterator to get data
+    content = b"".join(extracted_data.iter_encoded())
+    assert content == b"Hello world from a.txt.\n"
 
 
 def test_zipfileproxy_size_property(identity_simple, file_service, record_with_zip):
@@ -190,8 +193,6 @@ def test_zipfileproxy_io_methods_deflated(
     The testzip.zip fixture uses ZIP_STORED compression. This test verifies
     that the IO methods work correctly regardless of compression type.
     """
-    import io
-
     # Create a ZIP with DEFLATED compression
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -233,14 +234,17 @@ def test_container_item_as_attachment(identity_simple, file_service, record_with
         identity_simple, recid, "testzip.zip", "a.txt"
     )
     response = extracted.send_file(as_attachment=True)
-    assert 'attachment; filename="a.txt"' in response.headers.get("Content-Disposition")
+    # Note: send_stream() uses werkzeug's Content-Disposition building which
+    # doesn't add unnecessary quotes around simple ASCII filenames
+    assert "attachment; filename=a.txt" in response.headers.get("Content-Disposition")
 
-    # Test with as_attachment=False (should use 'inline')
+    # Test with as_attachment=False (should use 'inline' without filename)
     extracted = file_service.extract_container_item(
         identity_simple, recid, "testzip.zip", "a.txt"
     )
     response = extracted.send_file(as_attachment=False)
-    assert 'inline; filename="a.txt"' in response.headers.get("Content-Disposition")
+    # When as_attachment=False, send_stream() sets just 'inline' without filename
+    assert response.headers.get("Content-Disposition") == "inline"
 
 
 def test_container_item_range_requests_disabled(
@@ -263,7 +267,9 @@ def test_container_item_range_requests_disabled(
     # Should return 200 OK with full content, not 206
     assert response.status_code == 200
     assert response.headers.get("Accept-Ranges") is None
-    assert response.get_data() == b"Hello world from a.txt.\n"
+    # For direct_passthrough responses, consume the iterator to get data
+    content = b"".join(response.iter_encoded())
+    assert content == b"Hello world from a.txt.\n"
 
 
 def test_container_item_range_requests_enabled(
@@ -277,9 +283,6 @@ def test_container_item_range_requests_enabled(
     - Include Accept-Ranges and Content-Range headers
     - Return only the requested bytes
     """
-    import pytest
-    from werkzeug.exceptions import RequestedRangeNotSatisfiable
-
     recid = record_with_zip["id"]
 
     # Enable Range requests
@@ -296,7 +299,9 @@ def test_container_item_range_requests_enabled(
     assert response.headers.get("Accept-Ranges") == "bytes"
     assert "Content-Range" in response.headers
     assert response.headers["Content-Range"].startswith("bytes 0-9/")
-    assert response.get_data() == b"Hello worl"  # First 10 bytes (0-9)
+    # For direct_passthrough responses, consume the iterator to get data
+    content = b"".join(response.iter_encoded())
+    assert content == b"Hello worl"  # First 10 bytes (0-9)
 
     # Test 2: Range from offset to end (bytes 10-)
     extracted = file_service.extract_container_item(
@@ -307,7 +312,9 @@ def test_container_item_range_requests_enabled(
 
     assert response.status_code == 206
     assert response.headers.get("Accept-Ranges") == "bytes"
-    assert response.get_data() == b"d from a.txt.\n"  # Bytes 10 to end
+    # For direct_passthrough responses, consume the iterator to get data
+    content = b"".join(response.iter_encoded())
+    assert content == b"d from a.txt.\n"  # Bytes 10 to end
 
     # Test 3: Range beyond file size should return 416
     extracted = file_service.extract_container_item(
