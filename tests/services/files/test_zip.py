@@ -131,6 +131,95 @@ def test_zipfileproxy_size_property(identity_simple, file_service, record_with_z
     response = extracted.send_file()
     assert response.headers.get("Content-Length") == "24"
 
+
+def test_zipfileproxy_io_methods(identity_simple, file_service, record_with_zip):
+    """Test that ZipFileProxy correctly reports its IO capabilities.
+
+    This is a regression test for the issue where ZipFileProxy inherited
+    default IOBase methods that reported the stream as non-seekable and
+    non-readable, even though it implements seek(), tell(), and readinto().
+    """
+    recid = record_with_zip["id"]
+
+    # Open a file from the container
+    stream = file_service.open_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+
+    # Verify the stream is a ZipFileProxy
+    assert isinstance(stream, ZipFileProxy)
+
+    # Test readable() - should return True since we can read from ZIP members
+    assert stream.readable() is True
+
+    # Test seekable() - should return True since ZipExtFile supports seeking
+    assert stream.seekable() is True
+
+    # Test writable() - should return False as we only support reading
+    assert stream.writable() is False
+
+    # Also verify that seek() and tell() work correctly
+    initial_pos = stream.tell()
+    assert initial_pos == 0
+
+    # Read some data
+    data = stream.read(10)
+    assert len(data) == 10
+
+    # Verify position advanced
+    pos_after_read = stream.tell()
+    assert pos_after_read == 10
+
+    # Seek back to beginning
+    stream.seek(0)
+    assert stream.tell() == 0
+
+    # Seek to offset
+    stream.seek(5)
+    assert stream.tell() == 5
+
+    # Close the stream
+    stream.close()
+
+
+def test_zipfileproxy_io_methods_deflated(
+    identity_simple, file_service, record_with_zip
+):
+    """Test IO methods work correctly for both STORED and DEFLATED compression.
+
+    The testzip.zip fixture uses ZIP_STORED compression. This test verifies
+    that the IO methods work correctly regardless of compression type.
+    """
+    import io
+
+    # Create a ZIP with DEFLATED compression
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("deflated.txt", "Compressed content")
+
+    # Manually create a ZipFileProxy to test with DEFLATED
+    zip_buffer.seek(0)
+    with zipfile.ZipFile(zip_buffer, "r") as zf:
+        info = zf.infolist()[0]
+        opened = zf.open("deflated.txt")
+
+        class FakeProxy:
+            def close(self):
+                pass
+
+        proxy = ZipFileProxy(opened, info, FakeProxy())
+
+        # All IO methods should work the same for DEFLATED
+        assert proxy.readable() is True
+        assert proxy.seekable() is True
+        assert proxy.writable() is False
+
+        # Verify size is correct
+        assert proxy.size == 18
+
+        proxy.close()
+
+
 def test_large_zip_memory_usage(
     file_service, location, example_record, identity_simple
 ):

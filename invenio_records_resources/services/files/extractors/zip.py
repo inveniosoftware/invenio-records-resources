@@ -91,6 +91,30 @@ class ZipFileProxy(RawIOBase):
         """Return current position within the ZIP member stream."""
         return self._zip_file.tell()
 
+    def readable(self):
+        """Return whether the stream is readable.
+
+        Returns:
+            True, as this proxy wraps a readable ZIP member stream.
+        """
+        return self._zip_file.readable()
+
+    def seekable(self):
+        """Return whether the stream supports random access.
+
+        Returns:
+            True if the underlying ZIP member stream supports seeking.
+        """
+        return self._zip_file.seekable()
+
+    def writable(self):
+        """Return whether the stream is writable.
+
+        Returns:
+            False, as this proxy only supports reading from ZIP members.
+        """
+        return False
+
 
 class ZipProxy:
     """Open and manage a ZIP archive stream with optional TOC-aware optimization.
