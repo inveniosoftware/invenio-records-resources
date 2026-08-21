@@ -10,7 +10,7 @@ from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 
-from flask import request, Response
+from flask import current_app, request, Response
 from invenio_files_rest.helpers import send_stream
 
 from ...proxies import current_transfer_registry
@@ -307,6 +307,13 @@ class ContainerItemResult(ServiceItemResult):
         # which provides consistent security headers and Range support
         mtime = self._get_mtime()
 
+        # Use configured chunk size for streaming (defaults to 64 KB)
+        # TODO: Consider removing this config in the future and relying on
+        # invenio-files-rest's default chunk size (5 MB) for consistency.
+        chunk_size = current_app.config.get(
+            "RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE"
+        )
+
         return send_stream(
             stream=self._extracted_stream,
             filename=filename,
@@ -315,4 +322,5 @@ class ContainerItemResult(ServiceItemResult):
             mimetype=self.mimetype,
             restricted=restricted,
             as_attachment=as_attachment,
+            chunk_size=chunk_size,
         )
