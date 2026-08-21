@@ -76,10 +76,8 @@ class ZipProcessor(FileProcessor):
 
             #: total_uncompressed_check
             total_uncompressed += info.file_size
-            if (
-                total_uncompressed
-                > current_app.config["RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED"]
-            ):
+            limit = current_app.config["RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED"]
+            if limit is not None and total_uncompressed > limit:
                 raise InvalidZipException("Total uncompressed size limit exceeded")
 
 
