@@ -220,6 +220,29 @@ def test_zipfileproxy_io_methods_deflated(
         proxy.close()
 
 
+def test_container_item_as_attachment(identity_simple, file_service, record_with_zip):
+    """Test that as_attachment parameter controls Content-Disposition header.
+
+    This is a regression test for the bug where Content-Disposition was always
+    set to 'attachment' regardless of the as_attachment parameter value.
+    """
+    recid = record_with_zip["id"]
+
+    # Test with as_attachment=True (default behavior)
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    response = extracted.send_file(as_attachment=True)
+    assert 'attachment; filename="a.txt"' in response.headers.get("Content-Disposition")
+
+    # Test with as_attachment=False (should use 'inline')
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    response = extracted.send_file(as_attachment=False)
+    assert 'inline; filename="a.txt"' in response.headers.get("Content-Disposition")
+
+
 def test_large_zip_memory_usage(
     file_service, location, example_record, identity_simple
 ):
