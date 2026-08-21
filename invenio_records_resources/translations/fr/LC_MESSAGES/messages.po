@@ -8,6 +8,7 @@
 # Alizee Pace <alizee.pace@gmail.com>, 2024
 # Tibor Simko <tibor.simko@cern.ch>, 2025
 # Keziah Okyere, 2026
+# Pascal Repond <pascal.repond@rero.ch>, 2026
 # 
 #, fuzzy
 msgid ""
@@ -16,7 +17,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2026-06-22 20:43+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: Keziah Okyere, 2026\n"
+"Last-Translator: Pascal Repond <pascal.repond@rero.ch>, 2026\n"
 "Language-Team: French (https://app.transifex.com/inveniosoftware/teams/23537/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -28,11 +29,11 @@ msgstr ""
 #: invenio_records_resources/records/systemfields/entity_reference.py:41
 #, python-format
 msgid "Invalid reference for '%(key)s': %(obj)s"
-msgstr ""
+msgstr "Référence invalide pour '%(key)s': %(obj)s"
 
 #: invenio_records_resources/resources/errors.py:47
 msgid "A validation error occurred."
-msgstr ""
+msgstr "Une erreur de validation s'est produite"
 
 #: invenio_records_resources/resources/errors.py:69
 #: invenio_records_resources/resources/errors.py:70
@@ -49,7 +50,7 @@ msgstr "Erreur interne au serveur"
 
 #: invenio_records_resources/resources/errors.py:131
 msgid "Invalid querystring parameters."
-msgstr ""
+msgstr "Paramètres de querystring invalides."
 
 #: invenio_records_resources/resources/errors.py:137
 #: invenio_records_resources/resources/errors.py:143
@@ -198,7 +199,7 @@ msgstr ""
 
 #: invenio_records_resources/services/records/params/pagination.py:34
 msgid "Invalid pagination parameters."
-msgstr ""
+msgstr "Paramètres de pagination invalides."
 
 #: invenio_records_resources/services/records/params/querystr.py:25
 msgid "You cannot specify both 'q' and 'suggest' parameters at the same time."
