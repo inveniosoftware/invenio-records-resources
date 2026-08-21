@@ -243,6 +243,128 @@ def test_container_item_as_attachment(identity_simple, file_service, record_with
     assert 'inline; filename="a.txt"' in response.headers.get("Content-Disposition")
 
 
+def test_container_item_range_requests_disabled(
+    app, identity_simple, file_service, record_with_zip, monkeypatch
+):
+    """Test that Range requests return full response when disabled (default)."""
+    recid = record_with_zip["id"]
+
+    # Ensure Range requests are disabled (default)
+    monkeypatch.setitem(app.config, "FILES_REST_ALLOW_RANGE_REQUESTS", False)
+
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+
+    # Simulate a request with Range header
+    with app.test_request_context("/mock/path", headers={"Range": "bytes=0-9"}):
+        response = extracted.send_file()
+
+    # Should return 200 OK with full content, not 206
+    assert response.status_code == 200
+    assert response.headers.get("Accept-Ranges") is None
+    assert response.get_data() == b"Hello world from a.txt.\n"
+
+
+def test_container_item_range_requests_enabled(
+    app, identity_simple, file_service, record_with_zip, monkeypatch
+):
+    """Test that Range requests work correctly when enabled.
+
+    This tests the HTTP Range support for extracted container files.
+    When FILES_REST_ALLOW_RANGE_REQUESTS is True, the response should:
+    - Return 206 Partial Content for valid Range requests
+    - Include Accept-Ranges and Content-Range headers
+    - Return only the requested bytes
+    """
+    import pytest
+    from werkzeug.exceptions import RequestedRangeNotSatisfiable
+
+    recid = record_with_zip["id"]
+
+    # Enable Range requests
+    monkeypatch.setitem(app.config, "FILES_REST_ALLOW_RANGE_REQUESTS", True)
+
+    # Test 1: Valid Range request (bytes 0-9)
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    with app.test_request_context("/mock/path", headers={"Range": "bytes=0-9"}):
+        response = extracted.send_file()
+
+    assert response.status_code == 206
+    assert response.headers.get("Accept-Ranges") == "bytes"
+    assert "Content-Range" in response.headers
+    assert response.headers["Content-Range"].startswith("bytes 0-9/")
+    assert response.get_data() == b"Hello worl"  # First 10 bytes (0-9)
+
+    # Test 2: Range from offset to end (bytes 10-)
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    with app.test_request_context("/mock/path", headers={"Range": "bytes=10-"}):
+        response = extracted.send_file()
+
+    assert response.status_code == 206
+    assert response.headers.get("Accept-Ranges") == "bytes"
+    assert response.get_data() == b"d from a.txt.\n"  # Bytes 10 to end
+
+    # Test 3: Range beyond file size should return 416
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    with pytest.raises(RequestedRangeNotSatisfiable):
+        with app.test_request_context("/mock/path", headers={"Range": "bytes=9999-"}):
+            extracted.send_file()
+
+
+def test_container_item_no_range_for_iterable_stream(
+    app, identity_simple, file_service, record_with_zip, monkeypatch
+):
+    """Test that non-seekable iterable streams do not support Range requests.
+
+    Streams that are iterable (like GeneratorReader for directory ZIPs) are not
+    seekable and should never advertise Range support.
+    """
+    from invenio_records_resources.services.files.extractors.zip import GeneratorReader
+
+    recid = record_with_zip["id"]
+
+    # Enable Range requests
+    monkeypatch.setitem(app.config, "FILES_REST_ALLOW_RANGE_REQUESTS", True)
+
+    # Create a mock iterable stream (simulating a generated directory ZIP)
+    def gen():
+        yield b"test data"
+
+    class MockStream(GeneratorReader):
+        iterable = gen()
+
+    mock_stream = MockStream(gen(), "test.txt")
+
+    # Create ContainerItemResult with the iterable stream
+    from invenio_records_resources.services.files.results import ContainerItemResult
+
+    result = ContainerItemResult(
+        None,
+        None,
+        None,
+        None,
+        mock_stream,
+        "test.txt",
+        size=None,
+        mimetype="application/octet-stream",
+    )
+
+    # Even with Range requests enabled, iterable streams should not support Range
+    with app.test_request_context("/mock/path", headers={"Range": "bytes=0-4"}):
+        response = result.send_file()
+
+    # Should return 200 OK, not 206
+    assert response.status_code == 200
+    assert response.headers.get("Accept-Ranges") is None
+
+
 def test_large_zip_memory_usage(
     file_service, location, example_record, identity_simple
 ):

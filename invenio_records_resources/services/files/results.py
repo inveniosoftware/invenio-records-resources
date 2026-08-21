@@ -9,7 +9,7 @@ from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 
-from flask import Response, current_app
+from flask import Response, current_app, request
 
 from ...proxies import current_transfer_registry
 from ..base import ServiceItemResult, ServiceListResult
@@ -227,28 +227,47 @@ class ContainerItemResult(ServiceItemResult):
         return Path(self._extracted_path).name
 
     def send_file(self, restricted=True, as_attachment=False):
-        """Return file stream."""
+        """Return file stream with optional HTTP Range support.
+
+        If the extracted stream is seekable and Range requests are enabled,
+        the response will support byte-range requests (206 Partial Content).
+        """
         if getattr(self._extracted_stream, "name", None) is not None:
             filename = self._extracted_stream.name
         else:
             filename = self.file_id
-        if getattr(self._extracted_stream, "iterable", None) is not None:
-            chunk_iterator = self._extracted_stream.iterable
-        else:
-            chunk_size = current_app.config[
-                "RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE"
-            ]
 
-            def generator():
+        # Check if the stream is iterable (e.g., GeneratorReader for directory ZIPs)
+        if getattr(self._extracted_stream, "iterable", None) is not None:
+            # For non-seekable streams (like generated directory ZIPs), use generator
+            chunk_iterator = self._extracted_stream.iterable
+
+            # Set Content-Disposition based on as_attachment parameter
+            disposition = "attachment" if as_attachment else "inline"
+            headers = {
+                "Content-Disposition": f'{disposition}; filename="{filename}"',
+            }
+
+            return Response(
+                chunk_iterator,
+                mimetype=self.mimetype or "application/octet-stream",
+                headers=headers,
+            )
+
+        # For seekable streams (individual files from ZIP), support Range requests
+        chunk_size = current_app.config[
+            "RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE"
+        ]
+
+        def generator():
+            try:
                 while True:
                     chunk = self._extracted_stream.read(chunk_size)
                     if not chunk:
                         break
                     yield chunk
-
+            finally:
                 self._extracted_stream.close()
-
-            chunk_iterator = generator()
 
         # Set Content-Disposition based on as_attachment parameter
         disposition = "attachment" if as_attachment else "inline"
@@ -258,8 +277,26 @@ class ContainerItemResult(ServiceItemResult):
         if self.size is not None:
             headers["Content-Length"] = str(self.size)
 
-        return Response(
-            chunk_iterator,
+        # Create response with the generator
+        rv = Response(
+            generator(),
             mimetype=self.mimetype or "application/octet-stream",
             headers=headers,
         )
+
+        # Apply Range request handling if enabled
+        accept_ranges = current_app.config.get(
+            "FILES_REST_ALLOW_RANGE_REQUESTS", False
+        )
+
+        if accept_ranges and self.size is not None:
+            rv = rv.make_conditional(
+                request,
+                accept_ranges=True,
+                complete_length=self.size,
+            )
+            # Explicitly advertise Range support when enabled
+            if "Accept-Ranges" not in rv.headers:
+                rv.headers["Accept-Ranges"] = "bytes"
+
+        return rv
