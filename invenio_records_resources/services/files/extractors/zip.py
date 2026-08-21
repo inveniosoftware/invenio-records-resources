@@ -70,7 +70,7 @@ class ZipFileProxy(RawIOBase):
     @property
     def size(self):
         """Uncompressed size of this ZIP member in bytes."""
-        return self._file_info.size
+        return self._file_info.file_size
 
     def __enter__(self):
         """Context manager enter."""

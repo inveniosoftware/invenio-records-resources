@@ -7,6 +7,7 @@ import pytest
 
 from invenio_records_resources.services.errors import InvalidFileContentError
 from invenio_records_resources.services.files.components import processor
+from invenio_records_resources.services.files.extractors.zip import ZipFileProxy
 from invenio_records_resources.tasks import extract_file_metadata
 
 
@@ -101,6 +102,34 @@ def test_zip_extraction(identity_simple, file_service, record_with_zip):
     extracted_data = extracted.send_file()
     assert extracted_data.get_data() == b"Hello world from a.txt.\n"
 
+
+def test_zipfileproxy_size_property(identity_simple, file_service, record_with_zip):
+    """Test that ZipFileProxy.size returns the correct file_size.
+
+    This is a regression test for the bug where ZipFileProxy.size used
+    self._file_info.size instead of self._file_info.file_size, causing
+    AttributeError since ZipInfo has no 'size' attribute.
+    """
+    recid = record_with_zip["id"]
+
+    # Open a file from the container
+    stream = file_service.open_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+
+    # Verify the stream is a ZipFileProxy with working size property
+    assert isinstance(stream, ZipFileProxy)
+
+    # The size property should return the correct uncompressed size
+    # (not raise AttributeError)
+    assert stream.size == 24
+
+    # Verify Content-Length would be set correctly in send_file response
+    extracted = file_service.extract_container_item(
+        identity_simple, recid, "testzip.zip", "a.txt"
+    )
+    response = extracted.send_file()
+    assert response.headers.get("Content-Length") == "24"
 
 def test_large_zip_memory_usage(
     file_service, location, example_record, identity_simple
