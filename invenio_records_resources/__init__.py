@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2024-2026 Graz University of Technology.
-# SPDX-FileCopyrightText: 2025 KTH Royal Institute of Technology.
+# SPDX-FileCopyrightText: 2025-2026 KTH Royal Institute of Technology.
 # SPDX-FileCopyrightText: 2026 Northwestern University.
 # SPDX-License-Identifier: MIT
 
@@ -8,6 +8,6 @@
 
 from .ext import InvenioRecordsResources
 
-__version__ = "10.2.1"
+__version__ = "10.2.2"
 
 __all__ = ("__version__", "InvenioRecordsResources")
