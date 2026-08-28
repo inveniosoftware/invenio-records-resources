@@ -6,10 +6,12 @@
 """File service results."""
 
 from collections import defaultdict
+from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 
-from flask import Response, current_app
+from flask import current_app, request, Response
+from invenio_files_rest.helpers import send_stream
 
 from ...proxies import current_transfer_registry
 from ..base import ServiceItemResult, ServiceListResult
@@ -226,38 +228,99 @@ class ContainerItemResult(ServiceItemResult):
         """Get the record id."""
         return Path(self._extracted_path).name
 
+    def _get_mtime(self):
+        """Extract modification time from the extracted stream if available.
+
+        For ZIP members (ZipFileProxy), this extracts the date_time from the
+        underlying ZipInfo and converts it to a Unix timestamp.
+
+        Returns:
+            Unix timestamp (float) or None if mtime cannot be determined.
+        """
+        # Try to get mtime from ZipFileProxy's _file_info (ZipInfo.date_time)
+        if hasattr(self._extracted_stream, '_file_info'):
+            file_info = self._extracted_stream._file_info
+            if hasattr(file_info, 'date_time'):
+                try:
+                    dt = datetime(*file_info.date_time[:6])
+                    return dt.timestamp()
+                except (ValueError, TypeError):
+                    pass
+
+        # Try to get mtime attribute directly from the stream
+        if hasattr(self._extracted_stream, 'mtime'):
+            return self._extracted_stream.mtime
+
+        return None
+
     def send_file(self, restricted=True, as_attachment=False):
-        """Return file stream."""
+        """Return file stream with HTTP Range support.
+
+        Delegates to invenio_files_rest.helpers.send_stream() to ensure
+        consistent behavior with regular file downloads, including:
+        - Security headers (Content-Security-Policy, X-Content-Type-Options, etc.)
+        - Mimetype sanitization
+        - Cache control based on restricted parameter
+        - Unicode-safe filename handling (RFC 5987)
+        - HTTP Range request support (when FILES_REST_ALLOW_RANGE_REQUESTS is enabled)
+
+        Args:
+            restricted: When True, prevents caching by setting no-cache headers.
+            as_attachment: When True, sets Content-Disposition to 'attachment'
+                (forces download). When False, uses 'inline' (shows in browser).
+
+        Performance note: Range requests on ZIP_DEFLATED members may require
+        decompressing data from the beginning of the member to reach the
+        requested offset. For large compressed files, consider using ZIP_STORED
+        or implementing a materialized extraction cache for frequently accessed
+        content.
+
+        Returns:
+            Flask Response object with appropriate headers and stream.
+        """
+        # Get filename from stream or fallback to file_id
         if getattr(self._extracted_stream, "name", None) is not None:
             filename = self._extracted_stream.name
         else:
             filename = self.file_id
+
+        # Check if the stream is iterable (e.g., GeneratorReader for directory ZIPs)
+        # These non-seekable streams cannot support Range requests
         if getattr(self._extracted_stream, "iterable", None) is not None:
+            # For non-seekable streams, we need to handle them differently
+            # since send_stream expects a proper file-like object
+
             chunk_iterator = self._extracted_stream.iterable
-        else:
-            chunk_size = current_app.config[
-                "RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE"
-            ]
+            disposition = "attachment" if as_attachment else "inline"
 
-            def generator():
-                while True:
-                    chunk = self._extracted_stream.read(chunk_size)
-                    if not chunk:
-                        break
-                    yield chunk
+            headers = {
+                "Content-Disposition": f'{disposition}; filename="{filename}"'
+            }
 
-                self._extracted_stream.close()
+            return Response(
+                chunk_iterator,
+                mimetype=self.mimetype or "application/octet-stream",
+                headers=headers,
+            )
 
-            chunk_iterator = generator()
+        # For seekable streams (individual files from ZIP), use send_stream
+        # which provides consistent security headers and Range support
+        mtime = self._get_mtime()
 
-        headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
-        }
-        if self.size is not None:
-            headers["Content-Length"] = str(self.size)
+        # Use configured chunk size for streaming (defaults to 64 KB)
+        # TODO: Consider removing this config in the future and relying on
+        # invenio-files-rest's default chunk size (5 MB) for consistency.
+        chunk_size = current_app.config.get(
+            "RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE"
+        )
 
-        return Response(
-            chunk_iterator,
-            mimetype=self.mimetype or "application/octet-stream",
-            headers=headers,
+        return send_stream(
+            stream=self._extracted_stream,
+            filename=filename,
+            size=self.size,
+            mtime=mtime,
+            mimetype=self.mimetype,
+            restricted=restricted,
+            as_attachment=as_attachment,
+            chunk_size=chunk_size,
         )
