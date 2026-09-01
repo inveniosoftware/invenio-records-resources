@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2021-2024 CERN.
 # SPDX-FileCopyrightText: 2025 CESNET.
+# SPDX-FileCopyrightText: 2026 CERN.
 # SPDX-FileCopyrightText: 2026 KTH Royal Institute of Technology.
 # SPDX-License-Identifier: MIT
 
@@ -23,7 +24,7 @@ class LocalTransfer(Transfer):
 
     def set_file_content(self, stream, content_length):
         """Set file content."""
-        if self.file_record.file is not None:
+        if self.file_record.has_readable_file:
             raise TransferException(
                 _(
                     'File with key "%(file_key)s" is already committed.',

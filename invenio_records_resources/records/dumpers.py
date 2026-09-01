@@ -51,7 +51,7 @@ class PartialFileDumper(Dumper):
         access = record.get("access")
         if access:
             data.update({"access": access})
-        if record.file:
+        if record.has_readable_file:
             data.update(record.file.dumps())
         return data
 

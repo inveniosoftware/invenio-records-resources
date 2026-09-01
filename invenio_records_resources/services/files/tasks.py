@@ -18,7 +18,6 @@ from invenio_files_rest.proxies import current_files_rest
 from ...proxies import current_service_registry
 from ...services.errors import FileKeyNotFoundError
 from ..errors import TransferException
-from .transfer.constants import LOCAL_TRANSFER_TYPE
 
 
 @shared_task(ignore_result=True)
@@ -46,17 +45,14 @@ def fetch_file(service_id, record_id, file_key):
                         system_identity, record_id, file_key, transfer_metadata
                     )
                     return
-                service.set_file_content(
+                result = service.set_file_content(
                     system_identity,
                     record_id,
                     file_key,
                     response.raw,  # has read method
                 )
-                transfer_metadata.pop("url")
-                transfer_metadata["type"] = LOCAL_TRANSFER_TYPE
-                service.update_transfer_metadata(
-                    system_identity, record_id, file_key, transfer_metadata
-                )
+                if result.errors:
+                    return
                 # commit file
                 service.commit_file(system_identity, record_id, file_key)
         except Exception as e:
