@@ -11,12 +11,22 @@ import pytest
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_access.permissions import system_identity
+from invenio_db.uow import UnitOfWork
 from invenio_files_rest.errors import FileSizeError
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
+)
+from invenio_records_resources.services.files.components import (
+    FileContentComponent,
+    FileServiceComponent,
+)
+from invenio_records_resources.services.files.upload import (
+    FileUpload,
+    UploadConflict,
 )
 from tests.mock_module.models import FileRecordMetadata
 
@@ -798,7 +808,8 @@ def test_backward_compatibility(
     result = file_service.commit_file(identity_simple, recid, "article.txt")
 
     # remove the transfer section from the database and make sure it is not there
-    file_metadata = FileRecordMetadata.query.all()
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    file_metadata = FileRecordMetadata.query.filter_by(record_id=record.id).all()
     assert len(file_metadata) == 1
     file_metadata[0].json = {
         k: v for k, v in file_metadata[0].json.items() if k != "transfer"
@@ -834,3 +845,719 @@ def test_backward_compatibility(
     result = file_service.list_files(identity_simple, recid)
     assert result.entries
     assert len(list(result.entries)) == 0
+
+
+def test_staged_file_flow(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Upload and commit a local file."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,
+            "metadata": {"description": "Published article PDF."},
+        }
+    ]
+
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    entry = result.to_dict()["entries"][0]
+    assert entry["key"] == "article.txt"
+    assert entry["transfer"]["type"] == "L"
+    assert entry["status"] == "pending"
+
+    content = BytesIO(b"test file content")
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "article.txt",
+        content,
+        content.getbuffer().nbytes,
+    )
+    assert result.to_dict()["key"] == "article.txt"
+    assert result.to_dict()["status"] == "completed"
+
+    result = file_service.commit_file(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == "article.txt"
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "L"
+    fi = db_record.files["article.txt"].object_version.file
+    assert fi.readable is True
+    assert fi.size == 17
+    assert db_record.bucket.size == 17
+
+    result = file_service.read_file_metadata(identity_simple, recid, "article.txt")
+    assert result.to_dict()["key"] == "article.txt"
+    assert result.to_dict()["storage_class"] == "L"
+    assert result.to_dict()["size"] == 17
+
+    result = file_service.get_file_content(identity_simple, recid, "article.txt")
+    with result.get_stream("rb") as stream:
+        assert stream.read() == b"test file content"
+
+
+def test_staged_flag_off_keeps_local(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Enabling the option after initialization does not change the upload path."""
+    recid = example_file_record["id"]
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+            "size": 17,
+        }
+    ]
+
+    result = file_service.init_files(identity_simple, recid, file_to_initialise)
+    assert result.to_dict()["entries"][0]["transfer"]["type"] == "L"
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].object_version is None
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    content = BytesIO(b"test file content")
+    file_service.set_file_content(
+        identity_simple,
+        recid,
+        "article.txt",
+        content,
+        content.getbuffer().nbytes,
+    )
+    file_service.commit_file(identity_simple, recid, "article.txt")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "L"
+
+
+def test_preallocated_file_content_accepts_external_uow(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Use one transaction when the caller supplies it."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "article.txt", "size": 17}],
+    )
+
+    content = BytesIO(b"test file content")
+    with UnitOfWork(db.session) as group_uow:
+        result = file_service.set_file_content(
+            identity_simple,
+            recid,
+            "article.txt",
+            content,
+            content.getbuffer().nbytes,
+            uow=group_uow,
+        )
+        assert result.errors is None
+        group_uow.commit()
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["article.txt"]
+    assert fr.transfer.transfer_type == "L"
+    assert fr.object_version is not None
+    assert fr.object_version.file is not None
+    assert fr.object_version.file.readable is True
+    assert fr.object_version.file.size == 17
+
+
+def test_pending_staged_file_skipped_by_dumper_and_manager(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Exclude pending files from dumps and file totals."""
+    from invenio_records_resources.records.dumpers import PartialFileDumper
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "done.txt"}, {"key": "pending.txt"}],
+    )
+
+    content = BytesIO(b"finalised-bytes")
+    file_service.set_file_content(
+        identity_simple, recid, "done.txt", content, content.getbuffer().nbytes
+    )
+    file_service.commit_file(identity_simple, recid, "done.txt")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    finalised = db_record.files["done.txt"]
+    pending = db_record.files["pending.txt"]
+    assert finalised.object_version.file.readable is True
+    assert pending.object_version.file.readable is False
+
+    assert db_record.files.total_bytes == len(b"finalised-bytes")
+    mimetypes = db_record.files.mimetypes
+    assert None not in mimetypes
+    assert len(mimetypes) == 1
+
+    dumped_done = PartialFileDumper().dump(finalised, {})
+    dumped_pending = PartialFileDumper().dump(pending, {})
+    assert "file_id" in dumped_done
+    assert "file_id" not in dumped_pending
+
+
+class _RaisingStream:
+    """Raise after returning one chunk."""
+
+    def __init__(self, first_chunk):
+        self._first_chunk = first_chunk
+        self._yielded = False
+
+    def read(self, n=-1):
+        if not self._yielded:
+            self._yielded = True
+            return self._first_chunk
+        raise OSError("simulated mid-stream failure")
+
+
+def test_staged_failure_cleanup_and_retry(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Clean up a failed upload so it can be retried."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "retry.bin"}])
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["retry.bin"]
+    fr_id = fr.id
+    ov_id = fr.object_version.version_id
+    fi_id = fr.object_version.file_id
+
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "retry.bin",
+        _RaisingStream(b"some-bytes"),
+        16,
+    )
+    assert result.errors
+
+    assert FileRecordMetadata.query.filter_by(id=fr_id).first() is None
+    assert ObjectVersion.query.filter_by(version_id=ov_id).first() is None
+    assert FileInstance.query.filter_by(id=fi_id).first() is None
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert "retry.bin" not in db_record.files
+
+    file_service.init_files(identity_simple, recid, [{"key": "retry.bin"}])
+    content = BytesIO(b"happy path bytes")
+    file_service.set_file_content(
+        identity_simple,
+        recid,
+        "retry.bin",
+        content,
+        content.getbuffer().nbytes,
+    )
+    file_service.commit_file(identity_simple, recid, "retry.bin")
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fi = db_record.files["retry.bin"].object_version.file
+    assert fi.readable is True
+    assert fi.size == len(b"happy path bytes")
+
+
+@patch("invenio_records_resources.services.files.transfer.providers.fetch.fetch_file")
+def test_preallocated_fetch_failure_preserves_record_and_error(
+    p_fetch_file,
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """A failed fetch remains an ``F`` record and reports failed status."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "failed-fetch.bin",
+                "transfer": {
+                    "type": "F",
+                    "url": "https://inveniordm.test/files/failed-fetch.bin",
+                },
+            }
+        ],
+    )
+
+    result = file_service.set_file_content(
+        system_identity,
+        recid,
+        "failed-fetch.bin",
+        _RaisingStream(b"partial"),
+        16,
+    )
+
+    assert result.errors
+    result = file_service.read_file_metadata(
+        identity_simple, recid, "failed-fetch.bin"
+    ).to_dict()
+    assert result["transfer"]["type"] == "F"
+    assert result["transfer"]["error"]
+    assert result["status"] == "failed"
+
+
+def test_pending_upload_deletion_cleans_attempt_and_allows_reinitialization(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Deleting an active upload allows the key to be initialized again."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "abandoned.bin"}])
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    prepared = FileUpload(file_service)._prepare(
+        record, "abandoned.bin", content_length=4
+    )
+    assert db.session.get(FileInstance, prepared.file_instance_id).uri is not None
+
+    file_service.delete_file(identity_simple, recid, "abandoned.bin")
+
+    assert db.session.get(FileInstance, prepared.file_instance_id) is None
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert "abandoned.bin" not in record.files
+
+    file_service.init_files(identity_simple, recid, [{"key": "abandoned.bin"}])
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert "abandoned.bin" in record.files
+
+
+def test_deleted_upload_attempt_cannot_finalize(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """A deleted upload cannot be finalized."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "deleted.bin"}])
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    upload = FileUpload(file_service)
+    prepared = upload._prepare(record, "deleted.bin", content_length=4)
+    uri, size, checksum = prepared.storage.save(BytesIO(b"late"), size=4)
+
+    file_service.delete_file(identity_simple, recid, "deleted.bin")
+
+    with pytest.raises(UploadConflict, match="no longer owns"):
+        upload._finalize(prepared, uri, size, checksum)
+    assert db.session.get(FileInstance, prepared.file_instance_id) is None
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.bucket.size == 0
+
+
+def test_delete_all_files_cleans_pending_upload_attempts(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Bulk deletion cleans pending uploads."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "claimed.bin"}, {"key": "unclaimed.bin"}],
+    )
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    claimed = FileUpload(file_service)._prepare(record, "claimed.bin", content_length=4)
+    unclaimed_id = record.files["unclaimed.bin"].object_version.file_id
+
+    result = file_service.delete_all_files(identity_simple, recid)
+
+    assert [entry["key"] for entry in result.entries] == [
+        "claimed.bin",
+        "unclaimed.bin",
+    ]
+    assert db.session.get(FileInstance, claimed.file_instance_id) is None
+    assert db.session.get(FileInstance, unclaimed_id) is None
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert list(record.files) == []
+
+
+def test_upload_finalization_is_idempotent(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Retrying finalization does not account for the same bytes twice."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "once.bin"}])
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    upload = FileUpload(file_service)
+    prepared = upload._prepare(record, "once.bin", content_length=4)
+    uri, size, checksum = prepared.storage.save(BytesIO(b"once"), size=4)
+
+    upload._finalize(prepared, uri, size, checksum)
+    upload._finalize(prepared, uri, size, checksum)
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["once.bin"].object_version.file.readable is True
+    assert record.bucket.size == 4
+
+
+def test_staged_upload_runs_components_around_content(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    monkeypatch,
+    set_app_config_fn_scoped,
+):
+    """Run component hooks on either side of the staged content operation."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    events = []
+
+    class BeforeContent(FileServiceComponent):
+        def set_file_content(
+            self, identity, id_, file_key, stream, content_length, record
+        ):
+            assert self.uow
+            assert record.files[file_key].object_version.file.uri is None
+            events.append("before")
+
+    class AfterContent(FileServiceComponent):
+        def set_file_content(
+            self, identity, id_, file_key, stream, content_length, record
+        ):
+            assert self.uow
+            assert record.files[file_key].has_readable_file
+            events.append("after")
+
+    components = list(file_service.config.components)
+    content_index = components.index(FileContentComponent)
+    components[content_index:content_index] = [BeforeContent]
+    components.insert(content_index + 2, AfterContent)
+    monkeypatch.setattr(file_service.config, "components", components)
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "components.bin"}])
+
+    result = file_service.set_file_content(
+        identity_simple, recid, "components.bin", BytesIO(b"data"), 4
+    )
+
+    assert result.errors is None
+    assert events == ["before", "after"]
+
+
+@pytest.mark.parametrize(
+    ("failing_commit", "committed_before_error"),
+    [(1, True), (2, True), (2, False)],
+)
+def test_upload_reconciles_uncertain_commits(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    set_app_config_fn_scoped,
+    monkeypatch,
+    failing_commit,
+    committed_before_error,
+):
+    """Recover when a commit fails or its result is unknown."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "uncertain.bin"}])
+
+    original_commit = UnitOfWork.commit
+    commit_count = 0
+
+    def uncertain_commit(uow):
+        nonlocal commit_count
+        commit_count += 1
+        if commit_count == failing_commit:
+            if committed_before_error:
+                original_commit(uow)
+            raise RuntimeError("commit result unavailable")
+        return original_commit(uow)
+
+    monkeypatch.setattr(UnitOfWork, "commit", uncertain_commit)
+
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "uncertain.bin",
+        BytesIO(b"once"),
+        4,
+    )
+
+    assert result.errors is None
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["uncertain.bin"].has_readable_file
+    assert record.bucket.size == 4
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_staged_fetch_simple_flow(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+    set_app_config_fn_scoped,
+):
+    """A fetched file remains ``F`` until it is committed as ``L``."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    # Use a fresh stream because the module fixture may already be consumed.
+    class _Response:
+        raw = BytesIO(b"test file content")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "article.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/article.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["article.txt"]
+    assert fr.transfer.transfer_type == "L"
+    fi = fr.object_version.file
+    assert fi.readable is True
+    assert fi.size == len(b"test file content")
+
+    content = file_service.get_file_content(identity_simple, recid, "article.txt")
+    with content.get_stream("rb") as stream:
+        assert stream.read() == b"test file content"
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_staged_fetch_flag_off_keeps_fetch(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+):
+    """Use the existing fetch flow when the option is disabled."""
+
+    class _Response:
+        raw = BytesIO(b"test file content")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "article.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/article.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert db_record.files["article.txt"].transfer.transfer_type == "L"
+
+
+def test_preallocated_local_completes_after_flag_flip(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Complete an initialized upload after disabling the option."""
+    recid = example_file_record["id"]
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    file_service.init_files(identity_simple, recid, [{"key": "rolled.txt"}])
+    assert (
+        file_service.record_cls.pid.resolve(recid, registered_only=False)
+        .files["rolled.txt"]
+        .transfer.transfer_type
+        == "L"
+    )
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": False})
+
+    content = BytesIO(b"after-flip-bytes")
+    file_service.set_file_content(
+        identity_simple, recid, "rolled.txt", content, content.getbuffer().nbytes
+    )
+    file_service.commit_file(identity_simple, recid, "rolled.txt")
+
+    fr = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "rolled.txt"
+    ]
+    assert fr.transfer.transfer_type == "L"
+    assert fr.object_version.file.readable is True
+    assert fr.object_version.file.size == len(b"after-flip-bytes")
+
+    file_service.init_files(identity_simple, recid, [{"key": "fresh.txt"}])
+    fresh = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "fresh.txt"
+    ]
+    assert fresh.transfer.transfer_type == "L"
+
+
+@patch("invenio_records_resources.services.files.tasks.requests.get")
+def test_preallocated_fetch_completes_after_flag_flip(
+    p_response_raw,
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+    set_app_config_fn_scoped,
+):
+    """Keep the selected upload path after disabling the option."""
+
+    class _Response:
+        raw = BytesIO(b"after-flip-bytes")
+        status_code = 200
+
+    class _Request:
+        def __enter__(self):
+            return _Response()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request()
+
+    recid = example_file_record["id"]
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "rolled.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/rolled.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": False})
+
+    fr = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "rolled.txt"
+    ]
+    assert fr.transfer.transfer_type == "L"
+    assert fr.object_version.file.readable is True
+    assert fr.object_version.file.size == len(b"after-flip-bytes")
+
+    class _Response2:
+        raw = BytesIO(b"fresh-bytes")
+        status_code = 200
+
+    class _Request2:
+        def __enter__(self):
+            return _Response2()
+
+        def __exit__(self, *args):
+            pass
+
+    p_response_raw.return_value = _Request2()
+
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "fresh.txt",
+                "transfer": {
+                    "url": "https://inveniordm.test/files/fresh.txt",
+                    "type": "F",
+                },
+            }
+        ],
+    )
+
+    fresh = file_service.record_cls.pid.resolve(recid, registered_only=False).files[
+        "fresh.txt"
+    ]
+    assert fresh.transfer.transfer_type == "L"

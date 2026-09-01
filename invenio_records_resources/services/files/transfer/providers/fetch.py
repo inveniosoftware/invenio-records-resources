@@ -74,6 +74,10 @@ class FetchTransfer(RemoteTransferBase):
     def commit_file(self):
         """Commit the file."""
         super().commit_file()
+        # The source URL is no longer needed after the file becomes local.
+        transfer_metadata = dict(self.file_record.transfer)
+        transfer_metadata.pop("url", None)
+        self.file_record.transfer.set(transfer_metadata)
         self.file_record.transfer.transfer_type = LOCAL_TRANSFER_TYPE
         self.uow.register(RecordCommitOp(self.file_record))
 

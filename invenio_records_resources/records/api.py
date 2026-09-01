@@ -10,6 +10,7 @@ import os
 from contextlib import contextmanager
 
 from invenio_db import db
+from invenio_files_rest.errors import FileInstanceUnreadableError
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import SearchDumper
@@ -171,9 +172,17 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         if self.object_version:
             return File(object_model=self.object_version)
 
+    @property
+    def has_readable_file(self):
+        """Whether the file can be read."""
+        ov = self.object_version
+        return ov is not None and ov.file is not None and ov.file.readable
+
     @contextmanager
     def open_stream(self, mode):
         """Get a file stream for a given file record."""
+        if not self.has_readable_file:
+            raise FileInstanceUnreadableError()
         fp = self.object_version.file.storage().open(mode)
         try:
             yield fp
@@ -185,6 +194,8 @@ class FileRecord(RecordBase, SystemFieldsMixin):
 
         It is up to the caller to close the steam.
         """
+        if not self.has_readable_file:
+            raise FileInstanceUnreadableError()
         return self.object_version.file.storage().open(mode)
 
     @property
@@ -246,6 +257,8 @@ class File:
             id=data["file_id"],
             size=data.get("size"),
             checksum=data.get("checksum"),
+            # Column defaults apply on flush; loaded dump data is already readable.
+            readable=True,
         )
         fi = FileInstance(**file_args)
         obj = ObjectVersion(

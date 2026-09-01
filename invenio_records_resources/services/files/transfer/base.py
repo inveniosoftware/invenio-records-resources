@@ -91,9 +91,24 @@ class Transfer(ABC):
             raise FileSizeError(description=desc)
 
         try:
-            self.record.files.create_obj(
-                self.file_record.key, stream, size=content_length, size_limit=size_limit
-            )
+            obj = self.file_record.object_version
+            file_instance = obj.file if obj is not None else None
+            if file_instance is not None and not file_instance.readable:
+                file_instance.set_contents(
+                    stream,
+                    size=content_length,
+                    size_limit=size_limit,
+                    default_location=bucket.location.uri,
+                    default_storage_class=bucket.default_storage_class,
+                )
+                bucket.size += file_instance.size
+            else:
+                self.record.files.create_obj(
+                    self.file_record.key,
+                    stream,
+                    size=content_length,
+                    size_limit=size_limit,
+                )
         except (ClientDisconnected, OSError):
             raise TransferException(
                 f'Transfer of File with key "{self.file_record.key}" failed.'
@@ -122,7 +137,7 @@ class Transfer(ABC):
         TransferStatus.PENDING if the file is not uploaded yet or
         TransferStatus.FAILED if the file upload failed.
         """
-        if self.file_record is not None and self.file_record.file is not None:
+        if self.file_record is not None and self.file_record.has_readable_file:
             return TransferStatus.COMPLETED
 
         return TransferStatus.PENDING
@@ -133,6 +148,10 @@ class Transfer(ABC):
 
     def send_file(self, *, restricted, as_attachment):
         """Send file to the client."""
+        if not self.file_record.has_readable_file:
+            raise TransferException(
+                f'File with key "{self.file_record.key}" is not available.'
+            )
         return self.file_record.object_version.send_file(
             restricted=restricted, as_attachment=as_attachment
         )

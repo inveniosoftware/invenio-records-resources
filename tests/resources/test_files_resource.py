@@ -577,6 +577,49 @@ def test_download_archive_size_cap(
         app.config["RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE"] = None
 
 
+def test_download_archive_skips_pending_staged_file(
+    client,
+    search_clear,
+    headers,
+    input_data,
+    location,
+    set_app_config_fn_scoped,
+):
+    """Exclude pending files from archive downloads."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+
+    res = client.post("/mocks", headers=headers, json=input_data)
+    assert res.status_code == 201
+    id_ = res.json["id"]
+
+    res = client.post(
+        f"/mocks/{id_}/files",
+        headers=headers,
+        json=[{"key": "done.pdf"}, {"key": "pending.pdf"}],
+    )
+    assert res.status_code == 201
+    assert {e["transfer"]["type"] for e in res.json["entries"]} == {"L"}
+
+    res = client.put(
+        f"/mocks/{id_}/files/done.pdf/content",
+        headers={
+            "content-type": "application/octet-stream",
+            "accept": "application/json",
+        },
+        data=BytesIO(b"finalised-bytes"),
+    )
+    assert res.status_code == 200
+    res = client.post(f"/mocks/{id_}/files/done.pdf/commit", headers=headers)
+    assert res.status_code == 200
+    assert res.json["status"] == "completed"
+
+    res = client.get(f"/mocks/{id_}/files-archive")
+    assert res.status_code == 200
+    with zipfile.ZipFile(BytesIO(res.data), "r") as zf:
+        assert zf.namelist() == ["done.pdf"]
+        assert zf.read("done.pdf") == b"finalised-bytes"
+
+
 def test_files_multipart_api_flow(
     app, client, search_clear, headers, input_data, location
 ):
