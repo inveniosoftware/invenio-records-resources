@@ -13,7 +13,7 @@ from invenio_access.permissions import system_identity
 from invenio_indexer.proxies import current_indexer_registry
 from invenio_indexer.tasks import process_bulk_queue
 from invenio_pidstore.errors import PIDDoesNotExistError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, StaleDataError
 
 from .proxies import current_notifications_registry, current_service_registry
 
@@ -38,7 +38,12 @@ def extract_file_metadata(service_id, record_id, file_key):
         service = current_service_registry.get(active_service_id)
         try:
             service.extract_file_metadata(system_identity, record_id, file_key)
-        except (NoResultFound, PIDDoesNotExistError):
+        # we commit the file, this task still runs on the draft. if publish
+        # already happened the draft is gone. NoResultFound /
+        # PIDDoesNotExistError: the draft record or file is missing.
+        # StaleDataError: publish deleted the draft file row, so the update
+        # hits a stale row. then we retry on the published files service.
+        except (NoResultFound, PIDDoesNotExistError, StaleDataError):
             fallback_service_id = _published_fallback_service_id(service_id)
             if fallback_service_id is None:
                 raise
