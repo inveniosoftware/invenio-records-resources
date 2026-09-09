@@ -375,10 +375,6 @@ class FilesManager(MutableMapping):
            True
         Logic follows the bucket sync logic
         """
-        # TODO record file data is not synced
-        self.default_preview = src_files.default_preview
-        self.order = src_files.order
-
         # Sync file additions/removals/changes
         if self.bucket.locked:
             raise BucketLockedError()
@@ -408,6 +404,9 @@ class FilesManager(MutableMapping):
                 ):
                     obj_or_key = dest_rf.object_version
                     self[key] = obj_or_key, dict(src_rf)
+
+        self.default_preview = src_files.default_preview
+        self.order = src_files.order
 
     @property
     def entries(self):
