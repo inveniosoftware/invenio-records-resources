@@ -12,7 +12,7 @@ from celery import shared_task
 from flask import current_app
 from invenio_access.permissions import system_identity
 from invenio_db import db
-from invenio_files_rest.models import FileInstance
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 
 from ...proxies import current_service_registry
@@ -70,6 +70,56 @@ def fetch_file(service_id, record_id, file_key):
         current_app.logger.error(e)
         traceback.print_exc()
         raise
+
+
+@shared_task(
+    ignore_result=True,
+    acks_late=True,
+    retry_backoff=True,
+    max_retries=10,
+    autoretry_for=(Exception,),
+)
+def cleanup_failed_upload(file_instance_id, uri):
+    """Undo a reservation left behind by an upload that could not finish.
+
+    Idempotent: it only touches a file instance that still holds the path the
+    upload wrote, so a committed file or a re-used key is left alone.
+    """
+    file_instance = (
+        FileInstance.query.filter_by(id=file_instance_id)
+        .populate_existing()
+        .with_for_update()
+        .one_or_none()
+    )
+    if file_instance is None or file_instance.readable or file_instance.uri != uri:
+        db.session.rollback()
+        return
+
+    storage = file_instance.storage()
+    if ObjectVersion.query.filter_by(file_id=file_instance_id).count():
+        # An object version still points at the row, and deleting it would
+        # break that foreign key. Reset it so the file goes back to pending and
+        # can be uploaded again. An UPDATE, because the model's uri validator
+        # rejects None.
+        FileInstance.query.filter_by(id=file_instance_id).update(
+            {
+                "uri": None,
+                "size": 0,
+                "checksum": None,
+                "readable": False,
+                "writable": True,
+            },
+            synchronize_session=False,
+        )
+    else:
+        file_instance.delete()
+    db.session.commit()
+
+    try:
+        storage.delete()
+    except FileNotFoundError:
+        # A concurrent delete already removed the file.
+        pass
 
 
 @shared_task(

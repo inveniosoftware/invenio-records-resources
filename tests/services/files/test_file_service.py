@@ -15,6 +15,7 @@ from invenio_db.uow import UnitOfWork
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from marshmallow import ValidationError
+from sqlalchemy.exc import OperationalError
 
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
@@ -24,6 +25,7 @@ from invenio_records_resources.services.files.components import (
     FileContentComponent,
     FileServiceComponent,
 )
+from invenio_records_resources.services.files.tasks import cleanup_failed_upload
 from invenio_records_resources.services.files.upload import (
     FileUpload,
     UploadConflict,
@@ -1151,14 +1153,12 @@ def test_pending_upload_deletion_cleans_attempt_and_allows_reinitialization(
     file_service.init_files(identity_simple, recid, [{"key": "abandoned.bin"}])
 
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
-    prepared = FileUpload(file_service)._prepare(
-        record, "abandoned.bin", content_length=4
-    )
-    assert db.session.get(FileInstance, prepared.file_instance_id).uri is not None
+    claim = FileUpload(file_service)._prepare(record, "abandoned.bin", content_length=4)
+    assert db.session.get(FileInstance, claim.file_instance_id).uri is not None
 
     file_service.delete_file(identity_simple, recid, "abandoned.bin")
 
-    assert db.session.get(FileInstance, prepared.file_instance_id) is None
+    assert db.session.get(FileInstance, claim.file_instance_id) is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert "abandoned.bin" not in record.files
 
@@ -1167,7 +1167,7 @@ def test_pending_upload_deletion_cleans_attempt_and_allows_reinitialization(
     assert "abandoned.bin" in record.files
 
 
-def test_deleted_upload_attempt_cannot_finalize(
+def test_deleted_upload_cannot_finalize(
     file_service,
     location,
     example_file_record,
@@ -1175,21 +1175,21 @@ def test_deleted_upload_attempt_cannot_finalize(
     db,
     set_app_config_fn_scoped,
 ):
-    """A deleted upload cannot be finalized."""
+    """A deleted upload cannot be finished."""
     set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
     recid = example_file_record["id"]
     file_service.init_files(identity_simple, recid, [{"key": "deleted.bin"}])
 
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     upload = FileUpload(file_service)
-    prepared = upload._prepare(record, "deleted.bin", content_length=4)
-    uri, size, checksum = prepared.storage.save(BytesIO(b"late"), size=4)
+    claim = upload._prepare(record, "deleted.bin", content_length=4)
+    _uri, size, checksum = claim.storage.save(BytesIO(b"late"), size=4)
 
     file_service.delete_file(identity_simple, recid, "deleted.bin")
 
-    with pytest.raises(UploadConflict, match="no longer owns"):
-        upload._finalize(prepared, uri, size, checksum)
-    assert db.session.get(FileInstance, prepared.file_instance_id) is None
+    with pytest.raises(UploadConflict, match="was deleted while it was being uploaded"):
+        upload._finalize(claim, size, checksum)
+    assert db.session.get(FileInstance, claim.file_instance_id) is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.bucket.size == 0
 
@@ -1227,7 +1227,7 @@ def test_delete_all_files_cleans_pending_upload_attempts(
     assert list(record.files) == []
 
 
-def test_upload_finalization_is_idempotent(
+def test_finishing_an_upload_twice_is_safe(
     file_service,
     location,
     example_file_record,
@@ -1235,18 +1235,18 @@ def test_upload_finalization_is_idempotent(
     db,
     set_app_config_fn_scoped,
 ):
-    """Retrying finalization does not account for the same bytes twice."""
+    """Finishing twice does not count the same bytes twice."""
     set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
     recid = example_file_record["id"]
     file_service.init_files(identity_simple, recid, [{"key": "once.bin"}])
 
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     upload = FileUpload(file_service)
-    prepared = upload._prepare(record, "once.bin", content_length=4)
-    uri, size, checksum = prepared.storage.save(BytesIO(b"once"), size=4)
+    claim = upload._prepare(record, "once.bin", content_length=4)
+    _uri, size, checksum = claim.storage.save(BytesIO(b"once"), size=4)
 
-    upload._finalize(prepared, uri, size, checksum)
-    upload._finalize(prepared, uri, size, checksum)
+    upload._finalize(claim, size, checksum)
+    upload._finalize(claim, size, checksum)
 
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.files["once.bin"].object_version.file.readable is True
@@ -1278,7 +1278,7 @@ def test_staged_upload_runs_components_around_content(
             self, identity, id_, file_key, stream, content_length, record
         ):
             assert self.uow
-            assert record.files[file_key].has_readable_file
+            assert record.files[file_key].is_readable
             events.append("after")
 
     components = list(file_service.config.components)
@@ -1325,7 +1325,12 @@ def test_upload_reconciles_uncertain_commits(
         if commit_count == failing_commit:
             if committed_before_error:
                 original_commit(uow)
-            raise RuntimeError("commit result unavailable")
+            # What SQLAlchemy raises when the connection dies at commit time.
+            error = OperationalError(
+                "COMMIT", {}, Exception("server closed the connection unexpectedly")
+            )
+            error.connection_invalidated = True
+            raise error
         return original_commit(uow)
 
     monkeypatch.setattr(UnitOfWork, "commit", uncertain_commit)
@@ -1340,7 +1345,7 @@ def test_upload_reconciles_uncertain_commits(
 
     assert result.errors is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
-    assert record.files["uncertain.bin"].has_readable_file
+    assert record.files["uncertain.bin"].is_readable
     assert record.bucket.size == 4
 
 
@@ -1561,3 +1566,110 @@ def test_preallocated_fetch_completes_after_flag_flip(
         "fresh.txt"
     ]
     assert fresh.transfer.transfer_type == "L"
+
+
+def test_cleanup_task_returns_a_stuck_upload_to_pending(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """An upload that could not finish becomes pending again, not a broken row."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "stuck.bin"}])
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    claim = FileUpload(file_service)._prepare(record, "stuck.bin", content_length=4)
+    claim.storage.save(BytesIO(b"gone"), size=4)
+
+    # The record still points at the reserved row, so the row cannot be deleted.
+    cleanup_failed_upload(str(claim.file_instance_id), claim.uri)
+
+    file_instance = db.session.get(FileInstance, claim.file_instance_id)
+    assert file_instance is not None
+    assert file_instance.uri is None
+    assert file_instance.readable is False
+    assert file_instance.writable is True
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["stuck.bin"].object_version.file_id == claim.file_instance_id
+
+    # Pending again, so the same key can be uploaded.
+    result = file_service.set_file_content(
+        identity_simple, recid, "stuck.bin", BytesIO(b"redo"), 4
+    )
+    assert result.errors is None
+    file_service.commit_file(identity_simple, recid, "stuck.bin")
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["stuck.bin"].object_version.file.readable is True
+
+
+def test_remote_files_count_towards_total_bytes(
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+):
+    """A remote file has content even though it cannot be read from here."""
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [
+            {
+                "key": "remote.txt",
+                "checksum": "md5:c785060c866796cc2a1708c997154c8e",
+                "size": 17,
+                "transfer": {
+                    "url": "https://inveniordm.test/files/remote.txt",
+                    "type": "R",
+                },
+            }
+        ],
+    )
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    file_record = record.files["remote.txt"]
+    assert file_record.is_readable is False
+    assert file_record.has_content is True
+    assert record.files.total_bytes == 17
+    assert record.files.mimetypes == ["text/plain"]
+    assert record.files.exts == ["txt"]
+
+
+def test_reserved_uploads_do_not_count_towards_total_bytes(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    set_app_config_fn_scoped,
+):
+    """A file still being uploaded has no content yet."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "pending.bin"}])
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["pending.bin"].has_content is False
+    assert record.files.total_bytes == 0
+
+    claim = FileUpload(file_service)._prepare(record, "pending.bin", content_length=4)
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["pending.bin"].has_content is False
+    assert record.files.total_bytes == 0
+
+    # Back to pending, so the same key can be uploaded.
+    claim.discard()
+
+    file_service.set_file_content(
+        identity_simple, recid, "pending.bin", BytesIO(b"done"), 4
+    )
+    file_service.commit_file(identity_simple, recid, "pending.bin")
+
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["pending.bin"].has_content is True
+    assert record.files.total_bytes == 4
