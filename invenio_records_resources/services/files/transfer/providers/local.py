@@ -24,7 +24,7 @@ class LocalTransfer(Transfer):
 
     def set_file_content(self, stream, content_length):
         """Set file content."""
-        if self.file_record.has_readable_file:
+        if self.file_record.is_readable:
             raise TransferException(
                 _(
                     'File with key "%(file_key)s" is already committed.',

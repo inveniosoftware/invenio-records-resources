@@ -445,14 +445,12 @@ class FilesManager(MutableMapping):
     @property
     def total_bytes(self):
         """Return total number of bytes."""
-        return sum(f.file.size for f in self.entries.values() if f.has_readable_file)
+        return sum(f.file.size for f in self.entries.values() if f.has_content)
 
     @property
     def mimetypes(self):
         """Return list of mimetypes."""
-        return list(
-            {f.file.mimetype for f in self.entries.values() if f.has_readable_file}
-        )
+        return list({f.file.mimetype for f in self.entries.values() if f.has_content})
 
     @property
     def exts(self):
@@ -461,7 +459,7 @@ class FilesManager(MutableMapping):
             {
                 f.file.ext
                 for f in self.entries.values()
-                if f.has_readable_file and f.file.ext is not None
+                if f.has_content and f.file.ext is not None
             }
         )
 

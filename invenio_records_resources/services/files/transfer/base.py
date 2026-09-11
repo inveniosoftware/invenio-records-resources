@@ -137,7 +137,7 @@ class Transfer(ABC):
         TransferStatus.PENDING if the file is not uploaded yet or
         TransferStatus.FAILED if the file upload failed.
         """
-        if self.file_record is not None and self.file_record.has_readable_file:
+        if self.file_record is not None and self.file_record.is_readable:
             return TransferStatus.COMPLETED
 
         return TransferStatus.PENDING
@@ -148,7 +148,7 @@ class Transfer(ABC):
 
     def send_file(self, *, restricted, as_attachment):
         """Send file to the client."""
-        if not self.file_record.has_readable_file:
+        if not self.file_record.is_readable:
             raise TransferException(
                 f'File with key "{self.file_record.key}" is not available.'
             )
