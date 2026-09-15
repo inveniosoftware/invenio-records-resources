@@ -307,16 +307,25 @@ class FilesManager(MutableMapping):
         if not self.enabled:
             return
 
+        copyable = {
+            key: rf
+            for key, rf in src_files.items()
+            if rf.object_version is None or rf.has_content
+        }
         bucket_objects = ObjectVersion.query.filter_by(bucket_id=self.bucket_id).count()
         if bucket_objects == 0:
             # bucket is empty
             # copy all object versions to self.bucket
-            objs = ObjectVersion.copy_from(src_files.bucket_id, self.bucket_id)
-            ovs_by_key = {obj["key"]: obj for obj in objs}
+            objs = [
+                rf.object_version.copy(bucket=self.bucket)
+                for rf in copyable.values()
+                if rf.object_version is not None
+            ]
+            ovs_by_key = {obj.key: obj for obj in objs}
             rf_to_bulk_insert = []
 
             record_id = self.record.id
-            for key, rf in src_files.items():
+            for key, rf in copyable.items():
                 new_rf = {
                     "id": uuid.uuid4(),
                     "created": datetime.now(timezone.utc),
@@ -345,7 +354,7 @@ class FilesManager(MutableMapping):
         else:
             # if bucket is not empty then we fallback to the slow process of copying
             # files
-            for key, rf in src_files.items():
+            for key, rf in copyable.items():
                 # Copy object version of link existing?
                 if copy_obj:
                     dst_obj = rf.object_version.copy(bucket=self.bucket)
@@ -355,8 +364,10 @@ class FilesManager(MutableMapping):
                 # Copy file record, including all metadata and transfer info
                 self[key] = dst_obj, dict(rf)
 
-        self.default_preview = src_files.default_preview
-        self.order = src_files.order
+        self.default_preview = (
+            src_files.default_preview if src_files.default_preview in copyable else None
+        )
+        self.order = [key for key in src_files.order if key in copyable]
 
     def sync(self, src_files, delete_extras=True):
         """Sync changes from source files to this manager.
