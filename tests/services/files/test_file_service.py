@@ -1588,14 +1588,13 @@ def test_cleanup_task_returns_a_stuck_upload_to_pending(
     # The record still points at the reserved row, so the row cannot be deleted.
     cleanup_failed_upload(str(claim.file_instance_id), claim.uri)
 
-    file_instance = db.session.get(FileInstance, claim.file_instance_id)
-    assert file_instance is not None
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    file_instance = record.files["stuck.bin"].object_version.file
+    assert db.session.get(FileInstance, claim.file_instance_id) is None
+    assert file_instance.id != claim.file_instance_id
     assert file_instance.uri is None
     assert file_instance.readable is False
     assert file_instance.writable is True
-
-    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
-    assert record.files["stuck.bin"].object_version.file_id == claim.file_instance_id
 
     # Pending again, so the same key can be uploaded.
     result = file_service.set_file_content(

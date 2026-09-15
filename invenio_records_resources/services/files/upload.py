@@ -40,9 +40,9 @@ from werkzeug.exceptions import ClientDisconnected
 
 from ...records.models import FileRecordModelMixin
 from ..errors import FailedFileUploadException, TransferException
-from ..uow import RecordCommitOp
+from ..uow import RecordCommitOp, TaskOp
 from .components import FileContentComponent
-from .tasks import cleanup_failed_upload
+from .tasks import cleanup_failed_upload, discard_failed_upload
 from .transfer import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
 
 
@@ -90,46 +90,7 @@ class _PreparedUpload:
         The row goes back to unused when the record still points at it, and is
         deleted when nothing does any more.
         """
-        try:
-            self.storage.delete()
-        except FileNotFoundError:
-            # A concurrent delete already removed the file.
-            pass
-
-        with UnitOfWork(db.session) as uow:
-            file_instance = (
-                uow.session.query(FileInstance)
-                .filter_by(id=self.file_instance_id)
-                .populate_existing()
-                .with_for_update()
-                .one_or_none()
-            )
-            if self.matches_file_instance(file_instance):
-                object_version_count = (
-                    uow.session.query(ObjectVersion)
-                    .filter_by(file_id=self.file_instance_id)
-                    .count()
-                )
-                if object_version_count:
-                    # An object version points at the row, and deleting it
-                    # would break that foreign key. Reset it instead, so the
-                    # file goes back to pending and can be uploaded again.
-                    # An UPDATE, because the model's uri validator rejects None.
-                    uow.session.query(FileInstance).filter_by(
-                        id=self.file_instance_id
-                    ).update(
-                        {
-                            "uri": None,
-                            "size": 0,
-                            "checksum": None,
-                            "readable": False,
-                            "writable": True,
-                        },
-                        synchronize_session=False,
-                    )
-                else:
-                    file_instance.delete()
-            uow.commit()
+        discard_failed_upload(self.file_instance_id, self.uri)
 
 
 class UploadConflict(TransferException):
@@ -190,7 +151,11 @@ class FileUpload:
 
     def delete_file(self, identity, id_, record, file_key, uow=None):
         """Delete a file and any pending upload."""
-        if uow is None and self.uses_staged_upload(record.files[file_key]):
+        if self.uses_staged_upload(record.files[file_key]):
+            if uow is not None:
+                return self._delete_pending_upload_in_uow(
+                    identity, id_, record, file_key, uow
+                )
             return self._delete_pending_upload(identity, id_, record, file_key)
 
         if uow is not None:
@@ -375,30 +340,33 @@ class FileUpload:
 
     def _delete_pending_upload(self, identity, id_, record, file_key):
         """Delete a pending upload and its stored content."""
-        file_instance = record.files[file_key].object_version.file
-        file_instance_id = file_instance.id
-        storage = file_instance.storage() if file_instance.uri else None
-
         with UnitOfWork(db.session) as uow:
-            deleted_file = self._delete_file_in_uow(
-                identity,
-                id_,
-                file_key,
-                record,
-                uow,
-                softdelete_obj=False,
+            deleted_file = self._delete_pending_upload_in_uow(
+                identity, id_, record, file_key, uow
             )
             uow.commit()
+        return deleted_file
 
-        if storage is not None:
-            storage.delete()
-
-        with UnitOfWork(db.session) as uow:
-            current_file_instance = uow.session.get(FileInstance, file_instance_id)
-            if current_file_instance is not None:
-                current_file_instance.delete()
-            uow.commit()
-
+    def _delete_pending_upload_in_uow(self, identity, id_, record, file_key, uow):
+        """Delete a pending upload as part of a caller-managed transaction."""
+        file_instance = record.files[file_key].object_version.file
+        file_instance_id = file_instance.id
+        uri = file_instance.uri
+        deleted_file = self._delete_file_in_uow(
+            identity,
+            id_,
+            file_key,
+            record,
+            uow,
+            softdelete_obj=False,
+        )
+        uow.register(
+            TaskOp(
+                cleanup_failed_upload,
+                str(file_instance_id),
+                uri,
+            )
+        )
         return deleted_file
 
     def _prepare(
