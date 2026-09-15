@@ -20,6 +20,48 @@ from ...services.errors import FileKeyNotFoundError
 from ..errors import TransferException
 
 
+def discard_failed_upload(file_instance_id, uri):
+    """Delete one failed attempt without making its storage path reusable."""
+    try:
+        file_instance = (
+            FileInstance.query.filter_by(id=file_instance_id)
+            .populate_existing()
+            .with_for_update()
+            .one_or_none()
+        )
+        if file_instance is None:
+            db.session.rollback()
+            return
+        if file_instance.readable or file_instance.uri != uri:
+            db.session.rollback()
+            return
+
+        object_versions = (
+            ObjectVersion.query.filter_by(file_id=file_instance_id)
+            .populate_existing()
+            .with_for_update()
+            .all()
+        )
+        if uri is not None:
+            storage = file_instance.storage()
+            try:
+                storage.delete()
+            except FileNotFoundError:
+                pass
+
+        for object_version in object_versions:
+            replacement = FileInstance.create()
+            object_version.file = replacement
+            object_version.file_id = replacement.id
+
+        db.session.flush()
+        file_instance.delete()
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+
 @shared_task(ignore_result=True)
 def fetch_file(service_id, record_id, file_key):
     """Fetch file from external storage."""
@@ -85,41 +127,7 @@ def cleanup_failed_upload(file_instance_id, uri):
     Idempotent: it only touches a file instance that still holds the path the
     upload wrote, so a committed file or a re-used key is left alone.
     """
-    file_instance = (
-        FileInstance.query.filter_by(id=file_instance_id)
-        .populate_existing()
-        .with_for_update()
-        .one_or_none()
-    )
-    if file_instance is None or file_instance.readable or file_instance.uri != uri:
-        db.session.rollback()
-        return
-
-    storage = file_instance.storage()
-    if ObjectVersion.query.filter_by(file_id=file_instance_id).count():
-        # An object version still points at the row, and deleting it would
-        # break that foreign key. Reset it so the file goes back to pending and
-        # can be uploaded again. An UPDATE, because the model's uri validator
-        # rejects None.
-        FileInstance.query.filter_by(id=file_instance_id).update(
-            {
-                "uri": None,
-                "size": 0,
-                "checksum": None,
-                "readable": False,
-                "writable": True,
-            },
-            synchronize_session=False,
-        )
-    else:
-        file_instance.delete()
-    db.session.commit()
-
-    try:
-        storage.delete()
-    except FileNotFoundError:
-        # A concurrent delete already removed the file.
-        pass
+    discard_failed_upload(file_instance_id, uri)
 
 
 @shared_task(
