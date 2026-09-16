@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2020-2026 CERN.
-# SPDX-FileCopyrightText: 2022-2026 TU Wien.
+# SPDX-FileCopyrightText: 2020-2024 CERN.
+# SPDX-FileCopyrightText: 2022 TU Wien.
 # SPDX-FileCopyrightText: 2025 Graz University of Technology.
 # SPDX-License-Identifier: MIT
 
@@ -59,8 +59,7 @@ class ServiceSchemaWrapper:
 
     def __init__(self, service, schema):
         """Constructor."""
-        self._schema_cls = schema
-        self.schema = self._schema_cls()
+        self.schema = schema
         # TODO: Change constructor to accept a permission_policy_cls directly
         self._permission_policy_cls = service.config.permission_policy_cls
 
@@ -90,7 +89,7 @@ class ServiceSchemaWrapper:
 
         token = context_schema.set(local_context)
         try:
-            valid_data = self.schema.load(data, **schema_args)
+            valid_data = self.schema(**schema_args).load(data)
             errors = []
         except ValidationError as e:
             if raise_errors:
@@ -111,6 +110,6 @@ class ServiceSchemaWrapper:
 
         token = context_schema.set(local_context)
         try:
-            return self.schema.dump(data, **schema_args)
+            return self.schema(**schema_args).dump(data)
         finally:
             context_schema.reset(token)
