@@ -351,6 +351,10 @@ def test_record_files_copy(base_app, db, location):
     assert dst.files.order == src.files.order
     assert list(dst.files.keys()) == list(src.files.keys())
     assert (
+        dst.files["f1.pdf"].object_version_id
+        == dst.files["f1.pdf"].object_version.version_id
+    )
+    assert (
         dst.files["f1.pdf"].object_version.version_id
         != src.files["f1.pdf"].object_version.version_id
     )
