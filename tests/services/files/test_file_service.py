@@ -11,7 +11,7 @@ import pytest
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_access.permissions import system_identity
-from invenio_files_rest.errors import FileSizeError
+from invenio_files_rest.errors import FileSizeError, InvalidKeyError
 from marshmallow import ValidationError
 
 from invenio_records_resources.services.errors import (
@@ -190,6 +190,55 @@ def test_init_files(file_service, location, example_file_record, identity_simple
     assert file_to_initialise[1]["key"] == second_entry["key"]
     assert file_to_initialise[1]["metadata"] == second_entry["metadata"]
     assert second_entry["access"]["hidden"] is True
+
+
+@pytest.mark.parametrize(
+    "key,expected",
+    [
+        ("article.txt ", "article.txt"),
+        (" article.txt", "article.txt"),
+        ("  article.txt  ", "article.txt"),
+        ("my article.txt", "my article.txt"),
+    ],
+)
+def test_init_files_strips_surrounding_whitespace_from_key(
+    file_service, location, example_file_record, identity_simple, key, expected
+):
+    """Surrounding whitespace in a file key is stripped, inner whitespace is kept.
+
+    A key with a trailing space breaks extension detection, which in turn makes
+    the file fall back to the ``application/octet-stream`` mimetype.
+    """
+    recid = example_file_record["id"]
+
+    result = file_service.init_files(identity_simple, recid, [{"key": key}])
+
+    assert result.to_dict()["entries"][0]["key"] == expected
+
+
+@pytest.mark.parametrize("key", ["", " ", "   "])
+def test_init_files_rejects_blank_key(
+    file_service, location, example_file_record, identity_simple, key
+):
+    """A key that is empty once stripped is rejected rather than stored."""
+    recid = example_file_record["id"]
+
+    with pytest.raises(ValidationError) as e:
+        file_service.init_files(identity_simple, recid, [{"key": key}])
+
+    assert "key" in e.value.normalized_messages()[0]
+
+
+def test_init_files_key_collision_after_stripping(
+    file_service, location, example_file_record, identity_simple
+):
+    """Keys that only differ by surrounding whitespace collide after stripping."""
+    recid = example_file_record["id"]
+
+    with pytest.raises(InvalidKeyError):
+        file_service.init_files(
+            identity_simple, recid, [{"key": "article.txt"}, {"key": "article.txt "}]
+        )
 
 
 def test_retrieve_non_existing_file(
