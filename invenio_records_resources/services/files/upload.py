@@ -29,7 +29,7 @@ from uuid import UUID
 from flask import current_app
 from flask_babel import gettext as _
 from invenio_db import db
-from invenio_db.uow import UnitOfWork
+from invenio_db.uow import ModelCommitOp, UnitOfWork
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
@@ -40,10 +40,36 @@ from werkzeug.exceptions import ClientDisconnected
 
 from ...records.models import FileRecordModelMixin
 from ..errors import FailedFileUploadException, TransferException
-from ..uow import RecordCommitOp, TaskOp
+from ..uow import Operation, RecordCommitOp
 from .components import FileContentComponent
+from .components.base import FileServiceComponent
 from .tasks import cleanup_failed_upload, discard_failed_upload
 from .transfer import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
+from .transfer.providers.fetch import FetchTransfer
+from .transfer.providers.local import LocalTransfer
+
+STAGED_UPLOAD_MARKER = "_staged_upload"
+
+
+class _CleanupUploadOp(Operation):
+    """Clean staged storage after the deletion transaction commits."""
+
+    def __init__(self, file_instance_id, uri):
+        self.file_instance_id = str(file_instance_id)
+        self.uri = uri
+
+    def on_post_commit(self, uow):
+        """Clean synchronously, scheduling retries for transient failures."""
+        try:
+            discard_failed_upload(self.file_instance_id, self.uri)
+        except Exception:
+            current_app.logger.exception("Failed to clean staged upload.")
+            try:
+                cleanup_failed_upload.delay(self.file_instance_id, self.uri)
+            except Exception:
+                current_app.logger.exception(
+                    "Failed to schedule staged upload cleanup."
+                )
 
 
 @dataclass(frozen=True)
@@ -108,10 +134,100 @@ class FileUpload:
         """Initialize the upload."""
         self.service = service
 
+    def init(self, transfer, record, file_metadata, uow):
+        """Initialize a file, preallocating rows for supported staged uploads."""
+        if not self._supports_staged_upload(transfer):
+            return transfer.init_file(record, file_metadata)
+
+        file_instance = FileInstance.create()
+        uow.register(ModelCommitOp(file_instance))
+        obj = ObjectVersion.create(
+            record.bucket,
+            file_metadata["key"],
+            _file_id=file_instance,
+        )
+        file_record = transfer.init_file(record, file_metadata, obj=obj)
+        file_record[STAGED_UPLOAD_MARKER] = True
+        file_record.commit()
+        return file_record
+
     def set_content(
-        self, identity, id_, record, file_key, stream, content_length, uow=None
+        self,
+        identity,
+        id_,
+        record,
+        file_key,
+        stream,
+        content_length,
+        uow=None,
+        expected_file_record_id=None,
     ):
         """Set file content using the upload path chosen during initialization."""
+        if uow is not None:
+            return self._set_classic_content(
+                identity,
+                id_,
+                file_key,
+                record,
+                stream,
+                content_length,
+                uow=uow,
+                expected_file_record_id=expected_file_record_id,
+            )
+
+        if self.uses_staged_upload(record.files.get(file_key)):
+            return self._set_staged_content(
+                identity,
+                id_,
+                record,
+                file_key,
+                stream,
+                content_length,
+                expected_file_record_id=expected_file_record_id,
+            )
+
+        return self._set_classic_content(
+            identity,
+            id_,
+            file_key,
+            record,
+            stream,
+            content_length,
+            expected_file_record_id=expected_file_record_id,
+        )
+
+    def _set_staged_content(
+        self,
+        identity,
+        id_,
+        record,
+        file_key,
+        stream,
+        content_length,
+        *,
+        expected_file_record_id=None,
+    ):
+        """Upload content without retaining a database connection."""
+        return self._upload(
+            record,
+            file_key,
+            stream,
+            content_length,
+            expected_file_record_id=expected_file_record_id,
+        )
+
+    def _set_classic_content(
+        self,
+        identity,
+        id_,
+        file_key,
+        record,
+        stream,
+        content_length,
+        uow=None,
+        expected_file_record_id=None,
+    ):
+        """Upload content in one caller-managed or internal UoW."""
         if uow is not None:
             return self._set_content_in_uow(
                 identity,
@@ -121,19 +237,7 @@ class FileUpload:
                 stream,
                 content_length,
                 uow=uow,
-            )
-
-        if self.uses_staged_upload(record.files.get(file_key)):
-            component_args = (identity, id_, file_key, stream, content_length)
-            before_components, after_components = self._split_content_components()
-            return self._upload(
-                record,
-                file_key,
-                stream,
-                content_length,
-                before_components=before_components,
-                after_components=after_components,
-                component_args=component_args,
+                expected_file_record_id=expected_file_record_id,
             )
 
         with UnitOfWork(db.session) as managed_uow:
@@ -145,6 +249,7 @@ class FileUpload:
                 stream,
                 content_length,
                 uow=managed_uow,
+                expected_file_record_id=expected_file_record_id,
             )
             managed_uow.commit()
             return result
@@ -173,39 +278,74 @@ class FileUpload:
         if uow is not None:
             return self._delete_all_files_in_uow(identity, id_, record, uow)
 
-        file_keys = list(record.files)
-        deleted = {}
-        for file_key in file_keys:
-            if self.uses_staged_upload(record.files[file_key]):
-                deleted[file_key] = self._delete_pending_upload(
-                    identity, id_, record, file_key
-                )
-                record = self.service.record_cls.pid.resolve(id_, registered_only=False)
-
         with UnitOfWork(db.session) as managed_uow:
-            remaining = self._delete_all_files_in_uow(
-                identity, id_, record, managed_uow
-            )
+            deleted = self._delete_all_files_in_uow(identity, id_, record, managed_uow)
             managed_uow.commit()
-        deleted.update({file.key: file for file in remaining})
-        return [deleted[file_key] for file_key in file_keys]
+            return deleted
 
-    @staticmethod
-    def uses_staged_upload(file_record):
+    def uses_staged_upload(self, file_record):
         """Say whether this file is uploaded without holding a connection."""
         if file_record is None or file_record.transfer.transfer_type not in (
             LOCAL_TRANSFER_TYPE,
             FETCH_TRANSFER_TYPE,
         ):
             return False
+        if not file_record.get(STAGED_UPLOAD_MARKER, False):
+            return False
         obj = file_record.object_version
         return obj is not None and obj.file is not None and not obj.file.readable
 
+    def _supports_staged_upload(self, transfer):
+        """Say whether staged mode preserves the configured extension contracts."""
+        if not current_app.config.get("RECORDS_RESOURCES_USE_STAGED_TRANSFER"):
+            return False
+        return self._supports_staged_contract(type(transfer))
+
+    def _supports_staged_contract(self, transfer_cls):
+        """Say whether transfer and component hooks match the built-in pipeline."""
+        if transfer_cls not in (LocalTransfer, FetchTransfer):
+            return False
+
+        components = self.service.config.components
+        try:
+            components.index(FileContentComponent)
+        except ValueError:
+            return False
+
+        for component_cls in components:
+            set_content = getattr(component_cls, "set_file_content", None)
+            if (
+                component_cls is not FileContentComponent
+                and set_content is not FileServiceComponent.set_file_content
+            ):
+                return False
+        return True
+
     def _set_content_in_uow(
-        self, identity, id_, file_key, record, stream, content_length, *, uow
+        self,
+        identity,
+        id_,
+        file_key,
+        record,
+        stream,
+        content_length,
+        *,
+        uow,
+        expected_file_record_id=None,
     ):
         """Set file content in a transaction/UoW."""
         try:
+            if expected_file_record_id is not None:
+                current_file = (
+                    uow.session.query(record.files[file_key].model.__class__)
+                    .filter_by(id=expected_file_record_id, is_deleted=False)
+                    .with_for_update()
+                    .one_or_none()
+                )
+                if current_file is None:
+                    raise UploadSuperseded(
+                        f'File "{file_key}" was replaced before upload started.'
+                    )
             self.service.run_components(
                 "set_file_content",
                 identity,
@@ -223,11 +363,19 @@ class FileUpload:
             return error.file, error
 
     def _delete_file_in_uow(
-        self, identity, id_, file_key, record, uow, *, softdelete_obj=True
+        self,
+        identity,
+        id_,
+        file_key,
+        record,
+        uow,
+        *,
+        softdelete_obj=True,
+        remove_rf=True,
     ):
         """Delete a file in a transaction/UoW."""
         deleted_file = record.files.delete(
-            file_key, remove_rf=True, softdelete_obj=softdelete_obj
+            file_key, remove_rf=remove_rf, softdelete_obj=softdelete_obj
         )
         self.service.run_components(
             "delete_file", identity, id_, file_key, record, deleted_file, uow=uow
@@ -239,41 +387,28 @@ class FileUpload:
     def _delete_all_files_in_uow(self, identity, id_, record, uow):
         """Delete all files in a transaction/UoW."""
         file_keys = list(record.files)
-        results = [record.files.delete(file_key) for file_key in file_keys]
+        results = []
+        for file_key in file_keys:
+            file_record = record.files[file_key]
+            if self.uses_staged_upload(file_record):
+                pending = self._lock_pending_upload(record, file_record, uow)
+                if pending is not None:
+                    file_instance_id, uri = pending
+                    results.append(
+                        record.files.delete(
+                            file_key, softdelete_obj=False, remove_rf=True
+                        )
+                    )
+                    uow.register(_CleanupUploadOp(file_instance_id, uri))
+                else:
+                    results.append(record.files.delete(file_key))
+            else:
+                results.append(record.files.delete(file_key))
         self.service.run_components(
             "delete_all_files", identity, id_, record, results, uow=uow
         )
         uow.register(RecordCommitOp(record))
         return results
-
-    def _split_content_components(self):
-        """Preserve component order around the staged storage write.
-
-        Staged uploads replace ``FileContentComponent``. Components before it
-        join the prepare transaction, those after it join the finalize one.
-        This keeps only the storage write outside a database transaction.
-        """
-        before = []
-        after = []
-        content_seen = False
-        for component_cls in self.service.config.components:
-            if issubclass(component_cls, FileContentComponent):
-                content_seen = True
-            elif content_seen:
-                after.append(component_cls)
-            else:
-                before.append(component_cls)
-        return before, after
-
-    def _run_set_content_components(self, component_classes, args, record, uow):
-        """Run set-content components in the given UoW."""
-        for component_cls in component_classes:
-            component = component_cls(self.service)
-            component.uow = uow
-            try:
-                component.set_file_content(*args, record)
-            finally:
-                component.uow = None
 
     def _upload(
         self,
@@ -282,17 +417,14 @@ class FileUpload:
         stream,
         content_length,
         *,
-        before_components=(),
-        after_components=(),
-        component_args=(),
+        expected_file_record_id=None,
     ):
         """Upload content and return the file and any transfer error."""
         prepared = self._prepare(
             record,
             file_key,
             content_length,
-            components=before_components,
-            component_args=component_args,
+            expected_file_record_id=expected_file_record_id,
         )
         try:
             written_uri, size, checksum = prepared.storage.save(
@@ -308,7 +440,7 @@ class FileUpload:
         except FileSizeError as error:
             self._abort(record, prepared, error)
             raise
-        except (ClientDisconnected, OSError):
+        except ClientDisconnected, OSError:
             error = TransferException(f'Could not upload file "{file_key}".')
             return self._abort(record, prepared, error), error
         except Exception as error:
@@ -317,18 +449,12 @@ class FileUpload:
             raise
 
         try:
-            self._finalize(
-                prepared,
-                size,
-                checksum,
-                components=after_components,
-                component_args=component_args,
-            )
+            self._finalize(prepared, size, checksum)
         except FileSizeError as error:
             self._abort(record, prepared, error)
             raise
         except UploadSuperseded:
-            prepared.discard()
+            self._discard(prepared)
             raise
         except TransferException as error:
             return self._abort(record, prepared, error), error
@@ -349,9 +475,11 @@ class FileUpload:
 
     def _delete_pending_upload_in_uow(self, identity, id_, record, file_key, uow):
         """Delete a pending upload as part of a caller-managed transaction."""
-        file_instance = record.files[file_key].object_version.file
-        file_instance_id = file_instance.id
-        uri = file_instance.uri
+        file_record = record.files[file_key]
+        pending = self._lock_pending_upload(record, file_record, uow)
+        if pending is None:
+            return self._delete_file_in_uow(identity, id_, file_key, record, uow)
+        file_instance_id, uri = pending
         deleted_file = self._delete_file_in_uow(
             identity,
             id_,
@@ -359,18 +487,43 @@ class FileUpload:
             record,
             uow,
             softdelete_obj=False,
+            remove_rf=True,
         )
-        uow.register(
-            TaskOp(
-                cleanup_failed_upload,
-                str(file_instance_id),
-                uri,
-            )
-        )
+        uow.register(_CleanupUploadOp(file_instance_id, uri))
         return deleted_file
 
+    def _lock_pending_upload(self, record, file_record, uow):
+        """Lock a pending upload and return its current cleanup coordinates."""
+        uow.session.query(self.service.record_cls.model_cls).filter_by(
+            id=record.id
+        ).populate_existing().with_for_update().one()
+        locked_file_record = (
+            uow.session.query(file_record.model.__class__)
+            .filter_by(id=file_record.id, is_deleted=False)
+            .populate_existing()
+            .with_for_update()
+            .one()
+        )
+        object_version = (
+            uow.session.query(ObjectVersion)
+            .filter_by(version_id=locked_file_record.object_version_id)
+            .populate_existing()
+            .with_for_update()
+            .one()
+        )
+        file_instance = (
+            uow.session.query(FileInstance)
+            .filter_by(id=object_version.file_id)
+            .populate_existing()
+            .with_for_update()
+            .one()
+        )
+        if file_instance.readable:
+            return None
+        return file_instance.id, file_instance.uri
+
     def _prepare(
-        self, record, file_key, content_length, *, components=(), component_args=()
+        self, record, file_key, content_length, *, expected_file_record_id=None
     ):
         """Take the file for this upload and initialize its storage path.
 
@@ -387,9 +540,6 @@ class FileUpload:
 
         try:
             with UnitOfWork(db.session) as uow:
-                self._run_set_content_components(
-                    components, component_args, record, uow
-                )
                 # Lock the record, the file record, the object version and
                 # the file instance so none of them can be deleted or pointed
                 # somewhere else before this upload commits.
@@ -417,6 +567,13 @@ class FileUpload:
                     .with_for_update()
                     .one()
                 )
+                if (
+                    expected_file_record_id is not None
+                    and locked_file_model.id != expected_file_record_id
+                ):
+                    raise UploadSuperseded(
+                        f'File "{file_key}" was replaced before upload started.'
+                    )
                 if (
                     locked_file_model.object_version_id
                     != locked_object_version.version_id
@@ -489,16 +646,7 @@ class FileUpload:
                 ) from error
             raise
 
-    def _finalize(
-        self,
-        prepared,
-        size,
-        checksum,
-        retry=True,
-        *,
-        components=(),
-        component_args=(),
-    ):
+    def _finalize(self, prepared, size, checksum, retry=True):
         """Make the file readable and add its size to the bucket."""
         try:
             with UnitOfWork(db.session) as uow:
@@ -506,13 +654,13 @@ class FileUpload:
                 # them while this upload is being finished.
                 bucket = (
                     uow.session.query(Bucket)
-                    .filter_by(id=prepared.bucket_id)
+                    .filter_by(id=prepared.bucket_id, deleted=False)
                     .populate_existing()
                     .with_for_update()
                     .one()
                 )
                 uow.session.query(self.service.record_cls.model_cls).filter_by(
-                    id=prepared.record_id
+                    id=prepared.record_id, is_deleted=False
                 ).populate_existing().with_for_update().one()
                 file_record_row = (
                     uow.session.query(prepared.file_record_model)
@@ -578,13 +726,6 @@ class FileUpload:
                     prepared.uri, size, checksum, readable=True, writable=False
                 )
                 bucket.size += size
-                if components:
-                    record = self.service.record_cls.pid.resolve(
-                        component_args[1], registered_only=False
-                    )
-                    self._run_set_content_components(
-                        components, component_args, record, uow
-                    )
                 uow.commit()
         except NoResultFound as error:
             # One of the rows we locked was deleted while we streamed.
@@ -592,11 +733,16 @@ class FileUpload:
             raise UploadSuperseded(
                 f'File "{prepared.file_key}" was deleted while it was being uploaded.'
             ) from error
-        except (FileSizeError, TransferException):
+        except FileSizeError, TransferException:
             raise
         except Exception as error:
             db.session.rollback()
-            if self._is_finalized(prepared, size, checksum):
+            try:
+                finalized = self._is_finalized(prepared, size, checksum)
+            except Exception:
+                self._schedule_cleanup(prepared)
+                raise error
+            if finalized:
                 # The commit went through and the error came afterwards, so
                 # the file is finished and there is nothing left to do.
                 return
@@ -609,12 +755,10 @@ class FileUpload:
                     size,
                     checksum,
                     retry=False,
-                    components=components,
-                    component_args=component_args,
                 )
             # We cannot finish, so hand the reservation to a task that undoes
             # it, retrying with backoff.
-            cleanup_failed_upload.delay(str(prepared.file_instance_id), prepared.uri)
+            self._schedule_cleanup(prepared)
             raise
 
     @staticmethod
@@ -637,36 +781,98 @@ class FileUpload:
 
     def _abort(self, record, prepared, exception):
         """Record a fetch failure or remove a failed local upload."""
-        record = self.service.record_cls.pid.resolve(
-            record.pid.pid_value, registered_only=False
-        )
-        file_record = record.files.get(prepared.file_key)
-
-        if not prepared.matches_file_record(file_record):
-            # The key was deleted and re-initialized while we streamed, so the
-            # file record belongs to a later upload. Only our own rows go.
-            prepared.discard()
-            return file_record
-
-        if file_record.transfer.transfer_type == FETCH_TRANSFER_TYPE:
+        try:
             with UnitOfWork(db.session) as uow:
-                file_record.transfer["error"] = str(exception)
-                obj = file_record.object_version
-                file_record.object_version = None
-                file_record.object_version_id = None
-                obj.remove()
-                uow.register(RecordCommitOp(file_record))
-                uow.commit()
-            failed = file_record
-        else:
-            with UnitOfWork(db.session) as uow:
-                failed = record.files.delete(
-                    prepared.file_key, softdelete_obj=False, remove_rf=True
+                uow.session.query(self.service.record_cls.model_cls).filter_by(
+                    id=prepared.record_id
+                ).populate_existing().with_for_update().one()
+                file_record_row = (
+                    uow.session.query(prepared.file_record_model)
+                    .filter_by(id=prepared.file_record_id, is_deleted=False)
+                    .populate_existing()
+                    .with_for_update()
+                    .one()
                 )
-                uow.commit()
+                object_version = (
+                    uow.session.query(ObjectVersion)
+                    .filter_by(version_id=prepared.object_version_id)
+                    .populate_existing()
+                    .with_for_update()
+                    .one()
+                )
+                file_instance = (
+                    uow.session.query(FileInstance)
+                    .filter_by(id=prepared.file_instance_id)
+                    .populate_existing()
+                    .with_for_update()
+                    .one()
+                )
+                if (
+                    file_record_row.object_version_id != object_version.version_id
+                    or object_version.file_id != file_instance.id
+                    or not prepared.matches_file_instance(file_instance)
+                ):
+                    raise UploadSuperseded(
+                        f'File "{prepared.file_key}" was replaced while its upload '
+                        "was being aborted."
+                    )
 
-        prepared.discard()
-        return failed
+                record = self.service.record_cls.pid.resolve(
+                    record.pid.pid_value, registered_only=False
+                )
+                file_record = record.files.get(prepared.file_key)
+                if not prepared.matches_file_record(file_record):
+                    raise UploadSuperseded(
+                        f'File "{prepared.file_key}" was replaced while its upload '
+                        "was being aborted."
+                    )
+
+                if file_record.transfer.transfer_type == FETCH_TRANSFER_TYPE:
+                    file_record.transfer["error"] = str(exception)
+                    file_record.object_version = None
+                    file_record.object_version_id = None
+                    object_version.remove()
+                    uow.register(RecordCommitOp(file_record))
+                    failed = file_record
+                else:
+                    failed = record.files.delete(
+                        prepared.file_key, softdelete_obj=False, remove_rf=True
+                    )
+                    uow.register(RecordCommitOp(record))
+                uow.commit()
+                return failed
+        except NoResultFound as error:
+            db.session.rollback()
+            raise UploadSuperseded(
+                f'File "{prepared.file_key}" was deleted while its upload was '
+                "being aborted."
+            ) from error
+        finally:
+            self._discard(prepared)
+
+    @staticmethod
+    def _discard(prepared):
+        """Discard an upload now, scheduling a retry if cleanup fails."""
+        try:
+            prepared.discard()
+        except Exception:
+            current_app.logger.exception("Failed to discard staged upload.")
+            try:
+                cleanup_failed_upload.delay(
+                    str(prepared.file_instance_id), prepared.uri
+                )
+            except Exception:
+                current_app.logger.exception(
+                    "Failed to schedule staged upload cleanup."
+                )
+
+    @staticmethod
+    def _schedule_cleanup(prepared):
+        """Best-effort publication of retryable cleanup."""
+        try:
+            cleanup_failed_upload.delay(str(prepared.file_instance_id), prepared.uri)
+        except Exception:
+            current_app.logger.exception("Failed to schedule staged upload cleanup.")
 
     @staticmethod
     def _is_connection_lost(error):

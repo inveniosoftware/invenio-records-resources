@@ -23,6 +23,12 @@ from ..errors import TransferException
 def discard_failed_upload(file_instance_id, uri):
     """Delete one failed attempt without making its storage path reusable."""
     try:
+        object_versions = (
+            ObjectVersion.query.filter_by(file_id=file_instance_id)
+            .populate_existing()
+            .with_for_update()
+            .all()
+        )
         file_instance = (
             FileInstance.query.filter_by(id=file_instance_id)
             .populate_existing()
@@ -36,12 +42,6 @@ def discard_failed_upload(file_instance_id, uri):
             db.session.rollback()
             return
 
-        object_versions = (
-            ObjectVersion.query.filter_by(file_id=file_instance_id)
-            .populate_existing()
-            .with_for_update()
-            .all()
-        )
         if uri is not None:
             storage = file_instance.storage()
             try:
@@ -63,10 +63,18 @@ def discard_failed_upload(file_instance_id, uri):
 
 
 @shared_task(ignore_result=True)
-def fetch_file(service_id, record_id, file_key):
+def fetch_file(service_id, record_id, file_key, file_record_id=None):
     """Fetch file from external storage."""
     try:
         service = current_service_registry.get(service_id)
+        expected_file_record_id = file_record_id
+        record = service.record_cls.pid.resolve(record_id, registered_only=False)
+        file_record = record.files.get(file_key)
+        if file_record is None or (
+            expected_file_record_id is not None
+            and str(file_record.id) != expected_file_record_id
+        ):
+            return
         transfer_metadata = service.get_transfer_metadata(
             system_identity, record_id, file_key
         )
@@ -92,13 +100,20 @@ def fetch_file(service_id, record_id, file_key):
                     record_id,
                     file_key,
                     response.raw,  # has read method
+                    expected_file_record_id=file_record.id,
                 )
-                if result.errors:
+                if getattr(result, "errors", None):
                     return
                 # commit file
                 service.commit_file(system_identity, record_id, file_key)
         except Exception as e:
             current_app.logger.error(e)
+            current_record = service.record_cls.pid.resolve(
+                record_id, registered_only=False
+            )
+            current_file = current_record.files.get(file_key)
+            if current_file is None or current_file.id != file_record.id:
+                return
             transfer_metadata["error"] = str(e)
             service.update_transfer_metadata(
                 system_identity, record_id, file_key, transfer_metadata

@@ -109,7 +109,7 @@ class Transfer(ABC):
                     size=content_length,
                     size_limit=size_limit,
                 )
-        except (ClientDisconnected, OSError):
+        except ClientDisconnected, OSError:
             raise TransferException(
                 f'Transfer of File with key "{self.file_record.key}" failed.'
             )

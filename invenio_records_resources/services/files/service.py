@@ -28,6 +28,11 @@ from .upload import FileUpload
 class FileService(Service):
     """A service for adding files support to records."""
 
+    def __init__(self, config):
+        """Initialize the file service."""
+        super().__init__(config)
+        self.file_upload = FileUpload(self)
+
     @property
     def record_cls(self):
         """Get the record class."""
@@ -306,7 +311,7 @@ class FileService(Service):
         record = self._get_record(
             id_, identity, "delete_files", file_key=file_key, **kwargs
         )
-        deleted_file = FileUpload(self).delete_file(
+        deleted_file = self.file_upload.delete_file(
             identity, id_, record, file_key, uow
         )
 
@@ -321,7 +326,7 @@ class FileService(Service):
     def delete_all_files(self, identity, id_, uow=None, **kwargs):
         """Delete all the files of the record."""
         record = self._get_record(id_, identity, "delete_files", **kwargs)
-        results = FileUpload(self).delete_all_files(identity, id_, record, uow)
+        results = self.file_upload.delete_all_files(identity, id_, record, uow)
 
         return self.file_result_list(
             self,
@@ -333,7 +338,15 @@ class FileService(Service):
         )
 
     def set_file_content(
-        self, identity, id_, file_key, stream, content_length=None, uow=None, **kwargs
+        self,
+        identity,
+        id_,
+        file_key,
+        stream,
+        content_length=None,
+        uow=None,
+        expected_file_record_id=None,
+        **kwargs,
     ):
         """Save file content.
 
@@ -348,14 +361,21 @@ class FileService(Service):
             content_length=content_length,
             **kwargs,
         )
-        file, error = FileUpload(self).set_content(
-            identity, id_, record, file_key, stream, content_length, uow
+        file, error = self.file_upload.set_content(
+            identity,
+            id_,
+            record,
+            file_key,
+            stream,
+            content_length,
+            uow,
+            expected_file_record_id=expected_file_record_id,
         )
-        errors = None
+        errors = []
         if error is not None:
             if not isinstance(error, FailedFileUploadException):
                 current_app.logger.error("File upload transfer failed: %s", error)
-            errors = _("File upload transfer failed.")
+            errors.append(_("File upload transfer failed."))
 
         return self.file_result_item(
             self,
@@ -451,7 +471,7 @@ class FileService(Service):
             identity,
             file,
             record,
-            errors=errors or None,
+            errors=errors,
             links_tpl=self.file_links_item_tpl(id_),
         )
 
