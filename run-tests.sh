@@ -27,7 +27,7 @@ trap cleanup EXIT
 
 pybabel extract -F pyproject.toml invenio_records_resources --output-file /dev/null
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
-eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-opensearch} --cache ${CACHE:-redis} --s3 ${S3BACKEND:-minio} --env)"
+eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-opensearch} --cache ${CACHE:-redis} --s3 ${S3BACKEND:-rustfs} --env)"
 
 python -m pytest $@
 
