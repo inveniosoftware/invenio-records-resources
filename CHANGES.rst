@@ -8,6 +8,12 @@
 Changes
 =======
 
+Version v10.2.3 (released 2026-09-17)
+
+- fix(tests): changed minio to rustfs
+- Revert "Reusable marshmallow schema instances in services (#692)" (#723)
+- Reusable marshmallow schema instances in services (#692)
+
 Version v10.2.2 (released 2026-08-27)
 
 - i18n: pulled translations
