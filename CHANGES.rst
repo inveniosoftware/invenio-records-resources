@@ -2,12 +2,17 @@
     SPDX-FileCopyrightText: 2020-2024 CERN.
     SPDX-FileCopyrightText: 2024-2026 Graz University of Technology.
     SPDX-FileCopyrightText: 2025 Northwestern University.
-    SPDX-FileCopyrightText: 2025 KTH Royal Institute of Technology.
+    SPDX-FileCopyrightText: 2025-2026 KTH Royal Institute of Technology.
     SPDX-FileCopyrightText: 2026 TU Wien.
     SPDX-License-Identifier: MIT
 
 Changes
 =======
+
+Version v11.0.4 (released 2026-09-17)
+
+- fix(tests): changed minio to rustfs
+- i18n: update string formatting
 
 Version v11.0.3 (released 2026-08-13)
 
