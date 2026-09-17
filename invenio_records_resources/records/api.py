@@ -10,6 +10,7 @@ import os
 from contextlib import contextmanager
 
 from invenio_db import db
+from invenio_files_rest.errors import FileInstanceUnreadableError
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_records.api import Record as RecordBase
 from invenio_records.dumpers import SearchDumper
@@ -171,9 +172,41 @@ class FileRecord(RecordBase, SystemFieldsMixin):
         if self.object_version:
             return File(object_model=self.object_version)
 
+    @property
+    def is_readable(self):
+        """Whether the file's bytes are in our storage and can be opened.
+
+        A readable file always has content. The reverse does not hold: a remote
+        file has content that lives elsewhere, and a file still uploading has a
+        local path that nothing may read yet.
+        """
+        object_version = self.object_version
+        return (
+            object_version is not None
+            and object_version.file is not None
+            and object_version.file.readable
+        )
+
+    @property
+    def has_content(self):
+        """Whether the file has content, in our storage or somewhere else.
+
+        Remote files are not readable here but do have a size and a checksum,
+        and a file being uploaded has neither yet. ``writable`` is what tells
+        them apart: invenio-files-rest clears it once a file is finished.
+        """
+        object_version = self.object_version
+        return (
+            object_version is not None
+            and object_version.file is not None
+            and not object_version.file.writable
+        )
+
     @contextmanager
     def open_stream(self, mode):
         """Get a file stream for a given file record."""
+        if not self.is_readable:
+            raise FileInstanceUnreadableError()
         fp = self.object_version.file.storage().open(mode)
         try:
             yield fp
@@ -185,6 +218,8 @@ class FileRecord(RecordBase, SystemFieldsMixin):
 
         It is up to the caller to close the steam.
         """
+        if not self.is_readable:
+            raise FileInstanceUnreadableError()
         return self.object_version.file.storage().open(mode)
 
     @property
@@ -246,6 +281,8 @@ class File:
             id=data["file_id"],
             size=data.get("size"),
             checksum=data.get("checksum"),
+            # Column defaults apply on flush; loaded dump data is already readable.
+            readable=True,
         )
         fi = FileInstance(**file_args)
         obj = ObjectVersion(

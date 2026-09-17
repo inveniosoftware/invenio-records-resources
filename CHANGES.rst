@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.1.0 (unreleased)
+
+- files: release database connections while local and fetch uploads stream to storage.
+
 Version v11.0.3 (released 2026-08-13)
 
 - fix(files): retry metadata extraction after publication

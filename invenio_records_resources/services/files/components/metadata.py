@@ -6,11 +6,14 @@
 
 from flask import current_app
 from flask_babel import gettext as _
+from invenio_db.uow import ModelCommitOp
 from invenio_files_rest.errors import FileSizeError
+from invenio_files_rest.models import FileInstance, ObjectVersion
 
 from ....proxies import current_transfer_registry
 from ...errors import FilesCountExceededException
 from ...uow import RecordCommitOp
+from ..transfer import FETCH_TRANSFER_TYPE, LOCAL_TRANSFER_TYPE
 from .base import FileServiceComponent
 
 
@@ -31,16 +34,32 @@ class FileMetadataComponent(FileServiceComponent):
                     max_files=maxFiles, resulting_files_count=resulting_files_count
                 )
 
+        use_staged = current_app.config.get("RECORDS_RESOURCES_USE_STAGED_TRANSFER")
+
         for file_metadata in data:
+            transfer_data = file_metadata["transfer"]
             transfer = current_transfer_registry.get_transfer(
                 record=record,
                 file_service=self.service,
                 key=file_metadata["key"],
-                transfer_type=file_metadata["transfer"]["type"],
+                transfer_type=transfer_data["type"],
                 uow=self.uow,
             )
+            kwargs = {}
+            if use_staged and transfer_data["type"] in (
+                LOCAL_TRANSFER_TYPE,
+                FETCH_TRANSFER_TYPE,
+            ):
+                # Persist this upload path even if the configuration changes later.
+                file_instance = FileInstance.create()
+                self.uow.register(ModelCommitOp(file_instance))
+                kwargs["obj"] = ObjectVersion.create(
+                    record.bucket,
+                    file_metadata["key"],
+                    _file_id=file_instance,
+                )
 
-            _ = transfer.init_file(record, file_metadata)
+            transfer.init_file(record, file_metadata, **kwargs)
 
     def update_file_metadata(self, identity, id_, file_key, record, data):
         """Update file metadata handler."""

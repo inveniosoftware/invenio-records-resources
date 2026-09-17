@@ -123,7 +123,7 @@ class FileSchema(Schema):
         # We need to access the file attributes from the wrapped FileInstance
         # as getattr on the wrapper raises AttributeError if the attribute
         # is set to None.
-        if original.file is not None and original.file.file is not None:
+        if original.has_content:
             obj["checksum"] = original.file.file.checksum
             obj["size"] = original.file.file.size
             obj["storage_class"] = original.file.file.storage_class

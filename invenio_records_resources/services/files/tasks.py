@@ -12,13 +12,54 @@ from celery import shared_task
 from flask import current_app
 from invenio_access.permissions import system_identity
 from invenio_db import db
-from invenio_files_rest.models import FileInstance
+from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 
 from ...proxies import current_service_registry
 from ...services.errors import FileKeyNotFoundError
 from ..errors import TransferException
-from .transfer.constants import LOCAL_TRANSFER_TYPE
+
+
+def discard_failed_upload(file_instance_id, uri):
+    """Delete one failed attempt without making its storage path reusable."""
+    try:
+        file_instance = (
+            FileInstance.query.filter_by(id=file_instance_id)
+            .populate_existing()
+            .with_for_update()
+            .one_or_none()
+        )
+        if file_instance is None:
+            db.session.rollback()
+            return
+        if file_instance.readable or file_instance.uri != uri:
+            db.session.rollback()
+            return
+
+        object_versions = (
+            ObjectVersion.query.filter_by(file_id=file_instance_id)
+            .populate_existing()
+            .with_for_update()
+            .all()
+        )
+        if uri is not None:
+            storage = file_instance.storage()
+            try:
+                storage.delete()
+            except FileNotFoundError:
+                pass
+
+        for object_version in object_versions:
+            replacement = FileInstance.create()
+            object_version.file = replacement
+            object_version.file_id = replacement.id
+
+        db.session.flush()
+        file_instance.delete()
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 @shared_task(ignore_result=True)
@@ -46,17 +87,14 @@ def fetch_file(service_id, record_id, file_key):
                         system_identity, record_id, file_key, transfer_metadata
                     )
                     return
-                service.set_file_content(
+                result = service.set_file_content(
                     system_identity,
                     record_id,
                     file_key,
                     response.raw,  # has read method
                 )
-                transfer_metadata.pop("url")
-                transfer_metadata["type"] = LOCAL_TRANSFER_TYPE
-                service.update_transfer_metadata(
-                    system_identity, record_id, file_key, transfer_metadata
-                )
+                if result.errors:
+                    return
                 # commit file
                 service.commit_file(system_identity, record_id, file_key)
         except Exception as e:
@@ -74,6 +112,22 @@ def fetch_file(service_id, record_id, file_key):
         current_app.logger.error(e)
         traceback.print_exc()
         raise
+
+
+@shared_task(
+    ignore_result=True,
+    acks_late=True,
+    retry_backoff=True,
+    max_retries=10,
+    autoretry_for=(Exception,),
+)
+def cleanup_failed_upload(file_instance_id, uri):
+    """Undo a reservation left behind by an upload that could not finish.
+
+    Idempotent: it only touches a file instance that still holds the path the
+    upload wrote, so a committed file or a re-used key is left alone.
+    """
+    discard_failed_upload(file_instance_id, uri)
 
 
 @shared_task(

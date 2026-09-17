@@ -22,6 +22,7 @@ from ..errors import (
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
 from .schema import InitFileSchemaMixin
+from .upload import FileUpload
 
 
 class FileService(Service):
@@ -297,7 +298,6 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    @unit_of_work()
     def delete_file(self, identity, id_, file_key, uow=None, **kwargs):
         """Delete a single file.
 
@@ -306,14 +306,9 @@ class FileService(Service):
         record = self._get_record(
             id_, identity, "delete_files", file_key=file_key, **kwargs
         )
-        deleted_file = record.files.delete(file_key, remove_rf=True)
-
-        self.run_components(
-            "delete_file", identity, id_, file_key, record, deleted_file, uow=uow
+        deleted_file = FileUpload(self).delete_file(
+            identity, id_, record, file_key, uow
         )
-
-        # We also commit the record in case the file was the `default_preview`
-        uow.register(RecordCommitOp(record))
 
         return self.file_result_item(
             self,
@@ -323,19 +318,10 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
-    @unit_of_work()
     def delete_all_files(self, identity, id_, uow=None, **kwargs):
         """Delete all the files of the record."""
         record = self._get_record(id_, identity, "delete_files", **kwargs)
-
-        # We have to separate the gathering of the keys from their deletion
-        # because of how record.files is implemented.
-        file_keys = [fk for fk in record.files]
-        results = [record.files.delete(file_key) for file_key in file_keys]
-
-        self.run_components("delete_all_files", identity, id_, record, results, uow=uow)
-
-        uow.register(RecordCommitOp(record))
+        results = FileUpload(self).delete_all_files(identity, id_, record, uow)
 
         return self.file_result_list(
             self,
@@ -346,7 +332,6 @@ class FileService(Service):
             links_item_tpl=self.file_links_item_tpl(id_),
         )
 
-    @unit_of_work()
     def set_file_content(
         self, identity, id_, file_key, stream, content_length=None, uow=None, **kwargs
     ):
@@ -363,25 +348,13 @@ class FileService(Service):
             content_length=content_length,
             **kwargs,
         )
+        file, error = FileUpload(self).set_content(
+            identity, id_, record, file_key, stream, content_length, uow
+        )
         errors = None
-        try:
-            self.run_components(
-                "set_file_content",
-                identity,
-                id_,
-                file_key,
-                stream,
-                content_length,
-                record,
-                uow=uow,
-            )
-            file = record.files[file_key]
-
-        except FailedFileUploadException as e:
-            file = e.file
-            current_app.logger.exception("File upload transfer failed.")
-            # we gracefully fail so that uow can commit the cleanup operation in
-            # FileContentComponent
+        if error is not None:
+            if not isinstance(error, FailedFileUploadException):
+                current_app.logger.error("File upload transfer failed: %s", error)
             errors = _("File upload transfer failed.")
 
         return self.file_result_item(
@@ -451,7 +424,7 @@ class FileService(Service):
         :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         """
         record = self._get_record(id_, identity, "set_content_files", file_key=file_key)
-        errors = None
+        errors = []
         try:
             self.run_components(
                 "set_multipart_file_content",
@@ -471,14 +444,14 @@ class FileService(Service):
             current_app.logger.exception("File upload transfer failed.")
             # we gracefully fail so that uow can commit the cleanup operation in
             # FileContentComponent
-            errors = "File upload transfer failed."
+            errors.append(_("File upload transfer failed."))
 
         return self.file_result_item(
             self,
             identity,
             file,
             record,
-            errors=errors,
+            errors=errors or None,
             links_tpl=self.file_links_item_tpl(id_),
         )
 

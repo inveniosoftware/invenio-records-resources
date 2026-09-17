@@ -58,3 +58,7 @@ RECORDS_RESOURCES_ZIP_MAX_ENTRIES = 10000
 
 RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE = None
 """Max total file size (bytes) for archive download. ``None`` disables the cap."""
+
+
+RECORDS_RESOURCES_USE_STAGED_TRANSFER = False
+"""Release the database connection while newly initialized files are uploaded."""

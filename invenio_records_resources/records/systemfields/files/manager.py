@@ -307,16 +307,25 @@ class FilesManager(MutableMapping):
         if not self.enabled:
             return
 
+        copyable = {
+            key: rf
+            for key, rf in src_files.items()
+            if rf.object_version is None or rf.has_content
+        }
         bucket_objects = ObjectVersion.query.filter_by(bucket_id=self.bucket_id).count()
         if bucket_objects == 0:
             # bucket is empty
             # copy all object versions to self.bucket
-            objs = ObjectVersion.copy_from(src_files.bucket_id, self.bucket_id)
-            ovs_by_key = {obj["key"]: obj for obj in objs}
+            objs = [
+                rf.object_version.copy(bucket=self.bucket)
+                for rf in copyable.values()
+                if rf.object_version is not None
+            ]
+            ovs_by_key = {obj.key: obj for obj in objs}
             rf_to_bulk_insert = []
 
             record_id = self.record.id
-            for key, rf in src_files.items():
+            for key, rf in copyable.items():
                 new_rf = {
                     "id": uuid.uuid4(),
                     "created": datetime.now(timezone.utc),
@@ -331,7 +340,7 @@ class FilesManager(MutableMapping):
                 # if they change, for example remotely stored time series data with
                 # append). So if there is a local object version, copy it.
                 if key in ovs_by_key:
-                    new_rf["object_version_id"] = ovs_by_key[key]["version_id"]
+                    new_rf["object_version_id"] = ovs_by_key[key].version_id
                 rf_to_bulk_insert.append(new_rf)
 
             if rf_to_bulk_insert:
@@ -345,7 +354,7 @@ class FilesManager(MutableMapping):
         else:
             # if bucket is not empty then we fallback to the slow process of copying
             # files
-            for key, rf in src_files.items():
+            for key, rf in copyable.items():
                 # Copy object version of link existing?
                 if copy_obj:
                     dst_obj = rf.object_version.copy(bucket=self.bucket)
@@ -355,8 +364,10 @@ class FilesManager(MutableMapping):
                 # Copy file record, including all metadata and transfer info
                 self[key] = dst_obj, dict(rf)
 
-        self.default_preview = src_files.default_preview
-        self.order = src_files.order
+        self.default_preview = (
+            src_files.default_preview if src_files.default_preview in copyable else None
+        )
+        self.order = [key for key in src_files.order if key in copyable]
 
     def sync(self, src_files, delete_extras=True):
         """Sync changes from source files to this manager.
@@ -446,12 +457,12 @@ class FilesManager(MutableMapping):
     @property
     def total_bytes(self):
         """Return total number of bytes."""
-        return sum([f.file.size for f in self.entries.values() if f.file])
+        return sum(f.file.size for f in self.entries.values() if f.has_content)
 
     @property
     def mimetypes(self):
         """Return list of mimetypes."""
-        return list({f.file.mimetype for f in self.entries.values() if f.file})
+        return list({f.file.mimetype for f in self.entries.values() if f.has_content})
 
     @property
     def exts(self):
@@ -460,7 +471,7 @@ class FilesManager(MutableMapping):
             {
                 f.file.ext
                 for f in self.entries.values()
-                if f.file and f.file.ext is not None
+                if f.has_content and f.file.ext is not None
             }
         )
 
