@@ -4,6 +4,7 @@
 
 """File service tests."""
 
+import os
 from io import BytesIO
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ from invenio_files_rest.models import FileInstance, ObjectVersion
 from marshmallow import ValidationError
 from sqlalchemy.exc import OperationalError
 
+from invenio_records_resources.proxies import current_transfer_registry
 from invenio_records_resources.services.errors import (
     FileKeyNotFoundError,
     PermissionDeniedError,
@@ -26,6 +28,9 @@ from invenio_records_resources.services.files.components import (
     FileServiceComponent,
 )
 from invenio_records_resources.services.files.tasks import cleanup_failed_upload
+from invenio_records_resources.services.files.transfer.providers.local import (
+    LocalTransfer,
+)
 from invenio_records_resources.services.files.upload import (
     FileUpload,
     UploadConflict,
@@ -644,9 +649,11 @@ def test_multipart_file_upload_local_storage(
 
     content = b"test file content"
     result = upload_part(1, content[:10], 10)
+    assert result.errors == []
     assert result.to_dict()["key"] == key
 
     result = upload_part(2, content[10:], 7)
+    assert result.errors == []
     assert result.to_dict()["key"] == key
 
     result = file_service.commit_file(identity_simple, recid, "article.txt")
@@ -859,6 +866,7 @@ def test_staged_file_flow(
 ):
     """Upload and commit a local file."""
     set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    assert file_service.file_upload.service is file_service
 
     recid = example_file_record["id"]
     file_to_initialise = [
@@ -974,7 +982,7 @@ def test_preallocated_file_content_accepts_external_uow(
             content.getbuffer().nbytes,
             uow=group_uow,
         )
-        assert result.errors is None
+        assert result.errors == []
         group_uow.commit()
 
     db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
@@ -984,6 +992,66 @@ def test_preallocated_file_content_accepts_external_uow(
     assert fr.object_version.file is not None
     assert fr.object_version.file.readable is True
     assert fr.object_version.file.size == 17
+
+
+def test_custom_transfer_uses_classic_upload(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    set_app_config_fn_scoped,
+    monkeypatch,
+):
+    """Preserve custom transfer initialization and content hooks."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    events = []
+
+    class CustomLocalTransfer(LocalTransfer):
+        def init_file(self, record, file_metadata):
+            events.append("init")
+            return super().init_file(record, file_metadata)
+
+        def set_file_content(self, stream, content_length):
+            events.append("content")
+            return super().set_file_content(stream, content_length)
+
+    monkeypatch.setitem(current_transfer_registry._transfers, "L", CustomLocalTransfer)
+    recid = example_file_record["id"]
+
+    file_service.init_files(identity_simple, recid, [{"key": "custom.bin"}])
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["custom.bin"].object_version is None
+
+    file_service.set_file_content(
+        identity_simple, recid, "custom.bin", BytesIO(b"custom"), 6
+    )
+    assert events == ["init", "content"]
+
+
+def test_preallocated_upload_stays_staged_after_transfer_registry_change(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    set_app_config_fn_scoped,
+    monkeypatch,
+):
+    """Keep the persisted staged path after transfer configuration changes."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "persisted.bin"}])
+
+    class CustomLocalTransfer(LocalTransfer):
+        pass
+
+    monkeypatch.setitem(current_transfer_registry._transfers, "L", CustomLocalTransfer)
+    result = file_service.set_file_content(
+        identity_simple, recid, "persisted.bin", BytesIO(b"content"), 7
+    )
+
+    assert result.errors == []
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files["persisted.bin"].is_readable
 
 
 def test_pending_staged_file_skipped_by_dumper_and_manager(
@@ -1070,7 +1138,7 @@ def test_staged_failure_cleanup_and_retry(
         _RaisingStream(b"some-bytes"),
         16,
     )
-    assert result.errors
+    assert result.errors == ["File upload transfer failed."]
 
     assert FileRecordMetadata.query.filter_by(id=fr_id).first() is None
     assert ObjectVersion.query.filter_by(version_id=ov_id).first() is None
@@ -1130,7 +1198,7 @@ def test_preallocated_fetch_failure_preserves_record_and_error(
         16,
     )
 
-    assert result.errors
+    assert result.errors == ["File upload transfer failed."]
     result = file_service.read_file_metadata(
         identity_simple, recid, "failed-fetch.bin"
     ).to_dict()
@@ -1158,6 +1226,7 @@ def test_pending_upload_deletion_cleans_attempt_and_allows_reinitialization(
 
     file_service.delete_file(identity_simple, recid, "abandoned.bin")
 
+    db.session.expire_all()
     assert db.session.get(FileInstance, claim.file_instance_id) is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert "abandoned.bin" not in record.files
@@ -1189,6 +1258,7 @@ def test_deleted_upload_cannot_finalize(
 
     with pytest.raises(UploadConflict, match="was deleted while it was being uploaded"):
         upload._finalize(claim, size, checksum)
+    db.session.expire_all()
     assert db.session.get(FileInstance, claim.file_instance_id) is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.bucket.size == 0
@@ -1221,10 +1291,69 @@ def test_delete_all_files_cleans_pending_upload_attempts(
         "claimed.bin",
         "unclaimed.bin",
     ]
+    db.session.expire_all()
     assert db.session.get(FileInstance, claimed.file_instance_id) is None
     assert db.session.get(FileInstance, unclaimed_id) is None
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert list(record.files) == []
+
+
+def test_delete_all_files_with_uow_cleans_pending_upload_attempts(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Clean staged storage after a caller-managed bulk deletion commits."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "claimed.bin"}])
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    claim = file_service.file_upload._prepare(record, "claimed.bin", content_length=4)
+    claim.storage.save(BytesIO(b"data"), size=4)
+
+    with UnitOfWork(db.session) as group_uow:
+        file_service.delete_all_files(identity_simple, recid, uow=group_uow)
+        group_uow.commit()
+
+    db.session.expire_all()
+    assert db.session.get(FileInstance, claim.file_instance_id) is None
+    assert not os.path.exists(claim.uri)
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert list(record.files) == []
+
+
+def test_failed_staged_default_preview_is_cleared(
+    file_service,
+    location,
+    example_file_record,
+    identity_simple,
+    db,
+    set_app_config_fn_scoped,
+):
+    """Persist removal of a default preview whose upload fails."""
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
+    recid = example_file_record["id"]
+    file_service.init_files(identity_simple, recid, [{"key": "preview.bin"}])
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    record.files.default_preview = "preview.bin"
+    record.commit()
+    db.session.commit()
+
+    result = file_service.set_file_content(
+        identity_simple,
+        recid,
+        "preview.bin",
+        _RaisingStream(b"partial"),
+        16,
+    )
+
+    assert result.errors == ["File upload transfer failed."]
+    db.session.expire_all()
+    record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    assert record.files.default_preview is None
 
 
 def test_finishing_an_upload_twice_is_safe(
@@ -1253,7 +1382,7 @@ def test_finishing_an_upload_twice_is_safe(
     assert record.bucket.size == 4
 
 
-def test_staged_upload_runs_components_around_content(
+def test_custom_content_components_use_classic_upload(
     file_service,
     location,
     example_file_record,
@@ -1261,7 +1390,7 @@ def test_staged_upload_runs_components_around_content(
     monkeypatch,
     set_app_config_fn_scoped,
 ):
-    """Run component hooks on either side of the staged content operation."""
+    """Preserve custom component hooks by using the classic upload path."""
     set_app_config_fn_scoped({"RECORDS_RESOURCES_USE_STAGED_TRANSFER": True})
     events = []
 
@@ -1270,7 +1399,7 @@ def test_staged_upload_runs_components_around_content(
             self, identity, id_, file_key, stream, content_length, record
         ):
             assert self.uow
-            assert record.files[file_key].object_version.file.uri is None
+            assert record.files[file_key].object_version is None
             events.append("before")
 
     class AfterContent(FileServiceComponent):
@@ -1278,7 +1407,6 @@ def test_staged_upload_runs_components_around_content(
             self, identity, id_, file_key, stream, content_length, record
         ):
             assert self.uow
-            assert record.files[file_key].is_readable
             events.append("after")
 
     components = list(file_service.config.components)
@@ -1293,7 +1421,7 @@ def test_staged_upload_runs_components_around_content(
         identity_simple, recid, "components.bin", BytesIO(b"data"), 4
     )
 
-    assert result.errors is None
+    assert result.errors == []
     assert events == ["before", "after"]
 
 
@@ -1343,7 +1471,7 @@ def test_upload_reconciles_uncertain_commits(
         4,
     )
 
-    assert result.errors is None
+    assert result.errors == []
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.files["uncertain.bin"].is_readable
     assert record.bucket.size == 4
@@ -1600,7 +1728,7 @@ def test_cleanup_task_returns_a_stuck_upload_to_pending(
     result = file_service.set_file_content(
         identity_simple, recid, "stuck.bin", BytesIO(b"redo"), 4
     )
-    assert result.errors is None
+    assert result.errors == []
     file_service.commit_file(identity_simple, recid, "stuck.bin")
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.files["stuck.bin"].object_version.file.readable is True
