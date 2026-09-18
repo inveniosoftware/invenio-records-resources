@@ -48,7 +48,7 @@ RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE = 64 * 1024
 """Max header size of ZIP file that can be preloaded."""
 
 RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED = 500 * 1024 * 1024  # 500 MB
-"""Max allowed uncompressed size of ZIP."""
+"""Max allowed uncompressed size of ZIP. Set to ``None`` to disable the limit."""
 
 RECORDS_RESOURCES_ZIP_MAX_RATIO = 200.0
 """Max allowed compression ratio of an entry inside ZIP file."""
