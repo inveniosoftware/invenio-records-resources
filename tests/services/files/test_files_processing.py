@@ -8,7 +8,7 @@ from unittest.mock import ANY, MagicMock, call
 
 import pytest
 from invenio_pidstore.errors import PIDDoesNotExistError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, StaleDataError
 
 from invenio_records_resources.services.files.components import processor
 from invenio_records_resources.tasks import extract_file_metadata
@@ -77,6 +77,7 @@ def test_zip_meta_extraction(
     ("service_id", "fallback_service_id", "error"),
     [
         ("draft-files", "files", NoResultFound()),
+        ("draft-files", "files", StaleDataError()),
         (
             "draft-media-files",
             "media-files",
