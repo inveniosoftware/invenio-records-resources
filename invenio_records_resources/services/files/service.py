@@ -18,6 +18,7 @@ from ..errors import (
     FailedFileUploadException,
     FileKeyNotFoundError,
     NoExtractorFoundError,
+    PermissionDeniedError,
 )
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
@@ -119,12 +120,17 @@ class FileService(Service):
         # and if it does not exist, will return a permission denied, resulting in 403
         # status code. By reveresing the order, we can return a more specific
         # 404 status code.
+        # If permission is denied, we still return 404 to avoid leaking
+        # information about file existence to unauthorized users.
         if file_key and file_key not in record.files:
             raise FileKeyNotFoundError(id_, file_key)
 
-        self.require_permission(
-            identity, action, record=record, file_key=file_key, **kwargs
-        )
+        try:
+            self.require_permission(
+                identity, action, record=record, file_key=file_key, **kwargs
+            )
+        except PermissionDeniedError:
+            raise FileKeyNotFoundError(id_, file_key)
 
         return record
 
