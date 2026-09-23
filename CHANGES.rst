@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.1.1 (released 2026-09-23)
+
+- fix(files): retry metadata extraction on StaleDataError
+
 Version v11.1.0 (released 2026-09-21)
 
 - files: release database connections while local and fetch uploads stream to storage.
