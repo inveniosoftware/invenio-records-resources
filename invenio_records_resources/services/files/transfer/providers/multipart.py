@@ -4,6 +4,7 @@
 
 """Multipart file transfer provider."""
 
+import logging
 from datetime import datetime, timedelta, timezone
 
 import marshmallow as ma
@@ -14,11 +15,11 @@ from invenio_files_rest.models import FileInstance, ObjectVersion
 from ....errors import TransferException
 from ....uow import RecordCommitOp, TaskOp
 from ...schema import BaseTransferSchema
-from ...tasks import (
-    recompute_multipart_checksum_task,
-)
+from ...tasks import recompute_multipart_checksum_task
 from ..base import Transfer, TransferStatus
 from ..constants import LOCAL_TRANSFER_TYPE, MULTIPART_TRANSFER_TYPE
+
+logger = logging.getLogger(__name__)
 
 
 class MultipartStorageExt:
@@ -122,6 +123,18 @@ class MultipartStorageExt:
         """
         if hasattr(self._storage, "multipart_abort_upload"):
             return self._storage.multipart_abort_upload(**multipart_metadata)
+
+    def multipart_upload_exists(self, **multipart_metadata):
+        """Return True if the multipart upload is still active in the storage backend.
+
+        Returns True for backends that do not implement this check (safe default).
+
+        :param multipart_metadata: The metadata returned by multipart_initialize_upload.
+        :returns: True if the upload is still active (or unknown), False if gone.
+        """
+        if hasattr(self._storage, "multipart_upload_exists"):
+            return self._storage.multipart_upload_exists(**multipart_metadata)
+        return True
 
     def multipart_links(self, base_url, **multipart_metadata):
         """
@@ -312,9 +325,21 @@ class MultipartTransfer(Transfer):
 
     @property
     def status(self):
-        """Get the status of the transfer."""
-        # if the storage_class is M, return pending
-        # after commit, the storage class is changed to L (same way as FETCH works)
+        """Get the status of the transfer.
+
+        Returns FAILED if the storage backend confirms the multipart upload no longer
+        exists (e.g. aborted or expired in S3). Returns PENDING otherwise.
+        """
+        try:
+            storage = self._get_storage()
+            if not storage.multipart_upload_exists(**self.multipart_metadata):
+                return TransferStatus.FAILED
+        except Exception:
+            logger.warning(
+                "Could not check multipart upload existence for file %s; assuming pending.",
+                self.file_record.key,
+                exc_info=True,
+            )
         return TransferStatus.PENDING
 
     def expand_links(self, identity, self_url):
