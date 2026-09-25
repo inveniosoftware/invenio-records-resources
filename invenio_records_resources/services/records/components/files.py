@@ -61,6 +61,7 @@ class BaseRecordFilesComponent(FileConfigMixin, ServiceComponent):
     It only deals with:
     - enabled / disabled (metadata-only) files
     - default_preview
+    - order
     """
 
     def __init__(self, service):
@@ -107,6 +108,18 @@ class BaseRecordFilesComponent(FileConfigMixin, ServiceComponent):
                 e.get_description(), field_name=f"{self.files_data_key}.default_preview"
             )
 
+    def assign_files_order(self, record, order):
+        """Assign files order."""
+        record_files = self.get_record_files(record)
+        if order is None:
+            order = []
+        try:
+            record_files.order = order
+        except InvalidKeyError as e:
+            raise ValidationError(
+                e.get_description(), field_name=f"{self.files_data_key}.order"
+            )
+
     def create(self, identity, data=None, record=None, errors=None, **kwargs):
         """Inject parsed files options in the record."""
         # "enabled" presence is guaranteed by schema
@@ -117,10 +130,13 @@ class BaseRecordFilesComponent(FileConfigMixin, ServiceComponent):
         """Inject parsed files options in the record."""
         # "enabled" presence is guaranteed by schema
 
-        enabled = data[self.files_data_key]["enabled"]
+        files_data = data[self.files_data_key]
+        enabled = files_data["enabled"]
         self.assign_files_enabled(record, enabled)
-        default_preview = data[self.files_data_key].get("default_preview")
+        default_preview = files_data.get("default_preview")
         self.assign_files_default_preview(record, default_preview)
+        if "order" in files_data:
+            self.assign_files_order(record, files_data.get("order"))
 
 
 FilesAttrConfig = {
