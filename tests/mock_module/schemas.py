@@ -100,6 +100,7 @@ class FilesSchema(Schema):
     enabled = fields.Bool(load_default=True)
     # allow unsetting
     default_preview = SanitizedUnicode(allow_none=True)
+    order = fields.List(SanitizedUnicode())
 
     def get_attribute(self, obj, attr, default):
         """Override how attributes are retrieved when dumping.
@@ -112,7 +113,7 @@ class FilesSchema(Schema):
         """
         value = getattr(obj, attr, default)
 
-        if attr == "default_preview" and not value:
+        if attr in ("default_preview", "order") and not value:
             return default
 
         return value
