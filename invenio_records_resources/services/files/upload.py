@@ -142,7 +142,7 @@ class FileUpload:
         file_instance = FileInstance.create()
         uow.register(ModelCommitOp(file_instance))
         obj = ObjectVersion.create(
-            record.bucket,
+            record.files.bucket,
             file_metadata["key"],
             _file_id=file_instance,
         )
@@ -585,7 +585,7 @@ class FileUpload:
                         f'File "{file_key}" is already being uploaded.'
                     )
 
-                bucket = record.bucket
+                bucket = record.files.bucket
                 size_limit = bucket.size_limit
                 if content_length and size_limit and content_length > size_limit:
                     raise FileSizeError(
