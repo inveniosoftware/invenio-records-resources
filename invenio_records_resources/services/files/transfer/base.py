@@ -79,7 +79,7 @@ class Transfer(ABC):
 
     def set_file_content(self, stream, content_length):
         """Set file content."""
-        bucket = self.record.bucket
+        bucket = self.record.files.bucket
 
         size_limit = bucket.size_limit
         if content_length and size_limit and content_length > size_limit:
