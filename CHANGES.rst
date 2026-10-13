@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.1.2 (released 2026-10-13)
+
+- fix(files): use the files manager's bucket for staged uploads
+
 Version v11.1.1 (released 2026-09-23)
 
 - fix(files): retry metadata extraction on StaleDataError
