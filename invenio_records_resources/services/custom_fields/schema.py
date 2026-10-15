@@ -32,6 +32,11 @@ class CustomFieldsSchema(Schema):
         """Loads the custom fields values."""
         return self._schema.load(data=data)
 
+    class Meta:
+        # configuration for deep fried marshmallow, ignored if deepfriedmarshmallow is not installed
+        # needs to be present in order to serialize systemfields correctly
+        jit_options = {"expected_serialize_type": "hybrid"}
+
 
 class CustomFieldsSchemaUI(CustomFieldsSchema):
     """Marshmallow schema for custom fields in the UI."""
