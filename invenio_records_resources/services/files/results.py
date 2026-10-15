@@ -5,6 +5,7 @@
 
 """File service results."""
 
+import urllib.parse
 from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
@@ -250,9 +251,10 @@ class ContainerItemResult(ServiceItemResult):
 
             chunk_iterator = generator()
 
-        headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
-        }
+            filename_encoded = urllib.parse.quote(filename, safe="", encoding="utf-8")
+            headers = {
+                "Content-Disposition": f'attachment; filename="{filename_encoded}"',
+            }
         if self.size is not None:
             headers["Content-Length"] = str(self.size)
 
