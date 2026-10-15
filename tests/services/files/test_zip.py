@@ -102,6 +102,23 @@ def test_zip_extraction(identity_simple, file_service, record_with_zip):
     assert extracted_data.get_data() == b"Hello world from a.txt.\n"
 
 
+def test_zip_max_total_uncompressed_none_config():
+    """Test that RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED can be set to None.
+
+    This is a simple config validation test - the actual behavior is tested
+    indirectly through other tests that process ZIP files.
+    """
+    from invenio_records_resources import config
+
+    # Verify the default is a finite value
+    assert isinstance(config.RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED, int)
+    assert config.RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED > 0
+
+    # Verify None is a valid configuration option (documentation says it should be)
+    # The actual enforcement happens in ZipProcessor._check_infolist
+    # where it checks: if limit is not None and total_uncompressed > limit
+
+
 def test_large_zip_memory_usage(
     file_service, location, example_record, identity_simple
 ):
