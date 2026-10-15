@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2020-2024 CERN.
-# SPDX-FileCopyrightText: 2025 CESNET.
+# SPDX-FileCopyrightText: 2025-2026 CESNET.
 # SPDX-License-Identifier: MIT
 
 """File service tests."""
@@ -1800,3 +1800,75 @@ def test_reserved_uploads_do_not_count_towards_total_bytes(
     record = file_service.record_cls.pid.resolve(recid, registered_only=False)
     assert record.files["pending.bin"].has_content is True
     assert record.files.total_bytes == 4
+
+
+@pytest.fixture()
+def http_gzip_server():
+    """In-process HTTP server serving a gzip-encoded body.
+
+    Yields a tuple ``(base_url, expected_content)`` where ``base_url`` points to
+    a handler that always responds with ``Content-Encoding: gzip`` and the
+    gzip-compressed form of ``expected_content``.
+    """
+    import gzip
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    content = b"test file content\n" * 4096  # big enough to chunk
+    compressed = gzip.compress(content)
+
+    class _Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(compressed)))
+            self.end_headers()
+            self.wfile.write(compressed)
+
+        def log_message(self, *args):  # keep test output quiet
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address
+    try:
+        yield f"http://{host}:{port}/file", content
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+
+def test_fetch_file_with_gzip_content_encoding(
+    file_service,
+    example_file_record,
+    identity_simple,
+    location,
+    http_gzip_server,
+    set_app_config_fn_scoped,
+):
+    """Check that a fetched file served with Content-Encoding: gzip is stored decompressed."""
+    from urllib.parse import urlparse
+
+    url, expected_content = http_gzip_server
+    netloc = urlparse(url).netloc
+    set_app_config_fn_scoped({"RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS": [netloc]})
+
+    recid = example_file_record["id"]
+    file_service.init_files(
+        identity_simple,
+        recid,
+        [{"key": "article.txt", "transfer": {"url": url, "type": "F"}}],
+    )
+
+    db_record = file_service.record_cls.pid.resolve(recid, registered_only=False)
+    fr = db_record.files["article.txt"]
+    fi = fr.object_version.file
+    assert fi.readable is True
+    assert fi.size == len(expected_content)
+
+    content = file_service.get_file_content(identity_simple, recid, "article.txt")
+    with content.get_stream("rb") as stream:
+        assert stream.read() == expected_content
