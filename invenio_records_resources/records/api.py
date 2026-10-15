@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020-2024 CERN.
+# SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020 Northwestern University.
 # SPDX-FileCopyrightText: 2025 CESNET.
 # SPDX-License-Identifier: MIT
@@ -162,6 +162,19 @@ class FileRecord(RecordBase, SystemFieldsMixin):
 
             if not with_deleted:
                 query = query.filter(cls.model_cls.is_deleted != True)
+
+            for obj in query:
+                yield cls(obj.data, model=obj)
+
+    @classmethod
+    def list_deleted_by_keys(cls, record_id, keys):
+        """List soft-deleted record files by record ID and filenames/keys."""
+        with db.session.no_autoflush:
+            query = cls.model_cls.query.filter(
+                cls.model_cls.record_id == record_id,
+                cls.model_cls.key.in_(list(keys)),
+                cls.model_cls.is_deleted == True,
+            )
 
             for obj in query:
                 yield cls(obj.data, model=obj)

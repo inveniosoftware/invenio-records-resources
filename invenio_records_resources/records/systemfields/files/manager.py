@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020-2024 CERN.
+# SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020-2021 Northwestern University.
 # SPDX-FileCopyrightText: 2025 CESNET.
 # SPDX-FileCopyrightText: 2025 Graz University of Technology.
@@ -155,6 +155,15 @@ class FilesManager(MutableMapping):
         """Unlock the bucket."""
         self.bucket.locked = False
 
+    def _reclaim_keys(self, keys):
+        """Hard delete soft-deleted file records so their keys can be reused."""
+        keys = set(keys)
+        if not keys:
+            return
+
+        for rf in self.file_cls.list_deleted_by_keys(self.record.id, keys):
+            rf.delete(force=True)
+
     # TODO: "create" and "update" should be merged somehow...
     @ensure_enabled
     def create(
@@ -172,6 +181,8 @@ class FilesManager(MutableMapping):
 
         if key in self:
             raise InvalidKeyError(description=f"File with key {key} already exists.")
+
+        self._reclaim_keys([key])
 
         rf = self.file_cls.create({}, key=key, record_id=self.record.id)
         if stream:
@@ -325,6 +336,7 @@ class FilesManager(MutableMapping):
             rf_to_bulk_insert = []
 
             record_id = self.record.id
+            self._reclaim_keys(copyable)
             for key, rf in copyable.items():
                 new_rf = {
                     "id": uuid.uuid4(),

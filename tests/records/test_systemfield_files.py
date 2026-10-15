@@ -495,3 +495,76 @@ def test_record_files_access_implicit_not_set(base_app, db, location):
     data = record.dumps()
     assert data["files"]["entries"][0].get("access") is None
     assert record.files["f1.txt"].model.json.get("access") is None
+
+
+def test_reacreate_file_with_soft_deleted_kwy(base_app, db, location):
+    """Check that soft-deleting a file and uploading a new one
+    does not create a unique index problem."""
+
+    # Create the record
+    file_name = "test.pdf"
+    record = Record.create({})
+    record.files[file_name] = BytesIO(b"testfile")
+    original_id = record.files[file_name].id
+    record.commit()
+    db.session.commit()
+    assert models.FileRecordMetadata.query.count() == 1
+
+    # Soft delete the record
+    record.files.delete(file_name)
+    record.commit()
+    db.session.commit()
+
+    # Row survives but manager can't see it
+    assert models.FileRecordMetadata.query.count() == 1
+    assert file_name not in record.files
+    assert {
+        rf.key for rf in FileRecord.list_by_record(record.id, with_deleted=True)
+    } == {file_name}
+
+    # Adding same key does not throw unique error
+    record.files[file_name] = BytesIO(b"testfile_again")
+    record.commit()
+    db.session.commit()
+
+    rows = models.FileRecordMetadata.query.filter_by(record_id=record.id).all()
+    assert len(rows) == 1
+    assert rows[0].key == file_name
+    assert not rows[0].is_deleted
+    assert rows[0].id != original_id
+    assert record.files[file_name].object_version_id is not None
+
+
+def test_copy_over_soft_deleted_key(base_app, db, location):
+    """Check that copying over soft-deleted file does not
+    create a unique index problem."""
+
+    # Get source record
+    file_name = "test.pdf"
+    src = Record.create({})
+    src.files[file_name] = BytesIO(b"testfile")
+    src.commit()
+    db.session.commit()
+
+    # Destination record that once had the swame key, soft-deleted
+    dst = Record.create({})
+    dst.files[file_name] = {"metadata": {"description": "stale"}}
+    stale_id = dst.files[file_name].id
+    dst.files.delete(file_name)
+    dst.commit()
+    db.session.commit()
+
+    assert ObjectVersion.query.filter_by(bucket_id=dst.bucket_id).count() == 0
+    assert models.FileRecordMetadata.query.filter_by(record_id=dst.id).count() == 1
+
+    # Used to raise UniqueViolation on the insert
+    dst.files.copy(src.files)
+    dst.commit()
+    db.session.commit()
+
+    rows = models.FileRecordMetadata.query.filter_by(record_id=dst.id).all()
+    assert len(rows) == 1
+    assert rows[0].key == file_name
+    assert not rows[0].is_deleted
+    assert rows[0].id != stale_id
+    assert dst.files[file_name].object_version_id is not None
