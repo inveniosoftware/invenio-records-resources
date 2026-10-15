@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2025 CESNET i.a.l.e.
+# SPDX-FileCopyrightText: 2026 KTH Royal Institute of Technology.
 # SPDX-License-Identifier: MIT
 
 """ZIP file processor that builds and caches a table of contents for efficient extraction."""
@@ -28,7 +29,7 @@ class ZipProcessor(FileProcessor):
         try:
             toc_position = self._check_zip_file(file_record)
             metadata.update({"zip_toc_position": toc_position})
-        except InvalidZipException as e:
+        except (InvalidZipException, zipfile.BadZipFile) as e:
             metadata.update({"error": str(e)})
 
         file_record.metadata = metadata
