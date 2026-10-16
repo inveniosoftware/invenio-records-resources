@@ -3,6 +3,7 @@
 
 """Lucene query syntax parser."""
 
+import re
 from copy import deepcopy
 from functools import partial
 
@@ -13,6 +14,28 @@ from luqum.parser import parser as luqum_parser
 from werkzeug.utils import cached_property
 
 from invenio_records_resources.services.errors import QuerystringValidationError
+
+
+def normalise_quotes(query_str):
+    """Turn typographic and single quotes into the double quotes Lucene uses for phrases."""
+    # Typographic quotes that users paste from word processors. Mapped to the
+    # ASCII quotes that Lucene uses for phrases.
+    quote_translation = str.maketrans(
+        {
+            "“": '"',  # “
+            "”": '"',  # ”
+            "‘": "'",  # ‘
+            "’": "'",  # ’
+        }
+    )
+    query_str = query_str.translate(quote_translation)
+
+    # A single-quoted phrase: the quote must not be attached to a word on either side,
+    # so apostrophes in "don't" or "John's" are left alone.
+    single_quoted_phrase = re.compile(r"(?<!\w)'([^'\n]+)'(?!\w)")
+    query_str = single_quoted_phrase.sub(r'"\1"', query_str)
+
+    return query_str
 
 
 class QueryParser:
@@ -114,6 +137,7 @@ class QueryParser:
 
     def parse(self, query_str):
         """Parse the query."""
+        query_str = normalise_quotes(query_str)
         try:
             # We parse the Lucene query syntax in Python, so we know upfront
             # if the syntax is correct before executing it in the search engine
