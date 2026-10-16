@@ -22,10 +22,10 @@ def normalise_quotes(query_str):
     # ASCII quotes that Lucene uses for phrases.
     quote_translation = str.maketrans(
         {
-            "“": '"',  # “
-            "”": '"',  # ”
-            "‘": "'",  # ‘
-            "’": "'",  # ’
+            "\u201c": '"',  # Left double quotation mark
+            "\u201d": '"',  # Right double quotation mark
+            "\u2018": "'",  # Left single quotation mark
+            "\u2019": "'",  # Right single quotation mark
         }
     )
     query_str = query_str.translate(quote_translation)
