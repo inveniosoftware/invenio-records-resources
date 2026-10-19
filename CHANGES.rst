@@ -8,6 +8,10 @@
 Changes
 =======
 
+Version v10.2.4 (released 2026-10-19)
+
+- fix(files): persist malformed zip errors
+
 Version v10.2.3 (released 2026-09-17)
 
 - fix(tests): changed minio to rustfs
