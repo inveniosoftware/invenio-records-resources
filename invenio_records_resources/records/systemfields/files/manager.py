@@ -232,10 +232,10 @@ class FilesManager(MutableMapping):
         self[file_key] = file_obj
 
     @ensure_enabled
-    def delete(self, key, remove_obj=True, softdelete_obj=True, remove_rf=False):
+    def delete(self, key, remove_obj=True, softdelete_obj=True, remove_rf=True):
         """Delete a file.
 
-        Defaults to soft deletion of record file metadata and object versions.
+        Defaults to hard deletion of file records and soft deletion of object versions.
 
         :param key: The file name to delete.
         :param remove_obj: Boolean to remove the associated object version.
@@ -248,7 +248,8 @@ class FilesManager(MutableMapping):
         cached_ov = self._wip_ov_cache.pop(key, None)
         ov = rf.object_version or cached_ov
 
-        # Remove or softdelete the entire row
+        # Soft-deleted rows keep their (record_id, key) unique index entry and block
+        # reusing the key. Versioned tables can still keep history.
         rf.delete(force=remove_rf)
         if ov and remove_obj:
             # Set information for later, in case the removed object was still WIP
@@ -269,7 +270,7 @@ class FilesManager(MutableMapping):
         return rf
 
     @ensure_enabled
-    def delete_all(self, remove_obj=True, softdelete_obj=True, remove_rf=False):
+    def delete_all(self, remove_obj=True, softdelete_obj=True, remove_rf=True):
         """Delete all file records."""
         for key in list(self.keys()):
             self.delete(
