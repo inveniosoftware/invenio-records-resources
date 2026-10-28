@@ -9,6 +9,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from files_utils import add_file_to_record
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_access.permissions import system_identity
@@ -173,6 +174,23 @@ def test_file_flow(file_service, location, example_file_record, identity_simple,
     # Delete all remaining files
     result = file_service.delete_all_files(identity_simple, recid)
     assert list(result.entries) == []
+
+
+def test_reupload_after_delete_all_files(
+    file_service, location, example_file_record, identity_simple
+):
+    """Test uploading a file again after deleting all files of the record."""
+    recid = example_file_record["id"]
+    add_file_to_record(file_service, recid, "article.txt", identity_simple)
+
+    file_service.delete_all_files(identity_simple, recid)
+    assert list(file_service.list_files(identity_simple, recid).entries) == []
+
+    result = add_file_to_record(file_service, recid, "article.txt", identity_simple)
+    assert result.to_dict()["key"] == "article.txt"
+    entries = file_service.list_files(identity_simple, recid).entries
+    assert [e["key"] for e in entries] == ["article.txt"]
+    assert FileRecordMetadata.query.filter_by(key="article.txt").count() == 1
 
 
 def test_init_files(file_service, location, example_file_record, identity_simple):
