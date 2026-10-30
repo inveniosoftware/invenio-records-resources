@@ -48,6 +48,7 @@ class FileServiceConfig(ServiceConfig):
     # At the resource level and link serialization (service) level
     allow_upload = True
     allow_archive_download = True
+    allow_container = True
 
     components = [
         FileMetadataComponent,

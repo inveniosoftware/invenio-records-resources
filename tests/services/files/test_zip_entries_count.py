@@ -86,7 +86,9 @@ def test_zip_listing_too_many_entries(app, max_entries, zip64):
     """Archives over the limit are refused when listing them."""
     file_record, stream = stored_file(make_zip(6, zip64=zip64))
 
-    with pytest.raises(InvalidFileContentError, match="Too many files in ZIP: 6 > 5"):
+    with pytest.raises(
+        InvalidFileContentError, match="Too many files inside the ZIP file."
+    ):
         ZipExtractor().list(file_record)
     assert stream.closed
 
@@ -96,7 +98,9 @@ def test_zip_open_too_many_entries(app, max_entries, zip64):
     """Archives over the limit are refused when extracting from them."""
     file_record, stream = stored_file(make_zip(6, zip64=zip64))
 
-    with pytest.raises(InvalidFileContentError, match="Too many files in ZIP: 6 > 5"):
+    with pytest.raises(
+        InvalidFileContentError, match="Too many files inside the ZIP file."
+    ):
         ZipExtractor().open(file_record, "folder0/file000000.txt")
     assert stream.closed
 
@@ -106,7 +110,9 @@ def test_zip_listing_reads_only_the_end_of_large_archives(app):
     data = make_zip(100_000)
     file_record, stream = stored_file(data)
 
-    with pytest.raises(InvalidFileContentError, match="Too many files in ZIP"):
+    with pytest.raises(
+        InvalidFileContentError, match="Too many files inside the ZIP file."
+    ):
         ZipExtractor().list(file_record)
 
     assert len(data) > 10 * 2**20
@@ -129,7 +135,7 @@ def test_zip_processor_too_many_entries(app, max_entries):
 
     ZipProcessor().process(file_record)
 
-    assert file_record.metadata == {"error": "Too many files in ZIP: 100000 > 5"}
+    assert file_record.metadata == {"error": "Too many files inside the ZIP file"}
     assert stream.bytes_read < 128 * 2**10
 
 
