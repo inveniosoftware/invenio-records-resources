@@ -6,7 +6,7 @@
 
 """Resource tests for zip files."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -193,3 +193,21 @@ def test_zip_metadata_on_record_with_zip(
     # Make a GET request for a commited file and check that zip_toc_position is in the metadata
     res = client.get(f"/mocks/{recid}/files/testzip.zip", headers=headers)
     assert res.json["metadata"]["zip_toc_position"] == 236
+
+
+def test_container_too_many_entries(
+    app, file_service, location, record_with_zip, client, headers
+):
+    """A ZIP with too many entries gives an API error instead of an exception."""
+    recid = record_with_zip["id"]
+
+    with patch.dict(app.config, {"RECORDS_RESOURCES_ZIP_MAX_ENTRIES": 2}):
+        res = client.get(f"/mocks/{recid}/files/testzip.zip/container", headers=headers)
+        assert res.status_code == 400
+        assert "Too many files inside the ZIP file." in res.json["message"]
+
+        res = client.get(
+            f"/mocks/{recid}/files/testzip.zip/container/a.txt", headers=headers
+        )
+        assert res.status_code == 400
+        assert "Too many files inside the ZIP file." in res.json["message"]
