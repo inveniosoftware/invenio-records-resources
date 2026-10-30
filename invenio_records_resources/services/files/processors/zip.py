@@ -26,7 +26,7 @@ def check_zip_entries_count(fp):
     entries = endrec[zipfile._ECD_ENTRIES_TOTAL]
     max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
     if entries > max_files:
-        raise InvalidZipException(f"Too many files in ZIP: {entries} > {max_files}")
+        raise InvalidZipException("Too many files inside the ZIP file")
 
 
 class ZipProcessor(FileProcessor):
@@ -68,9 +68,7 @@ class ZipProcessor(FileProcessor):
         # max files count check
         max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
         if len(infolist) > max_files:
-            raise InvalidZipException(
-                f"Too many files in ZIP: {len(infolist)} > {max_files}"
-            )
+            raise InvalidZipException("Too many files inside the ZIP file")
 
         total_uncompressed = 0
         for info in infolist:

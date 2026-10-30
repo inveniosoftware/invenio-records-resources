@@ -23,6 +23,7 @@ set -o nounset
 function cleanup() {
     eval "$(docker-services-cli down --env)"
 }
+
 # Check for arguments
 # Note: "-k" would clash with "pytest"
 keep_services=0

@@ -36,7 +36,7 @@ def _open_checked(file_record):
         check_zip_entries_count(f)
     except InvalidZipException as e:
         f.close()
-        raise InvalidFileContentError(file_record.key, str(e))
+        raise InvalidFileContentError(file_record.key, str(e)) from e
     except BaseException:
         f.close()
         raise
