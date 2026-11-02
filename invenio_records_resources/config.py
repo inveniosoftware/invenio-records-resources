@@ -36,7 +36,16 @@ One of 'L' (local), 'F' (fetch), 'R' (point to remote), 'M' (multipart)."""
 
 
 RECORDS_RESOURCES_EXTRACTED_STREAM_CHUNK_SIZE = 64 * 1024
-"""Chunk size of extracted stream used in ContainerItemResult.send_file()."""
+"""Chunk size of extracted stream used in ContainerItemResult.send_file().
+
+This config controls the chunk size when streaming extracted files from ZIP
+archives. The value is passed to invenio_files_rest.helpers.send_stream().
+
+Note: This configuration may be deprecated in the future in favor of using
+invenio-files-rest's default chunk size (5 MB) for consistency across all
+file serving. Consider testing with larger values (e.g., 5 MB) before
+removing this custom setting.
+"""
 
 RECORDS_RESOURCES_ZIP_FORMATS = [".zip"]
 """File extensions interpreted as ZIP files."""
