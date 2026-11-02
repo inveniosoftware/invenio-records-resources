@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: 2025 CESNET i.a.l.e.
+# SPDX-License-Identifier: MIT
+
+"""ZIP files tests."""
+
 import io
 import zipfile
-from os.path import dirname, join
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,6 +12,64 @@ import pytest
 from invenio_records_resources.services.errors import InvalidFileContentError
 from invenio_records_resources.services.files.components import processor
 from invenio_records_resources.tasks import extract_file_metadata
+
+
+@pytest.fixture()
+def zip_with_non_ascii_filenames(
+    file_service, location, example_record, identity_simple, monkeypatch
+):
+    """Create a record with a ZIP file containing non-ASCII filenames.
+
+    The ZIP contains files with Unicode characters in filenames to test
+    proper handling of non-UTF-8 encoded filenames from various locales.
+    """
+    task = MagicMock()
+    monkeypatch.setattr(processor, "extract_file_metadata", task)
+
+    recid = example_record["id"]
+
+    # Create a ZIP file with non-ASCII filenames
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        # Add files with various non-ASCII characters in filenames
+        zipf.writestr("file_über.txt", "Content 1")
+        zipf.writestr("données_fichier.txt", "Content 2")
+        zipf.writestr("archivo_prueba_ñ.txt", "Content 3")
+    zip_buffer.seek(0)
+
+    metadata = {"type": "zip"}
+    file_service.init_files(
+        identity_simple,
+        recid,
+        data=[{"key": "non_ascii_test.zip", "metadata": metadata}],
+    )
+    file_service.set_file_content(
+        identity_simple, recid, "non_ascii_test.zip", zip_buffer
+    )
+    file_service.commit_file(identity_simple, recid, "non_ascii_test.zip")
+
+    # Call the metadata extraction task manually
+    extract_file_metadata(*task.apply_async.call_args[1]["args"])
+
+    return example_record
+
+
+def test_zip_open_non_ascii_filenames(
+    identity_simple, file_service, zip_with_non_ascii_filenames
+):
+    """Test that files with non-ASCII filenames can be opened correctly.
+
+    This verifies that the open() method can find and open files
+    with Unicode characters in their names.
+    """
+    recid = zip_with_non_ascii_filenames["id"]
+
+    # Open a file with non-ASCII characters
+    with file_service.open_container_item(
+        identity_simple, recid, "non_ascii_test.zip", "file_über.txt"
+    ) as f:
+        data = f.read()
+        assert data == b"Content 1"
 
 
 @pytest.fixture()
