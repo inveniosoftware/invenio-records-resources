@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2022-2024 CERN.
-# SPDX-FileCopyrightText: 2025 CESNET.
+# SPDX-FileCopyrightText: 2025-2026 CESNET.
 # SPDX-License-Identifier: MIT
 
 """Files tasks."""
@@ -95,6 +95,10 @@ def fetch_file(service_id, record_id, file_key, file_record_id=None):
                         system_identity, record_id, file_key, transfer_metadata
                     )
                     return
+                # response.raw is urllib3.response.HTTPResponse which might be a raw compressed stream.
+                # If it is, we need to decompress it when it is saved to the file storage. Setting
+                # decode_content to True will decompress it automatically.
+                response.raw.decode_content = True
                 result = service.set_file_content(
                     system_identity,
                     record_id,
