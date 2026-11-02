@@ -250,8 +250,10 @@ class ContainerItemResult(ServiceItemResult):
 
             chunk_iterator = generator()
 
+        # Set Content-Disposition based on as_attachment parameter
+        disposition = "attachment" if as_attachment else "inline"
         headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Disposition": f'{disposition}; filename="{filename}"',
         }
         if self.size is not None:
             headers["Content-Length"] = str(self.size)
