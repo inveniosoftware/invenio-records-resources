@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020-2024 CERN.
+# SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020 Northwestern University.
 # SPDX-FileCopyrightText: 2025 Graz University of Technology.
 # SPDX-License-Identifier: MIT
@@ -378,6 +378,43 @@ def test_record_files_copy_disabled(base_app, db, location):
     assert dst.files.enabled is True
     dst.files.copy(src.files)
     assert dst.files.enabled is False
+
+
+def test_record_files_sync(base_app, db, location):
+    """Test record files sync correctly when setting default_preview."""
+    # Create destination record
+    dst = Record.create({})
+    dst.files["f1.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "Old test file"}},
+    )
+    dst.files.default_preview = "f1.pdf"
+    dst.files.order = ["f1.pdf"]
+    dst.commit()
+    db.session.commit()
+
+    # Create source record with new files
+    src = Record.create({})
+    src.files["f2.pdf"] = (
+        BytesIO(b"testfile"),
+        {"metadata": {"description": "New test file"}},
+    )
+    src.files["f3.pdf"] = (
+        BytesIO(b"testfile2"),
+        {"metadata": {"description": "New test file2"}},
+    )
+    src.files.default_preview = "f2.pdf"
+    src.files.order = ["f3.pdf", "f2.pdf"]
+    src.commit()
+    db.session.commit()
+
+    # Test sync
+    dst.files.sync(src.files)
+
+    assert dst.files.default_preview == "f2.pdf"
+    assert "f1.pdf" not in dst.files
+    assert "f2.pdf" in dst.files
+    assert dst.files.order == ["f3.pdf", "f2.pdf"]
 
 
 def test_record_files_dump(base_app, db, location):
