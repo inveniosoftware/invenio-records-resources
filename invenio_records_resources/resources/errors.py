@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2026 CERN.
 # SPDX-FileCopyrightText: 2020 Northwestern University
 # SPDX-FileCopyrightText: 2023 Graz University of Technology.
+# SPDX-FileCopyrightText: 2026 Paradigm Repositories.
 # SPDX-License-Identifier: MIT
 
 """Common Errors handling for Resources."""
@@ -8,7 +9,7 @@
 from json import JSONDecodeError
 
 import marshmallow as ma
-from flask import jsonify, make_response, request, url_for
+from flask import current_app, jsonify, make_response, request, url_for
 from flask_resources import HTTPJSONException, create_error_handler
 from invenio_i18n import lazy_gettext as _
 from invenio_pidstore.errors import (
@@ -73,13 +74,27 @@ class HTTPJSONSearchRequestError(HTTPJSONException):
 
     def __init__(self, error):
         """Parse RequestError."""
-        cause_types = {c["type"] for c in error.info["error"]["root_cause"]}
+        error_info = error.info if isinstance(error.info, dict) else {}
+        root_causes = (error_info.get("error") or {}).get("root_cause") or []
+        cause_types = {c["type"] for c in root_causes}
+
         for t in cause_types:
             if t in self.causes_responses:
                 code, msg = self.causes_responses[t]
                 super().__init__(code=code, description=msg)
                 return
-        super().__init__(code=500, description=_("Internal server error"))
+
+        # Unmapped search engine error: log the full cause (visible in logs
+        # and error tracking) and expose only the cause types to the client.
+        current_app.logger.exception(
+            "Unhandled search engine RequestError: %s",
+            root_causes or str(error),
+        )
+        super().__init__(
+            code=500,
+            description=_("Internal server error"),
+            errors=[{"type": t} for t in sorted(cause_types)] or None,
+        )
 
 
 def create_pid_redirected_error_handler():
