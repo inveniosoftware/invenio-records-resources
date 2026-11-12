@@ -31,6 +31,8 @@ class FileServiceConfig(ServiceConfig):
 
     permission_action_prefix = ""
 
+    record_read_action = "read"
+
     file_result_item_cls = FileItem
     file_result_list_cls = FileList
     file_result_container_list_cls = ContainerListResult
