@@ -4,13 +4,13 @@
 """Custom Fields for InvenioRDM."""
 
 import calendar
+from datetime import timezone
 
 from arrow import Arrow
 from babel_edtf import parse_edtf
 from edtf.parser.edtf_exceptions import EDTFParseException
 from marshmallow import fields
 from marshmallow_utils.fields import EDTFDateTimeString, ISODateString
-from pytz import utc
 
 from .base import BaseListCF, ensure_no_field_cls
 from .mappings import EDTFMapping, ISODateMapping
@@ -54,7 +54,7 @@ class EDTFDateStringCF(BaseListCF):
     @classmethod
     def _format_date(cls, date):
         """Format the given date into ISO format."""
-        arrow = Arrow.fromtimestamp(calendar.timegm(date), tzinfo=utc)
+        arrow = Arrow.fromtimestamp(calendar.timegm(date), tzinfo=timezone.utc)
         return arrow.date().isoformat()
 
     @classmethod
