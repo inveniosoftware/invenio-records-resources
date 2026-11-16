@@ -263,6 +263,7 @@ class FileResource(ErrorHandlersMixin, Resource):
         """Read a zipped version of all files."""
         id_ = resource_requestctx.view_args["pid_value"]
         files = self.service.read_archive(g.identity, id_)
+        headers = {"Content-Disposition": f"attachment; filename={id_}.zip"}
 
         # emit file download stats events for each file
         emitter = current_stats.get_event_emitter("file-download")
@@ -271,23 +272,41 @@ class FileResource(ErrorHandlersMixin, Resource):
             if obj is not None and emitter is not None:
                 emitter(current_app, record=files._record, obj=obj, via_api=True)
 
+        # collect size of each file if known
+        files_and_sizes = [(f, f.file.size) if f.file else None for f in files._results]
+        sizes_known = not any(size is None for _, size in files_and_sizes)
+
+        # build the ZIP stream, and set the content-length header value if each file's
+        # size is known
+        zs = ZipStream(compress_type=ZIP_STORED, sized=sizes_known)
+        stack = ExitStack()
+        try:
+            for file_obj, size in files_and_sizes:
+                if file_obj.is_readable:
+                    fp = stack.enter_context(file_obj.open_stream("rb"))
+                    if sizes_known:
+                        zs.add(fp, file_obj.key, size=size)
+                    else:
+                        zs.add(fp, file_obj.key)
+
+            if (content_length := len(zs) if sizes_known else None) is not None:
+                headers["Content-Length"] = str(content_length)
+        except BaseException:
+            stack.close()
+            raise
+
         def _gen_zipstream():
             """Generator for the streaming of the zipped file."""
-            zs = ZipStream(compress_type=ZIP_STORED)
-            with ExitStack() as stack:
-                for file_obj in files._results:
-                    if file_obj.is_readable:
-                        fp = stack.enter_context(file_obj.open_stream("rb"))
-                        zs.add(fp, file_obj.key)
+            try:
                 yield from zs.all_files()
                 yield from zs.finalize()
+            finally:
+                stack.close()
 
         return Response(
             stream_with_context(_gen_zipstream()),
             mimetype="application/zip",
-            headers={
-                "Content-Disposition": f"attachment; filename={id_}.zip",
-            },
+            headers=headers,
         )
 
     @set_max_content_length
