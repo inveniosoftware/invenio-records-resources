@@ -9,6 +9,18 @@
 Changes
 =======
 
+Version v11.1.3 (released 2026-11-19)
+
+- chore: replace pytz.utc usage by datetime.timezone.utc
+    * The pytz library is deprecated and the Python standard
+      library can be used to get the UTC timezone.
+
+- fix(files): persist malformed zip errors
+    * Save corrupt and non-ZIP validation errors in metadata
+    so listing raises InvalidFileContentError.
+    * Test non-ZIP and truncated uploads while make sure
+    unexpected storage failures still propagate.
+
 Version v11.1.2 (released 2026-10-13)
 
 - fix(files): use the files manager's bucket for staged uploads
