@@ -17,9 +17,9 @@ Version v11.1.3 (released 2026-11-19)
 
 - fix(files): persist malformed zip errors
     * Save corrupt and non-ZIP validation errors in metadata
-    so listing raises InvalidFileContentError.
+      so listing raises InvalidFileContentError.
     * Test non-ZIP and truncated uploads while make sure
-    unexpected storage failures still propagate.
+      unexpected storage failures still propagate.
 
 Version v11.1.2 (released 2026-10-13)
 
