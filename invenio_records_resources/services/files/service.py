@@ -8,6 +8,7 @@
 
 from flask import current_app
 from invenio_i18n import gettext as _
+from invenio_pidstore.errors import PIDDoesNotExistError
 from marshmallow import ValidationError
 
 from invenio_records_resources.proxies import current_transfer_registry
@@ -19,6 +20,7 @@ from ..errors import (
     FailedFileUploadException,
     FileKeyNotFoundError,
     NoExtractorFoundError,
+    PermissionDeniedError,
 )
 from ..records.schema import ServiceSchemaWrapper
 from ..uow import RecordCommitOp, unit_of_work
@@ -115,11 +117,27 @@ class FileService(Service):
         action_name = self.config.permission_action_prefix + action_name
         return super().check_permission(identity, action_name, **kwargs)
 
-    def _get_record(self, id_, identity, action, file_key=None, **kwargs):
-        """Get the associated record.
+    def _can_read_record(self, identity, record):
+        """Check if the identity can read the record owning the files."""
+        # bypass the action prefix, see ``FileServiceConfig.record_read_action``
+        return super().check_permission(
+            identity, self.config.record_read_action, record=record
+        )
 
-        If a ``file_key`` is specified and the record in question doesn't have a file
-        for that key, a ``FileKeyNotFoundError`` will be raised.
+    def _get_record(self, id_, identity, action, file_key=None, **kwargs):
+        """Get the associated record, if ``action`` is allowed.
+
+        Refusals only disclose as much as the identity is allowed to know:
+
+        1. If the identity can't read the record, a ``PIDDoesNotExistError`` is
+           raised, so that neither the record nor its files are disclosed.
+        2. If a ``file_key`` is specified and the record in question doesn't have a
+           file for that key, a ``FileKeyNotFoundError`` is raised.
+        3. Otherwise, if ``action`` is not allowed, a ``PermissionDeniedError`` is
+           raised.
+
+        Being allowed to perform ``action`` on an existing file is enough, as access
+        can be granted to files only (e.g. via resource access tokens).
         """
         # FIXME: Remove "registered_only=False" since it breaks access to an
         # unpublished record.
@@ -127,17 +145,17 @@ class FileService(Service):
 
         # note: we check file existence before checking permissions, as permission
         # checks may require the file to exist (e.g. IfTransferType permission)
-        # and if it does not exist, will return a permission denied, resulting in 403
-        # status code. By reveresing the order, we can return a more specific
-        # 404 status code.
-        if file_key and file_key not in record.files:
-            raise FileKeyNotFoundError(id_, file_key)
-
-        self.require_permission(
+        file_exists = not file_key or file_key in record.files
+        if file_exists and self.check_permission(
             identity, action, record=record, file_key=file_key, **kwargs
-        )
+        ):
+            return record
 
-        return record
+        if not self._can_read_record(identity, record):
+            raise PIDDoesNotExistError(record.pid.pid_type, id_)
+        if not file_exists:
+            raise FileKeyNotFoundError(id_, file_key)
+        raise PermissionDeniedError(action)
 
     #
     # High-level API
