@@ -45,7 +45,7 @@ class FileResourceConfig(ResourceConfig):
         ),
         InvalidFileContentError: create_error_handler(
             lambda e: HTTPJSONException(
-                code=999,  # inspired by linkedin's status code for request denied
+                code=400,
                 description=str(e),
             )
         ),

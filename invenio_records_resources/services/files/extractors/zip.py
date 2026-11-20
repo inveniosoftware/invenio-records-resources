@@ -12,7 +12,12 @@ from pathlib import PurePosixPath
 from flask import current_app
 from zipstream import ZIP_DEFLATED, ZipStream
 
-from ...errors import FileKeyNotFoundError, InvalidFileContentError
+from ...errors import (
+    FileKeyNotFoundError,
+    InvalidFileContentError,
+    InvalidZipException,
+)
+from ..processors.zip import check_zip_entries_count
 from .base import FileExtractor
 from .reply_stream import ReplyStream
 
@@ -22,6 +27,20 @@ def _get_mimetype(filename):
         mimetypes.guess_type(PurePosixPath(filename).parts[-1])[0]
         or "application/octet-stream"
     )
+
+
+def _open_checked(file_record):
+    """Open the stored ZIP file, refusing it if it has too many entries."""
+    f = file_record.file.storage().open("rb")
+    try:
+        check_zip_entries_count(f)
+    except InvalidZipException as e:
+        f.close()
+        raise InvalidFileContentError(file_record.key, str(e)) from e
+    except BaseException:
+        f.close()
+        raise
+    return f
 
 
 class ZipFileProxy(RawIOBase):
@@ -121,7 +140,7 @@ class ZipProxy:
             This defends against malicious offsets that would otherwise cause
             excessive memory allocation.
         """
-        f = file_record.file.storage().open("rb")
+        f = _open_checked(file_record)
         metadata = file_record.metadata or {}
         toc_position = metadata.get("zip_toc_position", None)
         file_size = file_record.file.file.size
@@ -259,7 +278,7 @@ class ZipExtractor(FileExtractor):
             `zip_toc_position` and wraps immediately when provided.
         """
         self._require_zip_correct(file_record)
-        f = file_record.file.storage().open("rb")
+        f = _open_checked(file_record)
         metadata = file_record.metadata or {}
         toc_position = metadata.get("zip_toc_position", None)
         if toc_position:

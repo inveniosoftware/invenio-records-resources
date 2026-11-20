@@ -13,6 +13,22 @@ from ...errors import InvalidZipException
 from .base import FileProcessor
 
 
+def check_zip_entries_count(fp):
+    """Raise if the ZIP archive has more entries than allowed.
+
+    Only the end of central directory record at the end of the file is read,
+    so an archive with millions of entries is rejected before ``zipfile``
+    loads its whole central directory in memory.
+    """
+    endrec = zipfile._EndRecData(fp)
+    if not endrec:
+        raise zipfile.BadZipFile("File is not a zip file")
+    entries = endrec[zipfile._ECD_ENTRIES_TOTAL]
+    max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
+    if entries > max_files:
+        raise InvalidZipException("Too many files inside the ZIP file")
+
+
 class ZipProcessor(FileProcessor):
     """Processor for ZIP files that verifies the content of zip and stores position of table of contents to file metadata."""
 
@@ -38,6 +54,7 @@ class ZipProcessor(FileProcessor):
         """Check the contents of zip file and return the position of table of contents."""
         # Open the ZIP file and wrap it in RecordingStream to track byte ranges
         with file_record.open_stream("rb") as fp:
+            check_zip_entries_count(fp)
             recorded_stream = RecordingStream(fp)
             with zipfile.ZipFile(recorded_stream) as zf:
                 # Iterate through all entries in the ZIP's central directory
@@ -51,9 +68,7 @@ class ZipProcessor(FileProcessor):
         # max files count check
         max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
         if len(infolist) > max_files:
-            raise InvalidZipException(
-                f"Too many files in ZIP: {len(infolist)} > {max_files}"
-            )
+            raise InvalidZipException("Too many files inside the ZIP file")
 
         total_uncompressed = 0
         for info in infolist:
