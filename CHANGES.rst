@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.2.0 (released 2026-11-24)
+
+- chore(setup): bump dependencies
+
 Version v11.1.3 (released 2026-11-19)
 
 - chore: replace pytz.utc usage by datetime.timezone.utc
