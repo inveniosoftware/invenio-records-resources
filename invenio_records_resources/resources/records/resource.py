@@ -5,7 +5,6 @@
 
 """Invenio Resources module to create REST APIs."""
 
-import marshmallow as ma
 from flask import current_app, g
 from flask_resources import (
     Resource,
@@ -19,6 +18,7 @@ from flask_resources import (
 from invenio_stats.proxies import current_stats
 
 from ..errors import ErrorHandlersMixin
+from .headers import ETagInteger
 from .utils import search_preference
 
 #
@@ -33,7 +33,7 @@ request_read_args = request_parser(from_conf("request_read_args"), location="arg
 
 request_view_args = request_parser(from_conf("request_view_args"), location="view_args")
 
-request_headers = request_parser({"if_match": ma.fields.Int()}, location="headers")
+request_headers = request_parser({"if_match": ETagInteger()}, location="headers")
 
 request_search_args = request_parser(from_conf("request_search_args"), location="args")
 
