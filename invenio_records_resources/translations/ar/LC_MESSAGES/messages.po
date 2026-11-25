@@ -5,7 +5,6 @@
 # Bessem Aamira <bessemamira@gmail.com>, 2024
 # Salaheddine Ben Ali <salaheddine.benali@cnudst.tn>, 2025
 # 
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-records-resources 8.3.0\n"
