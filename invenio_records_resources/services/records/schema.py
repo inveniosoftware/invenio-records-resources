@@ -41,11 +41,21 @@ class BaseRecordSchema(Schema):
                 data.pop(name, None)
         return data
 
+    class Meta:
+        # configuration for deep fried marshmallow, ignored if deepfriedmarshmallow is not installed
+        # needs to be present in order to serialize systemfields correctly
+        jit_options = {"expected_serialize_type": "hybrid"}
+
 
 class BaseGhostSchema(Schema):
     """Base ghost schema."""
 
     is_ghost = fields.Constant(True, dump_only=True)
+
+    class Meta:
+        # configuration for deep fried marshmallow, ignored if deepfriedmarshmallow is not installed
+        # needs to be present in order to serialize systemfields correctly
+        jit_options = {"expected_serialize_type": "hybrid"}
 
 
 class ServiceSchemaWrapper:
