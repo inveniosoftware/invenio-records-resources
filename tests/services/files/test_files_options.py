@@ -62,6 +62,32 @@ def test_set_default_file_preview(
     assert item._record.files.default_preview == default_file
 
 
+def test_set_files_order(app, location, service, file_service, identity_simple, input_data):
+    input_data["files"] = {"enabled": True}
+    item = service.create(identity_simple, input_data)
+    add_file_to_record(file_service, item.id, "a.txt", identity_simple)
+    add_file_to_record(file_service, item.id, "b.txt", identity_simple)
+    input_data["files"] = {"enabled": True, "order": ["b.txt", "a.txt"]}
+
+    item = service.update(identity_simple, item.id, input_data)
+
+    item_dict = item.to_dict()
+    assert {"enabled": True, "order": ["b.txt", "a.txt"]} == item_dict["files"]
+    assert item._record.files.order == ["b.txt", "a.txt"]
+
+
+def test_set_files_order_when_unknown_should_raise(
+    app, location, service, file_service, identity_simple, input_data
+):
+    input_data["files"] = {"enabled": True}
+    item = service.create(identity_simple, input_data)
+    add_file_to_record(file_service, item.id, "file.txt", identity_simple)
+    input_data["files"] = {"enabled": True, "order": ["missing.txt"]}
+
+    with pytest.raises(ValidationError):
+        item = service.update(identity_simple, item.id, input_data)
+
+
 def test_set_default_file_preview_when_unknown_should_raise(
     app, location, service, file_service, identity_simple, input_data
 ):
