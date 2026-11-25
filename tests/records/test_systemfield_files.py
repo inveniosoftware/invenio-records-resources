@@ -495,3 +495,66 @@ def test_record_files_access_implicit_not_set(base_app, db, location):
     data = record.dumps()
     assert data["files"]["entries"][0].get("access") is None
     assert record.files["f1.txt"].model.json.get("access") is None
+
+
+def test_record_files_reuse_deleted_key(base_app, db, location):
+    """Test reusing the key of a deleted file."""
+    record = Record.create({})
+    record.files["f1.pdf"] = BytesIO(b"first")
+    record.commit()
+    db.session.commit()
+
+    record.files.delete("f1.pdf")
+    record.commit()
+    db.session.commit()
+
+    assert models.FileRecordMetadata.query.count() == 0
+    # The replaced content is kept as a non-head object version
+    assert ObjectVersion.query.filter_by(key="f1.pdf").count() == 2
+
+    record.files["f1.pdf"] = BytesIO(b"second")
+    record.commit()
+    db.session.commit()
+
+    assert models.FileRecordMetadata.query.count() == 1
+    assert record.files["f1.pdf"].file.size == len(b"second")
+    assert ObjectVersion.query.filter_by(key="f1.pdf").count() == 3
+
+
+def test_record_files_sync_reuse_removed_key(base_app, db, location):
+    """Test syncing a file whose key an earlier sync removed."""
+    src = Record.create({})
+    src.files["f1.pdf"] = BytesIO(b"first")
+    src.commit()
+    dst = Record.create({})
+    dst.files.sync(src.files)
+    dst.commit()
+    db.session.commit()
+
+    # Replace f1.pdf with f2.pdf
+    src.files.delete("f1.pdf")
+    src.files["f2.pdf"] = BytesIO(b"other")
+    src.commit()
+    dst.files.sync(src.files)
+    dst.commit()
+    db.session.commit()
+
+    assert set(dst.files) == {"f2.pdf"}
+
+    # Put f1.pdf back
+    src.files["f1.pdf"] = BytesIO(b"second")
+    src.commit()
+    dst.files.sync(src.files)
+    dst.commit()
+    db.session.commit()
+
+    assert set(dst.files) == {"f1.pdf", "f2.pdf"}
+    assert dst.files["f1.pdf"].file.size == len(b"second")
+    assert models.FileRecordMetadata.query.filter_by(record_id=dst.id).count() == 2
+    # Both versions of f1.pdf are kept in the destination bucket
+    assert (
+        ObjectVersion.query.filter_by(bucket_id=dst.bucket_id, key="f1.pdf")
+        .filter(ObjectVersion.file_id.isnot(None))
+        .count()
+        == 2
+    )
