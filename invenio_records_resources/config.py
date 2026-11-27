@@ -42,7 +42,13 @@ RECORDS_RESOURCES_ZIP_FORMATS = [".zip"]
 """File extensions interpreted as ZIP files."""
 
 RECORDS_RESOURCES_ZIP_MAX_LISTING_ENTRIES = 1000
-"""Max entries returned by the container listing API."""
+"""Max entries (files and folders) returned by the container listing API.
+
+It only shortens the response: once reached, the listing stops and is flagged as
+``truncated``. It does not change which ZIP files are accepted, nor which entries
+can be extracted: see ``RECORDS_RESOURCES_ZIP_MAX_ENTRIES`` for that. Set it to
+``None`` to return all entries of the accepted ZIP files.
+"""
 
 RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE = 64 * 1024
 """Max header size of ZIP file that can be preloaded."""
@@ -53,8 +59,22 @@ RECORDS_RESOURCES_ZIP_MAX_TOTAL_UNCOMPRESSED = 500 * 1024 * 1024  # 500 MB
 RECORDS_RESOURCES_ZIP_MAX_RATIO = 200.0
 """Max allowed compression ratio of an entry inside ZIP file."""
 
-RECORDS_RESOURCES_ZIP_MAX_ENTRIES = 10000
-"""Max allowed entries inside ZIP file."""
+RECORDS_RESOURCES_ZIP_MAX_ENTRIES = 1000
+"""Max entries (files and folders) that a ZIP file can contain.
+
+ZIP files with more entries are refused: their content cannot be listed or
+extracted, while the file itself can still be downloaded. The refusal of an
+uploaded file is saved in its metadata, so raising this value does not apply to
+files that were already refused.
+
+It protects the memory of the server, as the whole table of contents of a ZIP is
+loaded to open it. For the same reason, the size of the table of contents is
+limited to this value multiplied by 512 bytes (about 0.5 MB by default): a ZIP with
+very long file names can be refused with fewer entries.
+
+``RECORDS_RESOURCES_ZIP_MAX_LISTING_ENTRIES`` can further limit how many of the
+entries of an accepted ZIP are listed.
+"""
 
 RECORDS_RESOURCES_ARCHIVE_DOWNLOAD_MAX_SIZE = None
 """Max total file size (bytes) for archive download. ``None`` disables the cap."""

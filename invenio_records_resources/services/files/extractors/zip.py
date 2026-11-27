@@ -17,7 +17,7 @@ from ...errors import (
     InvalidFileContentError,
     InvalidZipException,
 )
-from ..processors.zip import check_zip_entries_count
+from ..processors.zip import open_zip_checked
 from .base import FileExtractor
 from .reply_stream import ReplyStream
 
@@ -27,20 +27,6 @@ def _get_mimetype(filename):
         mimetypes.guess_type(PurePosixPath(filename).parts[-1])[0]
         or "application/octet-stream"
     )
-
-
-def _open_checked(file_record):
-    """Open the stored ZIP file, refusing it if it has too many entries."""
-    f = file_record.file.storage().open("rb")
-    try:
-        check_zip_entries_count(f)
-    except InvalidZipException as e:
-        f.close()
-        raise InvalidFileContentError(file_record.key, str(e)) from e
-    except BaseException:
-        f.close()
-        raise
-    return f
 
 
 class ZipFileProxy(RawIOBase):
@@ -89,7 +75,7 @@ class ZipFileProxy(RawIOBase):
     @property
     def size(self):
         """Uncompressed size of this ZIP member in bytes."""
-        return self._file_info.size
+        return self._file_info.file_size
 
     def __enter__(self):
         """Context manager enter."""
@@ -140,25 +126,32 @@ class ZipProxy:
             This defends against malicious offsets that would otherwise cause
             excessive memory allocation.
         """
-        f = _open_checked(file_record)
-        metadata = file_record.metadata or {}
-        toc_position = metadata.get("zip_toc_position", None)
-        file_size = file_record.file.file.size
-        # Make sure that malicious toc position doesn't exhaust memory.
-        if (
-            toc_position
-            and file_size - toc_position
-            < current_app.config["RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE"]
-        ):
-            reply_stream = ReplyStream(
-                f, buffer_pos=toc_position, buffer_size=file_record.file.file.size
-            )
-        else:
-            reply_stream = f
+        f = file_record.file.storage().open("rb")
+        try:
+            metadata = file_record.metadata or {}
+            toc_position = metadata.get("zip_toc_position", None)
+            file_size = file_record.file.file.size
+            # Make sure that malicious toc position doesn't exhaust memory.
+            if (
+                toc_position
+                and file_size - toc_position
+                < current_app.config["RECORDS_RESOURCES_ZIP_MAX_HEADER_SIZE"]
+            ):
+                reply_stream = ReplyStream(
+                    f, buffer_pos=toc_position, buffer_size=file_record.file.file.size
+                )
+            else:
+                reply_stream = f
 
-        self.reply_stream = reply_stream
-        self.zip_file = zipfile.ZipFile(reply_stream, "r")
-        self.infolist = list(self.zip_file.infolist())
+            self.reply_stream = reply_stream
+            self.zip_file = open_zip_checked(reply_stream)
+            self.infolist = list(self.zip_file.infolist())
+        except InvalidZipException as e:
+            f.close()
+            raise InvalidFileContentError(file_record.key, str(e)) from e
+        except BaseException:
+            f.close()
+            raise
 
     def close(self):
         """Close the underlying reply stream.
@@ -271,23 +264,10 @@ class ZipExtractor(FileExtractor):
               - `reply_stream` is either the raw storage stream or a `ReplyStream`
                 wrapper if a TOC position is available.
               - `zipfile_obj` is an instance of `zipfile.ZipFile` opened for reading.
-
-        Notes:
-            This helper does not apply the additional "max header size" safety check
-            used by `ZipProxy` in the code above; it trusts the presence of
-            `zip_toc_position` and wraps immediately when provided.
         """
         self._require_zip_correct(file_record)
-        f = _open_checked(file_record)
-        metadata = file_record.metadata or {}
-        toc_position = metadata.get("zip_toc_position", None)
-        if toc_position:
-            reply_stream = ReplyStream(
-                f, buffer_pos=toc_position, buffer_size=file_record.size
-            )
-        else:
-            reply_stream = f
-        return reply_stream, zipfile.ZipFile(reply_stream, "r")
+        zip_proxy = ZipProxy(file_record)
+        return zip_proxy.reply_stream, zip_proxy.zip_file
 
     def list(self, file_record):
         """Return the cached table of contents for the ZIP file.
@@ -325,6 +305,10 @@ class ZipExtractor(FileExtractor):
             # Iterate through all entries in the ZIP's central directory
             # Recording Stream will capture byte range accessed
             for info in zip_file.infolist:
+                # flag the listing as truncated only if there are more entries
+                if max_entries and len(entries) + len(directories) >= max_entries:
+                    truncated = True
+                    break
                 file_key = str(PurePosixPath(info.filename))
                 if info.is_dir():
                     directories.append({"key": file_key})
@@ -338,9 +322,6 @@ class ZipExtractor(FileExtractor):
                             "crc": info.CRC,
                         }
                     )
-                if max_entries and len(entries) + len(directories) >= max_entries:
-                    truncated = True
-                    break
         return {
             "entries": entries,
             "truncated": truncated,
@@ -366,16 +347,25 @@ class ZipExtractor(FileExtractor):
         """
         self._require_zip_correct(file_record)
         zip_proxy = ZipProxy(file_record)
-        found_item = next(
-            (item for item in zip_proxy.infolist if item.filename.rstrip("/") == path),
-            None,
-        )
-        if not found_item:
-            raise FileKeyNotFoundError(file_record.record["id"], path)
-        if not found_item.is_dir():
-            return zip_proxy.open(path)
-        else:
-            return self._zip_directory(zip_proxy, found_item.filename)
+        try:
+            found_item = next(
+                (
+                    item
+                    for item in zip_proxy.infolist
+                    if item.filename.rstrip("/") == path
+                ),
+                None,
+            )
+            if not found_item:
+                raise FileKeyNotFoundError(file_record.record["id"], path)
+            if not found_item.is_dir():
+                return zip_proxy.open(path)
+            else:
+                return self._zip_directory(zip_proxy, found_item.filename)
+        except BaseException:
+            # the returned stream owns the proxy, close it if nothing is returned
+            zip_proxy.close()
+            raise
 
     def _zip_directory(self, zip_proxy, container_directory_key):
         """

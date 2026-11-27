@@ -16,6 +16,7 @@ from invenio_records_resources.services.files.transfer import TransferStatus
 from ..base import LinksTemplate, Service
 from ..errors import (
     ArchiveDownloadTooLargeException,
+    ContainerNotAllowedError,
     FailedFileUploadException,
     FileKeyNotFoundError,
     NoExtractorFoundError,
@@ -481,8 +482,14 @@ class FileService(Service):
             links_tpl=self.file_links_item_tpl(id_),
         )
 
+    def _check_container_allowed(self, file_key):
+        """Raise if container access is disabled for this service."""
+        if not getattr(self.config, "allow_container", True):
+            raise ContainerNotAllowedError(file_key)
+
     def list_container(self, identity, id_, file_key):
         """List the files in the container of a record."""
+        self._check_container_allowed(file_key)
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
         status = current_transfer_registry.get_transfer(
@@ -527,6 +534,7 @@ class FileService(Service):
 
     def _open_container_item(self, identity, id_, file_key, path):
         """Open a specific file from the container of a record."""
+        self._check_container_allowed(file_key)
         record = self._get_record(id_, identity, "get_content_files", file_key=file_key)
         file_record = record.files[file_key]
         status = current_transfer_registry.get_transfer(

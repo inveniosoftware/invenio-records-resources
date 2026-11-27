@@ -160,6 +160,20 @@ class NoExtractorFoundError(Exception):
         self.file_key = file_key
 
 
+class ContainerNotAllowedError(Exception):
+    """Container access is disabled for the file service."""
+
+    def __init__(self, file_key):
+        """Constructor."""
+        super().__init__(
+            _(
+                "Container access is disabled for the file '%(file_key)s'.",
+                file_key=file_key,
+            )
+        )
+        self.file_key = file_key
+
+
 class InvalidFileContentError(Exception):
     """Exception raised if stored file has invalid content."""
 
