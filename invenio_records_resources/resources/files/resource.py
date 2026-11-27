@@ -11,7 +11,7 @@ from contextlib import ExitStack
 from functools import wraps
 
 import marshmallow as ma
-from flask import Response, current_app, g, request, stream_with_context
+from flask import Response, abort, current_app, g, request, stream_with_context
 from flask_resources import (
     JSONDeserializer,
     RequestBodyParser,
@@ -148,14 +148,30 @@ class FileResource(ErrorHandlersMixin, Resource):
                         self.upload_multipart_content,
                     ),
                 ]
+
         if routes.get("list-container") and routes.get("container-item-extract"):
-            # allow listing and extracting from container files if the routes are defined
             # media files blueprint is initialized by using same original file resource
+            # When disabled, the routes are still registered to reply with a 404:
+            # otherwise "<key>/container" would be matched by the file item route
+            # (its path converter accepts slashes) and fail as a missing file.
+            allow_container = getattr(self.service.config, "allow_container", True)
+            list_view = self.list_container if allow_container else self._not_found
+            extract_view = (
+                self.extract_container_item if allow_container else self._not_found
+            )
 
             url_rules += [
-                route("GET", routes["list-container"], self.list_container),
                 route(
-                    "GET", routes["container-item-extract"], self.extract_container_item
+                    "GET",
+                    routes["list-container"],
+                    list_view,
+                    endpoint="list_container",
+                ),
+                route(
+                    "GET",
+                    routes["container-item-extract"],
+                    extract_view,
+                    endpoint="extract_container_item",
                 ),
             ]
 
@@ -323,6 +339,10 @@ class FileResource(ErrorHandlersMixin, Resource):
         )
 
         return item.to_dict(), 200
+
+    def _not_found(self):
+        """Reply with a 404, used for the routes of disabled features."""
+        abort(404)
 
     @request_view_args
     @response_handler()

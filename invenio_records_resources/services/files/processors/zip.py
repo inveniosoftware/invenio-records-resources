@@ -13,6 +13,32 @@ from ...errors import InvalidZipException
 from .base import FileProcessor
 
 
+def open_zip_checked(fp):
+    """Open a ZIP archive, refusing it if it has too many entries.
+
+    ``zipfile`` loads the whole central directory (table of contents) in memory
+    when opening an archive. The number of entries and the size of the central
+    directory are therefore checked first, reading only the end of the archive.
+    The declared number of entries can be understated, so the entries are also
+    counted after parsing.
+    """
+    # A similar check exists in invenio-previewer: keep them aligned.
+    max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
+    endrec = zipfile._EndRecData(fp)
+    if not endrec:
+        raise zipfile.BadZipFile("File is not a zip file")
+    if endrec[zipfile._ECD_ENTRIES_TOTAL] > max_files:
+        raise InvalidZipException("Too many files inside the ZIP file")
+    # The declared number of entries can be fake, so also limit the size of the
+    # table of contents. 512 bytes per entry is generous: it is mostly the file name.
+    if endrec[zipfile._ECD_SIZE] > max_files * 512:
+        raise InvalidZipException("The table of contents of the ZIP file is too large")
+    zip_file = zipfile.ZipFile(fp)
+    if len(zip_file.infolist()) > max_files:
+        raise InvalidZipException("Too many files inside the ZIP file")
+    return zip_file
+
+
 class ZipProcessor(FileProcessor):
     """Processor for ZIP files that verifies the content of zip and stores position of table of contents to file metadata."""
 
@@ -39,7 +65,7 @@ class ZipProcessor(FileProcessor):
         # Open the ZIP file and wrap it in RecordingStream to track byte ranges
         with file_record.open_stream("rb") as fp:
             recorded_stream = RecordingStream(fp)
-            with zipfile.ZipFile(recorded_stream) as zf:
+            with open_zip_checked(recorded_stream) as zf:
                 # Iterate through all entries in the ZIP's central directory
                 # Recording Stream will capture byte range accessed
                 infolist = zf.infolist()
@@ -48,13 +74,6 @@ class ZipProcessor(FileProcessor):
         return toc_position
 
     def _check_infolist(self, infolist):
-        # max files count check
-        max_files = current_app.config["RECORDS_RESOURCES_ZIP_MAX_ENTRIES"]
-        if len(infolist) > max_files:
-            raise InvalidZipException(
-                f"Too many files in ZIP: {len(infolist)} > {max_files}"
-            )
-
         total_uncompressed = 0
         for info in infolist:
 

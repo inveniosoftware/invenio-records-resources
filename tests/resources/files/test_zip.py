@@ -6,10 +6,13 @@
 
 """Resource tests for zip files."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from werkzeug.exceptions import NotFound
 
+from invenio_records_resources.resources import FileResource, FileResourceConfig
+from invenio_records_resources.services.errors import ContainerNotAllowedError
 from invenio_records_resources.services.files.components import processor
 from invenio_records_resources.services.files.transfer import TransferStatus
 from invenio_records_resources.tasks import extract_file_metadata
@@ -193,3 +196,52 @@ def test_zip_metadata_on_record_with_zip(
     # Make a GET request for a commited file and check that zip_toc_position is in the metadata
     res = client.get(f"/mocks/{recid}/files/testzip.zip", headers=headers)
     assert res.json["metadata"]["zip_toc_position"] == 236
+
+
+def test_container_too_many_entries(
+    app, file_service, location, record_with_zip, client, headers
+):
+    """A ZIP with too many entries gives an API error instead of an exception."""
+    recid = record_with_zip["id"]
+
+    with patch.dict(app.config, {"RECORDS_RESOURCES_ZIP_MAX_ENTRIES": 2}):
+        res = client.get(f"/mocks/{recid}/files/testzip.zip/container", headers=headers)
+        assert res.status_code == 400
+        assert "Too many files inside the ZIP file." in res.json["message"]
+
+        res = client.get(
+            f"/mocks/{recid}/files/testzip.zip/container/a.txt", headers=headers
+        )
+        assert res.status_code == 400
+        assert "Too many files inside the ZIP file." in res.json["message"]
+
+
+def test_container_not_allowed(
+    app, file_service, location, record_with_zip, identity_simple
+):
+    """The service refuses container access when it is disabled."""
+    recid = record_with_zip["id"]
+
+    with patch.object(file_service.config, "allow_container", False):
+        with pytest.raises(ContainerNotAllowedError):
+            file_service.list_container(identity_simple, recid, "testzip.zip")
+        with pytest.raises(ContainerNotAllowedError):
+            file_service.extract_container_item(
+                identity_simple, recid, "testzip.zip", "a.txt"
+            )
+        with pytest.raises(ContainerNotAllowedError):
+            file_service.open_container_item(
+                identity_simple, recid, "testzip.zip", "a.txt"
+            )
+
+
+def test_container_routes_not_allowed(app, file_service):
+    """The container routes reply with a 404 when container access is disabled."""
+    with patch.object(file_service.config, "allow_container", False):
+        resource = FileResource(FileResourceConfig, file_service)
+        rules = {rule["rule"]: rule for rule in resource.create_url_rules()}
+
+    for name in ("list-container", "container-item-extract"):
+        view = rules[FileResourceConfig.routes[name]]["view_func"]
+        with app.test_request_context(), pytest.raises(NotFound):
+            view()
